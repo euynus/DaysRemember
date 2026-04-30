@@ -4,6 +4,9 @@ struct ShareCardView: View {
     @Environment(\.dismiss) private var dismiss
     let day: Day
     @State private var template: Template = .classic
+    @State private var sharing = false
+    @State private var sharedImage: UIImage? = nil
+    @State private var savedToast: String? = nil
 
     enum Template: String, CaseIterable {
         case classic, frame, minimal, collage
@@ -15,25 +18,85 @@ struct ShareCardView: View {
         }
     }
 
+    private var info: DayInfo { DayInfo.compute(day) }
+
+    @ViewBuilder
+    private var card: some View {
+        switch template {
+        case .classic: ClassicCard(day: day, info: info)
+        case .frame: FrameCard(day: day, info: info)
+        case .minimal: MinimalCard(day: day, info: info)
+        case .collage: CollageCard(day: day, info: info)
+        }
+    }
+
     var body: some View {
-        let info = DayInfo.compute(day)
         VStack(spacing: 0) {
             navBar
             Spacer()
-            Group {
-                switch template {
-                case .classic: ClassicCard(day: day, info: info)
-                case .frame: FrameCard(day: day, info: info)
-                case .minimal: MinimalCard(day: day, info: info)
-                case .collage: CollageCard(day: day, info: info)
-                }
-            }
-            .padding(.horizontal, 32)
+            card.padding(.horizontal, 32)
             Spacer()
             templatePicker
             shareRow.padding(.bottom, 36)
         }
         .background(Theme.bg2)
+        .overlay(alignment: .top) {
+            if let savedToast {
+                Text(savedToast)
+                    .font(Theme.sans(13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .background(.black.opacity(0.78))
+                    .clipShape(Capsule())
+                    .padding(.top, 60)
+                    .transition(.opacity)
+            }
+        }
+        .sheet(isPresented: $sharing) {
+            if let img = sharedImage {
+                ShareSheet(activityItems: [img])
+                    .presentationDetents([.medium, .large])
+            }
+        }
+    }
+
+    @MainActor
+    private func renderCardImage() -> UIImage? {
+        let renderer = ImageRenderer(content: card.frame(width: 280, height: 350))
+        renderer.scale = UIScreen.main.scale
+        renderer.proposedSize = .init(width: 280, height: 350)
+        return renderer.uiImage
+    }
+
+    private func presentShareSheet() {
+        guard let img = renderCardImage() else { return }
+        sharedImage = img
+        sharing = true
+    }
+
+    private func saveToPhotos() {
+        guard let img = renderCardImage() else { return }
+        Task {
+            do {
+                try await PhotoSaver.save(image: img)
+                flashToast("已保存到相册")
+            } catch PhotoSaver.SaveError.denied {
+                flashToast("无相册权限")
+            } catch {
+                flashToast("保存失败")
+            }
+        }
+    }
+
+    @MainActor
+    private func flashToast(_ text: String) {
+        withAnimation(.easeInOut(duration: 0.18)) { savedToast = text }
+        Task {
+            try? await Task.sleep(nanoseconds: 1_700_000_000)
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.25)) { savedToast = nil }
+            }
+        }
     }
 
     private var navBar: some View {
@@ -45,7 +108,7 @@ struct ShareCardView: View {
             Spacer()
             Text("分享").font(Theme.serif(17, weight: .semibold))
             Spacer()
-            Button("保存") {}
+            Button("保存", action: saveToPhotos)
                 .font(Theme.sans(15, weight: .semibold))
                 .foregroundStyle(Theme.terracotta)
                 .buttonStyle(.plain)
@@ -75,25 +138,36 @@ struct ShareCardView: View {
 
     private var shareRow: some View {
         HStack(spacing: 16) {
-            shareIcon("微", color: Color(oklch: 0.7, 0.15, 145), label: "微信")
-            shareIcon("朋", color: Color(oklch: 0.7, 0.15, 145), label: "朋友圈")
-            shareIcon("小", color: Color(oklch: 0.65, 0.18, 25), label: "小红书")
-            shareIcon("保", color: Theme.ink, label: "保存")
-            shareIcon("更", color: Theme.ink2, label: "更多")
+            // The system share sheet routes to whatever messaging apps the user has installed
+            // (微信 / 朋友圈 / 小红书 etc. all show up if installed). The labeled buttons here
+            // pre-fill the common destinations for visual parity with the prototype, but they
+            // all go through the same UIActivityViewController.
+            shareIcon("微", color: Color(oklch: 0.7, 0.15, 145), label: "微信",
+                      action: presentShareSheet)
+            shareIcon("朋", color: Color(oklch: 0.7, 0.15, 145), label: "朋友圈",
+                      action: presentShareSheet)
+            shareIcon("小", color: Color(oklch: 0.65, 0.18, 25), label: "小红书",
+                      action: presentShareSheet)
+            shareIcon("保", color: Theme.ink, label: "保存", action: saveToPhotos)
+            shareIcon("更", color: Theme.ink2, label: "更多", action: presentShareSheet)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24)
     }
 
-    private func shareIcon(_ glyph: String, color: Color, label: String) -> some View {
-        VStack(spacing: 6) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(color.opacity(0.92))
-                Text(glyph).font(Theme.sans(11)).foregroundStyle(.white)
+    private func shareIcon(_ glyph: String, color: Color, label: String,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous).fill(color.opacity(0.92))
+                    Text(glyph).font(Theme.sans(11)).foregroundStyle(.white)
+                }
+                .frame(width: 44, height: 44)
+                Text(label).font(Theme.sans(11)).foregroundStyle(Theme.ink2)
             }
-            .frame(width: 44, height: 44)
-            Text(label).font(Theme.sans(11)).foregroundStyle(Theme.ink2)
         }
+        .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
     }
 }

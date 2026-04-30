@@ -40,5 +40,7 @@
     <string>zh_CN</string>
     <string>en</string>
   </array>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>「时光」需要权限来把分享卡片保存到相册。</string>
 </dict>
 </plist>
