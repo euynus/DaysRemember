@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct AddDayView: View {
     @Environment(\.dismiss) private var dismiss
@@ -7,6 +8,8 @@ struct AddDayView: View {
     @State private var title: String = "毕业十周年"
     @State private var category: DayCategory = .life
     @State private var photo: PhotoStyle = .study
+    @State private var photoData: Data? = nil
+    @State private var pickerItem: PhotosPickerItem? = nil
     @State private var recurring: Bool = true
     @State private var solar: Bool = true
     @State private var remindIndex: Int = 3
@@ -51,7 +54,7 @@ struct AddDayView: View {
             Button("保存") {
                 let new = Day(id: UUID().uuidString, title: title, date: selectedDate,
                               recurring: recurring, lunar: !solar, category: category,
-                              photo: photo)
+                              photo: photo, photoData: photoData)
                 store.add(new)
                 dismiss()
             }
@@ -66,7 +69,7 @@ struct AddDayView: View {
 
     private var coverEditor: some View {
         ZStack(alignment: .bottomLeading) {
-            PhotoTile(style: photo, cornerRadius: 22)
+            PhotoTile(style: photo, imageData: photoData, cornerRadius: 22)
                 .frame(height: 180)
             VStack(alignment: .leading, spacing: 4) {
                 Text(category.label.uppercased())
@@ -93,11 +96,14 @@ struct AddDayView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(pickerOptions, id: \.self) { p in
-                        Button { photo = p } label: {
+                        Button {
+                            photo = p
+                            photoData = nil // reverting to a preset clears any picked image
+                        } label: {
                             PhotoTile(style: p, flat: true, cornerRadius: 14)
                                 .frame(width: 56, height: 56)
                                 .overlay {
-                                    if photo == p {
+                                    if photo == p && photoData == nil {
                                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                                             .strokeBorder(Theme.terracotta, lineWidth: 2.5)
                                             .padding(-3)
@@ -106,22 +112,66 @@ struct AddDayView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    addPhotoTile
+                    photosPickerTile
                 }
             }
         }
     }
 
-    private var addPhotoTile: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4]))
-                .foregroundStyle(Theme.hairlineStrong)
-            Text("+").font(.system(size: 22)).foregroundStyle(Theme.muted)
+    private var photosPickerTile: some View {
+        PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
+            ZStack {
+                if let data = photoData, let ui = UIImage(data: data) {
+                    Image(uiImage: ui)
+                        .resizable()
+                        .scaledToFill()
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(Theme.terracotta, lineWidth: 2.5)
+                                .padding(-3)
+                        }
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4]))
+                            .foregroundStyle(Theme.hairlineStrong)
+                        Image(systemName: "photo.badge.plus")
+                            .font(.system(size: 18, weight: .regular))
+                            .foregroundStyle(Theme.muted)
+                    }
+                    .background(Theme.card)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+            }
+            .frame(width: 56, height: 56)
         }
-        .frame(width: 56, height: 56)
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .onChange(of: pickerItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    await MainActor.run {
+                        photoData = compressedJPEGData(from: data) ?? data
+                    }
+                }
+            }
+        }
+    }
+
+    /// Re-encode HEIC/PNG to a reasonably sized JPEG so the Day record stays small.
+    private func compressedJPEGData(from data: Data, maxDimension: CGFloat = 1600,
+                                    quality: CGFloat = 0.82) -> Data? {
+        guard let image = UIImage(data: data) else { return nil }
+        let scale = min(1, maxDimension / max(image.size.width, image.size.height))
+        if scale >= 1 {
+            return image.jpegData(compressionQuality: quality)
+        }
+        let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: target)
+        let resized = renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: target))
+        }
+        return resized.jpegData(compressionQuality: quality)
     }
 
     private var formCard: some View {

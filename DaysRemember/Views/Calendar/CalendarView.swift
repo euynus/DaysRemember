@@ -229,7 +229,7 @@ struct CalendarMonthView: View {
                                     .foregroundStyle(Theme.terracotta)
                                     .monospacedDigit()
                                     .frame(width: 38)
-                                PhotoTile(style: e.photo, flat: true, cornerRadius: 10)
+                                PhotoTile(day: e, flat: true, cornerRadius: 10)
                                     .frame(width: 36, height: 36)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(e.title).font(Theme.sans(13, weight: .medium))

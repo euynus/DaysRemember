@@ -120,7 +120,7 @@ struct TodaySpotlight: View {
             let info = DayInfo.compute(day)
             Button { onOpen(day) } label: {
                 HStack(spacing: 14) {
-                    PhotoTile(style: day.photo, flat: true, cornerRadius: 14)
+                    PhotoTile(day: day, flat: true, cornerRadius: 14)
                         .frame(width: 52, height: 52)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("即将到来")

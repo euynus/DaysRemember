@@ -9,12 +9,15 @@ struct Day: Identifiable, Codable, Hashable {
     var category: DayCategory
     var categoryLabel: String
     var photo: PhotoStyle
+    /// Optional user-picked image. When present, takes precedence over the gradient.
+    var photoData: Data?
     var note: String
     var location: String
     var pinned: Bool
 
     init(id: String, title: String, date: Date, recurring: Bool = false, lunar: Bool = false,
-         category: DayCategory, photo: PhotoStyle, note: String = "", location: String = "",
+         category: DayCategory, photo: PhotoStyle, photoData: Data? = nil,
+         note: String = "", location: String = "",
          pinned: Bool = false, categoryLabel: String? = nil) {
         self.id = id
         self.title = title
@@ -24,6 +27,7 @@ struct Day: Identifiable, Codable, Hashable {
         self.category = category
         self.categoryLabel = categoryLabel ?? category.label
         self.photo = photo
+        self.photoData = photoData
         self.note = note
         self.location = location
         self.pinned = pinned

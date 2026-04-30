@@ -1,15 +1,35 @@
 import SwiftUI
+import UIKit
 
 /// A photo placeholder — colored gradient + optional bottom-darkening scrim.
-/// Mirrors the prototype's `.photo` + `.photo-flat` CSS classes.
+/// When `imageData` is non-nil it is rendered in place of the gradient.
 struct PhotoTile: View {
     let style: PhotoStyle
+    var imageData: Data? = nil
     var flat: Bool = false
     var cornerRadius: CGFloat = 20
 
+    init(style: PhotoStyle, imageData: Data? = nil, flat: Bool = false, cornerRadius: CGFloat = 20) {
+        self.style = style
+        self.imageData = imageData
+        self.flat = flat
+        self.cornerRadius = cornerRadius
+    }
+
+    /// Convenience for callers that have a `Day`.
+    init(day: Day, flat: Bool = false, cornerRadius: CGFloat = 20) {
+        self.init(style: day.photo, imageData: day.photoData, flat: flat, cornerRadius: cornerRadius)
+    }
+
     var body: some View {
         ZStack {
-            style.background()
+            if let data = imageData, let ui = UIImage(data: data) {
+                Image(uiImage: ui)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                style.background()
+            }
             if !flat {
                 LinearGradient(
                     colors: [.black.opacity(0), .black.opacity(0.55)],

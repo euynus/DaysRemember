@@ -10,7 +10,7 @@ struct DayTile: View {
         let info = DayInfo.compute(day)
         Button(action: action) {
             ZStack(alignment: .bottomLeading) {
-                PhotoTile(style: day.photo, cornerRadius: 20)
+                PhotoTile(day: day, cornerRadius: 20)
 
                 if day.pinned {
                     pinnedBadge

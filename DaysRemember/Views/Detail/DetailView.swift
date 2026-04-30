@@ -11,7 +11,7 @@ struct DetailView: View {
         ZStack {
             // Background photo + scrim
             ZStack {
-                PhotoTile(style: day.photo, flat: true, cornerRadius: 0)
+                PhotoTile(day: day, flat: true, cornerRadius: 0)
                 LinearGradient(
                     colors: [
                         .black.opacity(0.25),

@@ -102,7 +102,7 @@ struct ClassicCard: View {
     let day: Day; let info: DayInfo
     var body: some View {
         ZStack(alignment: .topLeading) {
-            PhotoTile(style: day.photo, cornerRadius: 18)
+            PhotoTile(day: day, cornerRadius: 18)
             VStack(alignment: .leading) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(day.categoryLabel)
@@ -141,7 +141,7 @@ struct FrameCard: View {
     let day: Day; let info: DayInfo
     var body: some View {
         VStack(spacing: 14) {
-            PhotoTile(style: day.photo, cornerRadius: 4)
+            PhotoTile(day: day, cornerRadius: 4)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             VStack(spacing: 4) {
                 Text(day.title)
@@ -207,7 +207,7 @@ struct CollageCard: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 6) {
-                PhotoTile(style: day.photo, cornerRadius: 12)
+                PhotoTile(day: day, cornerRadius: 12)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 VStack(spacing: 6) {
                     PhotoTile(style: .baby, cornerRadius: 12)
