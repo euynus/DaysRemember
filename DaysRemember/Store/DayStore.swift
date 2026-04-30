@@ -1,5 +1,8 @@
 import Foundation
 import SwiftUI
+#if canImport(WidgetKit)
+import WidgetKit
+#endif
 
 @MainActor
 final class DayStore: ObservableObject {
@@ -7,6 +10,7 @@ final class DayStore: ObservableObject {
         didSet {
             save()
             rescheduleNotifications()
+            reloadWidgetTimelines()
         }
     }
 
@@ -17,7 +21,7 @@ final class DayStore: ObservableObject {
     }
 
     init() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
+        if let data = SharedStorage.defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([Day].self, from: data) {
             self.days = decoded
         } else {
@@ -27,7 +31,13 @@ final class DayStore: ObservableObject {
 
     func save() {
         guard let data = try? JSONEncoder().encode(days) else { return }
-        UserDefaults.standard.set(data, forKey: storageKey)
+        SharedStorage.defaults.set(data, forKey: storageKey)
+    }
+
+    private func reloadWidgetTimelines() {
+        #if canImport(WidgetKit)
+        WidgetCenter.shared.reloadAllTimelines()
+        #endif
     }
 
     func add(_ day: Day) { days.insert(day, at: 0) }

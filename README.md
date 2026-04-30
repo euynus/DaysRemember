@@ -2,6 +2,17 @@
 
 A warm, emotional Chinese-language anniversary & countdown iOS app — SwiftUI, iOS 17+. Implementation of the Anthropic Design handoff bundle in `_design/days-remember/`.
 
+## OS integrations
+
+| Capability | Wiring |
+|---|---|
+| **Local notifications** | `Store/NotificationManager.swift` schedules `dr.day.<id>.pre.<offset>` requests via `UNUserNotificationCenter`. Authorization is requested on first launch, schedule re-syncs on day add/edit/delete and on every reminder-toggle change in 提醒. Quiet-hours toggle pushes any 22:00–08:00 trigger past 08:00. |
+| **WidgetKit** | `DaysRememberWidget/` extension target with Small / Medium / Large families. Reads days through the `group.com.shiguang.daysremember` App Group (`Store/SharedStorage.swift`); the app calls `WidgetCenter.shared.reloadAllTimelines()` on every day change. Refreshes at the next midnight. |
+| **PhotosPicker** | `AddDayView` exposes a `PhotosPicker` tile alongside the gradient palette. Picked images are JPEG-compressed (max 1600px) and stored on `Day.photoData`. `PhotoTile(day:)` renders the image when present, falls back to the gradient otherwise — the change cascades through Home, Detail, Calendar, Share. |
+| **Share sheet** | `ShareCardView` renders the chosen template via `ImageRenderer`, then routes 微信 / 朋友圈 / 小红书 / 更多 buttons through `UIActivityViewController`. The 保存 button writes the rendered card to Photos via `PHPhotoLibrary` (requires `NSPhotoLibraryAddUsageDescription`). |
+
+Out of scope: WeChat-/小红书-specific SDK integrations are intentionally not wired — the system share sheet routes to whatever messaging apps the user has installed.
+
 ## Build
 
 This project uses [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate `DaysRemember.xcodeproj` from `project.yml`.
