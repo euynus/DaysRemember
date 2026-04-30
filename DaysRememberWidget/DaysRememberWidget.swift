@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import UIKit
 
 @main
 struct DaysRememberWidgetBundle: WidgetBundle {
@@ -93,10 +94,7 @@ private struct WidgetSmall: View {
     var body: some View {
         let info = DayInfo.compute(day)
         ZStack(alignment: .bottomLeading) {
-            day.photo.background()
-                .overlay(LinearGradient(colors: [.black.opacity(0), .black.opacity(0.55)],
-                                        startPoint: UnitPoint(x: 0.5, y: 0.35),
-                                        endPoint: .bottom))
+            WidgetPhotoTile(day: day, scrim: true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(day.title)
                     .font(Theme.sans(10))
@@ -120,7 +118,7 @@ private struct WidgetMedium: View {
     var body: some View {
         let info = DayInfo.compute(day)
         HStack(spacing: 0) {
-            day.photo.background()
+            WidgetPhotoTile(day: day)
                 .frame(width: 150)
             VStack(alignment: .leading) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -156,7 +154,7 @@ private struct WidgetLarge: View {
     var body: some View {
         let info = DayInfo.compute(day)
         VStack(spacing: 0) {
-            day.photo.background()
+            WidgetPhotoTile(day: day)
                 .frame(maxHeight: .infinity)
                 .frame(height: 160)
             VStack(alignment: .leading, spacing: 0) {
@@ -188,4 +186,30 @@ private struct WidgetLarge: View {
 private func label(_ info: DayInfo) -> String {
     if info.isToday { return "就是今天" }
     return info.isPast ? "已过 · 天" : "天后"
+}
+
+private struct WidgetPhotoTile: View {
+    let day: Day
+    var scrim: Bool = false
+
+    var body: some View {
+        ZStack {
+            if let data = day.photoData, let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                day.photo.background()
+            }
+
+            if scrim {
+                LinearGradient(
+                    colors: [.black.opacity(0), .black.opacity(0.55)],
+                    startPoint: UnitPoint(x: 0.5, y: 0.35),
+                    endPoint: .bottom
+                )
+            }
+        }
+        .clipped()
+    }
 }
