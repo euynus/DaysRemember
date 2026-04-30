@@ -39,29 +39,25 @@ enum Lunar {
         return sum + leapDays(y)
     }
 
+    private static let calendar: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(secondsFromGMT: 8 * 60 * 60) ?? .current
+        return c
+    }()
+
     private static let base: Date = {
         var c = DateComponents()
         c.year = 1900; c.month = 1; c.day = 31
-        c.calendar = Calendar(identifier: .gregorian)
-        c.timeZone = TimeZone(identifier: "Asia/Shanghai")
+        c.calendar = calendar
+        c.timeZone = calendar.timeZone
         return c.date!
     }()
 
     /// Convert Gregorian Date → LunarDate.
     static func solarToLunar(_ date: Date) -> LunarDate {
-        let cal = Calendar(identifier: .gregorian)
-        let dayStart = cal.startOfDay(for: date)
+        let dayStart = calendar.startOfDay(for: date)
         var offset = Int((dayStart.timeIntervalSince1970 - base.timeIntervalSince1970) / 86400.0)
         var y = 1900, temp = 0
-        while y < 2101 && offset > 0 {
-            temp = yearDays(y)
-            if offset - temp <= 0 { break }
-            offset -= temp
-            y += 1
-        }
-        // Walk into the year: replicate the JS loop semantics.
-        offset = Int((dayStart.timeIntervalSince1970 - base.timeIntervalSince1970) / 86400.0)
-        y = 1900
         while y < 2101 && offset > 0 {
             temp = yearDays(y)
             offset -= temp
