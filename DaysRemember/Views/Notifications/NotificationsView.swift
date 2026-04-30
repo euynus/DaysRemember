@@ -2,6 +2,18 @@ import SwiftUI
 
 struct NotificationsView: View {
     @EnvironmentObject var settings: AppSettings
+    @EnvironmentObject var store: DayStore
+
+    /// Toggle binding that re-syncs scheduled notifications whenever flipped.
+    private func reactiveBinding(_ key: ReferenceWritableKeyPath<AppSettings, Bool>) -> Binding<Bool> {
+        Binding(
+            get: { settings[keyPath: key] },
+            set: { newValue in
+                settings[keyPath: key] = newValue
+                store.rescheduleNotifications()
+            }
+        )
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -11,21 +23,24 @@ struct NotificationsView: View {
                     header.padding(.bottom, 18)
                     sampleCard.padding(.bottom, 22)
                     section("提前提醒") {
-                        ToggleRow(label: "提前 7 天", on: $settings.notifPre7)
-                        ToggleRow(label: "提前 3 天", on: $settings.notifPre3)
-                        ToggleRow(label: "提前 1 天", on: $settings.notifPre1)
-                        ToggleRow(label: "当天", on: $settings.notifDay0, isLast: true)
+                        ToggleRow(label: "提前 7 天", on: reactiveBinding(\.notifPre7))
+                        ToggleRow(label: "提前 3 天", on: reactiveBinding(\.notifPre3))
+                        ToggleRow(label: "提前 1 天", on: reactiveBinding(\.notifPre1))
+                        ToggleRow(label: "当天", on: reactiveBinding(\.notifDay0), isLast: true)
                     }
                     section("提醒时间") {
                         ValueRow(label: "每日提醒时间", value: "上午 9:00")
                         ValueRow(label: "重要日子提醒", value: "提前 1 天", isLast: true)
                     }
                     section("智能提醒") {
-                        ToggleRow(label: "时光回忆", sub: "一年前的今天发生了什么", on: $settings.memoryEnabled)
-                        ToggleRow(label: "纪念日时刻", sub: "发现日子背后的连接", on: $settings.momentsEnabled, isLast: true)
+                        ToggleRow(label: "时光回忆", sub: "一年前的今天发生了什么",
+                                  on: reactiveBinding(\.memoryEnabled))
+                        ToggleRow(label: "纪念日时刻", sub: "发现日子背后的连接",
+                                  on: reactiveBinding(\.momentsEnabled), isLast: true)
                     }
                     section("勿扰") {
-                        ToggleRow(label: "夜间勿扰", sub: "22:00 — 8:00 静音", on: $settings.quietHours, isLast: true)
+                        ToggleRow(label: "夜间勿扰", sub: "22:00 — 8:00 静音",
+                                  on: reactiveBinding(\.quietHours), isLast: true)
                     }
                     quote
                 }

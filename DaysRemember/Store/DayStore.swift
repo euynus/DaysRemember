@@ -3,9 +3,18 @@ import SwiftUI
 
 @MainActor
 final class DayStore: ObservableObject {
-    @Published var days: [Day]
+    @Published var days: [Day] {
+        didSet {
+            save()
+            rescheduleNotifications()
+        }
+    }
 
     private let storageKey = "days.v1"
+    /// Set after init so we can wire the notification scheduler without a circular dependency.
+    var settings: AppSettings? {
+        didSet { rescheduleNotifications() }
+    }
 
     init() {
         if let data = UserDefaults.standard.data(forKey: storageKey),
@@ -21,15 +30,14 @@ final class DayStore: ObservableObject {
         UserDefaults.standard.set(data, forKey: storageKey)
     }
 
-    func add(_ day: Day) { days.insert(day, at: 0); save() }
+    func add(_ day: Day) { days.insert(day, at: 0) }
     func update(_ day: Day) {
-        if let i = days.firstIndex(where: { $0.id == day.id }) {
-            days[i] = day; save()
-        }
+        if let i = days.firstIndex(where: { $0.id == day.id }) { days[i] = day }
     }
     func delete(_ day: Day) {
-        days.removeAll { $0.id == day.id }
-        save()
+        let id = day.id
+        days.removeAll { $0.id == id }
+        Task { await NotificationManager.shared.cancel(dayId: id) }
     }
 
     /// Nearest upcoming (future or today) within `within` days.
@@ -41,7 +49,13 @@ final class DayStore: ObservableObject {
             .first?.0
     }
 
-    func resetToSamples() { days = SampleData.days; save() }
+    func resetToSamples() { days = SampleData.days }
+
+    func rescheduleNotifications() {
+        guard let settings else { return }
+        let snapshot = days
+        Task { await NotificationManager.shared.sync(days: snapshot, settings: settings) }
+    }
 }
 
 @MainActor

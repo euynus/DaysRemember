@@ -5,11 +5,22 @@ struct DaysRememberApp: App {
     @StateObject private var store = DayStore()
     @StateObject private var settings = AppSettings()
 
+    init() {
+        // Wire the store to settings so it can re-schedule notifications on day changes.
+        // (Has to be in `body` for @StateObject access — this just sets the static link.)
+    }
+
     var body: some Scene {
         WindowGroup {
             RootGate()
                 .environmentObject(store)
                 .environmentObject(settings)
+                .task {
+                    store.settings = settings
+                    // Authorization is best-effort; user can still flip toggles either way.
+                    _ = await NotificationManager.shared.requestAuthorization()
+                    store.rescheduleNotifications()
+                }
         }
     }
 }
