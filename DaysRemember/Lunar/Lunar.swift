@@ -1,0 +1,140 @@
+import Foundation
+
+/// Chinese lunar calendar — port of `lunar.jsx`. Coverage: 1900-01-31 → ~2100.
+enum Lunar {
+    private static let GAN = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"]
+    private static let ZHI = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"]
+    private static let ZODIAC = ["鼠","牛","虎","兔","龙","蛇","马","羊","猴","鸡","狗","猪"]
+    private static let CN_MONTH = ["正","二","三","四","五","六","七","八","九","十","冬","腊"]
+    private static let CN_DAY_PREFIX = ["初","十","廿","卅"]
+    private static let CN_NUM = ["一","二","三","四","五","六","七","八","九","十"]
+
+    struct LunarDate: Equatable {
+        var year: Int
+        var month: Int
+        var day: Int
+        var isLeap: Bool
+    }
+
+    private static func tableValue(_ y: Int) -> UInt32 {
+        let idx = y - 1900
+        guard idx >= 0 && idx < LunarTable.info.count else { return 0 }
+        return LunarTable.info[idx]
+    }
+
+    private static func leapMonth(_ y: Int) -> Int { Int(tableValue(y) & 0xf) }
+    private static func leapDays(_ y: Int) -> Int {
+        leapMonth(y) > 0 ? ((tableValue(y) & 0x10000) != 0 ? 30 : 29) : 0
+    }
+    private static func monthDays(_ y: Int, _ m: Int) -> Int {
+        (tableValue(y) & (UInt32(0x10000) >> m)) != 0 ? 30 : 29
+    }
+    private static func yearDays(_ y: Int) -> Int {
+        var sum = 348
+        var i: UInt32 = 0x8000
+        while i > 0x8 {
+            if (tableValue(y) & i) != 0 { sum += 1 }
+            i >>= 1
+        }
+        return sum + leapDays(y)
+    }
+
+    private static let base: Date = {
+        var c = DateComponents()
+        c.year = 1900; c.month = 1; c.day = 31
+        c.calendar = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "Asia/Shanghai")
+        return c.date!
+    }()
+
+    /// Convert Gregorian Date → LunarDate.
+    static func solarToLunar(_ date: Date) -> LunarDate {
+        let cal = Calendar(identifier: .gregorian)
+        let dayStart = cal.startOfDay(for: date)
+        var offset = Int((dayStart.timeIntervalSince1970 - base.timeIntervalSince1970) / 86400.0)
+        var y = 1900, temp = 0
+        while y < 2101 && offset > 0 {
+            temp = yearDays(y)
+            if offset - temp <= 0 { break }
+            offset -= temp
+            y += 1
+        }
+        // Walk into the year: replicate the JS loop semantics.
+        offset = Int((dayStart.timeIntervalSince1970 - base.timeIntervalSince1970) / 86400.0)
+        y = 1900
+        while y < 2101 && offset > 0 {
+            temp = yearDays(y)
+            offset -= temp
+            y += 1
+        }
+        if offset < 0 { offset += temp; y -= 1 }
+
+        let leap = leapMonth(y)
+        var isLeap = false
+        var m = 1
+        while m < 13 && offset > 0 {
+            if leap > 0 && m == leap + 1 && !isLeap {
+                m -= 1
+                isLeap = true
+                temp = leapDays(y)
+            } else {
+                temp = monthDays(y, m)
+            }
+            if isLeap && m == leap + 1 { isLeap = false }
+            offset -= temp
+            m += 1
+        }
+        if offset == 0 && leap > 0 && m == leap + 1 {
+            if isLeap { isLeap = false } else { isLeap = true; m -= 1 }
+        }
+        if offset < 0 { offset += temp; m -= 1 }
+        return LunarDate(year: y, month: m, day: offset + 1, isLeap: isLeap)
+    }
+
+    /// Convert lunar date → Gregorian.
+    static func lunarToSolar(year: Int, month: Int, day: Int, isLeap: Bool = false) -> Date {
+        var offset = 0
+        for y in 1900..<year { offset += yearDays(y) }
+        let leap = leapMonth(year)
+        for m in 1..<month { offset += monthDays(year, m) }
+        if leap > 0 && month > leap { offset += leapDays(year) }
+        if isLeap && month == leap { offset += monthDays(year, month) }
+        offset += day - 1
+        return base.addingTimeInterval(TimeInterval(offset) * 86400)
+    }
+
+    // MARK: - Formatting
+
+    static func dayCN(_ d: Int) -> String {
+        if d == 10 { return "初十" }
+        if d == 20 { return "二十" }
+        if d == 30 { return "三十" }
+        let t = d / 10
+        let onesIndex = (d % 10 == 0 ? 10 : d % 10) - 1
+        return CN_DAY_PREFIX[t] + CN_NUM[onesIndex]
+    }
+
+    static func monthCN(_ m: Int, isLeap: Bool) -> String {
+        (isLeap ? "闰" : "") + CN_MONTH[m - 1] + "月"
+    }
+
+    static func ganZhi(_ y: Int) -> String {
+        GAN[(y - 4 + 60) % 10] + ZHI[(y - 4 + 60) % 12]
+    }
+
+    static func zodiac(_ y: Int) -> String {
+        ZODIAC[(y - 4 + 60) % 12]
+    }
+
+    /// "九月十四"
+    static func fmt(_ date: Date) -> String {
+        let l = solarToLunar(date)
+        return monthCN(l.month, isLeap: l.isLeap) + dayCN(l.day)
+    }
+
+    /// "农历己亥猪年 · 九月十四"
+    static func fmtFull(_ date: Date) -> String {
+        let l = solarToLunar(date)
+        return "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))"
+    }
+}

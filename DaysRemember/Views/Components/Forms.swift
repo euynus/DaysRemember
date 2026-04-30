@@ -1,0 +1,144 @@
+import SwiftUI
+
+/// Inset form row — used in Add and Notifications.
+struct FormRow<Trailing: View>: View {
+    let label: String
+    var isLast: Bool = false
+    @ViewBuilder var trailing: Trailing
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(Theme.sans(14, weight: .medium))
+                .foregroundStyle(Theme.ink)
+            Spacer()
+            trailing
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .frame(minHeight: 52, alignment: .leading)
+        .overlay(alignment: .bottom) {
+            if !isLast {
+                Rectangle()
+                    .fill(Theme.hairline)
+                    .frame(height: 0.5)
+                    .padding(.horizontal, 18)
+            }
+        }
+    }
+}
+
+/// 2-position segmented control (公历/农历, 一次/每年).
+struct SegBtnPair: View {
+    let leftLabel: String
+    let rightLabel: String
+    @Binding var leftSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 0) {
+            seg(leftLabel, active: leftSelected) { leftSelected = true }
+            seg(rightLabel, active: !leftSelected) { leftSelected = false }
+        }
+        .padding(2)
+        .background(Theme.bg2)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    @ViewBuilder
+    private func seg(_ label: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(Theme.sans(12, weight: .medium))
+                .foregroundStyle(active ? Theme.ink : Theme.ink2)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background {
+                    if active {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Theme.card)
+                            .shadow(color: .black.opacity(0.08), radius: 1, y: 1)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// iOS-style toggle row — terracotta when on, with sliding thumb.
+struct ToggleRow: View {
+    let label: String
+    var sub: String? = nil
+    @Binding var on: Bool
+    var isLast: Bool = false
+
+    var body: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.18)) { on.toggle() }
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label)
+                        .font(Theme.sans(14, weight: .medium))
+                        .foregroundStyle(Theme.ink)
+                    if let sub {
+                        Text(sub)
+                            .font(Theme.sans(12))
+                            .foregroundStyle(Theme.muted)
+                    }
+                }
+                Spacer()
+                ZStack(alignment: on ? .trailing : .leading) {
+                    Capsule()
+                        .fill(on ? Theme.terracotta : Theme.bg2)
+                        .frame(width: 44, height: 26)
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 22, height: 22)
+                        .padding(.horizontal, 2)
+                        .shadow(color: .black.opacity(0.15), radius: 1, y: 1)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(minHeight: 50)
+            .overlay(alignment: .bottom) {
+                if !isLast {
+                    Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.horizontal, 16)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Read-only label / value row.
+struct ValueRow: View {
+    let label: String
+    let value: String
+    var isLast: Bool = false
+    var body: some View {
+        HStack {
+            Text(label).font(Theme.sans(14)).foregroundStyle(Theme.ink)
+            Spacer()
+            Text(value).font(Theme.sans(13)).foregroundStyle(Theme.muted)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            if !isLast {
+                Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.horizontal, 16)
+            }
+        }
+    }
+}
+
+/// White card container with hairline border.
+struct InsetCard<Content: View>: View {
+    var radius: CGFloat = 18
+    @ViewBuilder var content: Content
+    var body: some View {
+        VStack(spacing: 0) { content }
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+    }
+}
