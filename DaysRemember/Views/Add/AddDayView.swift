@@ -5,7 +5,7 @@ struct AddDayView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var store: DayStore
 
-    @State private var title: String = "毕业十周年"
+    @State private var title: String = ""
     @State private var category: DayCategory = .life
     @State private var photo: PhotoStyle = .study
     @State private var photoData: Data? = nil
@@ -13,13 +13,18 @@ struct AddDayView: View {
     @State private var recurring: Bool = true
     @State private var solar: Bool = true
     @State private var remindIndex: Int = 3
-    @State private var selectedDate: Date = {
-        var c = DateComponents(); c.year = 2027; c.month = 6; c.day = 20
-        return CNDate.calendar.date(from: c) ?? Date()
-    }()
+    @State private var selectedDate: Date = Today.date
+    @State private var note: String = ""
+    @State private var location: String = ""
 
     private let pickerOptions: [PhotoStyle] = [.wedding, .baby, .birthday, .japan, .study, .work, .pet, .home]
-    private let reminders = ["当天", "1天", "3天", "7天"]
+    private let reminders: [(label: String, offset: Int)] = [
+        ("当天", 0), ("1天", 1), ("3天", 3), ("7天", 7)
+    ]
+
+    private var canSave: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -51,20 +56,37 @@ struct AddDayView: View {
             Spacer()
             Text("新的日子").font(Theme.serif(17, weight: .semibold)).foregroundStyle(Theme.ink)
             Spacer()
-            Button("保存") {
-                let new = Day(id: UUID().uuidString, title: title, date: selectedDate,
-                              recurring: recurring, lunar: !solar, category: category,
-                              photo: photo, photoData: photoData)
-                store.add(new)
-                dismiss()
-            }
-            .font(Theme.sans(15, weight: .semibold))
-            .foregroundStyle(Theme.terracotta)
-            .buttonStyle(.plain)
+            Button("保存", action: saveDay)
+                .font(Theme.sans(15, weight: .semibold))
+                .foregroundStyle(Theme.terracotta)
+                .buttonStyle(.plain)
+                .disabled(!canSave)
+                .opacity(canSave ? 1 : 0.45)
         }
         .padding(.horizontal, 20)
         .padding(.top, 60)
         .padding(.bottom, 8)
+    }
+
+    private func saveDay() {
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanTitle.isEmpty else { return }
+
+        let new = Day(
+            id: UUID().uuidString,
+            title: cleanTitle,
+            date: selectedDate,
+            recurring: recurring,
+            lunar: !solar,
+            category: category,
+            photo: photo,
+            photoData: photoData,
+            reminderOffsets: [reminders[remindIndex].offset],
+            note: note.trimmingCharacters(in: .whitespacesAndNewlines),
+            location: location.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+        store.add(new)
+        dismiss()
     }
 
     private var coverEditor: some View {
@@ -76,10 +98,11 @@ struct AddDayView: View {
                     .font(Theme.sans(10))
                     .tracking(2)
                     .foregroundStyle(Color.white.opacity(0.8))
-                TextField("", text: $title)
+                TextField("日子名称", text: $title)
                     .font(Theme.serif(22, weight: .semibold))
                     .foregroundStyle(.white)
                     .tint(.white)
+                    .submitLabel(.done)
                     .overlay(alignment: .bottom) {
                         Rectangle().fill(Color.white.opacity(0.4))
                             .frame(height: 1)
@@ -177,8 +200,13 @@ struct AddDayView: View {
     private var formCard: some View {
         InsetCard(radius: 18) {
             FormRow(label: "日期") {
-                Text("2027 年 6 月 20 日 · 农历 五月十六")
-                    .font(Theme.sans(14)).foregroundStyle(Theme.ink2)
+                VStack(alignment: .trailing, spacing: 4) {
+                    DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                        .labelsHidden()
+                    Text("农历 \(Lunar.fmt(selectedDate))")
+                        .font(Theme.sans(11))
+                        .foregroundStyle(Theme.muted)
+                }
             }
             FormRow(label: "日历") {
                 SegBtnPair(leftLabel: "公历", rightLabel: "农历", leftSelected: $solar)
@@ -189,13 +217,20 @@ struct AddDayView: View {
                 )
                 SegBtnPair(leftLabel: "一次", rightLabel: "每年", leftSelected: recurringBinding)
             }
+            FormRow(label: "地点") {
+                TextField("可选", text: $location)
+                    .font(Theme.sans(14))
+                    .foregroundStyle(Theme.ink2)
+                    .multilineTextAlignment(.trailing)
+                    .submitLabel(.done)
+            }
             FormRow(label: "提醒", isLast: true) {
                 HStack(spacing: 6) {
                     ForEach(reminders.indices, id: \.self) { i in
                         Button {
                             remindIndex = i
                         } label: {
-                            Text(reminders[i])
+                            Text(reminders[i].label)
                                 .font(Theme.sans(12, weight: .medium))
                                 .foregroundStyle(remindIndex == i ? Theme.bg : Theme.ink2)
                                 .padding(.horizontal, 10)
@@ -228,14 +263,24 @@ struct AddDayView: View {
     }
 
     private var notesCard: some View {
-        Text("写下这一天的心情…")
-            .font(Theme.serif(14).italic())
-            .lineSpacing(14 * 0.7)
-            .foregroundStyle(Theme.ink2)
-            .frame(maxWidth: .infinity, minHeight: 90, alignment: .topLeading)
-            .padding(16)
-            .background(Theme.card)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        ZStack(alignment: .topLeading) {
+            if note.isEmpty {
+                Text("写下这一天的心情…")
+                    .font(Theme.serif(14).italic())
+                    .foregroundStyle(Theme.muted)
+                    .padding(16)
+                    .allowsHitTesting(false)
+            }
+            TextEditor(text: $note)
+                .font(Theme.serif(14).italic())
+                .lineSpacing(14 * 0.7)
+                .foregroundStyle(Theme.ink2)
+                .scrollContentBackground(.hidden)
+                .frame(maxWidth: .infinity, minHeight: 90)
+                .padding(12)
+        }
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 

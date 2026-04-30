@@ -54,21 +54,15 @@ final class NotificationManager {
             center.removePendingNotificationRequests(withIdentifiers: stale)
         }
 
-        let offsets: [Int] = [
-            (settings.notifPre7 ? 7 : nil),
-            (settings.notifPre3 ? 3 : nil),
-            (settings.notifPre1 ? 1 : nil),
-            (settings.notifDay0 ? 0 : nil),
-        ].compactMap { $0 }
-
-        guard !offsets.isEmpty else { return }
-
         let cal = CNDate.calendar
         let now = Date()
         for day in days {
             let info = DayInfo.compute(day)
             // For non-recurring past days there's nothing left to remind about.
             if info.isPast && !day.recurring { continue }
+
+            let offsets = offsets(for: day, settings: settings)
+            guard !offsets.isEmpty else { continue }
 
             for offset in offsets {
                 guard let baseDay = cal.date(byAdding: .day, value: -offset, to: info.displayDate) else { continue }
@@ -95,6 +89,22 @@ final class NotificationManager {
                 try? await center.add(request)
             }
         }
+    }
+
+    private func offsets(for day: Day, settings: AppSettings) -> [Int] {
+        if let dayOffsets = day.reminderOffsets {
+            let normalized = Set(dayOffsets.filter { $0 >= 0 })
+            if !normalized.isEmpty {
+                return normalized.sorted(by: >)
+            }
+        }
+
+        return [
+            (settings.notifPre7 ? 7 : nil),
+            (settings.notifPre3 ? 3 : nil),
+            (settings.notifPre1 ? 1 : nil),
+            (settings.notifDay0 ? 0 : nil),
+        ].compactMap { $0 }
     }
 
     /// Remove pending requests for a specific day (used on delete).
