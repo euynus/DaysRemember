@@ -22,20 +22,34 @@ struct PhotoTile: View {
     }
 
     var body: some View {
+        let renderingPhoto = imageData.flatMap { UIImage(data: $0) } != nil
+        // Real photographs cover the full color range; the gradient palette already
+        // darkens at the bottom by design. So picked photos need a stronger scrim
+        // (and an earlier ramp) to keep white overlay text legible.
+        let scrimEndOpacity = renderingPhoto ? 0.85 : 0.55
+        let scrimStartY = renderingPhoto ? 0.25 : 0.35
+
         ZStack {
-            if let data = imageData, let ui = UIImage(data: data) {
-                Image(uiImage: ui)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                style.background()
+            GeometryReader { geo in
+                Group {
+                    if let data = imageData, let ui = UIImage(data: data) {
+                        Image(uiImage: ui)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        style.background()
+                    }
+                }
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
             }
             if !flat {
                 LinearGradient(
-                    colors: [.black.opacity(0), .black.opacity(0.55)],
-                    startPoint: UnitPoint(x: 0.5, y: 0.35),
+                    colors: [.black.opacity(0), .black.opacity(scrimEndOpacity)],
+                    startPoint: UnitPoint(x: 0.5, y: scrimStartY),
                     endPoint: .bottom
                 )
+                .allowsHitTesting(false)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))

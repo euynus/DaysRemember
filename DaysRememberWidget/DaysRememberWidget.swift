@@ -198,8 +198,11 @@ private struct WidgetPhotoTile: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
             } else {
                 day.photo.background()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
             if scrim {
@@ -208,6 +211,7 @@ private struct WidgetPhotoTile: View {
                     startPoint: UnitPoint(x: 0.5, y: 0.35),
                     endPoint: .bottom
                 )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .clipped()
