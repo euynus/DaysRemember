@@ -1,11 +1,17 @@
 import SwiftUI
 
 struct DetailView: View {
+    @EnvironmentObject var store: DayStore
     let day: Day
     var onBack: () -> Void = {}
     @State private var showShare = false
 
+    private var currentDay: Day {
+        store.days.first(where: { $0.id == day.id }) ?? day
+    }
+
     var body: some View {
+        let day = currentDay
         let info = DayInfo.compute(day)
 
         ZStack {
@@ -27,9 +33,9 @@ struct DetailView: View {
             VStack(spacing: 0) {
                 topControls
                 Spacer()
-                counter(info: info)
+                counter(day: day, info: info)
                 Spacer()
-                infoCard(info: info)
+                infoCard(day: day, info: info)
                     .padding(.horizontal, 14)
                     .padding(.bottom, 46)
             }
@@ -37,7 +43,7 @@ struct DetailView: View {
         .foregroundStyle(.white)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showShare) {
-            ShareCardView(day: day)
+            ShareCardView(day: currentDay)
         }
     }
 
@@ -49,12 +55,12 @@ struct DetailView: View {
             }
             Spacer()
             HStack(spacing: 8) {
-                GlassButton {} content: {
-                    Image(systemName: "star")
+                GlassButton(action: togglePinned) {
+                    Image(systemName: currentDay.pinned ? "star.fill" : "star")
                         .font(.system(size: 14, weight: .semibold))
                 }
-                GlassButton {} content: {
-                    Image(systemName: "ellipsis")
+                GlassButton(action: { showShare = true }) {
+                    Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 14, weight: .semibold))
                 }
             }
@@ -63,7 +69,13 @@ struct DetailView: View {
         .padding(.top, 62)
     }
 
-    private func counter(info: DayInfo) -> some View {
+    private func togglePinned() {
+        var updated = currentDay
+        updated.pinned.toggle()
+        store.update(updated)
+    }
+
+    private func counter(day: Day, info: DayInfo) -> some View {
         VStack(spacing: 0) {
             Text(day.categoryLabel.uppercased())
                 .font(Theme.sans(11))
@@ -86,7 +98,7 @@ struct DetailView: View {
         .padding(.horizontal, 32)
     }
 
-    private func infoCard(info: DayInfo) -> some View {
+    private func infoCard(day: Day, info: DayInfo) -> some View {
         VStack(spacing: 0) {
             InfoRow(label: "日期",
                     value: "\(CNDate.full(info.displayDate)) · \(CNDate.weekday(info.displayDate))")
