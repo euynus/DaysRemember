@@ -32,7 +32,8 @@ enum AppTab: String, Hashable, CaseIterable {
 
 struct RootTabView: View {
     @State private var tab: AppTab = Self.initialTab()
-    @State private var path = NavigationPath()
+    @State private var homePath = NavigationPath()
+    @State private var calendarPath = NavigationPath()
     @State private var addingDay = false
 
     /// Allows `xcrun simctl launch ... --tab calendar` for screenshotting.
@@ -56,21 +57,28 @@ struct RootTabView: View {
     private var content: some View {
         switch tab {
         case .home:
-            // Home is the only tab that pushes detail, so it owns the NavigationStack.
-            NavigationStack(path: $path) {
+            NavigationStack(path: $homePath) {
                 HomeView(
-                    onOpen: { day in path.append(day) },
+                    onOpen: { day in homePath.append(day) },
                     onAdd: { addingDay = true }
                 )
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: Day.self) { day in
-                    DetailView(day: day, onBack: { path.removeLast() })
+                    DetailView(day: day, onBack: { homePath.removeLast() })
                         .toolbar(.hidden, for: .navigationBar)
                         .navigationBarBackButtonHidden(true)
                 }
             }
         case .calendar:
-            CalendarMonthView(onOpen: { _ in })
+            NavigationStack(path: $calendarPath) {
+                CalendarMonthView(onOpen: { day in calendarPath.append(day) })
+                    .toolbar(.hidden, for: .navigationBar)
+                    .navigationDestination(for: Day.self) { day in
+                        DetailView(day: day, onBack: { calendarPath.removeLast() })
+                            .toolbar(.hidden, for: .navigationBar)
+                            .navigationBarBackButtonHidden(true)
+                    }
+            }
         case .categories:
             CategoriesView()
         case .notifications:
