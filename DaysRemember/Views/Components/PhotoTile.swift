@@ -29,18 +29,18 @@ struct PhotoTile: View {
     }
 
     var body: some View {
-        let renderingPhoto = imageData.flatMap { UIImage(data: $0) } != nil
+        let pickedImage = imageData.flatMap { UIImage(data: $0) }
         // Real photographs cover the full color range; the gradient palette already
         // darkens at the bottom by design. So picked photos need a stronger scrim
         // (and an earlier ramp) to keep white overlay text legible.
-        let scrimEndOpacity = renderingPhoto ? 0.85 : 0.55
-        let scrimStartY = renderingPhoto ? 0.25 : 0.35
+        let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
+        let scrimStartY = pickedImage != nil ? 0.25 : 0.35
 
         ZStack {
             GeometryReader { geo in
                 Group {
-                    if let data = imageData, let ui = UIImage(data: data) {
-                        focusedImage(ui, in: geo.size)
+                    if let pickedImage {
+                        focusedImage(pickedImage, in: geo.size)
                     } else {
                         style.background()
                     }
