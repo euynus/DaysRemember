@@ -25,7 +25,8 @@ final class DayStore: ObservableObject {
     private let cloud = ICloudSyncStore.shared
     private var cloudSyncEnabled = false
     private var cloudChangeToken: UUID?
-    private var isApplyingCloudChange = false
+    /// Non-nil while a remote envelope is being written into `days`/`categories`. Acts
+    /// as both the "skip the push-back" guard and the source of the timestamp to mirror.
     private var cloudApplyContext: (key: String, updatedAt: TimeInterval)?
     /// Set after init so we can wire the notification scheduler without a circular dependency.
     var settings: AppSettings? {
@@ -63,9 +64,9 @@ final class DayStore: ObservableObject {
         guard let data = try? JSONEncoder().encode(value) else { return }
         SharedStorage.defaults.set(data, forKey: storageKey)
 
-        if isApplyingCloudChange {
-            if cloudApplyContext?.key == cloudKey, let updatedAt = cloudApplyContext?.updatedAt {
-                cloud.noteLocalWrite(for: cloudKey, updatedAt: updatedAt)
+        if let context = cloudApplyContext {
+            if context.key == cloudKey {
+                cloud.noteLocalWrite(for: cloudKey, updatedAt: context.updatedAt)
             }
             return
         }
@@ -289,11 +290,9 @@ final class DayStore: ObservableObject {
     }
 
     private func applyCloudChange(key: String, updatedAt: TimeInterval, _ changes: () -> Void) {
-        isApplyingCloudChange = true
         cloudApplyContext = (key, updatedAt)
+        defer { cloudApplyContext = nil }
         changes()
-        cloudApplyContext = nil
-        isApplyingCloudChange = false
     }
 }
 
