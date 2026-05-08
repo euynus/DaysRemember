@@ -263,12 +263,9 @@ struct DayEditorView: View {
         .onChange(of: pickerItem) { _, item in
             guard let item else { return }
             Task {
-                if let data = try? await item.loadTransferable(type: Data.self) {
-                    await MainActor.run {
-                        photoData = compressedJPEGData(from: data) ?? data
-                        resetFocus()
-                    }
-                }
+                guard let data = try? await item.loadTransferable(type: Data.self) else { return }
+                photoData = compressedJPEGData(from: data) ?? data
+                resetFocus()
             }
         }
     }

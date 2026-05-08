@@ -92,10 +92,8 @@ struct ShareCardView: View {
     private func flashToast(_ text: String) {
         withAnimation(.easeInOut(duration: 0.18)) { savedToast = text }
         Task {
-            try? await Task.sleep(nanoseconds: 1_700_000_000)
-            await MainActor.run {
-                withAnimation(.easeInOut(duration: 0.25)) { savedToast = nil }
-            }
+            try? await Task.sleep(for: .milliseconds(1700))
+            withAnimation(.easeInOut(duration: 0.25)) { savedToast = nil }
         }
     }
 
