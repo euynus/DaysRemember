@@ -52,15 +52,25 @@ xcrun simctl launch <UDID> com.shiguang.daysremember --screen onboarding --page 
 
 ### Data flow
 
-`DayStore` (`Store/DayStore.swift`) is the single `@MainActor ObservableObject` source of truth for the user's days. JSON-encoded `[Day]` is persisted to **shared UserDefaults** via `SharedStorage.defaults` (App Group `group.com.shiguang.daysremember`, falling back to `.standard` if the entitlement isn't wired).
+`DayStore` (`Store/DayStore.swift`) is the single `@MainActor ObservableObject` source of truth for both `days: [Day]` and `categories: [CategoryDefinition]`. Each is JSON-encoded under its own key (`days.v1`, `categories.v1`) in **shared UserDefaults** via `SharedStorage.defaults` (App Group `group.com.shiguang.daysremember`, falling back to `.standard` if the entitlement isn't wired).
 
-`DayStore.days.didSet` chains three side effects in order: `save()` → `rescheduleNotifications()` → `reloadWidgetTimelines()`. This means *any* mutation to the array — `add`, `update`, `delete`, even `resetToSamples` — automatically persists, re-syncs `UNUserNotificationCenter`, and pokes `WidgetCenter`.
+`DayStore.days.didSet` chains three side effects in order: `save()` → `rescheduleNotifications()` → `reloadWidgetTimelines()`. So *any* mutation — `add`, `update`, `delete`, `resetToSamples` — automatically persists, re-syncs `UNUserNotificationCenter`, and pokes `WidgetCenter`. `categories.didSet` only persists; notifications and widgets don't depend on it. `add(_:)` and `update(_:)` route through `normalized(_:)`, which reconciles the day's `categoryID` / `categoryLabel` against the current category list and clamps `coverFocusX/Y` into `[0, 1]`.
 
-`AppSettings` is a separate `ObservableObject` of `@AppStorage` toggles (onboarding flag, reminder offsets, quiet hours). It's passed into `DayStore` via the `store.settings = settings` assignment in `DaysRememberApp.swift`'s `.task` — that pattern avoids the circular dependency between the two `@StateObject`s.
+`AppSettings` is a separate `ObservableObject` of `@AppStorage` toggles (onboarding flag, per-offset reminders, quiet hours, daily `notificationHour`/`notificationMinute`, and `memoryEnabled` / `momentsEnabled` placeholder switches). It's wired to `DayStore` via `store.settings = settings` in `DaysRememberApp.swift`'s `.task` — that pattern avoids the circular dependency between the two `@StateObject`s.
+
+### iCloud sync
+
+`Store/ICloudSyncStore.swift` wraps `NSUbiquitousKeyValueStore` with a generic `Envelope { updatedAt, deviceID, value }` payload and three keys: `icloud.days.v1`, `icloud.categories.v1`, `icloud.settings.v1`. Both `DayStore.enableCloudSync()` and `AppSettings.enableCloudSync(onRemoteApply:)` fire from `DaysRememberApp.body.task` and:
+
+1. Subscribe to `NSUbiquitousKeyValueStore.didChangeExternallyNotification` to pull newer values.
+2. After every local mutation, push if the local timestamp is newer (last-writer-wins on `updatedAt`).
+3. Mirror the remote timestamp at `icloud.localTimestamp.<key>` in shared defaults — `pull*IfNewer` reads this to decide whether to apply.
+
+When applying a remote change, `applyCloudChange(key:updatedAt:)` flips `isApplyingCloudChange = true` so the resulting `didSet` doesn't push back into KVS and race the timestamp. Categories arriving from the cloud also re-`normalized()` every day — the **day** side is the source of truth for `categoryLabel`. Envelopes are capped at ~950 KB; pushes that exceed it silently drop (the KVS hard limit is 1 MB per key). The `com.apple.developer.ubiquity-kvstore-identifier` entitlement lives on **`DaysRemember.entitlements` only** — the widget reads through shared `UserDefaults` and does not need its own KVS entitlement.
 
 ### Navigation shell
 
-`RootTabView` is a **custom** tab bar, not SwiftUI's `TabView`. It uses `.safeAreaInset(edge: .bottom) { TabBar(...) }` — earlier attempts with `ZStack(alignment: .bottom)` bottom-anchored short screens. Only the Home tab wraps in `NavigationStack` (for push to Detail); the other tabs render flat to avoid the iOS 26 nav-bar height reservation that pushes content down.
+`RootTabView` is a **custom** tab bar, not SwiftUI's `TabView`. It uses `.safeAreaInset(edge: .bottom) { TabBar(...) }` — earlier attempts with `ZStack(alignment: .bottom)` bottom-anchored short screens. The four tabs are layered in a `ZStack` and switched via `.opacity` + `.allowsHitTesting` + `.accessibilityHidden` so each tab keeps its own navigation state when the user switches away and back. Home, Calendar, and Categories each own a `NavigationStack` + `NavigationPath` (`homePath`, `calendarPath`, `categoryPath`); Detail is pushed via `.navigationDestination(for: Day.self)`. Notifications renders flat. Every NavigationStack hides the system bar (`.toolbar(.hidden, for: .navigationBar)`) and the screens render their own header — this avoids the iOS 26 nav-bar height reservation that would push content down.
 
 Two layout invariants every screen must follow:
 
@@ -71,7 +81,13 @@ Two layout invariants every screen must follow:
 
 `Theme/OKLCH.swift` does runtime OKLCH → sRGB conversion via the OKLab pipeline (Björn Ottosson). `Color(oklch: L, C, h)` and `Color.adaptive(lightOklch:darkOklch:)` are the standard constructors — they match the prototype's CSS values directly without hand-converting. `Theme/Tokens.swift` exposes the named tokens (`Theme.bg`, `Theme.terracotta`, `Theme.sage`, …) and font helpers (`Theme.serif(_:weight:)`, `Theme.sans(_:weight:)`) that prefer Noto Serif/Sans SC when bundled and degrade to Songti SC / PingFang SC otherwise.
 
-`PhotoStyle` is an enum of 10 named gradients (`.wedding`, `.baby`, …) matching the prototype's CSS classes one-for-one. `PhotoTile` renders either a real `UIImage` from `Day.photoData` or the gradient — call `PhotoTile(day:)` whenever you have a `Day` so user-picked photos take precedence over the preset palette.
+`PhotoStyle` (`Theme/PhotoStyle.swift`) is an enum of two flavors: 10 gradients (`.wedding`, `.baby`, …) matching the prototype's CSS `.photo-*` classes, and 9 hand-drawn Canvas scenes (`.sketchLove`, `.sketchFamily`, `.sketchTravel`, `.sketchWork`, `.sketchLife`, `.sketchMountain`, `.sketchSea`, `.sketchCafe`, `.sketchGarden`) drawn at runtime by `HandDrawnPhotoBackground`. The first five sketch variants are exposed as `PhotoStyle.categorySketchPresets` so the cover picker can offer a sketch matching each system category. `PhotoTile` renders either a real `UIImage` from `Day.photoData` (framed by `coverFocusX/Y`) or the `PhotoStyle` background — call `PhotoTile(day:)` whenever you have a `Day` so user-picked photos take precedence over the preset palette.
+
+### Categories
+
+`DayCategory` (`Models/Category.swift`) is the original five-value enum (`.love`, `.family`, `.travel`, `.work`, `.life`) and remains on every `Day` for backwards compat — the widget and older snapshots still decode it. Custom categories layer on top via `CategoryDefinition` (id / name / icon / `colorToken: CategoryColorToken` / `isSystem`), persisted under `categories.v1`. Each `Day` carries `categoryID` (a free-form string for custom categories, or the system enum's raw value) and a `categoryLabel` snapshot of the name at write time.
+
+`DayStore.updateCategory` rewrites the `categoryLabel` on every day that referenced a renamed custom category. `deleteCategory(id:migrateTo:)` requires a migration target and rewrites `categoryID` / `categoryLabel` / `category` on each affected day in one pass. System categories (`isSystem == true`) cannot be renamed or deleted; they're merged back into the persisted list on every load via `normalizedCategories(_:)`, so a missing system category in stored JSON is self-healing.
 
 ### Lunar calendar
 
@@ -83,7 +99,7 @@ Two layout invariants every screen must follow:
 - Recurring (Gregorian) → next anniversary in current/next year.
 - Recurring **lunar** → walk `today.year ... today.year + 2`, find the first lunar-anniversary `≥ today` via `lunarToSolar(year:, month:, day:, isLeap:)` using the original date's lunar components.
 
-`Today.date` is `Date()` in production, but in DEBUG builds reads the `DR_PIN_TODAY` env var to pin to `2026-04-23` (the prototype's reference today). All countdown computations go through `Today.date`, never `Date()` directly.
+`Today.date` is `Date()` in production. In DEBUG, it reads the `DR_PIN_TODAY` env var: `"1"` pins to `2026-04-23` (the prototype's reference today), or any `yyyy-MM-dd` string pins to that date — useful for date-sensitive test runs. All countdown computations go through `Today.date`, never `Date()` directly.
 
 ### Widget extension & shared sources
 
@@ -91,14 +107,15 @@ Two layout invariants every screen must follow:
 
 Both targets carry the App Group entitlement (`DaysRemember/Resources/DaysRemember.entitlements`, `DaysRememberWidget/DaysRememberWidget.entitlements`). On the simulator the group works without provisioning.
 
-When changing the data model in `Day.swift` or its persistence format, be aware: the widget reads the same JSON. Either bump the `storageKey` or stay backward-compatible.
+When changing the data model in `Day.swift` or its persistence format, be aware: the widget reads the same JSON, and so does iCloud KVS. `Day.init(from:)` already supplies defaults for every field added after the initial schema (`recurring`, `lunar`, `categoryID`, `categoryLabel`, `coverFocusX/Y`, `reminderOffsets`, `note`, `location`, `pinned`); add new fields via `decodeIfPresent` with a sensible default, or bump `storageKey` / `icloud.*.v1`.
 
 ### OS integrations
 
 | Layer | Entry point |
 |---|---|
-| `UNUserNotificationCenter` | `Store/NotificationManager.swift`. Identifier scheme `dr.day.<id>.pre.<offset>` lets a single day's pending requests be cancelled or replaced in isolation. Authorization requested in `DaysRememberApp.body`'s `.task`. Toggles in `NotificationsView` use `reactiveBinding(_:)` so flipping a reminder offset re-syncs the schedule immediately. |
-| `PhotosUI.PhotosPicker` | `AddDayView.photosPickerTile`. Picked images are JPEG-recompressed to ≤ 1600px before being stored on `Day.photoData`. |
+| `UNUserNotificationCenter` | `Store/NotificationManager.swift`. Identifier scheme `dr.day.<id>.pre.<offset>` lets a single day's pending requests be cancelled or replaced in isolation. Authorization requested in `DaysRememberApp.body`'s `.task` (skipped when `DebugLaunch.isAutomated` so `simctl` screenshots don't stall on the system prompt). Trigger time honors `AppSettings.notificationHour` / `notificationMinute`; quiet hours push any 22:00–08:00 trigger past 08:00 — see `NotificationManager.triggerDate(...)` (also covered by `UIUXModelTests`). |
+| `NSUbiquitousKeyValueStore` | `Store/ICloudSyncStore.swift` — see *iCloud sync* above. Entitlement `com.apple.developer.ubiquity-kvstore-identifier` lives on `DaysRemember.entitlements` only; the widget reads through shared `UserDefaults`. |
+| `PhotosUI.PhotosPicker` | `AddDayView.photosPickerTile`. Picked images are JPEG-recompressed to ≤ 1600px before being stored on `Day.photoData`. `coverFocusX/Y` (normalized 0–1) drives the framing in `PhotoTile`. |
 | `ImageRenderer` + `UIActivityViewController` | `ShareCardView.renderCardImage()` + `Components/ShareSheet.swift`. The labelled buttons (微信 / 朋友圈 / 小红书 / 更多) all route to the same system share sheet; no per-app SDK integration. |
 | `PHPhotoLibrary` | `Components/ShareSheet.swift::PhotoSaver`. Requires `NSPhotoLibraryAddUsageDescription` in `Info.plist`. |
 

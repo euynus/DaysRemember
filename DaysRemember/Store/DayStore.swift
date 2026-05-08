@@ -49,36 +49,31 @@ final class DayStore: ObservableObject {
     }
 
     func save() {
-        guard let data = try? JSONEncoder().encode(days) else { return }
-        SharedStorage.defaults.set(data, forKey: storageKey)
-        guard !isApplyingCloudChange else {
-            if cloudApplyContext?.key == ICloudSyncStore.Key.days,
-               let updatedAt = cloudApplyContext?.updatedAt {
-                cloud.noteLocalWrite(for: ICloudSyncStore.Key.days, updatedAt: updatedAt)
-            }
-            return
-        }
-        let updatedAt = Date().timeIntervalSinceReferenceDate
-        cloud.noteLocalWrite(for: ICloudSyncStore.Key.days, updatedAt: updatedAt)
-        if cloudSyncEnabled {
-            pushDaysToCloud(updatedAt: updatedAt)
-        }
+        persist(days, storageKey: storageKey, cloudKey: ICloudSyncStore.Key.days)
     }
 
     func saveCategories() {
-        guard let data = try? JSONEncoder().encode(categories) else { return }
-        SharedStorage.defaults.set(data, forKey: categoriesKey)
-        guard !isApplyingCloudChange else {
-            if cloudApplyContext?.key == ICloudSyncStore.Key.categories,
-               let updatedAt = cloudApplyContext?.updatedAt {
-                cloud.noteLocalWrite(for: ICloudSyncStore.Key.categories, updatedAt: updatedAt)
+        persist(categories, storageKey: categoriesKey, cloudKey: ICloudSyncStore.Key.categories)
+    }
+
+    /// Encode `value` to shared `UserDefaults` under `storageKey`. When this run is the
+    /// `didSet` echo of an in-flight cloud apply, mirror the remote timestamp; otherwise
+    /// record a fresh local write and (if enabled) push the new value to KVS.
+    private func persist<Value: Codable>(_ value: Value, storageKey: String, cloudKey: String) {
+        guard let data = try? JSONEncoder().encode(value) else { return }
+        SharedStorage.defaults.set(data, forKey: storageKey)
+
+        if isApplyingCloudChange {
+            if cloudApplyContext?.key == cloudKey, let updatedAt = cloudApplyContext?.updatedAt {
+                cloud.noteLocalWrite(for: cloudKey, updatedAt: updatedAt)
             }
             return
         }
+
         let updatedAt = Date().timeIntervalSinceReferenceDate
-        cloud.noteLocalWrite(for: ICloudSyncStore.Key.categories, updatedAt: updatedAt)
+        cloud.noteLocalWrite(for: cloudKey, updatedAt: updatedAt)
         if cloudSyncEnabled {
-            pushCategoriesToCloud(updatedAt: updatedAt)
+            cloud.push(value, for: cloudKey, updatedAt: updatedAt)
         }
     }
 
@@ -243,62 +238,54 @@ final class DayStore: ObservableObject {
     }
 
     private func reconcileDaysWithCloud() {
-        if pullDaysIfNewer() { return }
-        guard let remote: ICloudSyncStore.RemoteValue<[Day]> = cloud.remoteValue(for: ICloudSyncStore.Key.days) else {
-            pushDaysToCloud()
-            return
-        }
-        let localTimestamp = cloud.localTimestamp(for: ICloudSyncStore.Key.days)
-        if localTimestamp > remote.updatedAt + 0.001 {
-            pushDaysToCloud(updatedAt: localTimestamp)
-        }
+        reconcile(days, cloudKey: ICloudSyncStore.Key.days, pullIfNewer: pullDaysIfNewer)
     }
 
     private func reconcileCategoriesWithCloud() {
-        if pullCategoriesIfNewer() { return }
-        guard let remote: ICloudSyncStore.RemoteValue<[CategoryDefinition]> = cloud.remoteValue(for: ICloudSyncStore.Key.categories) else {
-            pushCategoriesToCloud()
-            return
-        }
-        let localTimestamp = cloud.localTimestamp(for: ICloudSyncStore.Key.categories)
-        if localTimestamp > remote.updatedAt + 0.001 {
-            pushCategoriesToCloud(updatedAt: localTimestamp)
-        }
+        reconcile(categories, cloudKey: ICloudSyncStore.Key.categories, pullIfNewer: pullCategoriesIfNewer)
     }
 
     @discardableResult
     private func pullDaysIfNewer() -> Bool {
-        guard let remote: ICloudSyncStore.RemoteValue<[Day]> = cloud.remoteValue(for: ICloudSyncStore.Key.days),
-              remote.updatedAt > cloud.localTimestamp(for: ICloudSyncStore.Key.days) + 0.001 else {
-            return false
+        pullIfNewer(cloudKey: ICloudSyncStore.Key.days) { (remote: [Day]) in
+            days = remote.map(normalized)
         }
-
-        applyCloudChange(key: ICloudSyncStore.Key.days, updatedAt: remote.updatedAt) {
-            days = remote.value.map(normalized)
-        }
-        return true
     }
 
     @discardableResult
     private func pullCategoriesIfNewer() -> Bool {
-        guard let remote: ICloudSyncStore.RemoteValue<[CategoryDefinition]> = cloud.remoteValue(for: ICloudSyncStore.Key.categories),
-              remote.updatedAt > cloud.localTimestamp(for: ICloudSyncStore.Key.categories) + 0.001 else {
-            return false
-        }
-
-        applyCloudChange(key: ICloudSyncStore.Key.categories, updatedAt: remote.updatedAt) {
-            categories = Self.normalizedCategories(remote.value)
+        pullIfNewer(cloudKey: ICloudSyncStore.Key.categories) { (remote: [CategoryDefinition]) in
+            categories = Self.normalizedCategories(remote)
             days = days.map(normalized)
         }
+    }
+
+    /// Pull-then-push reconciliation: if remote is newer, apply it; otherwise if local is
+    /// newer (or remote is missing) push the local value.
+    private func reconcile<Value: Codable>(_ value: Value, cloudKey: String, pullIfNewer: () -> Bool) {
+        if pullIfNewer() { return }
+        guard let remote: ICloudSyncStore.RemoteValue<Value> = cloud.remoteValue(for: cloudKey) else {
+            cloud.push(value, for: cloudKey)
+            return
+        }
+        let localTimestamp = cloud.localTimestamp(for: cloudKey)
+        if localTimestamp > remote.updatedAt + 0.001 {
+            cloud.push(value, for: cloudKey, updatedAt: localTimestamp)
+        }
+    }
+
+    /// Apply the remote value through `apply` if its timestamp beats the local mirror.
+    /// `apply` runs inside `applyCloudChange` so the resulting `didSet`s skip pushing back.
+    @discardableResult
+    private func pullIfNewer<Value: Codable>(cloudKey: String, apply: (Value) -> Void) -> Bool {
+        guard let remote: ICloudSyncStore.RemoteValue<Value> = cloud.remoteValue(for: cloudKey),
+              remote.updatedAt > cloud.localTimestamp(for: cloudKey) + 0.001 else {
+            return false
+        }
+        applyCloudChange(key: cloudKey, updatedAt: remote.updatedAt) {
+            apply(remote.value)
+        }
         return true
-    }
-
-    private func pushDaysToCloud(updatedAt: TimeInterval = Date().timeIntervalSinceReferenceDate) {
-        cloud.push(days, for: ICloudSyncStore.Key.days, updatedAt: updatedAt)
-    }
-
-    private func pushCategoriesToCloud(updatedAt: TimeInterval = Date().timeIntervalSinceReferenceDate) {
-        cloud.push(categories, for: ICloudSyncStore.Key.categories, updatedAt: updatedAt)
     }
 
     private func applyCloudChange(key: String, updatedAt: TimeInterval, _ changes: () -> Void) {
