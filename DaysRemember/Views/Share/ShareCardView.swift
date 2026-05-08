@@ -137,31 +137,27 @@ struct ShareCardView: View {
     }
 
     private var shareRow: some View {
-        HStack(spacing: 16) {
-            // The system share sheet routes to whatever messaging apps the user has installed
-            // (微信 / 朋友圈 / 小红书 etc. all show up if installed). The labeled buttons here
-            // pre-fill the common destinations for visual parity with the prototype, but they
-            // all go through the same UIActivityViewController.
-            shareIcon("微", color: Color(oklch: 0.7, 0.15, 145), label: "微信",
+        HStack(spacing: 18) {
+            shareIcon("square.and.arrow.up", color: Theme.terracotta, label: "分享",
                       action: presentShareSheet)
-            shareIcon("朋", color: Color(oklch: 0.7, 0.15, 145), label: "朋友圈",
+            shareIcon("square.and.arrow.down", color: Theme.ink, label: "保存",
+                      action: saveToPhotos)
+            shareIcon("ellipsis", color: Theme.ink2, label: "更多",
                       action: presentShareSheet)
-            shareIcon("小", color: Color(oklch: 0.65, 0.18, 25), label: "小红书",
-                      action: presentShareSheet)
-            shareIcon("保", color: Theme.ink, label: "保存", action: saveToPhotos)
-            shareIcon("更", color: Theme.ink2, label: "更多", action: presentShareSheet)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24)
     }
 
-    private func shareIcon(_ glyph: String, color: Color, label: String,
+    private func shareIcon(_ systemName: String, color: Color, label: String,
                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 6) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 14, style: .continuous).fill(color.opacity(0.92))
-                    Text(glyph).font(Theme.sans(11)).foregroundStyle(.white)
+                    Image(systemName: systemName)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
                 .frame(width: 44, height: 44)
                 Text(label).font(Theme.sans(11)).foregroundStyle(Theme.ink2)
@@ -169,6 +165,7 @@ struct ShareCardView: View {
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
+        .accessibilityLabel(label)
     }
 }
 
