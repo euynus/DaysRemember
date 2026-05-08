@@ -1,0 +1,93 @@
+import XCTest
+@testable import DaysRemember
+
+final class UIUXModelTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        SharedStorage.defaults.removeObject(forKey: "days.v1")
+        SharedStorage.defaults.removeObject(forKey: "categories.v1")
+    }
+
+    override func tearDown() {
+        SharedStorage.defaults.removeObject(forKey: "days.v1")
+        SharedStorage.defaults.removeObject(forKey: "categories.v1")
+        super.tearDown()
+    }
+
+    func testOldDayJSONDefaultsCategoryIDAndCoverFocus() throws {
+        let json = """
+        [{
+            "id": "old",
+            "title": "旧日子",
+            "date": 0,
+            "recurring": true,
+            "lunar": false,
+            "category": "travel",
+            "categoryLabel": "旅行",
+            "photo": "home",
+            "note": "",
+            "location": "",
+            "pinned": false
+        }]
+        """
+        let days = try JSONDecoder().decode([Day].self, from: Data(json.utf8))
+
+        XCTAssertEqual(days.first?.categoryID, DayCategory.travel.rawValue)
+        XCTAssertEqual(days.first?.coverFocusX, 0.5)
+        XCTAssertEqual(days.first?.coverFocusY, 0.5)
+    }
+
+    @MainActor
+    func testDeletingCustomCategoryMigratesDays() {
+        let store = DayStore()
+        store.days = []
+        let custom = store.addCategory(name: "朋友", icon: "person.2", colorToken: .dusty)
+        store.add(Day(id: "friend", title: "朋友聚会", date: Date(),
+                      category: .life, photo: .home,
+                      categoryID: custom.id, categoryLabel: custom.name))
+
+        store.deleteCategory(id: custom.id, migrateTo: DayCategory.work.rawValue)
+
+        XCTAssertFalse(store.categories.contains(where: { $0.id == custom.id }))
+        XCTAssertEqual(store.days.first?.categoryID, DayCategory.work.rawValue)
+        XCTAssertEqual(store.days.first?.categoryLabel, DayCategory.work.label)
+    }
+
+    func testNotificationTriggerUsesConfiguredTime() {
+        let cal = CNDate.calendar
+        let display = date(2026, 7, 20)
+        let now = date(2026, 7, 1)
+
+        let trigger = NotificationManager.triggerDate(displayDate: display, offset: 7,
+                                                      hour: 16, minute: 30,
+                                                      quietHours: false, now: now,
+                                                      calendar: cal)
+
+        XCTAssertEqual(cal.component(.day, from: trigger!), 13)
+        XCTAssertEqual(cal.component(.hour, from: trigger!), 16)
+        XCTAssertEqual(cal.component(.minute, from: trigger!), 30)
+    }
+
+    func testNotificationTriggerRespectsQuietHours() {
+        let cal = CNDate.calendar
+        let display = date(2026, 7, 20)
+        let now = date(2026, 7, 1)
+
+        let trigger = NotificationManager.triggerDate(displayDate: display, offset: 1,
+                                                      hour: 23, minute: 15,
+                                                      quietHours: true, now: now,
+                                                      calendar: cal)
+
+        XCTAssertEqual(cal.component(.day, from: trigger!), 19)
+        XCTAssertEqual(cal.component(.hour, from: trigger!), 8)
+        XCTAssertEqual(cal.component(.minute, from: trigger!), 15)
+    }
+
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = day
+        return CNDate.calendar.date(from: components)!
+    }
+}

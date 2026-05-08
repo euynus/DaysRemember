@@ -13,8 +13,14 @@ final class DayStore: ObservableObject {
             reloadWidgetTimelines()
         }
     }
+    @Published var categories: [CategoryDefinition] {
+        didSet {
+            saveCategories()
+        }
+    }
 
     private let storageKey = "days.v1"
+    private let categoriesKey = "categories.v1"
     /// Set after init so we can wire the notification scheduler without a circular dependency.
     var settings: AppSettings? {
         didSet { rescheduleNotifications() }
@@ -27,11 +33,23 @@ final class DayStore: ObservableObject {
         } else {
             self.days = SampleData.days
         }
+
+        if let data = SharedStorage.defaults.data(forKey: categoriesKey),
+           let decoded = try? JSONDecoder().decode([CategoryDefinition].self, from: data) {
+            self.categories = Self.normalizedCategories(decoded)
+        } else {
+            self.categories = CategoryDefinition.system
+        }
     }
 
     func save() {
         guard let data = try? JSONEncoder().encode(days) else { return }
         SharedStorage.defaults.set(data, forKey: storageKey)
+    }
+
+    func saveCategories() {
+        guard let data = try? JSONEncoder().encode(categories) else { return }
+        SharedStorage.defaults.set(data, forKey: categoriesKey)
     }
 
     private func reloadWidgetTimelines() {
@@ -40,9 +58,9 @@ final class DayStore: ObservableObject {
         #endif
     }
 
-    func add(_ day: Day) { days.insert(day, at: 0) }
+    func add(_ day: Day) { days.insert(normalized(day), at: 0) }
     func update(_ day: Day) {
-        if let i = days.firstIndex(where: { $0.id == day.id }) { days[i] = day }
+        if let i = days.firstIndex(where: { $0.id == day.id }) { days[i] = normalized(day) }
     }
     func delete(_ day: Day) {
         let id = day.id
@@ -59,12 +77,116 @@ final class DayStore: ObservableObject {
             .first?.0
     }
 
-    func resetToSamples() { days = SampleData.days }
+    func resetToSamples() {
+        categories = CategoryDefinition.system
+        days = SampleData.days
+    }
 
     func rescheduleNotifications() {
         guard let settings else { return }
         let snapshot = days
         Task { await NotificationManager.shared.sync(days: snapshot, settings: settings) }
+    }
+
+    func category(for id: String) -> CategoryDefinition {
+        categories.first(where: { $0.id == id }) ?? Self.fallbackCategory
+    }
+
+    func category(for day: Day) -> CategoryDefinition {
+        category(for: day.categoryID)
+    }
+
+    func days(in categoryID: String?) -> [Day] {
+        let source = sortedDays(days)
+        guard let categoryID else { return source }
+        return source.filter { $0.categoryID == categoryID }
+    }
+
+    func sortedDays(_ source: [Day]) -> [Day] {
+        source.sorted { lhs, rhs in
+            if lhs.pinned != rhs.pinned { return lhs.pinned && !rhs.pinned }
+            let left = DayInfo.compute(lhs)
+            let right = DayInfo.compute(rhs)
+            if left.isPast != right.isPast { return !left.isPast }
+            return left.days < right.days
+        }
+    }
+
+    @discardableResult
+    func addCategory(name: String, icon: String, colorToken: CategoryColorToken) -> CategoryDefinition {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanIcon = icon.trimmingCharacters(in: .whitespacesAndNewlines)
+        let category = CategoryDefinition(
+            id: "custom.\(UUID().uuidString)",
+            name: cleanName.isEmpty ? "新分类" : cleanName,
+            icon: cleanIcon.isEmpty ? "tag" : cleanIcon,
+            colorToken: colorToken,
+            isSystem: false
+        )
+        categories.append(category)
+        return category
+    }
+
+    func updateCategory(_ category: CategoryDefinition) {
+        guard let index = categories.firstIndex(where: { $0.id == category.id }),
+              !categories[index].isSystem else { return }
+        let cleanName = category.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanIcon = category.icon.trimmingCharacters(in: .whitespacesAndNewlines)
+        categories[index] = CategoryDefinition(
+            id: category.id,
+            name: cleanName.isEmpty ? categories[index].name : cleanName,
+            icon: cleanIcon.isEmpty ? categories[index].icon : cleanIcon,
+            colorToken: category.colorToken,
+            isSystem: false
+        )
+        days = days.map { day in
+            guard day.categoryID == category.id else { return day }
+            var updated = day
+            updated.categoryLabel = categories[index].name
+            return updated
+        }
+    }
+
+    func deleteCategory(id: String, migrateTo targetID: String) {
+        guard let category = categories.first(where: { $0.id == id }),
+              !category.isSystem,
+              categories.contains(where: { $0.id == targetID && $0.id != id }) else { return }
+
+        let target = self.category(for: targetID)
+        categories.removeAll { $0.id == id }
+        days = days.map { day in
+            guard day.categoryID == id else { return day }
+            var updated = day
+            updated.categoryID = target.id
+            updated.categoryLabel = target.name
+            updated.category = DayCategory(rawValue: target.id) ?? .life
+            return updated
+        }
+    }
+
+    private func normalized(_ day: Day) -> Day {
+        let definition = category(for: day.categoryID)
+        var updated = day
+        updated.categoryID = definition.id
+        updated.categoryLabel = definition.name
+        updated.category = DayCategory(rawValue: definition.id) ?? .life
+        updated.coverFocusX = min(1, max(0, updated.coverFocusX))
+        updated.coverFocusY = min(1, max(0, updated.coverFocusY))
+        return updated
+    }
+
+    private static var fallbackCategory: CategoryDefinition {
+        CategoryDefinition.system.first(where: { $0.id == DayCategory.life.rawValue })
+            ?? CategoryDefinition(id: DayCategory.life.rawValue, name: DayCategory.life.label,
+                                  icon: "sparkles", colorToken: .terracotta, isSystem: true)
+    }
+
+    private static func normalizedCategories(_ decoded: [CategoryDefinition]) -> [CategoryDefinition] {
+        var result = decoded
+        for systemCategory in CategoryDefinition.system where !result.contains(where: { $0.id == systemCategory.id }) {
+            result.append(systemCategory)
+        }
+        return result
     }
 }
 
@@ -78,4 +200,6 @@ final class AppSettings: ObservableObject {
     @AppStorage("notif.memory") var memoryEnabled: Bool = true
     @AppStorage("notif.moments") var momentsEnabled: Bool = true
     @AppStorage("notif.quiet") var quietHours: Bool = true
+    @AppStorage("notif.hour") var notificationHour: Int = 9
+    @AppStorage("notif.minute") var notificationMinute: Int = 0
 }

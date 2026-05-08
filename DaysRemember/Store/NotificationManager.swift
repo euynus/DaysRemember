@@ -11,13 +11,9 @@ final class NotificationManager {
     static let shared = NotificationManager()
     private init() {}
 
-    /// Reminder time of day (defaults to 09:00 — matches the prototype's static "上午 9:00" setting).
-    private let triggerHour = 9
-    private let triggerMinute = 0
-
     /// Quiet hours bounds — notifications are pushed past the upper bound when they fall inside.
-    private let quietStart = 22
-    private let quietEnd = 8
+    nonisolated private static let quietStart = 22
+    nonisolated private static let quietEnd = 8
 
     enum AuthorizationResult { case granted, denied, deferred }
 
@@ -65,13 +61,15 @@ final class NotificationManager {
             guard !offsets.isEmpty else { continue }
 
             for offset in offsets {
-                guard let baseDay = cal.date(byAdding: .day, value: -offset, to: info.displayDate) else { continue }
-                var hour = triggerHour
-                if settings.quietHours && (hour >= quietStart || hour < quietEnd) {
-                    hour = quietEnd
-                }
-                guard let trigger = cal.date(bySettingHour: hour, minute: triggerMinute, second: 0,
-                                             of: baseDay) else { continue }
+                guard let trigger = Self.triggerDate(
+                    displayDate: info.displayDate,
+                    offset: offset,
+                    hour: settings.notificationHour,
+                    minute: settings.notificationMinute,
+                    quietHours: settings.quietHours,
+                    now: now,
+                    calendar: cal
+                ) else { continue }
                 if trigger <= now { continue }
 
                 let content = UNMutableNotificationContent()
@@ -128,5 +126,23 @@ final class NotificationManager {
         default:
             return "「\(day.title)」还有 \(offset) 天"
         }
+    }
+
+    nonisolated static func triggerDate(displayDate: Date, offset: Int, hour: Int, minute: Int,
+                                        quietHours: Bool, now: Date,
+                                        calendar: Calendar = CNDate.calendar) -> Date? {
+        guard let baseDay = calendar.date(byAdding: .day, value: -offset, to: displayDate) else {
+            return nil
+        }
+        let safeHour = min(23, max(0, hour))
+        let safeMinute = min(59, max(0, minute))
+        let resolvedHour = quietHours && (safeHour >= quietStart || safeHour < quietEnd)
+            ? quietEnd
+            : safeHour
+        guard let trigger = calendar.date(bySettingHour: resolvedHour, minute: safeMinute, second: 0,
+                                          of: baseDay) else {
+            return nil
+        }
+        return trigger > now ? trigger : nil
     }
 }

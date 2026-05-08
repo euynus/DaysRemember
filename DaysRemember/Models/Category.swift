@@ -33,3 +33,77 @@ enum DayCategory: String, Codable, CaseIterable, Hashable {
         }
     }
 }
+
+enum CategoryColorToken: String, Codable, CaseIterable, Hashable, Identifiable {
+    case terracotta, rose, amber, dusty, sage
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .terracotta: return "赤陶"
+        case .rose: return "玫瑰"
+        case .amber: return "琥珀"
+        case .dusty: return "雾蓝"
+        case .sage: return "鼠尾草"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .terracotta: return Theme.terracotta
+        case .rose: return Theme.rose
+        case .amber: return Theme.amber
+        case .dusty: return Theme.dusty
+        case .sage: return Theme.sage
+        }
+    }
+
+    var soft: Color {
+        switch self {
+        case .terracotta: return Theme.terracottaSoft
+        case .rose: return Theme.roseSoft
+        case .amber: return Theme.amberSoft
+        case .dusty: return Theme.dustySoft
+        case .sage: return Theme.sageSoft
+        }
+    }
+}
+
+struct CategoryDefinition: Identifiable, Codable, Hashable {
+    var id: String
+    var name: String
+    var icon: String
+    var colorToken: CategoryColorToken
+    var isSystem: Bool
+
+    static let system: [CategoryDefinition] = DayCategory.allCases.map { category in
+        CategoryDefinition(
+            id: category.rawValue,
+            name: category.label,
+            icon: icon(for: category),
+            colorToken: colorToken(for: category),
+            isSystem: true
+        )
+    }
+
+    private static func icon(for category: DayCategory) -> String {
+        switch category {
+        case .love: return "heart"
+        case .family: return "house"
+        case .travel: return "airplane"
+        case .work: return "briefcase"
+        case .life: return "sparkles"
+        }
+    }
+
+    private static func colorToken(for category: DayCategory) -> CategoryColorToken {
+        switch category {
+        case .love: return .rose
+        case .family: return .amber
+        case .travel: return .dusty
+        case .work: return .sage
+        case .life: return .terracotta
+        }
+    }
+}
