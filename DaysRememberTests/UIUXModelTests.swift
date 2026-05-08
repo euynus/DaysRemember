@@ -83,6 +83,31 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertEqual(cal.component(.minute, from: trigger!), 15)
     }
 
+    func testAppSettingsSnapshotCodableRoundTrip() throws {
+        let json = """
+        {
+            "hasOnboarded": true,
+            "notifPre7": false,
+            "notifPre3": true,
+            "notifPre1": true,
+            "notifDay0": false,
+            "memoryEnabled": true,
+            "momentsEnabled": false,
+            "quietHours": true,
+            "notificationHour": 21,
+            "notificationMinute": 45
+        }
+        """
+
+        let snapshot = try JSONDecoder().decode(AppSettingsSnapshot.self, from: Data(json.utf8))
+        let encoded = try JSONEncoder().encode(snapshot)
+        let decoded = try JSONDecoder().decode(AppSettingsSnapshot.self, from: encoded)
+
+        XCTAssertEqual(decoded, snapshot)
+        XCTAssertEqual(decoded.notificationHour, 21)
+        XCTAssertEqual(decoded.notificationMinute, 45)
+    }
+
     private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
         var components = DateComponents()
         components.year = year

@@ -17,6 +17,10 @@ struct DaysRememberApp: App {
                 .environmentObject(settings)
                 .task {
                     store.settings = settings
+                    store.enableCloudSync()
+                    settings.enableCloudSync {
+                        store.rescheduleNotifications()
+                    }
                     // Skip the system permission prompt during automated screenshots —
                     // it would block the simulator and can't be dismissed via simctl.
                     if !DebugLaunch.isAutomated {
