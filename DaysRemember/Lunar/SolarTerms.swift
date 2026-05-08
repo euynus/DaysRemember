@@ -14,7 +14,7 @@ enum SolarTerms {
     ]
 
     static func name(for date: Date) -> String? {
-        let cal = Calendar(identifier: .gregorian)
+        let cal = CNDate.calendar
         let m = cal.component(.month, from: date)
         let d = cal.component(.day, from: date)
         return table.first { $0.month == m && $0.day == d }?.name
