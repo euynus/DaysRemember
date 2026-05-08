@@ -46,8 +46,8 @@ enum Theme {
     /// Serif stack: Noto Serif SC → Songti SC → system serif
     static func serif(_ size: CGFloat, weight: Font.Weight = .regular,
                       relativeTo textStyle: Font.TextStyle = .body) -> Font {
-        if let _ = UIFont(name: "NotoSerifSC-Regular", size: size) {
-            return .custom(notoSerifName(for: weight), size: size, relativeTo: textStyle)
+        if UIFont(name: "NotoSerifSC-Regular", size: size) != nil {
+            return .custom(notoName(family: "NotoSerifSC", weight: weight), size: size, relativeTo: textStyle)
         }
         if UIFont(name: "STSongti-SC-Regular", size: size) != nil {
             return .custom("STSongti-SC-Regular", size: size, relativeTo: textStyle).weight(weight)
@@ -59,7 +59,7 @@ enum Theme {
     static func sans(_ size: CGFloat, weight: Font.Weight = .regular,
                      relativeTo textStyle: Font.TextStyle = .body) -> Font {
         if UIFont(name: "NotoSansSC-Regular", size: size) != nil {
-            return .custom(notoSansName(for: weight), size: size, relativeTo: textStyle)
+            return .custom(notoName(family: "NotoSansSC", weight: weight), size: size, relativeTo: textStyle)
         }
         if UIFont(name: "PingFangSC-Regular", size: size) != nil {
             return .custom("PingFangSC-Regular", size: size, relativeTo: textStyle).weight(weight)
@@ -67,19 +67,15 @@ enum Theme {
         return .system(size: size, weight: weight)
     }
 
-    private static func notoSerifName(for weight: Font.Weight) -> String {
+    /// Map a Font.Weight to one of the three Noto SC face suffixes we ship.
+    private static func notoName(family: String, weight: Font.Weight) -> String {
+        let suffix: String
         switch weight {
-        case .semibold, .bold, .heavy, .black: return "NotoSerifSC-SemiBold"
-        case .medium: return "NotoSerifSC-Medium"
-        default: return "NotoSerifSC-Regular"
+        case .semibold, .bold, .heavy, .black: suffix = "SemiBold"
+        case .medium: suffix = "Medium"
+        default: suffix = "Regular"
         }
-    }
-    private static func notoSansName(for weight: Font.Weight) -> String {
-        switch weight {
-        case .semibold, .bold, .heavy, .black: return "NotoSansSC-SemiBold"
-        case .medium: return "NotoSansSC-Medium"
-        default: return "NotoSansSC-Regular"
-        }
+        return "\(family)-\(suffix)"
     }
 }
 
