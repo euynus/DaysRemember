@@ -17,6 +17,7 @@ struct IconBtn: View {
                 .shadow(color: .black.opacity(0.04), radius: 1, y: 1)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     @ViewBuilder
@@ -31,13 +32,27 @@ struct IconBtn: View {
         case .chevronRight: Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold))
         }
     }
+
+    private var label: String {
+        switch kind {
+        case .search: return "搜索"
+        case .plus: return "新增日子"
+        case .back: return "返回"
+        case .ellipsis: return "更多"
+        case .star: return "置顶"
+        case .chevronLeft: return "上一个"
+        case .chevronRight: return "下一个"
+        }
+    }
 }
 
 /// Frosted-glass 40pt circular button used over photos (Detail screen).
 struct GlassButton<Content: View>: View {
+    let accessibilityLabel: String
     let action: () -> Void
     @ViewBuilder var content: Content
-    init(action: @escaping () -> Void = {}, @ViewBuilder content: () -> Content) {
+    init(accessibilityLabel: String, action: @escaping () -> Void = {}, @ViewBuilder content: () -> Content) {
+        self.accessibilityLabel = accessibilityLabel
         self.action = action
         self.content = content()
     }
@@ -53,5 +68,6 @@ struct GlassButton<Content: View>: View {
                 )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
     }
 }

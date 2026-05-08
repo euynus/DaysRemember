@@ -5,6 +5,8 @@ struct DetailView: View {
     let day: Day
     var onBack: () -> Void = {}
     @State private var showShare = false
+    @State private var showEditor = false
+    @State private var showDeleteConfirm = false
 
     private var currentDay: Day {
         store.days.first(where: { $0.id == day.id }) ?? day
@@ -45,24 +47,48 @@ struct DetailView: View {
         .sheet(isPresented: $showShare) {
             ShareCardView(day: currentDay)
         }
+        .sheet(isPresented: $showEditor) {
+            DayEditorView(day: currentDay)
+        }
+        .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("删除", role: .destructive) {
+                store.delete(currentDay)
+                onBack()
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("删除后会同时取消这个日子的待提醒。")
+        }
     }
 
     private var topControls: some View {
         HStack {
-            GlassButton(action: onBack) {
+            GlassButton(accessibilityLabel: "返回", action: onBack) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .bold))
             }
             Spacer()
             HStack(spacing: 8) {
-                GlassButton(action: togglePinned) {
+                GlassButton(accessibilityLabel: currentDay.pinned ? "取消置顶" : "置顶", action: togglePinned) {
                     Image(systemName: currentDay.pinned ? "star.fill" : "star")
                         .font(.system(size: 14, weight: .semibold))
                 }
-                GlassButton(action: { showShare = true }) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 14, weight: .semibold))
+                Menu {
+                    Button("编辑", systemImage: "pencil") { showEditor = true }
+                    Button("分享", systemImage: "square.and.arrow.up") { showShare = true }
+                    Button("删除", systemImage: "trash", role: .destructive) { showDeleteConfirm = true }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 40, height: 40)
+                        .foregroundStyle(.white)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                        )
                 }
+                .accessibilityLabel("更多操作")
             }
         }
         .padding(.horizontal, 16)
