@@ -17,12 +17,16 @@ struct FormRow<Trailing: View>: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
         .frame(minHeight: 52, alignment: .leading)
-        .overlay(alignment: .bottom) {
+        .rowHairline(isLast: isLast, hPadding: 18)
+    }
+}
+
+private extension View {
+    /// Hairline divider at the bottom of a stacked row, suppressed for the last item.
+    func rowHairline(isLast: Bool, hPadding: CGFloat = 16) -> some View {
+        overlay(alignment: .bottom) {
             if !isLast {
-                Rectangle()
-                    .fill(Theme.hairline)
-                    .frame(height: 0.5)
-                    .padding(.horizontal, 18)
+                Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.horizontal, hPadding)
             }
         }
     }
@@ -106,11 +110,7 @@ struct ToggleRow: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .frame(minHeight: 50)
-            .overlay(alignment: .bottom) {
-                if !isLast {
-                    Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.horizontal, 16)
-                }
-            }
+            .rowHairline(isLast: isLast)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -137,11 +137,7 @@ struct TimeRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .overlay(alignment: .bottom) {
-            if !isLast {
-                Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.horizontal, 16)
-            }
-        }
+        .rowHairline(isLast: isLast)
     }
 }
 
@@ -158,11 +154,7 @@ struct ValueRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .overlay(alignment: .bottom) {
-            if !isLast {
-                Rectangle().fill(Theme.hairline).frame(height: 0.5).padding(.horizontal, 16)
-            }
-        }
+        .rowHairline(isLast: isLast)
     }
 }
 
