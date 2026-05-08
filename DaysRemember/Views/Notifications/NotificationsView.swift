@@ -15,6 +15,37 @@ struct NotificationsView: View {
         )
     }
 
+    private var reminderTime: Binding<Date> {
+        Binding(
+            get: {
+                var components = DateComponents()
+                components.calendar = CNDate.calendar
+                components.year = 2000
+                components.month = 1
+                components.day = 1
+                components.hour = settings.notificationHour
+                components.minute = settings.notificationMinute
+                return CNDate.calendar.date(from: components) ?? Date()
+            },
+            set: { newValue in
+                settings.notificationHour = CNDate.calendar.component(.hour, from: newValue)
+                settings.notificationMinute = CNDate.calendar.component(.minute, from: newValue)
+                store.rescheduleNotifications()
+            }
+        )
+    }
+
+    private var reminderSummary: String {
+        [
+            settings.notifPre7 ? "7天" : nil,
+            settings.notifPre3 ? "3天" : nil,
+            settings.notifPre1 ? "1天" : nil,
+            settings.notifDay0 ? "当天" : nil
+        ]
+        .compactMap { $0 }
+        .joined(separator: "、")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             topBar
@@ -29,14 +60,10 @@ struct NotificationsView: View {
                         ToggleRow(label: "当天", on: reactiveBinding(\.notifDay0), isLast: true)
                     }
                     section("提醒时间") {
-                        ValueRow(label: "每日提醒时间", value: "上午 9:00")
-                        ValueRow(label: "重要日子提醒", value: "提前 1 天", isLast: true)
-                    }
-                    section("智能提醒") {
-                        ToggleRow(label: "时光回忆", sub: "一年前的今天发生了什么",
-                                  on: reactiveBinding(\.memoryEnabled))
-                        ToggleRow(label: "纪念日时刻", sub: "发现日子背后的连接",
-                                  on: reactiveBinding(\.momentsEnabled), isLast: true)
+                        TimeRow(label: "每日提醒时间", time: reminderTime)
+                        ValueRow(label: "重要日子提醒",
+                                 value: reminderSummary.isEmpty ? "未开启" : reminderSummary,
+                                 isLast: true)
                     }
                     section("勿扰") {
                         ToggleRow(label: "夜间勿扰", sub: "22:00 — 8:00 静音",
