@@ -58,16 +58,21 @@ struct GlassButton<Content: View>: View {
     }
     var body: some View {
         Button(action: action) {
-            content
-                .frame(width: 40, height: 40)
-                .foregroundStyle(.white)
-                .background(Color.white.opacity(0.18))
-                .clipShape(Circle())
-                .overlay(
-                    Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
-                )
+            content.glassCircle()
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
+    }
+}
+
+extension View {
+    /// Translucent white-on-photo circle — the visual the GlassButton ships with,
+    /// also reused as the label of Menu/Picker triggers that need the same look.
+    func glassCircle(size: CGFloat = 40) -> some View {
+        frame(width: size, height: size)
+            .foregroundStyle(.white)
+            .background(Color.white.opacity(0.18))
+            .clipShape(Circle())
+            .overlay(Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5))
     }
 }

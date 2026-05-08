@@ -81,13 +81,7 @@ struct DetailView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 14, weight: .bold))
-                        .frame(width: 40, height: 40)
-                        .foregroundStyle(.white)
-                        .background(Color.white.opacity(0.18))
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
-                        )
+                        .glassCircle()
                 }
                 .accessibilityLabel("更多操作")
             }
