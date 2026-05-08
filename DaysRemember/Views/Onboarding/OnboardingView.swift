@@ -33,7 +33,6 @@ struct OnboardingView: View {
     ]
 
     var body: some View {
-        let cur = pages[page]
         let isFinal = (page == pages.count - 1)
         let textColor: Color = isFinal ? .white : Theme.ink
         let subColor: Color = isFinal ? Color.white.opacity(0.8) : Theme.ink2
@@ -42,40 +41,13 @@ struct OnboardingView: View {
             background(isFinal: isFinal)
 
             VStack(spacing: 0) {
-                Spacer().frame(height: 80)
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Group {
-                        switch cur.kind {
-                        case .hero: HeroArt()
-                        case .count: CountDemoArt()
-                        case .photo: PhotoDemoArt()
-                        case .final: FinalArt()
-                        }
+                TabView(selection: $page) {
+                    ForEach(pages.indices, id: \.self) { index in
+                        pageContent(index, textColor: textColor, subColor: subColor)
+                            .tag(index)
                     }
-
-                    VStack(alignment: .leading, spacing: 16) {
-                        if let eyebrow = cur.eyebrow {
-                            Text(eyebrow)
-                                .font(Theme.serif(14))
-                                .tracking(5.6) // ≈ 0.4em at 14pt
-                                .foregroundColor(Theme.terracotta)
-                        }
-                        Text(cur.title)
-                            .font(Theme.serif(32, weight: .semibold))
-                            .lineSpacing(32 * 0.3)
-                            .foregroundColor(textColor)
-                        if let sub = cur.sub {
-                            Text(sub)
-                                .font(Theme.sans(15))
-                                .lineSpacing(15 * 0.7)
-                                .foregroundColor(subColor)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 36)
                 }
-                .padding(.horizontal, 32)
+                .tabViewStyle(.page(indexDisplayMode: .never))
 
                 Spacer()
 
@@ -130,6 +102,46 @@ struct OnboardingView: View {
         }
         .preferredColorScheme(isFinal ? .dark : nil)
         .ignoresSafeArea()
+    }
+
+    private func pageContent(_ index: Int, textColor: Color, subColor: Color) -> some View {
+        let cur = pages[index]
+        return VStack(spacing: 0) {
+            Spacer().frame(height: 80)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Group {
+                    switch cur.kind {
+                    case .hero: HeroArt()
+                    case .count: CountDemoArt()
+                    case .photo: PhotoDemoArt()
+                    case .final: FinalArt()
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 16) {
+                    if let eyebrow = cur.eyebrow {
+                        Text(eyebrow)
+                            .font(Theme.serif(14, relativeTo: .subheadline))
+                            .tracking(5.6)
+                            .foregroundStyle(Theme.terracotta)
+                    }
+                    Text(cur.title)
+                        .font(Theme.serif(32, weight: .semibold, relativeTo: .largeTitle))
+                        .lineSpacing(32 * 0.3)
+                        .foregroundStyle(textColor)
+                    if let sub = cur.sub {
+                        Text(sub)
+                            .font(Theme.sans(15, relativeTo: .body))
+                            .lineSpacing(15 * 0.7)
+                            .foregroundStyle(subColor)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 36)
+            }
+            .padding(.horizontal, 32)
+        }
     }
 
     private func dotColor(i: Int, isFinal: Bool) -> Color {
