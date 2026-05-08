@@ -239,11 +239,11 @@ final class DayStore: ObservableObject {
     }
 
     private func reconcileDaysWithCloud() {
-        reconcile(days, cloudKey: ICloudSyncStore.Key.days, pullIfNewer: pullDaysIfNewer)
+        cloud.reconcile(days, for: ICloudSyncStore.Key.days, pull: pullDaysIfNewer)
     }
 
     private func reconcileCategoriesWithCloud() {
-        reconcile(categories, cloudKey: ICloudSyncStore.Key.categories, pullIfNewer: pullCategoriesIfNewer)
+        cloud.reconcile(categories, for: ICloudSyncStore.Key.categories, pull: pullCategoriesIfNewer)
     }
 
     @discardableResult
@@ -258,20 +258,6 @@ final class DayStore: ObservableObject {
         pullIfNewer(cloudKey: ICloudSyncStore.Key.categories) { (remote: [CategoryDefinition]) in
             categories = Self.normalizedCategories(remote)
             days = days.map(normalized)
-        }
-    }
-
-    /// Pull-then-push reconciliation: if remote is newer, apply it; otherwise if local is
-    /// newer (or remote is missing) push the local value.
-    private func reconcile<Value: Codable>(_ value: Value, cloudKey: String, pullIfNewer: () -> Bool) {
-        if pullIfNewer() { return }
-        guard let remote: ICloudSyncStore.RemoteValue<Value> = cloud.remoteValue(for: cloudKey) else {
-            cloud.push(value, for: cloudKey)
-            return
-        }
-        let localTimestamp = cloud.localTimestamp(for: cloudKey)
-        if localTimestamp > remote.updatedAt + 0.001 {
-            cloud.push(value, for: cloudKey, updatedAt: localTimestamp)
         }
     }
 
@@ -340,15 +326,7 @@ final class AppSettings: ObservableObject {
     }
 
     private func reconcileSettingsWithCloud() {
-        if pullSettingsIfNewer() { return }
-        guard let remote: ICloudSyncStore.RemoteValue<AppSettingsSnapshot> = cloud.remoteValue(for: ICloudSyncStore.Key.settings) else {
-            pushSettingsToCloud()
-            return
-        }
-        let localTimestamp = cloud.localTimestamp(for: ICloudSyncStore.Key.settings)
-        if localTimestamp > remote.updatedAt + 0.001 {
-            pushSettingsToCloud(updatedAt: localTimestamp)
-        }
+        cloud.reconcile(snapshot, for: ICloudSyncStore.Key.settings, pull: pullSettingsIfNewer)
     }
 
     @discardableResult

@@ -81,6 +81,20 @@ final class ICloudSyncStore {
         return RemoteValue(value: envelope.value, updatedAt: envelope.updatedAt, deviceID: envelope.deviceID)
     }
 
+    /// Pull-then-push reconciliation: prefer a newer remote (via `pull`); else push the
+    /// local value if its mirrored timestamp beats the remote's.
+    func reconcile<Value: Codable>(_ value: Value, for key: String, pull: () -> Bool) {
+        if pull() { return }
+        guard let remote: RemoteValue<Value> = remoteValue(for: key) else {
+            push(value, for: key)
+            return
+        }
+        let localTimestamp = localTimestamp(for: key)
+        if localTimestamp > remote.updatedAt + 0.001 {
+            push(value, for: key, updatedAt: localTimestamp)
+        }
+    }
+
     private func startObserving() {
         guard observer == nil else { return }
         observer = NotificationCenter.default.addObserver(
