@@ -55,10 +55,12 @@ struct DaysProvider: TimelineProvider {
         let raw = SharedStorage.defaults.data(forKey: "days.v1")
         let days = raw.flatMap { try? JSONDecoder().decode([Day].self, from: $0) } ?? SampleData.days
         return days
-            .map { ($0, DayInfo.compute($0, today: today)) }
-            .filter { !$0.1.isPast && $0.1.days <= 365 }
-            .sorted { $0.1.days < $1.1.days }
-            .first?.0
+            .compactMap { day -> (Day, Int)? in
+                let info = DayInfo.compute(day, today: today)
+                return (info.isPast || info.days > 365) ? nil : (day, info.days)
+            }
+            .min { $0.1 < $1.1 }?
+            .0
     }
 }
 
