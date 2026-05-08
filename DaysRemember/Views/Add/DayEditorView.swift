@@ -23,7 +23,10 @@ struct DayEditorView: View {
     @State private var dragStartX: Double?
     @State private var dragStartY: Double?
 
-    private static let pickerOptions: [PhotoStyle] = [.wedding, .baby, .birthday, .japan, .study, .work, .pet, .home]
+    private static let pickerOptions: [PhotoStyle] = [
+        .wedding, .baby, .birthday, .japan, .study, .work, .pet, .home,
+        .sketchMountain, .sketchSea, .sketchCafe, .sketchGarden
+    ]
     private static let reminders: [(label: String, offset: Int)] = [
         ("当天", 0), ("1天", 1), ("3天", 3), ("7天", 7)
     ]
@@ -215,7 +218,7 @@ struct DayEditorView: View {
                                 }
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("选择预设封面")
+                        .accessibilityLabel("选择\(preset.displayName)封面")
                     }
                     photosPickerTile
                 }
