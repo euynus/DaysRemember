@@ -90,8 +90,7 @@ struct CalendarMonthView: View {
 
     private var navBar: some View {
         HStack {
-            Image(systemName: "chevron.left").font(.system(size: 18, weight: .bold))
-                .foregroundStyle(Theme.ink).opacity(0)
+            Color.clear.frame(width: 18, height: 18)
             Spacer()
             Text("日历").font(Theme.serif(17, weight: .semibold))
             Spacer()
