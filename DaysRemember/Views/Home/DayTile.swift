@@ -29,6 +29,7 @@ struct DayTile: View {
             .shadow(color: .black.opacity(0.05), radius: 16, y: 6)
         }
         .buttonStyle(PressableTileStyle())
+        .accessibilityLabel("\(day.title)，\(info.days) \(info.labelShort)")
     }
 
     @ViewBuilder
@@ -42,6 +43,8 @@ struct DayTile: View {
                     .foregroundStyle(Color.white.opacity(0.85))
                 Text(day.title)
                     .font(Theme.serif(22, weight: .semibold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(info.days)")
                         .font(Theme.serif(56, weight: .medium))
@@ -60,6 +63,8 @@ struct DayTile: View {
                         .foregroundStyle(Color.white.opacity(0.8))
                     Text(day.title)
                         .font(Theme.serif(17, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 0) {
@@ -79,6 +84,7 @@ struct DayTile: View {
                 Text(day.title)
                     .font(Theme.serif(14, weight: .semibold))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(info.days)")
                         .font(Theme.serif(28, weight: .medium))

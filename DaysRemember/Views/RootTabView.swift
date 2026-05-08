@@ -34,6 +34,7 @@ struct RootTabView: View {
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
+    @State private var categoryPath = NavigationPath()
     @State private var addingDay = false
 
     /// Allows `xcrun simctl launch ... --tab calendar` for screenshotting.
@@ -55,35 +56,75 @@ struct RootTabView: View {
 
     @ViewBuilder
     private var content: some View {
-        switch tab {
-        case .home:
-            NavigationStack(path: $homePath) {
-                HomeView(
-                    onOpen: { day in homePath.append(day) },
-                    onAdd: { addingDay = true }
-                )
+        ZStack {
+            homeStack
+                .opacity(tab == .home ? 1 : 0)
+                .allowsHitTesting(tab == .home)
+                .accessibilityHidden(tab != .home)
+            calendarStack
+                .opacity(tab == .calendar ? 1 : 0)
+                .allowsHitTesting(tab == .calendar)
+                .accessibilityHidden(tab != .calendar)
+            categoriesStack
+                .opacity(tab == .categories ? 1 : 0)
+                .allowsHitTesting(tab == .categories)
+                .accessibilityHidden(tab != .categories)
+            NotificationsView()
+                .opacity(tab == .notifications ? 1 : 0)
+                .allowsHitTesting(tab == .notifications)
+                .accessibilityHidden(tab != .notifications)
+        }
+    }
+
+    private var homeStack: some View {
+        NavigationStack(path: $homePath) {
+            HomeView(
+                onOpen: { day in homePath.append(day) },
+                onAdd: { addingDay = true }
+            )
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: Day.self) { day in
+                DetailView(day: day, onBack: { popHomePath() })
+                    .toolbar(.hidden, for: .navigationBar)
+                    .navigationBarBackButtonHidden(true)
+            }
+        }
+    }
+
+    private var calendarStack: some View {
+        NavigationStack(path: $calendarPath) {
+            CalendarMonthView(onOpen: { day in calendarPath.append(day) })
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: Day.self) { day in
-                    DetailView(day: day, onBack: { homePath.removeLast() })
+                    DetailView(day: day, onBack: { popCalendarPath() })
                         .toolbar(.hidden, for: .navigationBar)
                         .navigationBarBackButtonHidden(true)
                 }
-            }
-        case .calendar:
-            NavigationStack(path: $calendarPath) {
-                CalendarMonthView(onOpen: { day in calendarPath.append(day) })
-                    .toolbar(.hidden, for: .navigationBar)
-                    .navigationDestination(for: Day.self) { day in
-                        DetailView(day: day, onBack: { calendarPath.removeLast() })
-                            .toolbar(.hidden, for: .navigationBar)
-                            .navigationBarBackButtonHidden(true)
-                    }
-            }
-        case .categories:
-            CategoriesView()
-        case .notifications:
-            NotificationsView()
         }
+    }
+
+    private var categoriesStack: some View {
+        NavigationStack(path: $categoryPath) {
+            CategoriesView(onOpen: { day in categoryPath.append(day) })
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(for: Day.self) { day in
+                    DetailView(day: day, onBack: { popCategoryPath() })
+                        .toolbar(.hidden, for: .navigationBar)
+                        .navigationBarBackButtonHidden(true)
+                }
+        }
+    }
+
+    private func popHomePath() {
+        if !homePath.isEmpty { homePath.removeLast() }
+    }
+
+    private func popCalendarPath() {
+        if !calendarPath.isEmpty { calendarPath.removeLast() }
+    }
+
+    private func popCategoryPath() {
+        if !categoryPath.isEmpty { categoryPath.removeLast() }
     }
 }
 
@@ -104,9 +145,12 @@ struct TabBar: View {
                             .foregroundStyle(current == t ? Theme.ink : Theme.muted)
                     }
                     .frame(maxWidth: .infinity)
+                    .frame(minHeight: 44)
                     .padding(.vertical, 6)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(t.label)
+                .accessibilityValue(current == t ? "当前标签" : "")
             }
         }
         .padding(.horizontal, 16)
