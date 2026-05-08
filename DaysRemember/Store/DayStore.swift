@@ -97,10 +97,12 @@ final class DayStore: ObservableObject {
     /// Nearest upcoming (future or today) within `within` days.
     func nearestUpcoming(within: Int = 100) -> Day? {
         days
-            .map { ($0, DayInfo.compute($0)) }
-            .filter { !$0.1.isPast && $0.1.days <= within }
-            .sorted { $0.1.days < $1.1.days }
-            .first?.0
+            .compactMap { day -> (Day, Int)? in
+                let info = DayInfo.compute(day)
+                return (info.isPast || info.days > within) ? nil : (day, info.days)
+            }
+            .min { $0.1 < $1.1 }?
+            .0
     }
 
     func resetToSamples() {
