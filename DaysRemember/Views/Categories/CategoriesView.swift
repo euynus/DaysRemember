@@ -90,15 +90,9 @@ struct CategoriesView: View {
             .buttonStyle(.plain)
             .disabled(editing)
 
-            ForEach(stride(from: 0, to: store.categories.count, by: 2).map { $0 }, id: \.self) { index in
-                HStack(spacing: 10) {
-                    categoryTile(store.categories[index])
-                    if index + 1 < store.categories.count {
-                        categoryTile(store.categories[index + 1])
-                    } else {
-                        Color.clear.frame(maxWidth: .infinity).frame(height: 110)
-                    }
-                }
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10),
+                                GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                ForEach(store.categories) { categoryTile($0) }
             }
         }
         .padding(.horizontal, 20)
