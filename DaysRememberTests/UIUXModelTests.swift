@@ -53,6 +53,29 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertEqual(store.days.first?.categoryLabel, DayCategory.work.label)
     }
 
+    @MainActor
+    func testSortedDaysOrdersByPinnedThenUpcomingThenDistance() {
+        let store = DayStore()
+        // Pinned but past — outranks every unpinned day regardless of distance.
+        let pinnedPast = Day(id: "pinned-past", title: "pinned past",
+                             date: date(2024, 1, 1), category: .life, photo: .home,
+                             pinned: true)
+        // Far-future, unpinned — should sort behind close-future.
+        let farFuture = Day(id: "far", title: "far",
+                            date: date(2030, 6, 1), category: .life, photo: .home)
+        // Close-future, unpinned — runner-up after pinned.
+        let nearFuture = Day(id: "near", title: "near",
+                             date: date(2026, 7, 1), category: .life, photo: .home)
+        // Past, unpinned — sorts last.
+        let past = Day(id: "past", title: "past",
+                       date: date(2024, 6, 1), category: .life, photo: .home)
+
+        store.days = [past, farFuture, nearFuture, pinnedPast]
+        let sorted = store.sortedDays(store.days)
+
+        XCTAssertEqual(sorted.map(\.id), ["pinned-past", "near", "far", "past"])
+    }
+
     func testNotificationTriggerUsesConfiguredTime() {
         let cal = CNDate.calendar
         let display = date(2026, 7, 20)
