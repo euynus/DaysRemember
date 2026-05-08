@@ -43,23 +43,25 @@ enum Theme {
 
     // MARK: - Fonts
     /// Serif stack: Noto Serif SC → Songti SC → system serif
-    static func serif(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+    static func serif(_ size: CGFloat, weight: Font.Weight = .regular,
+                      relativeTo textStyle: Font.TextStyle = .body) -> Font {
         if let _ = UIFont(name: "NotoSerifSC-Regular", size: size) {
-            return .custom(notoSerifName(for: weight), size: size)
+            return .custom(notoSerifName(for: weight), size: size, relativeTo: textStyle)
         }
         if UIFont(name: "STSongti-SC-Regular", size: size) != nil {
-            return .custom("STSongti-SC-Regular", size: size).weight(weight)
+            return .custom("STSongti-SC-Regular", size: size, relativeTo: textStyle).weight(weight)
         }
         return .system(size: size, weight: weight, design: .serif)
     }
 
     /// Sans stack: Noto Sans SC → PingFang SC → system
-    static func sans(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+    static func sans(_ size: CGFloat, weight: Font.Weight = .regular,
+                     relativeTo textStyle: Font.TextStyle = .body) -> Font {
         if UIFont(name: "NotoSansSC-Regular", size: size) != nil {
-            return .custom(notoSansName(for: weight), size: size)
+            return .custom(notoSansName(for: weight), size: size, relativeTo: textStyle)
         }
         if UIFont(name: "PingFangSC-Regular", size: size) != nil {
-            return .custom("PingFangSC-Regular", size: size).weight(weight)
+            return .custom("PingFangSC-Regular", size: size, relativeTo: textStyle).weight(weight)
         }
         return .system(size: size, weight: weight)
     }
