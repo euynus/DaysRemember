@@ -4,6 +4,8 @@ struct CalendarMonthView: View {
     @EnvironmentObject var store: DayStore
     @State private var month: Int
     @State private var year: Int
+    @State private var selectedEvents: [Day] = []
+    @State private var selectedDayTitle = ""
     var onOpen: (Day) -> Void
 
     init(onOpen: @escaping (Day) -> Void = { _ in }) {
@@ -63,6 +65,11 @@ struct CalendarMonthView: View {
                         .padding(.leading, 4)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     monthList
+                } else {
+                    ContentUnavailableView("本月没有日子", systemImage: "calendar",
+                                           description: Text("切换月份查看其他记录。"))
+                        .foregroundStyle(Theme.muted)
+                        .padding(.top, 42)
                 }
             }
             .padding(.horizontal, 16)
@@ -70,6 +77,15 @@ struct CalendarMonthView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
+        .sheet(isPresented: Binding(
+            get: { !selectedEvents.isEmpty },
+            set: { if !$0 { selectedEvents = [] } }
+        )) {
+            CalendarEventPicker(title: selectedDayTitle, events: selectedEvents) { day in
+                selectedEvents = []
+                onOpen(day)
+            }
+        }
     }
 
     private var navBar: some View {
@@ -101,11 +117,12 @@ struct CalendarMonthView: View {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Theme.ink)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(Theme.card)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("上个月")
             Spacer()
             VStack(spacing: 2) {
                 Text(verbatim: "\(year) 年 \(Self.monthNames[month])月")
@@ -121,11 +138,12 @@ struct CalendarMonthView: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Theme.ink)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(Theme.card)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("下个月")
         }
         .padding(.horizontal, 20)
         .padding(.top, 14)
@@ -209,9 +227,17 @@ struct CalendarMonthView: View {
             }
         }
 
-        if hasEvents, let first = events.first {
-            Button { onOpen(first) } label: { cell }
+        if hasEvents {
+            Button {
+                if events.count == 1, let first = events.first {
+                    onOpen(first)
+                } else {
+                    selectedDayTitle = "\(year) 年 \(Self.monthNames[month])月 \(d) 日"
+                    selectedEvents = events
+                }
+            } label: { cell }
                 .buttonStyle(.plain)
+                .accessibilityLabel("\(d)日，\(events.count) 个日子")
         } else {
             cell
         }
@@ -251,5 +277,65 @@ struct CalendarMonthView: View {
                 }
             }
         }
+    }
+}
+
+private struct CalendarEventPicker: View {
+    @Environment(\.dismiss) private var dismiss
+    let title: String
+    let events: [Day]
+    var onOpen: (Day) -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button("取消") { dismiss() }
+                    .font(Theme.sans(15, weight: .medium, relativeTo: .body))
+                    .foregroundStyle(Theme.ink2)
+                    .buttonStyle(.plain)
+                Spacer()
+                Text(title)
+                    .font(Theme.serif(17, weight: .semibold, relativeTo: .headline))
+                Spacer()
+                Color.clear.frame(width: 32, height: 32)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 22)
+            .padding(.bottom, 12)
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 8) {
+                    ForEach(events) { event in
+                        Button {
+                            onOpen(event)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                PhotoTile(day: event, flat: true, cornerRadius: 10)
+                                    .frame(width: 42, height: 42)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(event.title)
+                                        .font(Theme.sans(14, weight: .medium, relativeTo: .body))
+                                        .foregroundStyle(Theme.ink)
+                                    Text(event.categoryLabel)
+                                        .font(Theme.sans(12, relativeTo: .caption))
+                                        .foregroundStyle(Theme.muted)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Theme.card)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
+            }
+        }
+        .background(Theme.bg)
+        .presentationDetents([.medium, .large])
     }
 }
