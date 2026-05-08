@@ -17,12 +17,14 @@ struct DetailView: View {
         let info = DayInfo.compute(day)
 
         ZStack {
+            Color.black.ignoresSafeArea()
+
             // Background photo + scrim
             ZStack {
                 PhotoTile(day: day, flat: true, cornerRadius: 0)
                 LinearGradient(
                     colors: [
-                        .black.opacity(0.25),
+                        .black.opacity(0.35),
                         .black.opacity(0.10),
                         .black.opacity(0.85),
                     ],
@@ -43,7 +45,6 @@ struct DetailView: View {
             }
         }
         .foregroundStyle(.white)
-        .preferredColorScheme(.dark)
         .sheet(isPresented: $showShare) {
             ShareCardView(day: currentDay)
         }
@@ -82,7 +83,7 @@ struct DetailView: View {
                         .font(.system(size: 14, weight: .bold))
                         .frame(width: 40, height: 40)
                         .foregroundStyle(.white)
-                        .background(.ultraThinMaterial)
+                        .background(Color.white.opacity(0.18))
                         .clipShape(Circle())
                         .overlay(
                             Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
@@ -157,7 +158,10 @@ struct DetailView: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
-        .background(.ultraThinMaterial)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.black.opacity(0.32))
+        )
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)

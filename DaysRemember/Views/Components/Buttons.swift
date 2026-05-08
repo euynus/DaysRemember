@@ -61,7 +61,7 @@ struct GlassButton<Content: View>: View {
             content
                 .frame(width: 40, height: 40)
                 .foregroundStyle(.white)
-                .background(.ultraThinMaterial)
+                .background(Color.white.opacity(0.18))
                 .clipShape(Circle())
                 .overlay(
                     Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
