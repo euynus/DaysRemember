@@ -122,7 +122,11 @@ struct HomeView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(filters, id: \.self) { f in
-                    FilterChip(label: label(for: f), active: f == filter) { filter = f }
+                    let colors = colors(for: f)
+                    FilterChip(label: label(for: f), active: f == filter,
+                               tint: colors.tint, softTint: colors.soft) {
+                        filter = f
+                    }
                 }
             }
             .padding(.horizontal, 20)
@@ -136,6 +140,16 @@ struct HomeView: View {
         case .all: return "全部"
         case .pinned: return "置顶"
         case .category(let id): return store.category(for: id).name
+        }
+    }
+
+    private func colors(for filter: Filter) -> (tint: Color, soft: Color) {
+        switch filter {
+        case .all, .pinned:
+            return (Theme.terracotta, Theme.terracottaSoft)
+        case .category(let id):
+            let category = store.category(for: id)
+            return (category.colorToken.color, category.colorToken.soft)
         }
     }
 }
@@ -205,8 +219,8 @@ struct TodaySpotlight: View {
                 .background(
                     LinearGradient(
                         colors: [
-                            .adaptive(lightOklch: (0.96, 0.02, 30), darkOklch: (0.30, 0.04, 30)),
-                            .adaptive(lightOklch: (0.90, 0.04, 35), darkOklch: (0.36, 0.06, 35))
+                            Theme.card,
+                            Theme.terracottaSoft
                         ],
                         startPoint: .leading, endPoint: .trailing)
                 )

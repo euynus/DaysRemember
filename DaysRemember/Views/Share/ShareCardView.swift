@@ -124,11 +124,16 @@ struct ShareCardView: View {
                 Button { template = t } label: {
                     Text(t.label)
                         .font(Theme.sans(12, weight: .medium))
-                        .foregroundStyle(template == t ? Theme.bg : Theme.ink2)
+                        .foregroundStyle(template == t ? Theme.terracotta : Theme.ink2)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(template == t ? Theme.ink : Theme.card)
+                        .background(template == t ? Theme.terracottaSoft : Theme.card)
                         .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(template == t ? Theme.terracotta.opacity(0.22) : Theme.hairline,
+                                              lineWidth: 0.5)
+                        )
                 }
                 .buttonStyle(.plain)
             }

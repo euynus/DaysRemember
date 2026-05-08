@@ -49,14 +49,17 @@ struct SegBtnPair: View {
         Button(action: action) {
             Text(label)
                 .font(Theme.sans(12, weight: .medium))
-                .foregroundStyle(active ? Theme.ink : Theme.ink2)
+                .foregroundStyle(active ? Theme.terracotta : Theme.ink2)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 5)
                 .background {
                     if active {
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Theme.card)
-                            .shadow(color: .black.opacity(0.08), radius: 1, y: 1)
+                            .fill(Theme.terracottaSoft)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(Theme.terracotta.opacity(0.18), lineWidth: 0.5)
+                            )
                     }
                 }
         }

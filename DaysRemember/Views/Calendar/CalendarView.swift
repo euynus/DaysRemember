@@ -203,12 +203,12 @@ struct CalendarMonthView: View {
             Text("\(d)")
                 .font(Theme.sans(13, weight: isToday ? .semibold : .medium))
                 .monospacedDigit()
-                .foregroundStyle(isToday ? .white : (hasEvents ? Theme.ink : Theme.ink2))
+                .foregroundStyle(isToday ? Theme.accentForeground : (hasEvents ? Theme.ink : Theme.ink2))
             if hasEvents {
                 HStack(spacing: 2) {
                     ForEach(0..<min(events.count, 3), id: \.self) { _ in
                         Circle()
-                            .fill(isToday ? Color.white : Theme.terracotta)
+                            .fill(isToday ? Theme.accentForeground : Theme.terracotta)
                             .frame(width: 3, height: 3)
                     }
                 }

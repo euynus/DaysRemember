@@ -27,11 +27,16 @@ struct WidgetsPreviewView: View {
                     Button { size = s } label: {
                         Text("\(s.label)号")
                             .font(Theme.sans(13, weight: .medium))
-                            .foregroundStyle(size == s ? Theme.bg : Theme.ink2)
+                            .foregroundStyle(size == s ? Theme.terracotta : Theme.ink2)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(size == s ? Theme.ink : Theme.card)
+                            .background(size == s ? Theme.terracottaSoft : Theme.card)
                             .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(size == s ? Theme.terracotta.opacity(0.22) : Theme.hairline,
+                                                  lineWidth: 0.5)
+                            )
                     }
                     .buttonStyle(.plain)
                 }

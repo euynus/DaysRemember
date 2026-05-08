@@ -11,8 +11,8 @@ struct IconBtn: View {
         Button(action: action) {
             icon
                 .frame(width: 40, height: 40)
-                .background(accent ? Theme.ink : Theme.card)
-                .foregroundStyle(accent ? Theme.bg : Theme.ink)
+                .background(accent ? Theme.terracotta : Theme.card)
+                .foregroundStyle(accent ? Theme.accentForeground : Theme.ink)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .shadow(color: .black.opacity(0.04), radius: 1, y: 1)
         }

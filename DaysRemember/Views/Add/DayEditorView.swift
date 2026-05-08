@@ -183,11 +183,16 @@ struct DayEditorView: View {
                 Button { coverPreview = preview } label: {
                     Text(preview.label)
                         .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
-                        .foregroundStyle(coverPreview == preview ? Theme.bg : Theme.ink2)
+                        .foregroundStyle(coverPreview == preview ? Theme.terracotta : Theme.ink2)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
-                        .background(coverPreview == preview ? Theme.ink : Theme.card)
+                        .background(coverPreview == preview ? Theme.terracottaSoft : Theme.card)
                         .clipShape(RoundedRectangle(cornerRadius: 9))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 9)
+                                .strokeBorder(coverPreview == preview ? Theme.terracotta.opacity(0.2) : Theme.hairline,
+                                              lineWidth: 0.5)
+                        )
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(preview.label)封面比例")
@@ -303,11 +308,16 @@ struct DayEditorView: View {
                         } label: {
                             Text(Self.reminders[index].label)
                                 .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
-                                .foregroundStyle(remindIndex == index ? Theme.bg : Theme.ink2)
+                                .foregroundStyle(remindIndex == index ? Theme.terracotta : Theme.ink2)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 7)
-                                .background(remindIndex == index ? Theme.ink : .clear)
+                                .background(remindIndex == index ? Theme.terracottaSoft : .clear)
                                 .clipShape(RoundedRectangle(cornerRadius: 7))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 7)
+                                        .strokeBorder(remindIndex == index ? Theme.terracotta.opacity(0.2) : .clear,
+                                                      lineWidth: 0.5)
+                                )
                         }
                         .buttonStyle(.plain)
                     }
@@ -322,11 +332,16 @@ struct DayEditorView: View {
                 Button { categoryID = category.id } label: {
                     Label(category.name, systemImage: category.icon)
                         .font(Theme.sans(13, weight: .medium, relativeTo: .body))
-                        .foregroundStyle(categoryID == category.id ? Theme.bg : Theme.ink2)
+                        .foregroundStyle(categoryID == category.id ? category.colorToken.color : Theme.ink2)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
-                        .background(categoryID == category.id ? Theme.ink : Theme.card)
+                        .background(categoryID == category.id ? category.colorToken.soft : Theme.card)
                         .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(categoryID == category.id ? category.colorToken.color.opacity(0.24) : Theme.hairline,
+                                              lineWidth: 0.5)
+                        )
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("分类 \(category.name)")

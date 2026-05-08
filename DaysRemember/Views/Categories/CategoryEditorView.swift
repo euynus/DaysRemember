@@ -112,11 +112,16 @@ struct CategoryEditorView: View {
                             Text(token.label)
                         }
                         .font(Theme.sans(13, weight: .medium, relativeTo: .body))
-                        .foregroundStyle(colorToken == token ? Theme.bg : Theme.ink2)
+                        .foregroundStyle(colorToken == token ? token.color : Theme.ink2)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
-                        .background(colorToken == token ? Theme.ink : Theme.card)
+                        .background(colorToken == token ? token.soft : Theme.card)
                         .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(colorToken == token ? token.color.opacity(0.24) : Theme.hairline,
+                                              lineWidth: 0.5)
+                        )
                     }
                     .buttonStyle(.plain)
                 }

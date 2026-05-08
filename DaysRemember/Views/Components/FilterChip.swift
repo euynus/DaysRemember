@@ -1,20 +1,26 @@
 import SwiftUI
 
-/// Selectable pill — ink fill when active, card fill otherwise.
+/// Selectable pill — softly tinted when active, card fill otherwise.
 struct FilterChip: View {
     let label: String
     let active: Bool
+    var tint: Color = Theme.terracotta
+    var softTint: Color = Theme.terracottaSoft
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(label)
                 .font(Theme.sans(13, weight: .medium))
-                .foregroundStyle(active ? Theme.bg : Theme.ink2)
+                .foregroundStyle(active ? tint : Theme.ink2)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .background(active ? Theme.ink : Theme.card)
+                .background(active ? softTint : Theme.card)
                 .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(active ? tint.opacity(0.28) : Theme.hairline, lineWidth: 0.5)
+                )
                 .shadow(color: active ? .clear : .black.opacity(0.04), radius: 1, y: 1)
         }
         .buttonStyle(.plain)
