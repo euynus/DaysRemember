@@ -147,7 +147,10 @@ struct TodaySpotlight: View {
                 .padding(.vertical, 14)
                 .background(
                     LinearGradient(
-                        colors: [Color(oklch: 0.96, 0.02, 30), Color(oklch: 0.90, 0.04, 35)],
+                        colors: [
+                            .adaptive(lightOklch: (0.96, 0.02, 30), darkOklch: (0.30, 0.04, 30)),
+                            .adaptive(lightOklch: (0.90, 0.04, 35), darkOklch: (0.36, 0.06, 35))
+                        ],
                         startPoint: .leading, endPoint: .trailing)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))

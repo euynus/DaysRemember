@@ -39,10 +39,18 @@ enum CNDate {
 enum Today {
     static var date: Date {
         #if DEBUG
-        if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] == "1" {
-            var c = DateComponents()
-            c.year = 2026; c.month = 4; c.day = 23
-            return CNDate.calendar.date(from: c) ?? Date()
+        if let raw = ProcessInfo.processInfo.environment["DR_PIN_TODAY"] {
+            if raw == "1" {
+                var c = DateComponents()
+                c.year = 2026; c.month = 4; c.day = 23
+                return CNDate.calendar.date(from: c) ?? Date()
+            }
+            // Accept "yyyy-MM-dd" so test runs can pin to arbitrary dates.
+            let f = DateFormatter()
+            f.calendar = CNDate.calendar
+            f.timeZone = CNDate.calendar.timeZone
+            f.dateFormat = "yyyy-MM-dd"
+            if let d = f.date(from: raw) { return d }
         }
         #endif
         return Date()

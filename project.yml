@@ -69,6 +69,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.shiguang.daysremember.tests
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/时光.app/时光"
         BUNDLE_LOADER: "$(TEST_HOST)"
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   DaysRemember:
     build:

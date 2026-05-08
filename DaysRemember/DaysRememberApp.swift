@@ -17,8 +17,11 @@ struct DaysRememberApp: App {
                 .environmentObject(settings)
                 .task {
                     store.settings = settings
-                    // Authorization is best-effort; user can still flip toggles either way.
-                    _ = await NotificationManager.shared.requestAuthorization()
+                    // Skip the system permission prompt during automated screenshots —
+                    // it would block the simulator and can't be dismissed via simctl.
+                    if !DebugLaunch.isAutomated {
+                        _ = await NotificationManager.shared.requestAuthorization()
+                    }
                     store.rescheduleNotifications()
                 }
         }
@@ -62,6 +65,15 @@ enum DebugLaunch {
                 WidgetsPreviewView()
             }
         }
+    }
+
+    /// True when launched with any debug arg or pinned-today env var — i.e. an
+    /// automated screenshot session that can't dismiss system popups.
+    static var isAutomated: Bool {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("--screen") || args.contains("--tab") { return true }
+        if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] != nil { return true }
+        return false
     }
 
     static var screenOverride: Screen? {
