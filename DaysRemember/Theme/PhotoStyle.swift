@@ -3,7 +3,12 @@ import SwiftUI
 /// One of the prototype's CSS `.photo-*` gradient classes.
 enum PhotoStyle: String, Codable, CaseIterable, Hashable {
     case wedding, baby, birthday, japan, study, memorial, work, pet, home, health
+    case sketchLove, sketchFamily, sketchTravel, sketchWork, sketchLife
     case sketchMountain, sketchSea, sketchCafe, sketchGarden
+
+    static let categorySketchPresets: [PhotoStyle] = [
+        .sketchLove, .sketchFamily, .sketchTravel, .sketchWork, .sketchLife
+    ]
 
     var displayName: String {
         switch self {
@@ -17,6 +22,11 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
         case .pet: return "宠物"
         case .home: return "生活"
         case .health: return "健康"
+        case .sketchLove: return "手绘爱情"
+        case .sketchFamily: return "手绘家人"
+        case .sketchTravel: return "手绘旅行"
+        case .sketchWork: return "手绘工作"
+        case .sketchLife: return "手绘生活"
         case .sketchMountain: return "手绘山野"
         case .sketchSea: return "手绘海边"
         case .sketchCafe: return "手绘咖啡"
@@ -86,6 +96,16 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
                 colors: [Color(oklch: 0.80, 0.09, 140),
                          Color(oklch: 0.45, 0.08, 150)],
                 startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .sketchLove:
+            HandDrawnPhotoBackground(scene: .love)
+        case .sketchFamily:
+            HandDrawnPhotoBackground(scene: .family)
+        case .sketchTravel:
+            HandDrawnPhotoBackground(scene: .travel)
+        case .sketchWork:
+            HandDrawnPhotoBackground(scene: .work)
+        case .sketchLife:
+            HandDrawnPhotoBackground(scene: .life)
         case .sketchMountain:
             HandDrawnPhotoBackground(scene: .mountain)
         case .sketchSea:
@@ -99,6 +119,7 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
 }
 
 private enum HandDrawnScene {
+    case love, family, travel, work, life
     case mountain, sea, cafe, garden
 }
 
@@ -110,6 +131,16 @@ private struct HandDrawnPhotoBackground: View {
             LinearGradient(colors: palette, startPoint: .topLeading, endPoint: .bottomTrailing)
             Canvas { context, size in
                 switch scene {
+                case .love:
+                    drawLove(in: &context, size: size)
+                case .family:
+                    drawFamily(in: &context, size: size)
+                case .travel:
+                    drawTravel(in: &context, size: size)
+                case .work:
+                    drawWork(in: &context, size: size)
+                case .life:
+                    drawLife(in: &context, size: size)
                 case .mountain:
                     drawMountain(in: &context, size: size)
                 case .sea:
@@ -125,6 +156,16 @@ private struct HandDrawnPhotoBackground: View {
 
     private var palette: [Color] {
         switch scene {
+        case .love:
+            return [Color(hex: 0xFCE3DC), Color(hex: 0xEFA4A6), Color(hex: 0xB85C62)]
+        case .family:
+            return [Color(hex: 0xFFF0C8), Color(hex: 0xE6BE70), Color(hex: 0xA06D42)]
+        case .travel:
+            return [Color(hex: 0xEFE7D5), Color(hex: 0xB7CED9), Color(hex: 0x687FA7)]
+        case .work:
+            return [Color(hex: 0xE7F0D8), Color(hex: 0xA9C5A4), Color(hex: 0x5F856E)]
+        case .life:
+            return [Color(hex: 0xF8E2CC), Color(hex: 0xE6A478), Color(hex: 0xB76642)]
         case .mountain:
             return [Color(hex: 0xF6E9D1), Color(hex: 0xBFD6C6), Color(hex: 0x6E9A82)]
         case .sea:
@@ -133,6 +174,158 @@ private struct HandDrawnPhotoBackground: View {
             return [Color(hex: 0xF7D7C0), Color(hex: 0xDDA37F), Color(hex: 0x8E5D47)]
         case .garden:
             return [Color(hex: 0xF7EAC8), Color(hex: 0xC8DBA4), Color(hex: 0x73966D)]
+        }
+    }
+
+    private func drawLove(in context: inout GraphicsContext, size: CGSize) {
+        let ink = Color(hex: 0x6B3138)
+        let rose = Color(hex: 0xC8616B).opacity(0.74)
+        let cream = Color(hex: 0xFFF2DD).opacity(0.72)
+
+        var envelope = Path()
+        envelope.move(to: point(0.18, 0.46, size))
+        envelope.addLine(to: point(0.78, 0.36, size))
+        envelope.addLine(to: point(0.86, 0.68, size))
+        envelope.addLine(to: point(0.26, 0.78, size))
+        envelope.closeSubpath()
+        context.fill(envelope, with: .color(cream))
+        stroke(envelope, in: &context, color: ink.opacity(0.58), width: line(size, 0.009), jitter: true)
+        stroke(polyline([(0.20, 0.47), (0.52, 0.61), (0.78, 0.37)], size),
+               in: &context, color: ink.opacity(0.36), width: line(size, 0.007), jitter: true)
+
+        context.fill(heartPath(center: point(0.54, 0.40, size), scale: min(size.width, size.height) * 0.24),
+                     with: .color(rose))
+        stroke(heartPath(center: point(0.54, 0.40, size), scale: min(size.width, size.height) * 0.24),
+               in: &context, color: ink.opacity(0.52), width: line(size, 0.008), jitter: true)
+
+        context.fill(heartPath(center: point(0.26, 0.25, size), scale: min(size.width, size.height) * 0.10),
+                     with: .color(Color.white.opacity(0.45)))
+        context.fill(heartPath(center: point(0.78, 0.22, size), scale: min(size.width, size.height) * 0.08),
+                     with: .color(Color.white.opacity(0.38)))
+        stroke(polyline([(0.18, 0.88), (0.40, 0.83), (0.64, 0.86), (0.84, 0.80)], size),
+               in: &context, color: ink.opacity(0.32), width: line(size, 0.012), jitter: true)
+    }
+
+    private func drawFamily(in context: inout GraphicsContext, size: CGSize) {
+        let ink = Color(hex: 0x65401F)
+        let house = Color(hex: 0xF8E2B1).opacity(0.78)
+        let roof = Color(hex: 0xA65F3E).opacity(0.76)
+        let green = Color(hex: 0x6F8A56).opacity(0.72)
+
+        var roofPath = Path()
+        roofPath.move(to: point(0.18, 0.50, size))
+        roofPath.addLine(to: point(0.50, 0.24, size))
+        roofPath.addLine(to: point(0.82, 0.50, size))
+        roofPath.closeSubpath()
+        context.fill(roofPath, with: .color(roof))
+        stroke(roofPath, in: &context, color: ink.opacity(0.55), width: line(size, 0.01), jitter: true)
+
+        let body = rectPath(0.25, 0.48, 0.50, 0.32, size)
+        context.fill(body, with: .color(house))
+        stroke(body, in: &context, color: ink.opacity(0.50), width: line(size, 0.009), jitter: true)
+        stroke(rectPath(0.34, 0.56, 0.12, 0.12, size), in: &context, color: ink.opacity(0.36), width: line(size, 0.007))
+        stroke(rectPath(0.55, 0.56, 0.12, 0.24, size), in: &context, color: ink.opacity(0.42), width: line(size, 0.007))
+
+        for person in [(0.37, 0.84, 0.040), (0.50, 0.83, 0.048), (0.63, 0.85, 0.036)] as [(CGFloat, CGFloat, CGFloat)] {
+            drawPerson(x: person.0, y: person.1, radius: person.2, in: &context, size: size,
+                       color: ink.opacity(0.66))
+        }
+
+        drawTree(x: 0.13, y: 0.80, in: &context, size: size, color: green, ink: ink)
+        drawTree(x: 0.87, y: 0.78, in: &context, size: size, color: green.opacity(0.82), ink: ink)
+        stroke(polyline([(0.18, 0.88), (0.82, 0.88)], size), in: &context, color: ink.opacity(0.28), width: line(size, 0.011), jitter: true)
+    }
+
+    private func drawTravel(in context: inout GraphicsContext, size: CGSize) {
+        let ink = Color(hex: 0x2F4766)
+        let mountain = Color(hex: 0x6D86A4).opacity(0.58)
+        let road = Color(hex: 0xF3D49A).opacity(0.78)
+        let accent = Color(hex: 0xB85F44).opacity(0.80)
+
+        var hills = Path()
+        hills.move(to: point(-0.04, 0.68, size))
+        hills.addCurve(to: point(0.28, 0.34, size), control1: point(0.06, 0.60, size), control2: point(0.16, 0.40, size))
+        hills.addCurve(to: point(0.50, 0.56, size), control1: point(0.38, 0.40, size), control2: point(0.41, 0.54, size))
+        hills.addCurve(to: point(0.79, 0.38, size), control1: point(0.60, 0.52, size), control2: point(0.69, 0.38, size))
+        hills.addCurve(to: point(1.04, 0.66, size), control1: point(0.90, 0.43, size), control2: point(0.96, 0.58, size))
+        hills.addLine(to: point(1.04, 1.04, size))
+        hills.addLine(to: point(-0.04, 1.04, size))
+        context.fill(hills, with: .color(mountain))
+        stroke(hills, in: &context, color: ink.opacity(0.45), width: line(size, 0.01), jitter: true)
+
+        stroke(polyline([(0.46, 1.04), (0.51, 0.82), (0.57, 0.70), (0.60, 0.58)], size),
+               in: &context, color: road, width: line(size, 0.045))
+        stroke(polyline([(0.44, 0.23), (0.52, 0.19), (0.70, 0.24), (0.86, 0.19)], size),
+               in: &context, color: ink.opacity(0.45), width: line(size, 0.007))
+
+        stroke(suitcasePath(x: 0.18, y: 0.68, size: size), in: &context,
+               color: ink.opacity(0.62), width: line(size, 0.009), jitter: true)
+        context.fill(Path(ellipseIn: rect(0.72, 0.17, 0.14, 0.14, size)), with: .color(accent))
+        stroke(polyline([(0.68, 0.29), (0.82, 0.25), (0.90, 0.29)], size),
+               in: &context, color: ink.opacity(0.36), width: line(size, 0.008), jitter: true)
+    }
+
+    private func drawWork(in context: inout GraphicsContext, size: CGSize) {
+        let ink = Color(hex: 0x2F4B3F)
+        let paper = Color(hex: 0xF3F0D8).opacity(0.76)
+        let screen = Color(hex: 0xDCE9D4).opacity(0.78)
+        let accent = Color(hex: 0x6F9A75).opacity(0.72)
+
+        let laptop = rectPath(0.26, 0.36, 0.48, 0.28, size)
+        context.fill(laptop, with: .color(screen))
+        stroke(laptop, in: &context, color: ink.opacity(0.58), width: line(size, 0.009), jitter: true)
+        stroke(polyline([(0.18, 0.70), (0.82, 0.70)], size),
+               in: &context, color: ink.opacity(0.58), width: line(size, 0.018), jitter: true)
+        stroke(polyline([(0.34, 0.49), (0.45, 0.49), (0.50, 0.55), (0.62, 0.44)], size),
+               in: &context, color: accent, width: line(size, 0.012), jitter: true)
+
+        var note = Path()
+        note.move(to: point(0.12, 0.20, size))
+        note.addLine(to: point(0.36, 0.16, size))
+        note.addLine(to: point(0.40, 0.40, size))
+        note.addLine(to: point(0.16, 0.44, size))
+        note.closeSubpath()
+        context.fill(note, with: .color(paper))
+        stroke(note, in: &context, color: ink.opacity(0.38), width: line(size, 0.007), jitter: true)
+        for y in [0.24, 0.30, 0.36] as [CGFloat] {
+            stroke(polyline([(0.18, y), (0.34, y - 0.03)], size), in: &context,
+                   color: ink.opacity(0.25), width: line(size, 0.005))
+        }
+
+        stroke(rectPath(0.68, 0.20, 0.14, 0.16, size), in: &context, color: ink.opacity(0.44), width: line(size, 0.008), jitter: true)
+        stroke(polyline([(0.71, 0.20), (0.71, 0.16), (0.79, 0.16), (0.79, 0.20)], size),
+               in: &context, color: ink.opacity(0.44), width: line(size, 0.007))
+    }
+
+    private func drawLife(in context: inout GraphicsContext, size: CGSize) {
+        let ink = Color(hex: 0x6E3C25)
+        let mug = Color(hex: 0xFFF1DA).opacity(0.74)
+        let plant = Color(hex: 0x668456).opacity(0.78)
+        let accent = Color(hex: 0xD9794E).opacity(0.70)
+
+        stroke(polyline([(0.16, 0.80), (0.84, 0.80)], size),
+               in: &context, color: ink.opacity(0.40), width: line(size, 0.014), jitter: true)
+
+        var cup = Path()
+        cup.move(to: point(0.36, 0.50, size))
+        cup.addQuadCurve(to: point(0.62, 0.50, size), control: point(0.49, 0.55, size))
+        cup.addQuadCurve(to: point(0.57, 0.72, size), control: point(0.62, 0.69, size))
+        cup.addQuadCurve(to: point(0.41, 0.72, size), control: point(0.49, 0.76, size))
+        cup.addQuadCurve(to: point(0.36, 0.50, size), control: point(0.35, 0.66, size))
+        context.fill(cup, with: .color(mug))
+        stroke(cup, in: &context, color: ink.opacity(0.58), width: line(size, 0.010), jitter: true)
+        stroke(Path(ellipseIn: rect(0.58, 0.55, 0.12, 0.12, size)), in: &context,
+               color: ink.opacity(0.44), width: line(size, 0.008), jitter: true)
+
+        for leaf in [(0.24, 0.45), (0.29, 0.38), (0.33, 0.48), (0.25, 0.55)] {
+            stroke(leafPath(x: leaf.0, y: leaf.1, size: size), in: &context, color: plant, width: line(size, 0.012))
+        }
+        stroke(polyline([(0.29, 0.62), (0.29, 0.42)], size), in: &context, color: plant, width: line(size, 0.007))
+        context.fill(heartPath(center: point(0.73, 0.40, size), scale: min(size.width, size.height) * 0.12),
+                     with: .color(accent))
+
+        for sparkle in [(0.18, 0.20), (0.78, 0.20), (0.84, 0.52)] as [(CGFloat, CGFloat)] {
+            drawSparkle(x: sparkle.0, y: sparkle.1, in: &context, size: size, color: Color.white.opacity(0.52))
         }
     }
 
@@ -284,6 +477,74 @@ private struct HandDrawnPhotoBackground: View {
         }
         context.fill(Path(ellipseIn: CGRect(x: center.x - r * 0.5, y: center.y - r * 0.5, width: r, height: r)),
                      with: .color(Color(hex: 0x6B4A2E).opacity(0.7)))
+    }
+
+    private func drawPerson(x: CGFloat, y: CGFloat, radius: CGFloat,
+                            in context: inout GraphicsContext, size: CGSize, color: Color) {
+        let head = CGRect(
+            x: size.width * x - size.width * radius,
+            y: size.height * (y - 0.16) - size.width * radius,
+            width: size.width * radius * 2,
+            height: size.width * radius * 2
+        )
+        context.fill(Path(ellipseIn: head), with: .color(color))
+        stroke(polyline([(x, y - 0.11), (x, y), (x - 0.05, y + 0.05), (x, y), (x + 0.05, y + 0.05)], size),
+               in: &context, color: color, width: line(size, 0.008), jitter: true)
+    }
+
+    private func drawTree(x: CGFloat, y: CGFloat, in context: inout GraphicsContext,
+                          size: CGSize, color: Color, ink: Color) {
+        stroke(polyline([(x, y), (x, y - 0.18)], size), in: &context,
+               color: ink.opacity(0.40), width: line(size, 0.007))
+        for blob in [(x - 0.045, y - 0.16), (x, y - 0.22), (x + 0.045, y - 0.16)] {
+            context.fill(Path(ellipseIn: rect(blob.0, blob.1, 0.09, 0.09, size)), with: .color(color))
+        }
+    }
+
+    private func drawSparkle(x: CGFloat, y: CGFloat, in context: inout GraphicsContext,
+                             size: CGSize, color: Color) {
+        stroke(polyline([(x, y - 0.06), (x, y + 0.06)], size),
+               in: &context, color: color, width: line(size, 0.006))
+        stroke(polyline([(x - 0.05, y), (x + 0.05, y)], size),
+               in: &context, color: color, width: line(size, 0.006))
+    }
+
+    private func suitcasePath(x: CGFloat, y: CGFloat, size: CGSize) -> Path {
+        var path = rectPath(x, y, 0.18, 0.16, size)
+        path.move(to: point(x + 0.05, y, size))
+        path.addLine(to: point(x + 0.05, y - 0.05, size))
+        path.addLine(to: point(x + 0.13, y - 0.05, size))
+        path.addLine(to: point(x + 0.13, y, size))
+        path.move(to: point(x + 0.09, y, size))
+        path.addLine(to: point(x + 0.09, y + 0.16, size))
+        return path
+    }
+
+    private func heartPath(center: CGPoint, scale: CGFloat) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: center.x, y: center.y + scale * 0.34))
+        path.addCurve(
+            to: CGPoint(x: center.x - scale * 0.52, y: center.y - scale * 0.12),
+            control1: CGPoint(x: center.x - scale * 0.42, y: center.y + scale * 0.12),
+            control2: CGPoint(x: center.x - scale * 0.56, y: center.y - scale * 0.02)
+        )
+        path.addCurve(
+            to: CGPoint(x: center.x, y: center.y - scale * 0.36),
+            control1: CGPoint(x: center.x - scale * 0.44, y: center.y - scale * 0.36),
+            control2: CGPoint(x: center.x - scale * 0.12, y: center.y - scale * 0.48)
+        )
+        path.addCurve(
+            to: CGPoint(x: center.x + scale * 0.52, y: center.y - scale * 0.12),
+            control1: CGPoint(x: center.x + scale * 0.12, y: center.y - scale * 0.48),
+            control2: CGPoint(x: center.x + scale * 0.44, y: center.y - scale * 0.36)
+        )
+        path.addCurve(
+            to: CGPoint(x: center.x, y: center.y + scale * 0.34),
+            control1: CGPoint(x: center.x + scale * 0.56, y: center.y - scale * 0.02),
+            control2: CGPoint(x: center.x + scale * 0.42, y: center.y + scale * 0.12)
+        )
+        path.closeSubpath()
+        return path
     }
 
     private func wave(y: CGFloat, size: CGSize) -> Path {

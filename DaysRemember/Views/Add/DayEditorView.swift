@@ -25,8 +25,7 @@ struct DayEditorView: View {
 
     private static let pickerOptions: [PhotoStyle] = [
         .wedding, .baby, .birthday, .japan, .study, .work, .pet, .home,
-        .sketchMountain, .sketchSea, .sketchCafe, .sketchGarden
-    ]
+    ] + PhotoStyle.categorySketchPresets
     private static let reminders: [(label: String, offset: Int)] = [
         ("当天", 0), ("1天", 1), ("3天", 3), ("7天", 7)
     ]
