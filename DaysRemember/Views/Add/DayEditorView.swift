@@ -207,6 +207,9 @@ struct DayEditorView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionLabel(text: "封面")
             ScrollView(.horizontal, showsIndicators: false) {
+                // Reserve the same 62×62 cell every item so the selected ring renders
+                // on all four sides — earlier the ring was an overlay with padding(-3)
+                // that the HStack/ScrollView clipped on top and bottom.
                 HStack(spacing: 8) {
                     ForEach(Self.pickerOptions, id: \.self) { preset in
                         Button {
@@ -214,39 +217,46 @@ struct DayEditorView: View {
                             photoData = nil
                             resetFocus()
                         } label: {
-                            PhotoTile(style: preset, flat: true, cornerRadius: 14)
-                                .frame(width: 56, height: 56)
-                                .overlay {
-                                    if photo == preset && photoData == nil {
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .strokeBorder(Theme.terracotta, lineWidth: 2.5)
-                                            .padding(-3)
-                                    }
-                                }
+                            coverChoiceTile {
+                                PhotoTile(style: preset, flat: true, cornerRadius: 14)
+                                    .frame(width: 56, height: 56)
+                            } selected: {
+                                photo == preset && photoData == nil
+                            }
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("选择\(preset.displayName)封面")
                     }
                     photosPickerTile
                 }
+                .padding(.vertical, 3)
             }
         }
     }
 
+    /// 62×62 cell that wraps a 56×56 thumbnail and renders the selected-state ring
+    /// on all four edges without overflowing into the parent layout.
+    private func coverChoiceTile<Content: View>(@ViewBuilder content: () -> Content,
+                                                 selected: () -> Bool) -> some View {
+        ZStack {
+            content()
+            if selected() {
+                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                    .strokeBorder(Theme.terracotta, lineWidth: 2.5)
+            }
+        }
+        .frame(width: 62, height: 62)
+    }
+
     private var photosPickerTile: some View {
         PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
-            ZStack {
+            coverChoiceTile {
                 if let data = photoData, let ui = UIImage(data: data) {
                     Image(uiImage: ui)
                         .resizable()
                         .scaledToFill()
                         .frame(width: 56, height: 56)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 14)
-                                .strokeBorder(Theme.terracotta, lineWidth: 2.5)
-                                .padding(-3)
-                        }
                 } else {
                     ZStack {
                         RoundedRectangle(cornerRadius: 14)
@@ -256,11 +266,13 @@ struct DayEditorView: View {
                             .font(.system(size: 18, weight: .regular))
                             .foregroundStyle(Theme.muted)
                     }
+                    .frame(width: 56, height: 56)
                     .background(Theme.card)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
+            } selected: {
+                photoData != nil
             }
-            .frame(width: 56, height: 56)
         }
         .accessibilityLabel("选择相册封面")
         .onChange(of: pickerItem) { _, item in
