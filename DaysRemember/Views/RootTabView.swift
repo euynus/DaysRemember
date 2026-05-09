@@ -162,6 +162,9 @@ struct TabBar: View {
                 Rectangle().fill(Theme.hairline).frame(height: 0.5)
                     .frame(maxHeight: .infinity, alignment: .top)
             }
+            // Extend the cream fill into the home-indicator strip so scroll content
+            // never shows through that gap below the tab icons.
+            .ignoresSafeArea(edges: .bottom)
         )
     }
 }
