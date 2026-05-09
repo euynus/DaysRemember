@@ -103,6 +103,7 @@ struct ShareCardView: View {
                 .font(Theme.sans(15, weight: .medium))
                 .foregroundStyle(Theme.ink2)
                 .buttonStyle(.plain)
+                .navTextButton()
             Spacer()
             Text("分享").font(Theme.serif(17, weight: .semibold))
             Spacer()
@@ -110,6 +111,7 @@ struct ShareCardView: View {
                 .font(Theme.sans(15, weight: .semibold))
                 .foregroundStyle(Theme.terracotta)
                 .buttonStyle(.plain)
+                .navTextButton()
         }
         .padding(.horizontal, 20)
         .padding(.top, 60)

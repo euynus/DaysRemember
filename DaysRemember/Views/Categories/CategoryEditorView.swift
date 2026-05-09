@@ -43,6 +43,7 @@ struct CategoryEditorView: View {
                 .font(Theme.sans(15, weight: .medium, relativeTo: .body))
                 .foregroundStyle(Theme.ink2)
                 .buttonStyle(.plain)
+                .navTextButton()
             Spacer()
             Text(category == nil ? "新建分类" : "编辑分类")
                 .font(Theme.serif(17, weight: .semibold, relativeTo: .headline))
@@ -53,6 +54,7 @@ struct CategoryEditorView: View {
                 .buttonStyle(.plain)
                 .disabled(!canSave)
                 .opacity(canSave ? 1 : 0.45)
+                .navTextButton()
         }
         .padding(.horizontal, 20)
         .padding(.top, 60)

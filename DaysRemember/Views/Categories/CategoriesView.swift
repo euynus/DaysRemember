@@ -57,7 +57,8 @@ struct CategoriesView: View {
             .font(Theme.sans(14, weight: .medium, relativeTo: .body))
             .foregroundStyle(Theme.terracotta)
             .buttonStyle(.plain)
-            .frame(width: 44, height: 44, alignment: .trailing)
+            .frame(minHeight: 44, alignment: .trailing)
+            .contentShape(Rectangle())
         }
         .padding(.horizontal, 20)
         .padding(.top, 60)

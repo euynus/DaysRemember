@@ -75,4 +75,12 @@ extension View {
             .clipShape(Circle())
             .overlay(Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5))
     }
+
+    /// Pad a text-only nav-bar button so the hit area reaches iOS's recommended
+    /// 44pt-ish target without changing the visual position of the label glyphs.
+    func navTextButton() -> some View {
+        padding(.vertical, 10)
+            .padding(.horizontal, 4)
+            .contentShape(Rectangle())
+    }
 }

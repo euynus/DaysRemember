@@ -115,6 +115,7 @@ struct CalendarMonthView: View {
             .font(Theme.sans(14, weight: .medium))
             .foregroundStyle(Theme.terracotta)
             .buttonStyle(.plain)
+            .navTextButton()
         }
         .padding(.horizontal, 20)
         .padding(.top, 60)
