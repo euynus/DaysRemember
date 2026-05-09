@@ -69,16 +69,17 @@ struct PhotoTile: View {
         let scrimStartY = pickedImage != nil ? 0.25 : 0.35
 
         ZStack {
-            GeometryReader { geo in
-                Group {
-                    if let pickedImage {
-                        focusedImage(pickedImage, in: geo.size)
-                    } else {
-                        style.background()
-                    }
+            // Only the picked-photo path needs GeometryReader — it positions the
+            // image within its container according to the focus point. The gradient
+            // and rasterized hand-drawn covers fill naturally.
+            if let pickedImage {
+                GeometryReader { geo in
+                    focusedImage(pickedImage, in: geo.size)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
                 }
-                .frame(width: geo.size.width, height: geo.size.height)
-                .clipped()
+            } else {
+                style.background()
             }
             if !flat {
                 LinearGradient(
