@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// One of the prototype's CSS `.photo-*` gradient classes.
 enum PhotoStyle: String, Codable, CaseIterable, Hashable {
@@ -118,15 +119,45 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
     }
 }
 
-private enum HandDrawnScene {
+private enum HandDrawnScene: String {
     case love, family, travel, work, life
     case mountain, sea, cafe, garden
 }
 
+/// Process-wide raster cache for the hand-drawn covers. Each scene has ~50-200
+/// path ops; rendering once and reusing the bitmap saves the redraw on every
+/// body re-eval (scrolls, taps, anything that re-validates the home grid).
+private enum HandDrawnRasterCache {
+    static let storage: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 16
+        return cache
+    }()
+}
+
+@MainActor
 private struct HandDrawnPhotoBackground: View {
     let scene: HandDrawnScene
 
     var body: some View {
+        let key = scene.rawValue as NSString
+        let raster = HandDrawnRasterCache.storage.object(forKey: key) ?? renderAndCache(key: key)
+        Image(uiImage: raster)
+            .resizable()
+            .scaledToFill()
+    }
+
+    /// Synchronous one-shot render via ImageRenderer. Runs at most once per scene
+    /// per app session — subsequent body evals hit the NSCache fast path.
+    private func renderAndCache(key: NSString) -> UIImage {
+        let renderer = ImageRenderer(content: rawContent.frame(width: 512, height: 512))
+        renderer.scale = 2
+        guard let image = renderer.uiImage else { return UIImage() }
+        HandDrawnRasterCache.storage.setObject(image, forKey: key)
+        return image
+    }
+
+    private var rawContent: some View {
         ZStack {
             LinearGradient(colors: palette, startPoint: .topLeading, endPoint: .bottomTrailing)
             Canvas { context, size in
