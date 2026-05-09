@@ -15,6 +15,7 @@ struct DaysRememberApp: App {
             RootGate()
                 .environmentObject(store)
                 .environmentObject(settings)
+                .environment(\.locale, Locale(identifier: "zh_CN"))
                 .task {
                     store.settings = settings
                     store.enableCloudSync()
