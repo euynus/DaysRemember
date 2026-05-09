@@ -140,13 +140,18 @@ final class DayStore: ObservableObject {
     }
 
     func sortedDays(_ source: [Day]) -> [Day] {
-        source.sorted { lhs, rhs in
-            if lhs.pinned != rhs.pinned { return lhs.pinned && !rhs.pinned }
-            let left = DayInfo.compute(lhs)
-            let right = DayInfo.compute(rhs)
-            if left.isPast != right.isPast { return !left.isPast }
-            return left.days < right.days
-        }
+        // Decorate-sort-undecorate: compute DayInfo once per day instead of on every
+        // comparator call. With N days the sort issues ~N log N comparisons; without
+        // memoizing we'd hit DayInfo.compute (which can do a multi-year lunar walk for
+        // recurring lunar days) ~2N log N times per sort.
+        source
+            .map { ($0, DayInfo.compute($0)) }
+            .sorted { lhs, rhs in
+                if lhs.0.pinned != rhs.0.pinned { return lhs.0.pinned && !rhs.0.pinned }
+                if lhs.1.isPast != rhs.1.isPast { return !lhs.1.isPast }
+                return lhs.1.days < rhs.1.days
+            }
+            .map(\.0)
     }
 
     @discardableResult
