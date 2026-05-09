@@ -93,7 +93,9 @@ struct DetailView: View {
     private func togglePinned() {
         var updated = currentDay
         updated.pinned.toggle()
-        store.update(updated)
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+            store.update(updated)
+        }
     }
 
     private func counter(day: Day, info: DayInfo) -> some View {
@@ -105,9 +107,14 @@ struct DetailView: View {
                 .padding(.bottom, 10)
             Text(day.title)
                 .font(Theme.serif(28, weight: .medium))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
             Text("\(info.days)")
                 .font(Theme.serif(120, weight: .medium))
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
                 .padding(.top, 28)
                 .padding(.bottom, 6)
             Text("\(info.label) · 天")
