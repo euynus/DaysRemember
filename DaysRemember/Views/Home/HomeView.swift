@@ -46,14 +46,13 @@ struct HomeView: View {
             TodayStrip()
             ScrollView(.vertical, showsIndicators: false) {
                 if filteredDays.isEmpty {
-                    ContentUnavailableView(
-                        isSearching ? "没有找到日子" : "这里还没有日子",
-                        systemImage: isSearching ? "magnifyingglass" : "calendar.badge.plus",
-                        description: Text(isSearching ? "换个关键词试试。" : "点右上角加号记录第一个重要日子。")
-                    )
-                    .foregroundStyle(Theme.muted)
-                    .padding(.top, 56)
-                    .padding(.horizontal, 24)
+                    let empty = emptyStateCopy()
+                    ContentUnavailableView(empty.title,
+                                           systemImage: empty.symbol,
+                                           description: Text(empty.detail))
+                        .foregroundStyle(Theme.muted)
+                        .padding(.top, 56)
+                        .padding(.horizontal, 24)
                 } else {
                     MosaicGrid(days: filteredDays, onOpen: onOpen)
                         .padding(.horizontal, 20)
@@ -153,6 +152,26 @@ struct HomeView: View {
         case .category(let id):
             let category = store.category(for: id)
             return (category.colorToken.color, category.colorToken.soft)
+        }
+    }
+
+    /// Copy for the empty-state placeholder, tailored to whichever filter or search
+    /// is currently active so the message matches what the user is seeing.
+    private func emptyStateCopy() -> (title: String, symbol: String, detail: String) {
+        if isSearching {
+            return ("没有找到日子", "magnifyingglass", "换个关键词试试。")
+        }
+        switch filter {
+        case .pinned:
+            return ("还没有置顶的日子", "star", "在日子上长按可以置顶它。")
+        case .category(let id):
+            return ("这个分类里还没有日子",
+                    store.category(for: id).icon,
+                    "切换分类，或在加号里给它添个新日子。")
+        case .all:
+            return ("这里还没有日子",
+                    "calendar.badge.plus",
+                    "点右上角加号，记录第一个重要日子。")
         }
     }
 }
