@@ -18,7 +18,9 @@ struct HomeView: View {
 
     private var filteredDays: [Day] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return store.sortedDays(store.days).filter { d in
+        // Filter first, then sort: a typed search or category filter can prune most of
+        // the array, and sortedDays does an O(N log N) sort on whatever it receives.
+        let matched = store.days.filter { d in
             switch filter {
             case .all:
                 break
@@ -32,6 +34,7 @@ struct HomeView: View {
             return [d.title, d.location, d.note, categoryName]
                 .contains { $0.localizedCaseInsensitiveContains(query) }
         }
+        return store.sortedDays(matched)
     }
 
     var body: some View {

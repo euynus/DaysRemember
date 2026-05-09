@@ -147,9 +147,9 @@ final class DayStore: ObservableObject {
     }
 
     func days(in categoryID: String?) -> [Day] {
-        let source = sortedDays(days)
-        guard let categoryID else { return source }
-        return source.filter { $0.categoryID == categoryID }
+        guard let categoryID else { return sortedDays(days) }
+        // Filter before sort — sort cost grows N log N, so trimming first is cheaper.
+        return sortedDays(days.filter { $0.categoryID == categoryID })
     }
 
     func sortedDays(_ source: [Day]) -> [Day] {
