@@ -1,6 +1,38 @@
 import SwiftUI
 import UIKit
 
+/// Process-wide LRU for decoded user photos. Each `UIImage(data:)` produces a fresh
+/// instance with its own lazy-decoded bitmap; without sharing, every grid re-render
+/// re-decodes the same JPEG. Keyed by a fingerprint (count + first 8 bytes) so the
+/// lookup is O(1) and content-stable across `Day` value-type copies.
+private enum PhotoDecodeCache {
+    static let storage: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 64
+        return cache
+    }()
+
+    static func decoded(_ data: Data) -> UIImage? {
+        let key = fingerprint(data)
+        if let cached = storage.object(forKey: key) { return cached }
+        guard let image = UIImage(data: data) else { return nil }
+        storage.setObject(image, forKey: key)
+        return image
+    }
+
+    private static func fingerprint(_ data: Data) -> NSString {
+        // Two different JPEGs almost always differ in either total length or the first
+        // few header bytes (JFIF/EXIF markers vary). 9 chars: count + 8 prefix bytes.
+        var key = "\(data.count):"
+        data.withUnsafeBytes { buf in
+            for byte in buf.bindMemory(to: UInt8.self).prefix(8) {
+                key.append(String(byte, radix: 16))
+            }
+        }
+        return key as NSString
+    }
+}
+
 /// A photo placeholder — colored gradient + optional bottom-darkening scrim.
 /// When `imageData` is non-nil it is rendered in place of the gradient.
 struct PhotoTile: View {
@@ -29,7 +61,7 @@ struct PhotoTile: View {
     }
 
     var body: some View {
-        let pickedImage = imageData.flatMap { UIImage(data: $0) }
+        let pickedImage = imageData.flatMap(PhotoDecodeCache.decoded)
         // Real photographs cover the full color range; the gradient palette already
         // darkens at the bottom by design. So picked photos need a stronger scrim
         // (and an earlier ramp) to keep white overlay text legible.
