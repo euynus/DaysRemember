@@ -11,6 +11,20 @@ struct DayInfo {
     static func compute(_ d: Day, today: Date = Today.date) -> DayInfo {
         let cal = CNDate.calendar
         let todayStart = cal.startOfDay(for: today)
+        let key = CacheKey(
+            dayID: d.id,
+            dateRef: d.date.timeIntervalSinceReferenceDate,
+            recurring: d.recurring,
+            lunar: d.lunar,
+            todayStartRef: todayStart.timeIntervalSinceReferenceDate
+        )
+        if let hit = Cache.shared.fetch(key) { return hit }
+        let result = uncached(d, todayStart: todayStart, calendar: cal)
+        Cache.shared.store(key, result)
+        return result
+    }
+
+    private static func uncached(_ d: Day, todayStart: Date, calendar cal: Calendar) -> DayInfo {
         var displayDate = cal.startOfDay(for: d.date)
 
         if d.recurring {
@@ -51,6 +65,34 @@ struct DayInfo {
             displayDate: displayDate,
             yearsAgo: years
         )
+    }
+
+    /// Memoization key — uses Day.id + date + recurrence + today's day-boundary so
+    /// cache entries naturally drift out at midnight without manual invalidation.
+    /// Avoids hashing Day directly because Day.photoData would make Hashable O(N).
+    private struct CacheKey: Hashable {
+        let dayID: String
+        let dateRef: TimeInterval
+        let recurring: Bool
+        let lunar: Bool
+        let todayStartRef: TimeInterval
+    }
+
+    private final class Cache: @unchecked Sendable {
+        static let shared = Cache()
+        private let lock = NSLock()
+        private var entries: [CacheKey: DayInfo] = [:]
+
+        func fetch(_ key: CacheKey) -> DayInfo? {
+            lock.lock(); defer { lock.unlock() }
+            return entries[key]
+        }
+
+        func store(_ key: CacheKey, _ info: DayInfo) {
+            lock.lock(); defer { lock.unlock() }
+            if entries.count >= 256 { entries.removeAll(keepingCapacity: true) }
+            entries[key] = info
+        }
     }
 
     /// "还有" / "已过去" / "就是今天"
