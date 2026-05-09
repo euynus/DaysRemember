@@ -317,14 +317,16 @@ final class AppSettings: ObservableObject {
             guard changedKeys == nil || changedKeys?.contains(ICloudSyncStore.Key.settings) == true else { return }
             self?.pullSettingsIfNewer()
         }
-        settingsCancellable = objectWillChange.sink { [weak self] _ in
-            guard let self, self.cloudSyncEnabled, !self.isApplyingCloudChange else { return }
-            Task { @MainActor [weak self] in
-                await Task.yield()
+        // Debounce so rapid toggles (e.g. flipping several reminder offsets in a row)
+        // coalesce into one KVS write instead of one push per @AppStorage emission.
+        // 300 ms also covers the "objectWillChange fires before the value commits"
+        // gap that the old Task.yield handled.
+        settingsCancellable = objectWillChange
+            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
                 guard let self, self.cloudSyncEnabled, !self.isApplyingCloudChange else { return }
                 self.pushSettingsToCloud()
             }
-        }
         reconcileSettingsWithCloud()
     }
 
