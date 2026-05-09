@@ -28,6 +28,8 @@ final class DayStore: ObservableObject {
     /// Non-nil while a remote envelope is being written into `days`/`categories`. Acts
     /// as both the "skip the push-back" guard and the source of the timestamp to mirror.
     private var cloudApplyContext: (key: String, updatedAt: TimeInterval)?
+    /// Debounce/serialize handle for `NotificationManager.sync`.
+    private var rescheduleTask: Task<Void, Never>?
     /// Set after init so we can wire the notification scheduler without a circular dependency.
     var settings: AppSettings? {
         didSet { rescheduleNotifications() }
@@ -112,8 +114,19 @@ final class DayStore: ObservableObject {
 
     func rescheduleNotifications() {
         guard let settings else { return }
+        // Coalesce rapid edits: cancel any task waiting to run, and chain off the
+        // previous one so we never dispatch overlapping syncs that would race on
+        // UNUserNotificationCenter (both calls would remove-stale then add-new and
+        // could end up with duplicate requests).
+        let previous = rescheduleTask
+        rescheduleTask?.cancel()
         let snapshot = days
-        Task { await NotificationManager.shared.sync(days: snapshot, settings: settings) }
+        rescheduleTask = Task {
+            await previous?.value
+            try? await Task.sleep(for: .milliseconds(300))
+            if Task.isCancelled { return }
+            await NotificationManager.shared.sync(days: snapshot, settings: settings)
+        }
     }
 
     func enableCloudSync() {
