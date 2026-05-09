@@ -32,7 +32,9 @@ struct CalendarMonthView: View {
         return cal.component(.weekday, from: dt) - 1
     }
 
-    private var eventsByDay: [Int: [Day]] {
+    /// O(N) build keyed by day-of-month for the visible month. Called once per body
+    /// re-eval and threaded through `grid` / `monthList` so neither has to recompute.
+    private func computeEventsByDay() -> [Int: [Day]] {
         var map: [Int: [Day]] = [:]
         let cal = CNDate.calendar
         for d in store.days {
@@ -52,19 +54,20 @@ struct CalendarMonthView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        let eventsByDay = computeEventsByDay()
+        return VStack(spacing: 0) {
             navBar
             monthSwitcher
             weekdayRow
             ScrollView(.vertical, showsIndicators: false) {
-                grid
+                grid(eventsByDay: eventsByDay)
                 if !eventsByDay.isEmpty {
                     SectionLabel(text: "本月日子")
                         .padding(.top, 22)
                         .padding(.bottom, 12)
                         .padding(.leading, 4)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    monthList
+                    monthList(eventsByDay: eventsByDay)
                 } else {
                     ContentUnavailableView("本月没有日子", systemImage: "calendar",
                                            description: Text("切换月份查看其他记录。"))
@@ -171,7 +174,7 @@ struct CalendarMonthView: View {
         .padding(.bottom, 4)
     }
 
-    private var grid: some View {
+    private func grid(eventsByDay: [Int: [Day]]) -> some View {
         let cal = CNDate.calendar
         let today = Today.date
         let isCurrentMonth = (cal.component(.year, from: today) == year)
@@ -242,7 +245,7 @@ struct CalendarMonthView: View {
         }
     }
 
-    private var monthList: some View {
+    private func monthList(eventsByDay: [Int: [Day]]) -> some View {
         VStack(spacing: 8) {
             ForEach(eventsByDay.keys.sorted(), id: \.self) { day in
                 if let evts = eventsByDay[day] {
