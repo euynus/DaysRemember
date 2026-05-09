@@ -62,6 +62,8 @@ struct WidgetsPreviewView: View {
             Button(action: onBack) {
                 Image(systemName: "chevron.left").font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Theme.ink)
+                    .frame(width: 40, height: 40)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             Spacer()
