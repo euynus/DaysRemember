@@ -84,7 +84,7 @@ struct RootTabView: View {
             )
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Day.self) { day in
-                DetailView(day: day, onBack: { popHomePath() })
+                DetailView(day: day)
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationBarBackButtonHidden(true)
             }
@@ -96,7 +96,7 @@ struct RootTabView: View {
             CalendarMonthView(onOpen: { day in calendarPath.append(day) })
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: Day.self) { day in
-                    DetailView(day: day, onBack: { popCalendarPath() })
+                    DetailView(day: day)
                         .toolbar(.hidden, for: .navigationBar)
                         .navigationBarBackButtonHidden(true)
                 }
@@ -108,23 +108,11 @@ struct RootTabView: View {
             CategoriesView(onOpen: { day in categoryPath.append(day) })
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: Day.self) { day in
-                    DetailView(day: day, onBack: { popCategoryPath() })
+                    DetailView(day: day)
                         .toolbar(.hidden, for: .navigationBar)
                         .navigationBarBackButtonHidden(true)
                 }
         }
-    }
-
-    private func popHomePath() {
-        if !homePath.isEmpty { homePath.removeLast() }
-    }
-
-    private func popCalendarPath() {
-        if !calendarPath.isEmpty { calendarPath.removeLast() }
-    }
-
-    private func popCategoryPath() {
-        if !categoryPath.isEmpty { categoryPath.removeLast() }
     }
 }
 

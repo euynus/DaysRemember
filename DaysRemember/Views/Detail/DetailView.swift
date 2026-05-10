@@ -2,8 +2,8 @@ import SwiftUI
 
 struct DetailView: View {
     @EnvironmentObject var store: DayStore
+    @Environment(\.dismiss) private var dismiss
     let day: Day
-    var onBack: () -> Void = {}
     @State private var showShare = false
     @State private var showEditor = false
     @State private var showDeleteConfirm = false
@@ -54,7 +54,7 @@ struct DetailView: View {
         .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("删除", role: .destructive) {
                 store.delete(currentDay)
-                onBack()
+                dismiss()
             }
             Button("取消", role: .cancel) {}
         } message: {
@@ -64,7 +64,7 @@ struct DetailView: View {
 
     private var topControls: some View {
         HStack {
-            GlassButton(accessibilityLabel: "返回", action: onBack) {
+            GlassButton(accessibilityLabel: "返回") { dismiss() } content: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .bold))
             }
