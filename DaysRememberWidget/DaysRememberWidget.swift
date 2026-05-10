@@ -19,6 +19,7 @@ struct DaysRememberWidget: Widget {
                     Theme.bg
                 }
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("时光 · 即将到来")
         .description("把最近一个重要的日子放到主屏。")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
@@ -79,13 +80,20 @@ struct DaysWidgetEntryView: View {
             default: WidgetSmall(day: day)
             }
         } else {
-            VStack(spacing: 6) {
-                Text("时光")
-                    .font(Theme.serif(20, weight: .semibold))
-                    .foregroundStyle(Theme.terracotta)
-                Text("还没有日子")
-                    .font(Theme.sans(12))
-                    .foregroundStyle(Theme.muted)
+            ZStack {
+                LinearGradient(
+                    colors: [Theme.card, Theme.terracottaSoft],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                VStack(spacing: 6) {
+                    Text("时光")
+                        .font(Theme.serif(20, weight: .semibold))
+                        .foregroundStyle(Theme.terracotta)
+                    Text("还没有日子")
+                        .font(Theme.sans(12))
+                        .foregroundStyle(Theme.muted)
+                }
             }
         }
     }
@@ -95,23 +103,43 @@ private struct WidgetSmall: View {
     let day: Day
     var body: some View {
         let info = DayInfo.compute(day)
-        ZStack(alignment: .bottomLeading) {
+        ZStack {
             WidgetPhotoTile(day: day, scrim: true)
-            VStack(alignment: .leading, spacing: 2) {
+
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("时光")
+                        .font(Theme.sans(10, weight: .semibold))
+                        .tracking(1.4)
+                        .foregroundStyle(Color.white.opacity(0.82))
+                    Spacer()
+                    Circle()
+                        .fill(Color.white.opacity(0.76))
+                        .frame(width: 6, height: 6)
+                }
+
+                Spacer(minLength: 4)
+
                 Text(day.title)
-                    .font(Theme.sans(10))
-                    .foregroundStyle(Color.white.opacity(0.85))
+                    .font(Theme.sans(12, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.92))
                     .lineLimit(1)
-                Text("\(info.days)")
-                    .font(Theme.serif(44, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
-                Text(label(info))
-                    .font(Theme.sans(10))
-                    .foregroundStyle(Color.white.opacity(0.8))
+                    .minimumScaleFactor(0.75)
+                HStack(alignment: .lastTextBaseline, spacing: 4) {
+                    Text("\(info.days)")
+                        .font(Theme.serif(46, weight: .medium))
+                        .monospacedDigit()
+                        .foregroundStyle(.white)
+                        .minimumScaleFactor(0.75)
+                    Text(label(info))
+                        .font(Theme.sans(11, weight: .medium))
+                        .foregroundStyle(Color.white.opacity(0.82))
+                        .lineLimit(1)
+                }
             }
-            .padding(14)
+            .padding(16)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
 
@@ -119,35 +147,53 @@ private struct WidgetMedium: View {
     let day: Day
     var body: some View {
         let info = DayInfo.compute(day)
-        HStack(spacing: 0) {
-            WidgetPhotoTile(day: day)
-                .frame(width: 150)
+        HStack(spacing: 14) {
             VStack(alignment: .leading) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("即将到来")
-                        .font(Theme.sans(10))
-                        .tracking(1.6)
-                        .foregroundStyle(Theme.muted)
-                    Text(day.title)
-                        .font(Theme.serif(16, weight: .semibold))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 4)
-                VStack(alignment: .leading, spacing: 2) {
+                Text("即将到来")
+                    .font(Theme.sans(10, weight: .semibold))
+                    .tracking(1.6)
+                    .foregroundStyle(Theme.terracotta)
+                Text(day.title)
+                    .font(Theme.serif(18, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .padding(.top, 3)
+
+                Spacer(minLength: 8)
+
+                HStack(alignment: .lastTextBaseline, spacing: 6) {
                     Text("\(info.days)")
-                        .font(Theme.serif(38, weight: .medium))
+                        .font(Theme.serif(42, weight: .medium))
                         .foregroundStyle(Theme.terracotta)
                         .monospacedDigit()
-                    Text(label(info) + " · " + CNDate.short(info.displayDate))
-                        .font(Theme.sans(11))
+                    Text(label(info))
+                        .font(Theme.sans(12, weight: .medium))
                         .foregroundStyle(Theme.muted)
                 }
+                Text(CNDate.short(info.displayDate))
+                    .font(Theme.sans(11, weight: .medium))
+                    .foregroundStyle(Theme.muted)
+                    .padding(.top, 1)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            WidgetPhotoTile(day: day, scrim: false)
+                .frame(width: 104, height: 104)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.65), lineWidth: 1)
+                )
         }
+        .padding(16)
+        .background(
+            LinearGradient(
+                colors: [Theme.card, Theme.terracottaSoft],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 }
 
@@ -155,32 +201,41 @@ private struct WidgetLarge: View {
     let day: Day
     var body: some View {
         let info = DayInfo.compute(day)
-        VStack(spacing: 0) {
-            WidgetPhotoTile(day: day)
-                .frame(maxHeight: .infinity)
-                .frame(height: 160)
+        ZStack(alignment: .bottomLeading) {
+            WidgetPhotoTile(day: day, scrim: true)
             VStack(alignment: .leading, spacing: 0) {
-                Text("即将到来")
-                    .font(Theme.sans(10))
-                    .tracking(1.6)
-                    .foregroundStyle(Theme.muted)
-                Text(day.title)
-                    .font(Theme.serif(18, weight: .semibold))
-                    .foregroundStyle(Theme.ink)
-                    .padding(.top, 4)
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("\(info.days)")
-                        .font(Theme.serif(56, weight: .medium))
-                        .foregroundStyle(Theme.terracotta)
-                        .monospacedDigit()
-                    Text(label(info) + " · " + CNDate.short(info.displayDate))
-                        .font(Theme.sans(12))
-                        .foregroundStyle(Theme.muted)
+                HStack {
+                    Text(day.categoryLabel)
+                        .font(Theme.sans(10, weight: .semibold))
+                        .tracking(1.6)
+                        .foregroundStyle(Color.white.opacity(0.78))
+                    Spacer()
                 }
-                .padding(.top, 10)
+
+                Spacer()
+
+                Text(day.title)
+                    .font(Theme.serif(24, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
+                HStack(alignment: .lastTextBaseline, spacing: 8) {
+                    Text("\(info.days)")
+                        .font(Theme.serif(72, weight: .medium))
+                        .foregroundStyle(.white)
+                        .monospacedDigit()
+                        .minimumScaleFactor(0.8)
+                    Text(label(info))
+                        .font(Theme.sans(13, weight: .medium))
+                        .foregroundStyle(Color.white.opacity(0.82))
+                }
+                .padding(.top, 4)
+                Text(CNDate.short(info.displayDate))
+                    .font(Theme.sans(12, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.72))
+                    .padding(.top, 2)
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
         }
     }
 }
@@ -209,8 +264,8 @@ private struct WidgetPhotoTile: View {
 
             if scrim {
                 LinearGradient(
-                    colors: [.black.opacity(0), .black.opacity(0.55)],
-                    startPoint: UnitPoint(x: 0.5, y: 0.35),
+                    colors: [.black.opacity(0.08), .black.opacity(0.22), .black.opacity(0.72)],
+                    startPoint: UnitPoint(x: 0.5, y: 0.15),
                     endPoint: .bottom
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

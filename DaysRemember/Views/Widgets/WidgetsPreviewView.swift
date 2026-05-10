@@ -164,54 +164,90 @@ struct WidgetsPreviewView: View {
 
 struct SmallWidget: View {
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            PhotoTile(style: .japan, cornerRadius: 22)
-            VStack(alignment: .leading, spacing: 2) {
+        ZStack {
+            PhotoTile(style: .japan, cornerRadius: 0)
+            LinearGradient(
+                colors: [.black.opacity(0.08), .black.opacity(0.22), .black.opacity(0.72)],
+                startPoint: UnitPoint(x: 0.5, y: 0.15),
+                endPoint: .bottom
+            )
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text("时光")
+                        .font(Theme.sans(10, weight: .semibold))
+                        .tracking(1.4)
+                        .foregroundStyle(Color.white.opacity(0.82))
+                    Spacer()
+                    Circle()
+                        .fill(Color.white.opacity(0.76))
+                        .frame(width: 6, height: 6)
+                }
+                Spacer(minLength: 4)
                 Text("蜜月旅行")
-                    .font(Theme.sans(10))
-                    .foregroundStyle(Color.white.opacity(0.85))
-                Text("132").font(Theme.serif(44, weight: .medium))
-                    .monospacedDigit()
-                Text("天后 · 京都")
-                    .font(Theme.sans(10))
-                    .foregroundStyle(Color.white.opacity(0.8))
+                    .font(Theme.sans(12, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.92))
+                    .lineLimit(1)
+                HStack(alignment: .lastTextBaseline, spacing: 4) {
+                    Text("132").font(Theme.serif(46, weight: .medium))
+                        .monospacedDigit()
+                    Text("天后")
+                        .font(Theme.sans(11, weight: .medium))
+                        .foregroundStyle(Color.white.opacity(0.82))
+                }
             }
-            .padding(14)
+            .padding(16)
             .foregroundStyle(.white)
         }
         .frame(width: 150, height: 150)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
 
 struct MediumWidget: View {
     var body: some View {
-        HStack(spacing: 0) {
-            PhotoTile(style: .japan, flat: true, cornerRadius: 0)
-                .frame(width: 150)
+        HStack(spacing: 14) {
             VStack(alignment: .leading) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("即将到来").font(Theme.sans(10)).tracking(2)
-                        .foregroundStyle(Color(hex: 0x8A8074))
-                    Text("蜜月旅行").font(Theme.serif(16, weight: .semibold))
-                        .foregroundStyle(Color(hex: 0x1F1A15))
-                }
-                Spacer()
-                VStack(alignment: .leading, spacing: 2) {
+                Text("即将到来")
+                    .font(Theme.sans(10, weight: .semibold))
+                    .tracking(1.6)
+                    .foregroundStyle(Theme.terracotta)
+                Text("蜜月旅行")
+                    .font(Theme.serif(18, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.top, 3)
+                Spacer(minLength: 8)
+                HStack(alignment: .lastTextBaseline, spacing: 6) {
                     Text("132")
-                        .font(Theme.serif(38, weight: .medium))
-                        .foregroundStyle(Color(oklch: 0.62, 0.12, 35))
+                        .font(Theme.serif(42, weight: .medium))
+                        .foregroundStyle(Theme.terracotta)
                         .monospacedDigit()
-                    Text("天 · 8月23日")
-                        .font(Theme.sans(11))
-                        .foregroundStyle(Color(hex: 0x8A8074))
+                    Text("天后")
+                        .font(Theme.sans(12, weight: .medium))
+                        .foregroundStyle(Theme.muted)
                 }
+                Text("8月23日")
+                    .font(Theme.sans(11, weight: .medium))
+                    .foregroundStyle(Theme.muted)
+                    .padding(.top, 1)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            PhotoTile(style: .japan, flat: true, cornerRadius: 24)
+                .frame(width: 104, height: 104)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.65), lineWidth: 1)
+                )
         }
+        .padding(16)
         .frame(width: 320, height: 150)
-        .background(Color.white.opacity(0.95))
+        .background(
+            LinearGradient(
+                colors: [Theme.card, Theme.terracottaSoft],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.18), radius: 16, y: 8)
     }
@@ -219,39 +255,41 @@ struct MediumWidget: View {
 
 struct LargeWidget: View {
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottomLeading) {
             PhotoTile(style: .japan, flat: true, cornerRadius: 0)
-                .frame(height: 160)
+            LinearGradient(
+                colors: [.black.opacity(0.08), .black.opacity(0.22), .black.opacity(0.72)],
+                startPoint: UnitPoint(x: 0.5, y: 0.15),
+                endPoint: .bottom
+            )
             VStack(alignment: .leading, spacing: 0) {
-                Text("即将到来")
-                    .font(Theme.sans(10))
-                    .tracking(2)
-                    .foregroundStyle(Color(hex: 0x8A8074))
+                Text("旅行")
+                    .font(Theme.sans(10, weight: .semibold))
+                    .tracking(1.6)
+                    .foregroundStyle(Color.white.opacity(0.78))
+                Spacer()
                 Text("蜜月旅行")
-                    .font(Theme.serif(18, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0x1F1A15))
-                    .padding(.top, 4)
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    .font(Theme.serif(24, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                HStack(alignment: .lastTextBaseline, spacing: 8) {
                     Text("132")
-                        .font(Theme.serif(56, weight: .medium))
-                        .foregroundStyle(Color(oklch: 0.62, 0.12, 35))
+                        .font(Theme.serif(72, weight: .medium))
+                        .foregroundStyle(.white)
                         .monospacedDigit()
-                    Text("天后 · 京都").font(Theme.sans(12)).foregroundStyle(Color(hex: 0x8A8074))
+                    Text("天后")
+                        .font(Theme.sans(13, weight: .medium))
+                        .foregroundStyle(Color.white.opacity(0.82))
                 }
-                .padding(.top, 10)
-                HStack(spacing: 6) {
-                    ForEach(0..<4) { i in
-                        Capsule()
-                            .fill(i == 0 ? Color(oklch: 0.62, 0.12, 35) : Color(hex: 0xEFE9DF))
-                            .frame(height: 4)
-                    }
-                }
-                .padding(.top, 12)
+                .padding(.top, 4)
+                Text("8月23日")
+                    .font(Theme.sans(12, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.72))
+                    .padding(.top, 2)
             }
-            .padding(16)
+            .padding(20)
         }
         .frame(width: 320, height: 320)
-        .background(Color.white.opacity(0.95))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.18), radius: 16, y: 8)
     }
