@@ -65,14 +65,17 @@ struct MosaicGrid: View {
             DayTile(day: d, size: .hero, action: { onOpen(d) })
                 .frame(maxWidth: .infinity)
                 .aspectRatio(1.35, contentMode: .fit)
+                .dayContextMenu(day: d)
         case .wide(let d):
             DayTile(day: d, size: .wide, action: { onOpen(d) })
                 .frame(maxWidth: .infinity)
                 .aspectRatio(2.2, contentMode: .fit)
+                .dayContextMenu(day: d)
         case .sq(let d):
             DayTile(day: d, size: .sq, action: { onOpen(d) })
                 .frame(maxWidth: .infinity)
                 .aspectRatio(1, contentMode: .fit)
+                .dayContextMenu(day: d)
         }
     }
 }

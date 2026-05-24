@@ -116,3 +116,56 @@ struct PressableTileStyle: ButtonStyle {
             .animation(.spring(response: 0.25, dampingFraction: 0.85), value: configuration.isPressed)
     }
 }
+
+/// Long-press context menu for a day tile — quick pin / edit / share / delete
+/// without opening Detail. Self-contained: owns its sheet + dialog state and reads
+/// the live `Day` back from the store so the actions reflect the latest edit.
+struct DayContextMenu: ViewModifier {
+    @EnvironmentObject private var store: DayStore
+    let day: Day
+    @State private var showEditor = false
+    @State private var showShare = false
+    @State private var showDeleteConfirm = false
+
+    private var current: Day { store.days.first { $0.id == day.id } ?? day }
+
+    func body(content: Content) -> some View {
+        content
+            .contextMenu {
+                Button {
+                    var updated = current
+                    updated.pinned.toggle()
+                    store.update(updated)
+                } label: {
+                    Label(current.pinned ? "取消置顶" : "置顶",
+                          systemImage: current.pinned ? "star.slash" : "star")
+                }
+                Button { showEditor = true } label: {
+                    Label("编辑", systemImage: "pencil")
+                }
+                Button { showShare = true } label: {
+                    Label("分享", systemImage: "square.and.arrow.up")
+                }
+                Divider()
+                Button(role: .destructive) { showDeleteConfirm = true } label: {
+                    Label("删除", systemImage: "trash")
+                }
+            }
+            .sheet(isPresented: $showEditor) { DayEditorView(day: current) }
+            .sheet(isPresented: $showShare) { ShareCardView(day: current) }
+            .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm,
+                                titleVisibility: .visible) {
+                Button("删除", role: .destructive) { store.delete(current) }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("删除后会同时取消这个日子的待提醒。")
+            }
+    }
+}
+
+extension View {
+    /// Attach the quick day-actions context menu (pin / edit / share / delete).
+    func dayContextMenu(day: Day) -> some View {
+        modifier(DayContextMenu(day: day))
+    }
+}
