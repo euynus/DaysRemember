@@ -20,6 +20,16 @@ struct CategoryEditorView: View {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    /// Curated SF Symbols suited to anniversaries / life events — a visual grid
+    /// replaces raw symbol-name entry so the icon can never come out blank.
+    private static let iconChoices = [
+        "heart", "house", "airplane", "briefcase", "sparkles", "star",
+        "gift", "birthday.cake", "graduationcap", "book", "cup.and.saucer", "fork.knife",
+        "camera", "music.note", "gamecontroller", "leaf", "pawprint", "figure.run",
+        "dumbbell", "mappin.and.ellipse", "sun.max", "moon.stars", "flame", "drop",
+        "balloon.2", "party.popper", "crown", "bell", "flag", "tag",
+    ]
+
     var body: some View {
         VStack(spacing: 0) {
             navBar
@@ -27,6 +37,7 @@ struct CategoryEditorView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     preview
                     form
+                    iconPicker
                     colorPicker
                 }
                 .padding(.horizontal, 20)
@@ -85,20 +96,44 @@ struct CategoryEditorView: View {
 
     private var form: some View {
         InsetCard(radius: 18) {
-            FormRow(label: "名称") {
+            FormRow(label: "名称", isLast: true) {
                 TextField("例如：朋友", text: $name)
                     .font(Theme.sans(14, relativeTo: .body))
                     .foregroundStyle(Theme.ink2)
                     .multilineTextAlignment(.trailing)
                     .submitLabel(.done)
             }
-            FormRow(label: "图标", isLast: true) {
-                TextField("SF Symbol", text: $icon)
-                    .font(Theme.sans(14, relativeTo: .body))
-                    .foregroundStyle(Theme.ink2)
-                    .multilineTextAlignment(.trailing)
-                    .textInputAutocapitalization(.never)
-                    .submitLabel(.done)
+        }
+    }
+
+    private var iconPicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel(text: "图标")
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6),
+                      spacing: 10) {
+                ForEach(Self.iconChoices, id: \.self) { symbol in
+                    let selected = icon == symbol
+                    Button {
+                        if !selected { Haptics.selection() }
+                        icon = symbol
+                    } label: {
+                        Image(systemName: symbol)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(selected ? colorToken.color : Theme.ink2)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 46)
+                            .background(selected ? colorToken.soft : Theme.card)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .strokeBorder(selected ? colorToken.color.opacity(0.3) : Theme.hairline,
+                                                  lineWidth: selected ? 1.5 : 0.5)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("图标 \(symbol)")
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
             }
         }
     }
