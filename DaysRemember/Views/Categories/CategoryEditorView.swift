@@ -140,6 +140,7 @@ struct CategoryEditorView: View {
         } else {
             store.addCategory(name: name, icon: icon, colorToken: colorToken)
         }
+        Haptics.success()
         dismiss()
     }
 }

@@ -411,6 +411,7 @@ struct DayEditorView: View {
         } else {
             store.update(new)
         }
+        Haptics.success()
         dismiss()
     }
 

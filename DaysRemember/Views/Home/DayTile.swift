@@ -135,6 +135,7 @@ struct DayContextMenu: ViewModifier {
                 Button {
                     var updated = current
                     updated.pinned.toggle()
+                    Haptics.impact(.soft)
                     store.update(updated)
                 } label: {
                     Label(current.pinned ? "取消置顶" : "置顶",
@@ -155,7 +156,10 @@ struct DayContextMenu: ViewModifier {
             .sheet(isPresented: $showShare) { ShareCardView(day: current) }
             .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm,
                                 titleVisibility: .visible) {
-                Button("删除", role: .destructive) { store.delete(current) }
+                Button("删除", role: .destructive) {
+                    Haptics.warning()
+                    store.delete(current)
+                }
                 Button("取消", role: .cancel) {}
             } message: {
                 Text("删除后会同时取消这个日子的待提醒。")

@@ -127,6 +127,7 @@ struct HomeView: View {
                     let colors = colors(for: f)
                     FilterChip(label: label(for: f), active: f == filter,
                                tint: colors.tint, softTint: colors.soft) {
+                        if filter != f { Haptics.selection() }
                         filter = f
                     }
                 }

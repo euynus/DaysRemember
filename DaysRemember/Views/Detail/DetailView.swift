@@ -53,6 +53,7 @@ struct DetailView: View {
         }
         .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("删除", role: .destructive) {
+                Haptics.warning()
                 store.delete(currentDay)
                 dismiss()
             }
@@ -93,6 +94,7 @@ struct DetailView: View {
     private func togglePinned() {
         var updated = currentDay
         updated.pinned.toggle()
+        Haptics.impact(.soft)
         withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
             store.update(updated)
         }

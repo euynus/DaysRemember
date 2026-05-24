@@ -35,6 +35,7 @@ struct CategoriesView: View {
             if let deletingCategory {
                 ForEach(store.categories.filter { $0.id != deletingCategory.id }) { target in
                     Button("迁移到 \(target.name)") {
+                        Haptics.warning()
                         store.deleteCategory(id: deletingCategory.id, migrateTo: target.id)
                         self.deletingCategory = nil
                     }

@@ -79,10 +79,13 @@ struct ShareCardView: View {
         Task {
             do {
                 try await PhotoSaver.save(image: img)
+                Haptics.success()
                 flashToast("已保存到相册")
             } catch PhotoSaver.SaveError.denied {
+                Haptics.warning()
                 flashToast("无相册权限")
             } catch {
+                Haptics.warning()
                 flashToast("保存失败")
             }
         }

@@ -40,8 +40,14 @@ struct SegBtnPair: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            seg(leftLabel, active: leftSelected) { leftSelected = true }
-            seg(rightLabel, active: !leftSelected) { leftSelected = false }
+            seg(leftLabel, active: leftSelected) {
+                if !leftSelected { Haptics.selection() }
+                leftSelected = true
+            }
+            seg(rightLabel, active: !leftSelected) {
+                if leftSelected { Haptics.selection() }
+                leftSelected = false
+            }
         }
         .padding(2)
         .background(Theme.bg2)
@@ -82,6 +88,7 @@ struct ToggleRow: View {
 
     var body: some View {
         Button {
+            Haptics.selection()
             withAnimation(.easeInOut(duration: 0.18)) { on.toggle() }
         } label: {
             HStack(spacing: 12) {

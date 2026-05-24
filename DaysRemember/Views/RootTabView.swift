@@ -123,7 +123,10 @@ struct TabBar: View {
     var body: some View {
         HStack {
             ForEach(AppTab.allCases, id: \.self) { t in
-                Button { onSelect(t) } label: {
+                Button {
+                    if current != t { Haptics.selection() }
+                    onSelect(t)
+                } label: {
                     VStack(spacing: 4) {
                         Image(systemName: current == t ? t.iconNameFilled : t.iconName)
                             .font(.system(size: 20, weight: current == t ? .semibold : .regular))
