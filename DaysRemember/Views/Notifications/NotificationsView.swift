@@ -105,8 +105,17 @@ struct NotificationsView: View {
         .padding(.horizontal, 4)
     }
 
+    /// HH:mm of the configured daily reminder time, e.g. "9:00".
+    private var sampleTime: String {
+        String(format: "%d:%02d", settings.notificationHour, settings.notificationMinute)
+    }
+
     private var sampleCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        // Preview the next real reminder the user would actually receive, so the
+        // mock matches their data and chosen time instead of a fixed example.
+        let day = store.nearestUpcoming(within: 3650)
+        let info = day.map { DayInfo.compute($0) }
+        return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 7).fill(Theme.terracotta)
@@ -118,11 +127,11 @@ struct NotificationsView: View {
                 Text("时光")
                     .font(Theme.sans(12, weight: .semibold))
                 Spacer()
-                Text("9:00").font(Theme.sans(11)).foregroundStyle(Theme.muted)
+                Text(sampleTime).font(Theme.sans(11)).foregroundStyle(Theme.muted)
             }
-            Text("蜜月旅行还有 7 天")
+            Text(sampleTitleLine(day: day, info: info))
                 .font(Theme.serif(14, weight: .semibold))
-            Text("开始打包行李吧 · 京都 · 8月23日")
+            Text(sampleSubtitle(day: day, info: info))
                 .font(Theme.sans(12))
                 .foregroundStyle(Theme.ink2)
                 .lineSpacing(12 * 0.5)
@@ -135,6 +144,18 @@ struct NotificationsView: View {
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
         )
         .shadow(color: .black.opacity(0.06), radius: 1, y: 1)
+    }
+
+    private func sampleTitleLine(day: Day?, info: DayInfo?) -> String {
+        guard let day, let info else { return "还没有即将到来的日子" }
+        if info.isToday { return "今天是「\(day.title)」" }
+        return "「\(day.title)」还有 \(info.days) 天"
+    }
+
+    private func sampleSubtitle(day: Day?, info: DayInfo?) -> String {
+        guard let day, let info else { return "添加一个日子，提醒就会出现在这里。" }
+        let date = CNDate.short(info.displayDate)
+        return day.location.isEmpty ? date : "\(day.location) · \(date)"
     }
 
     @ViewBuilder
