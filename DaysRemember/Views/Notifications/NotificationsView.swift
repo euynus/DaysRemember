@@ -1,8 +1,10 @@
 import SwiftUI
+import UIKit
 
 struct NotificationsView: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var store: DayStore
+    @State private var permissionDenied = false
 
     /// Toggle binding that re-syncs scheduled notifications whenever flipped.
     private func reactiveBinding(_ key: ReferenceWritableKeyPath<AppSettings, Bool>) -> Binding<Bool> {
@@ -52,6 +54,7 @@ struct NotificationsView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     header.padding(.bottom, 18)
+                    if permissionDenied { permissionBanner.padding(.bottom, 18) }
                     sampleCard.padding(.bottom, 22)
                     section("提前提醒") {
                         ToggleRow(label: "提前 7 天", on: reactiveBinding(\.notifPre7))
@@ -77,6 +80,43 @@ struct NotificationsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
+        .task { permissionDenied = await NotificationManager.shared.currentStatus() == .denied }
+    }
+
+    /// Shown when the user has denied notification permission — the reminder toggles
+    /// below would otherwise be silently inert.
+    private var permissionBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "bell.slash.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.rose)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("通知权限已关闭")
+                    .font(Theme.sans(13, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                Text("开启后才能收到日子提醒")
+                    .font(Theme.sans(12))
+                    .foregroundStyle(Theme.muted)
+            }
+            Spacer(minLength: 8)
+            Button("去设置") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .font(Theme.sans(13, weight: .semibold))
+            .foregroundStyle(Theme.terracotta)
+            .buttonStyle(.plain)
+        }
+        .padding(14)
+        .background(Theme.roseSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Theme.rose.opacity(0.2), lineWidth: 0.5)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("打开系统设置以开启通知")
     }
 
     private var topBar: some View {

@@ -17,6 +17,12 @@ final class NotificationManager {
 
     enum AuthorizationResult { case granted, denied, deferred }
 
+    /// Read-only current authorization status (does not prompt). Used to surface a
+    /// "notifications are off" banner so the reminder toggles aren't silently inert.
+    func currentStatus() async -> UNAuthorizationStatus {
+        await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+    }
+
     @discardableResult
     func requestAuthorization() async -> AuthorizationResult {
         let center = UNUserNotificationCenter.current()
