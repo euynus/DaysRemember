@@ -32,11 +32,11 @@ struct WidgetsPreviewView: View {
                             .padding(.vertical, 7)
                             .background(size == s ? Theme.terracottaSoft : Theme.card)
                             .clipShape(Capsule())
-                            .overlay(
+                            .overlay {
                                 Capsule()
                                     .strokeBorder(size == s ? Theme.terracotta.opacity(0.22) : Theme.hairline,
                                                   lineWidth: 0.5)
-                            )
+                            }
                     }
                     .buttonStyle(.plain)
                 }
@@ -155,10 +155,10 @@ struct WidgetsPreviewView: View {
         .background(isInverted ? Theme.ink : Theme.card)
         .foregroundStyle(isInverted ? Theme.bg : Theme.ink)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(Theme.hairline, lineWidth: isInverted ? 0 : 0.5)
-        )
+        }
     }
 }
 
@@ -234,10 +234,10 @@ struct MediumWidget: View {
 
             PhotoTile(style: .japan, flat: true, cornerRadius: 24)
                 .frame(width: 104, height: 104)
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.65), lineWidth: 1)
-                )
+                }
         }
         .padding(16)
         .frame(width: 320, height: 150)

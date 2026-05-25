@@ -124,10 +124,10 @@ struct HomeView: View {
         .padding(.vertical, 12)
         .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
-        )
+        }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .accessibilityLabel("搜索日子")
@@ -272,10 +272,10 @@ struct TodaySpotlight: View {
                         startPoint: .leading, endPoint: .trailing)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .strokeBorder(Theme.hairline, lineWidth: 0.5)
-                )
+                }
             }
             .buttonStyle(.plain)
             .accessibilityElement(children: .ignore)

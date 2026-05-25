@@ -63,7 +63,7 @@ extension View {
             .foregroundStyle(.white)
             .background(Color.white.opacity(0.18))
             .clipShape(Circle())
-            .overlay(Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5))
+            .overlay { Circle().strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5) }
     }
 
     /// Pad a text-only nav-bar button so the hit area reaches iOS's recommended

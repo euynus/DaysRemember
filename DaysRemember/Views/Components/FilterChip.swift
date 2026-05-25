@@ -17,10 +17,10 @@ struct FilterChip: View {
                 .padding(.vertical, 7)
                 .background(active ? softTint : Theme.card)
                 .clipShape(Capsule())
-                .overlay(
+                .overlay {
                     Capsule()
                         .strokeBorder(active ? tint.opacity(0.28) : Theme.hairline, lineWidth: 0.5)
-                )
+                }
                 .shadow(color: active ? .clear : .black.opacity(0.04), radius: 1, y: 1)
         }
         .buttonStyle(.plain)

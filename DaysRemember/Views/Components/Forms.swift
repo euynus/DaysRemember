@@ -66,10 +66,10 @@ struct SegBtnPair: View {
                     if active {
                         RoundedRectangle(cornerRadius: 6)
                             .fill(Theme.terracottaSoft)
-                            .overlay(
+                            .overlay {
                                 RoundedRectangle(cornerRadius: 6)
                                     .strokeBorder(Theme.terracotta.opacity(0.18), lineWidth: 0.5)
-                            )
+                            }
                     }
                 }
         }

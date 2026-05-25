@@ -121,10 +121,10 @@ struct NotificationsView: View {
         .padding(14)
         .background(Theme.roseSoft)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(Theme.rose.opacity(0.2), lineWidth: 0.5)
-        )
+        }
         .accessibilityElement(children: .combine)
         .accessibilityHint("打开系统设置以开启通知")
     }
@@ -193,10 +193,10 @@ struct NotificationsView: View {
         .padding(14)
         .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
-        )
+        }
         .shadow(color: .black.opacity(0.06), radius: 1, y: 1)
     }
 

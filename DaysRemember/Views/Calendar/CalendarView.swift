@@ -287,10 +287,10 @@ struct CalendarMonthView: View {
                             .padding(.vertical, 10)
                             .background(Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .overlay(
+                            .overlay {
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                                     .strokeBorder(Theme.hairline, lineWidth: 0.5)
-                            )
+                            }
                         }
                         .buttonStyle(.plain)
                     }

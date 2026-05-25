@@ -189,10 +189,10 @@ private struct WidgetMedium: View {
             WidgetPhotoTile(day: day, scrim: false)
                 .frame(width: 104, height: 104)
                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay(
+                .overlay {
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.65), lineWidth: 1)
-                )
+                }
         }
         .padding(16)
         .background(

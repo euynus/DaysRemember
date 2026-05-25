@@ -172,10 +172,10 @@ struct DetailView: View {
                 .fill(Color.black.opacity(0.32))
         )
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
-        )
+        }
     }
 }
 

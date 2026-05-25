@@ -197,11 +197,11 @@ struct DayEditorView: View {
                         .padding(.vertical, 8)
                         .background(coverPreview == preview ? Theme.terracottaSoft : Theme.card)
                         .clipShape(RoundedRectangle(cornerRadius: 9))
-                        .overlay(
+                        .overlay {
                             RoundedRectangle(cornerRadius: 9)
                                 .strokeBorder(coverPreview == preview ? Theme.terracotta.opacity(0.2) : Theme.hairline,
                                               lineWidth: 0.5)
-                        )
+                        }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(preview.label)封面比例")
@@ -351,10 +351,10 @@ struct DayEditorView: View {
                 .padding(.vertical, 9)
                 .background(selected ? Theme.terracottaSoft : Theme.card)
                 .clipShape(Capsule())
-                .overlay(
+                .overlay {
                     Capsule().strokeBorder(selected ? Theme.terracotta.opacity(0.24) : Theme.hairline,
                                            lineWidth: 0.5)
-                )
+                }
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label == "默认" ? "默认提醒，跟随全局设置" : "提醒\(label)")
@@ -375,11 +375,11 @@ struct DayEditorView: View {
                         .padding(.vertical, 9)
                         .background(categoryID == category.id ? category.colorToken.soft : Theme.card)
                         .clipShape(Capsule())
-                        .overlay(
+                        .overlay {
                             Capsule()
                                 .strokeBorder(categoryID == category.id ? category.colorToken.color.opacity(0.24) : Theme.hairline,
                                               lineWidth: 0.5)
-                        )
+                        }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("分类 \(category.name)")

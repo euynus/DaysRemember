@@ -124,11 +124,11 @@ struct CategoryEditorView: View {
                             .frame(height: 46)
                             .background(selected ? colorToken.soft : Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .overlay(
+                            .overlay {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .strokeBorder(selected ? colorToken.color.opacity(0.3) : Theme.hairline,
                                                   lineWidth: selected ? 1.5 : 0.5)
-                            )
+                            }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("图标 \(symbol)")
@@ -154,11 +154,11 @@ struct CategoryEditorView: View {
                         .padding(.vertical, 9)
                         .background(colorToken == token ? token.soft : Theme.card)
                         .clipShape(Capsule())
-                        .overlay(
+                        .overlay {
                             Capsule()
                                 .strokeBorder(colorToken == token ? token.color.opacity(0.24) : Theme.hairline,
                                               lineWidth: 0.5)
-                        )
+                        }
                     }
                     .buttonStyle(.plain)
                 }

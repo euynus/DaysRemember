@@ -136,11 +136,11 @@ struct ShareCardView: View {
                         .padding(.vertical, 8)
                         .background(template == t ? Theme.terracottaSoft : Theme.card)
                         .clipShape(Capsule())
-                        .overlay(
+                        .overlay {
                             Capsule()
                                 .strokeBorder(template == t ? Theme.terracotta.opacity(0.22) : Theme.hairline,
                                               lineWidth: 0.5)
-                        )
+                        }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(t.label)模板")
@@ -279,10 +279,10 @@ struct MinimalCard: View {
         .frame(width: 280, height: 350, alignment: .topLeading)
         .background(Theme.bg)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
-        )
+        }
         .shadow(color: .black.opacity(0.16), radius: 24, y: 12)
     }
 }

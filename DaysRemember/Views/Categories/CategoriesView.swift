@@ -182,10 +182,10 @@ struct CategoriesView: View {
         .frame(maxWidth: .infinity)
         .frame(height: hero ? 140 : 110)
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
-        )
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title)，\(subtitle)")
     }
@@ -196,10 +196,10 @@ struct CategoriesView: View {
             ForEach(stack.indices, id: \.self) { index in
                 PhotoTile(style: stack[index], flat: true, cornerRadius: 10)
                     .frame(width: 36, height: 36)
-                    .overlay(
+                    .overlay {
                         RoundedRectangle(cornerRadius: 10)
                             .strokeBorder(Theme.bg, lineWidth: 2)
-                    )
+                    }
                     .zIndex(Double(stack.count - index))
             }
         }
@@ -228,11 +228,11 @@ struct CategoriesView: View {
             .padding(.vertical, 14)
             .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 18))
-            .overlay(
+            .overlay {
                 RoundedRectangle(cornerRadius: 18)
                     .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4]))
                     .foregroundStyle(Theme.hairlineStrong)
-            )
+            }
         }
         .buttonStyle(.plain)
         .accessibilityLabel("新建分类")
