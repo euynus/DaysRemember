@@ -140,6 +140,8 @@ struct ShareCardView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("\(t.label)模板")
+                .accessibilityAddTraits(template == t ? [.isSelected] : [])
             }
         }
         .padding(.vertical, 14)

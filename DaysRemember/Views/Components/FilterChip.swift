@@ -24,6 +24,7 @@ struct FilterChip: View {
                 .shadow(color: active ? .clear : .black.opacity(0.04), radius: 1, y: 1)
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(active ? [.isSelected] : [])
     }
 }
 

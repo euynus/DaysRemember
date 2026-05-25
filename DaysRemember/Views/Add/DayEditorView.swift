@@ -199,6 +199,7 @@ struct DayEditorView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(preview.label)封面比例")
+                .accessibilityAddTraits(coverPreview == preview ? [.isSelected] : [])
             }
         }
     }
@@ -226,6 +227,7 @@ struct DayEditorView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("选择\(preset.displayName)封面")
+                        .accessibilityAddTraits(photo == preset && photoData == nil ? [.isSelected] : [])
                     }
                     photosPickerTile
                 }
@@ -332,6 +334,8 @@ struct DayEditorView: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("提醒\(Self.reminders[index].label)")
+                        .accessibilityAddTraits(remindIndex == index ? [.isSelected] : [])
                     }
                 }
             }
@@ -357,6 +361,7 @@ struct DayEditorView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("分类 \(category.name)")
+                .accessibilityAddTraits(categoryID == category.id ? [.isSelected] : [])
             }
         }
     }
