@@ -49,8 +49,12 @@ enum Theme {
         if UIFont(name: "NotoSerifSC-Regular", size: size) != nil {
             return .custom(notoName(family: "NotoSerifSC", weight: weight), size: size, relativeTo: textStyle)
         }
-        if UIFont(name: "STSongti-SC-Regular", size: size) != nil {
-            return .custom("STSongti-SC-Regular", size: size, relativeTo: textStyle).weight(weight)
+        // Songti SC ships discrete weight faces; choose the face directly. Calling
+        // `.weight()` on a custom font is unreliable (it doesn't switch to the named
+        // bold face), and the design depends on the serif weight hierarchy.
+        let songti = songtiName(for: weight)
+        if UIFont(name: songti, size: size) != nil {
+            return .custom(songti, size: size, relativeTo: textStyle)
         }
         return .system(size: size, weight: weight, design: .serif)
     }
@@ -61,8 +65,9 @@ enum Theme {
         if UIFont(name: "NotoSansSC-Regular", size: size) != nil {
             return .custom(notoName(family: "NotoSansSC", weight: weight), size: size, relativeTo: textStyle)
         }
-        if UIFont(name: "PingFangSC-Regular", size: size) != nil {
-            return .custom("PingFangSC-Regular", size: size, relativeTo: textStyle).weight(weight)
+        let pingfang = pingFangName(for: weight)
+        if UIFont(name: pingfang, size: size) != nil {
+            return .custom(pingfang, size: size, relativeTo: textStyle)
         }
         return .system(size: size, weight: weight)
     }
@@ -77,12 +82,25 @@ enum Theme {
         }
         return "\(family)-\(suffix)"
     }
-}
 
-extension Font {
-    /// Approximate a weight on a custom font that may not have weight variants.
-    func weight(_ w: Font.Weight) -> Font {
-        // Font.weight() returns Font; identity for custom fonts that already chose a face.
-        self
+    /// Songti SC weight faces — Light / Regular / Bold / Black (no Medium/Semibold).
+    private static func songtiName(for weight: Font.Weight) -> String {
+        switch weight {
+        case .ultraLight, .thin, .light: return "STSongti-SC-Light"
+        case .semibold, .bold: return "STSongti-SC-Bold"
+        case .heavy, .black: return "STSongti-SC-Black"
+        default: return "STSongti-SC-Regular" // regular, medium
+        }
+    }
+
+    /// PingFang SC weight faces — Ultralight … Semibold (no Bold/Heavy/Black).
+    private static func pingFangName(for weight: Font.Weight) -> String {
+        switch weight {
+        case .ultraLight: return "PingFangSC-Ultralight"
+        case .thin, .light: return "PingFangSC-Light"
+        case .medium: return "PingFangSC-Medium"
+        case .semibold, .bold, .heavy, .black: return "PingFangSC-Semibold"
+        default: return "PingFangSC-Regular" // regular
+        }
     }
 }
