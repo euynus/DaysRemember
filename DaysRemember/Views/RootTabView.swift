@@ -83,12 +83,7 @@ struct RootTabView: View {
                 onAdd: { addingDay = true }
             )
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Day.self) { day in
-                DetailView(day: day)
-                    .toolbar(.hidden, for: .navigationBar)
-                    .navigationBarBackButtonHidden(true)
-                    .enableSwipeBack()
-            }
+            .dayDetailDestination()
         }
     }
 
@@ -96,12 +91,7 @@ struct RootTabView: View {
         NavigationStack(path: $calendarPath) {
             CalendarMonthView(onOpen: { day in calendarPath.append(day) })
                 .toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(for: Day.self) { day in
-                    DetailView(day: day)
-                        .toolbar(.hidden, for: .navigationBar)
-                        .navigationBarBackButtonHidden(true)
-                        .enableSwipeBack()
-                }
+                .dayDetailDestination()
         }
     }
 
@@ -109,12 +99,21 @@ struct RootTabView: View {
         NavigationStack(path: $categoryPath) {
             CategoriesView(onOpen: { day in categoryPath.append(day) })
                 .toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(for: Day.self) { day in
-                    DetailView(day: day)
-                        .toolbar(.hidden, for: .navigationBar)
-                        .navigationBarBackButtonHidden(true)
-                        .enableSwipeBack()
-                }
+                .dayDetailDestination()
+        }
+    }
+}
+
+private extension View {
+    /// Shared `Day` → `DetailView` push used by all three tab stacks: hidden nav
+    /// bar, custom back button, and the restored edge-swipe-back gesture — one place
+    /// to keep them identical.
+    func dayDetailDestination() -> some View {
+        navigationDestination(for: Day.self) { day in
+            DetailView(day: day)
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationBarBackButtonHidden(true)
+                .enableSwipeBack()
         }
     }
 }
