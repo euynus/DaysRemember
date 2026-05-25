@@ -246,13 +246,19 @@ struct TodaySpotlight: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(info.days)")
-                            .font(Theme.serif(28, weight: .semibold))
-                            .foregroundStyle(Theme.terracotta)
-                            .monospacedDigit()
-                        Text("天后")
-                            .font(Theme.sans(10))
-                            .foregroundStyle(Theme.muted)
+                        if info.isToday {
+                            Text("今天")
+                                .font(Theme.serif(22, weight: .semibold))
+                                .foregroundStyle(Theme.terracotta)
+                        } else {
+                            Text("\(info.days)")
+                                .font(Theme.serif(28, weight: .semibold))
+                                .foregroundStyle(Theme.terracotta)
+                                .monospacedDigit()
+                            Text("天后")
+                                .font(Theme.sans(10))
+                                .foregroundStyle(Theme.muted)
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
