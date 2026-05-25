@@ -108,6 +108,7 @@ struct CalendarMonthView: View {
             Text("日历").font(Theme.serif(17, weight: .semibold))
             Spacer()
             Button("今天") {
+                Haptics.selection()
                 let cal = CNDate.calendar; let today = Today.date
                 year = cal.component(.year, from: today)
                 month = cal.component(.month, from: today) - 1
@@ -125,6 +126,7 @@ struct CalendarMonthView: View {
     private var monthSwitcher: some View {
         HStack {
             Button {
+                Haptics.selection()
                 if month == 0 { month = 11; year -= 1 } else { month -= 1 }
             } label: {
                 Image(systemName: "chevron.left")
@@ -146,6 +148,7 @@ struct CalendarMonthView: View {
             }
             Spacer()
             Button {
+                Haptics.selection()
                 if month == 11 { month = 0; year += 1 } else { month += 1 }
             } label: {
                 Image(systemName: "chevron.right")
