@@ -41,6 +41,7 @@ struct ShareCardView: View {
             shareRow.padding(.bottom, 36)
         }
         .background(Theme.bg2)
+        .sensoryFeedback(.selection, trigger: template)
         .overlay(alignment: .top) {
             if let savedToast {
                 Text(savedToast)
@@ -126,7 +127,6 @@ struct ShareCardView: View {
         HStack(spacing: 8) {
             ForEach(Template.allCases, id: \.self) { t in
                 Button {
-                    if template != t { Haptics.selection() }
                     template = t
                 } label: {
                     Text(t.label)

@@ -140,7 +140,6 @@ struct DayContextMenu: ViewModifier {
                 Button {
                     var updated = current
                     updated.pinned.toggle()
-                    Haptics.impact(.soft)
                     store.update(updated)
                 } label: {
                     Label(current.pinned ? "取消置顶" : "置顶",
@@ -169,6 +168,7 @@ struct DayContextMenu: ViewModifier {
             } message: {
                 Text("删除后会同时取消这个日子的待提醒。")
             }
+            .sensoryFeedback(.impact(flexibility: .soft), trigger: current.pinned)
     }
 }
 

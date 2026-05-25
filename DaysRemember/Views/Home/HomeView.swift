@@ -75,6 +75,7 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
+        .sensoryFeedback(.selection, trigger: filter)
     }
 
     private var header: some View {
@@ -145,7 +146,6 @@ struct HomeView: View {
                     let colors = colors(for: f)
                     FilterChip(label: label(for: f), active: f == filter,
                                tint: colors.tint, softTint: colors.soft) {
-                        if filter != f { Haptics.selection() }
                         filter = f
                     }
                 }

@@ -154,7 +154,6 @@ struct TabBar: View {
         HStack {
             ForEach(AppTab.allCases, id: \.self) { t in
                 Button {
-                    if current != t { Haptics.selection() }
                     onSelect(t)
                 } label: {
                     VStack(spacing: 4) {
@@ -187,5 +186,6 @@ struct TabBar: View {
             // never shows through that gap below the tab icons.
             .ignoresSafeArea(edges: .bottom)
         )
+        .sensoryFeedback(.selection, trigger: current)
     }
 }

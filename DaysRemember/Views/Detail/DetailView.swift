@@ -45,6 +45,7 @@ struct DetailView: View {
             }
         }
         .foregroundStyle(.white)
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: day.pinned)
         .sheet(isPresented: $showShare) {
             ShareCardView(day: currentDay)
         }
@@ -94,7 +95,6 @@ struct DetailView: View {
     private func togglePinned() {
         var updated = currentDay
         updated.pinned.toggle()
-        Haptics.impact(.soft)
         withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
             store.update(updated)
         }

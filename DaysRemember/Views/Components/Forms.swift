@@ -40,18 +40,13 @@ struct SegBtnPair: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            seg(leftLabel, active: leftSelected) {
-                if !leftSelected { Haptics.selection() }
-                leftSelected = true
-            }
-            seg(rightLabel, active: !leftSelected) {
-                if leftSelected { Haptics.selection() }
-                leftSelected = false
-            }
+            seg(leftLabel, active: leftSelected) { leftSelected = true }
+            seg(rightLabel, active: !leftSelected) { leftSelected = false }
         }
         .padding(2)
         .background(Theme.bg2)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .sensoryFeedback(.selection, trigger: leftSelected)
     }
 
     @ViewBuilder
@@ -88,7 +83,6 @@ struct ToggleRow: View {
 
     var body: some View {
         Button {
-            Haptics.selection()
             withAnimation(.easeInOut(duration: 0.18)) { on.toggle() }
         } label: {
             HStack(spacing: 12) {
@@ -120,6 +114,7 @@ struct ToggleRow: View {
             .rowHairline(isLast: isLast)
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: on)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label)
         .accessibilityValue(on ? "开启" : "关闭")

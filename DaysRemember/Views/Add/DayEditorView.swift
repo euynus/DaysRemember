@@ -95,6 +95,10 @@ struct DayEditorView: View {
             }
         }
         .background(Theme.bg.ignoresSafeArea())
+        .sensoryFeedback(.selection, trigger: coverPreview)
+        .sensoryFeedback(.selection, trigger: photo)
+        .sensoryFeedback(.selection, trigger: remindIndex)
+        .sensoryFeedback(.selection, trigger: categoryID)
     }
 
     private var navBar: some View {
@@ -187,7 +191,6 @@ struct DayEditorView: View {
         HStack(spacing: 6) {
             ForEach(CoverPreview.allCases, id: \.self) { preview in
                 Button {
-                    if coverPreview != preview { Haptics.selection() }
                     coverPreview = preview
                 } label: {
                     Text(preview.label)
@@ -220,7 +223,6 @@ struct DayEditorView: View {
                 HStack(spacing: 8) {
                     ForEach(Self.pickerOptions, id: \.self) { preset in
                         Button {
-                            if photo != preset || photoData != nil { Haptics.selection() }
                             photo = preset
                             photoData = nil
                             resetFocus()
@@ -341,7 +343,6 @@ struct DayEditorView: View {
     private func reminderChip(label: String, selected: Bool,
                               action: @escaping () -> Void) -> some View {
         Button {
-            if !selected { Haptics.selection() }
             action()
         } label: {
             Text(label)
@@ -365,7 +366,6 @@ struct DayEditorView: View {
         FlowLayout(spacing: 8) {
             ForEach(store.categories) { category in
                 Button {
-                    if categoryID != category.id { Haptics.selection() }
                     categoryID = category.id
                 } label: {
                     Label(category.name, systemImage: category.icon)

@@ -46,6 +46,7 @@ struct CategoryEditorView: View {
             }
         }
         .background(Theme.bg.ignoresSafeArea())
+        .sensoryFeedback(.selection, trigger: icon)
     }
 
     private var navBar: some View {
@@ -114,7 +115,6 @@ struct CategoryEditorView: View {
                 ForEach(Self.iconChoices, id: \.self) { symbol in
                     let selected = icon == symbol
                     Button {
-                        if !selected { Haptics.selection() }
                         icon = symbol
                     } label: {
                         Image(systemName: symbol)
