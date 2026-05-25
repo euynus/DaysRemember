@@ -142,6 +142,8 @@ struct CalendarMonthView: View {
             VStack(spacing: 2) {
                 Text(verbatim: "\(year) 年 \(Self.monthNames[month])月")
                     .font(Theme.serif(28, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(seasonLabel)
                     .font(Theme.sans(12))
                     .foregroundStyle(Theme.muted)
@@ -219,6 +221,8 @@ struct CalendarMonthView: View {
             Text("\(d)")
                 .font(Theme.sans(13, weight: isToday ? .semibold : .medium))
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .foregroundStyle(isToday ? Theme.accentForeground : (hasEvents ? Theme.ink : Theme.ink2))
             if hasEvents {
                 HStack(spacing: 2) {
