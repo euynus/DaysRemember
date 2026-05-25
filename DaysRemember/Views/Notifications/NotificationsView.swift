@@ -155,9 +155,12 @@ struct NotificationsView: View {
         .padding(.horizontal, 4)
     }
 
-    /// HH:mm of the configured daily reminder time, e.g. "9:00".
-    private var sampleTime: String {
-        String(format: "%d:%02d", settings.notificationHour, settings.notificationMinute)
+    /// The configured daily reminder time as a Date, for locale-aware formatting.
+    private var sampleTimeDate: Date {
+        var components = DateComponents()
+        components.hour = settings.notificationHour
+        components.minute = settings.notificationMinute
+        return CNDate.calendar.date(from: components) ?? .now
     }
 
     private var sampleCard: some View {
@@ -177,7 +180,8 @@ struct NotificationsView: View {
                 Text("时光")
                     .font(Theme.sans(12, weight: .semibold))
                 Spacer()
-                Text(sampleTime).font(Theme.sans(11)).foregroundStyle(Theme.muted)
+                Text(sampleTimeDate, format: .dateTime.hour().minute())
+                    .font(Theme.sans(11)).foregroundStyle(Theme.muted)
             }
             Text(sampleTitleLine(day: day, info: info))
                 .font(Theme.serif(14, weight: .semibold))
