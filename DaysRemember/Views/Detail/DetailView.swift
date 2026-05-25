@@ -126,6 +126,13 @@ struct DetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 32)
+        // Read the whole counter as one natural sentence instead of four fragments
+        // ("category", "title", "132", "还有 · 天").
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(day.title)，\(day.categoryLabel)，"
+            + (info.isToday ? "就是今天" : "\(info.label) \(info.days) 天")
+        )
     }
 
     private func infoCard(day: Day, info: DayInfo) -> some View {
