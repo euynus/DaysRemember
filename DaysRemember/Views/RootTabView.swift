@@ -134,14 +134,12 @@ struct RootTabView: View {
 
 private extension View {
     /// Shared `Day` → `DetailView` push used by all three tab stacks: hidden nav
-    /// bar, custom back button, and the restored edge-swipe-back gesture — one place
-    /// to keep them identical.
+    /// bar and a custom back button — one place to keep them identical.
     func dayDetailDestination() -> some View {
         navigationDestination(for: Day.self) { day in
             DetailView(day: day)
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationBarBackButtonHidden(true)
-                .enableSwipeBack()
         }
     }
 }

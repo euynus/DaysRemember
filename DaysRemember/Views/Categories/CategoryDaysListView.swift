@@ -64,7 +64,6 @@ struct CategoryDaysListView: View {
         }
         .background(Theme.bg)
         .toolbar(.hidden, for: .navigationBar)
-        .enableSwipeBack()
     }
 
     private var header: some View {
