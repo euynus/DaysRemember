@@ -153,7 +153,11 @@ struct DetailView: View {
                 InfoRow(label: "地点", value: day.location)
             }
             if day.recurring {
-                let n = (info.yearsAgo ?? 0) + (info.isPast ? 0 : 1)
+                // Anniversary number = years between the original date and the upcoming
+                // occurrence. (yearsAgo + 1 over-counted by one whenever the anniversary
+                // falls in the current year rather than having rolled to next year.)
+                let n = max(1, CNDate.calendar.component(.year, from: info.displayDate)
+                              - CNDate.calendar.component(.year, from: day.date))
                 InfoRow(label: "重复", value: "每年 · 第 \(n) 次")
             }
             if !day.note.isEmpty {
