@@ -9,8 +9,9 @@ import UIKit
 /// Bridges a tapped reminder (or widget link) to SwiftUI navigation: `RootTabView`
 /// observes `dayID`, opens that day's detail, and clears it.
 @MainActor
-final class DeepLinkRouter: ObservableObject {
-    @Published var dayID: String?
+@Observable
+final class DeepLinkRouter {
+    var dayID: String?
 }
 
 /// UNUserNotificationCenter delegate — routes a tapped reminder to its day, and lets

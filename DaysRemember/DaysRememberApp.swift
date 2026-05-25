@@ -4,7 +4,7 @@ import SwiftUI
 struct DaysRememberApp: App {
     @StateObject private var store = DayStore()
     @StateObject private var settings = AppSettings()
-    @StateObject private var router = DeepLinkRouter()
+    @State private var router = DeepLinkRouter()
 
     init() {
         // Wire the store to settings so it can re-schedule notifications on day changes.
@@ -16,7 +16,7 @@ struct DaysRememberApp: App {
             RootGate()
                 .environmentObject(store)
                 .environmentObject(settings)
-                .environmentObject(router)
+                .environment(router)
                 .environment(\.locale, Locale(identifier: "zh_CN"))
                 .task {
                     store.settings = settings
@@ -39,7 +39,7 @@ struct DaysRememberApp: App {
 private struct RootGate: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var store: DayStore
-    @EnvironmentObject var router: DeepLinkRouter
+    @Environment(DeepLinkRouter.self) var router
 
     var body: some View {
         if let override = DebugLaunch.screenOverride {

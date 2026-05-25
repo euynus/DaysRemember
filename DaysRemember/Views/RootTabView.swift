@@ -32,7 +32,7 @@ enum AppTab: String, Hashable, CaseIterable {
 
 struct RootTabView: View {
     @EnvironmentObject private var store: DayStore
-    @EnvironmentObject private var router: DeepLinkRouter
+    @Environment(DeepLinkRouter.self) private var router
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
