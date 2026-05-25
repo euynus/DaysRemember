@@ -31,20 +31,23 @@ struct DaysRememberWidget: Widget {
 struct DaysEntry: TimelineEntry {
     var date: Date
     var day: Day?
+    /// True when the store holds days but none are upcoming — lets the empty view
+    /// distinguish "no days yet" from "nothing coming up".
+    var hasAnyDays: Bool = false
 }
 
 struct DaysProvider: TimelineProvider {
     func placeholder(in context: Context) -> DaysEntry {
-        DaysEntry(date: Date(), day: SampleData.days.first)
+        DaysEntry(date: Date(), day: SampleData.days.first, hasAnyDays: true)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (DaysEntry) -> Void) {
-        completion(DaysEntry(date: Date(), day: nearestUpcoming()))
+        completion(makeEntry(asOf: Date()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<DaysEntry>) -> Void) {
         let now = Date()
-        let entry = DaysEntry(date: now, day: nearestUpcoming(asOf: now))
+        let entry = makeEntry(asOf: now)
         // Refresh at the next midnight so the countdown ticks down.
         let nextMidnight = CNDate.calendar.nextDate(after: now,
                                                     matching: DateComponents(hour: 0, minute: 0),
@@ -52,16 +55,17 @@ struct DaysProvider: TimelineProvider {
         completion(Timeline(entries: [entry], policy: .after(nextMidnight)))
     }
 
-    private func nearestUpcoming(asOf today: Date = Date()) -> Day? {
+    private func makeEntry(asOf today: Date) -> DaysEntry {
         let raw = SharedStorage.defaults.data(forKey: "days.v1")
         let days = raw.flatMap { try? JSONDecoder().decode([Day].self, from: $0) } ?? SampleData.days
-        return days
+        let nearest = days
             .compactMap { day -> (Day, Int)? in
                 let info = DayInfo.compute(day, today: today)
                 return (info.isPast || info.days > 365) ? nil : (day, info.days)
             }
             .min { $0.1 < $1.1 }?
             .0
+        return DaysEntry(date: today, day: nearest, hasAnyDays: !days.isEmpty)
     }
 }
 
@@ -90,7 +94,7 @@ struct DaysWidgetEntryView: View {
                     Text("时光")
                         .font(Theme.serif(20, weight: .semibold))
                         .foregroundStyle(Theme.terracotta)
-                    Text("还没有日子")
+                    Text(entry.hasAnyDays ? "暂无即将到来的日子" : "还没有日子")
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.muted)
                 }
