@@ -39,6 +39,7 @@ struct DaysRememberApp: App {
 private struct RootGate: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var store: DayStore
+    @EnvironmentObject var router: DeepLinkRouter
 
     var body: some View {
         if let override = DebugLaunch.screenOverride {
@@ -46,7 +47,12 @@ private struct RootGate: View {
         } else if settings.hasOnboarded {
             RootTabView()
         } else {
-            OnboardingView(onFinish: { settings.hasOnboarded = true })
+            // Drop any reminder/widget link queued before onboarding finished, so it
+            // doesn't fire a surprise navigation the moment RootTabView first mounts.
+            OnboardingView(onFinish: {
+                router.dayID = nil
+                settings.hasOnboarded = true
+            })
         }
     }
 }
