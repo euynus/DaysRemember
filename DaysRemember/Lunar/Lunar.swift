@@ -57,6 +57,11 @@ enum Lunar {
     static func solarToLunar(_ date: Date) -> LunarDate {
         let dayStart = calendar.startOfDay(for: date)
         var offset = Int((dayStart.timeIntervalSince1970 - base.timeIntervalSince1970) / 86400.0)
+        // Dates before the table's first Spring Festival (1900-01-31) fall in lunar
+        // year 1899, which the 1900–2100 table can't represent. Clamp to the first
+        // lunar day so callers never get an out-of-range month/day — which would trap
+        // the array-indexing formatters (CN_MONTH / CN_DAY_PREFIX / CN_NUM).
+        if offset < 0 { return LunarDate(year: 1900, month: 1, day: 1, isLeap: false) }
         var y = 1900, temp = 0
         while y < 2101 && offset > 0 {
             temp = yearDays(y)
