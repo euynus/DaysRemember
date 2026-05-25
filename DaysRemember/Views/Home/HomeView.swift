@@ -17,6 +17,17 @@ struct HomeView: View {
         [.all, .pinned] + store.categories.map { .category($0.id) }
     }
 
+    /// Warm, time-of-day greeting in place of a static "你好".
+    private var greeting: String {
+        switch CNDate.calendar.component(.hour, from: Today.date) {
+        case 5..<11: return "早安"
+        case 11..<13: return "午安"
+        case 13..<18: return "下午好"
+        case 18..<23: return "晚上好"
+        default: return "夜深了"
+        }
+    }
+
     private var filteredDays: [Day] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         // Filter first, then sort: a typed search or category filter can prune most of
@@ -73,7 +84,7 @@ struct HomeView: View {
                     .font(Theme.sans(12))
                     .tracking(3.6)
                     .foregroundStyle(Theme.muted)
-                Text("你好，今天")
+                Text(greeting)
                     .font(Theme.serif(30, weight: .semibold))
                     .foregroundStyle(Theme.ink)
             }
