@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ShareCardView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.displayScale) private var displayScale
     let day: Day
     @State private var template: Template = .classic
     @State private var sharing = false
@@ -63,7 +64,7 @@ struct ShareCardView: View {
     @MainActor
     private func renderCardImage() -> UIImage? {
         let renderer = ImageRenderer(content: card.frame(width: 280, height: 350))
-        renderer.scale = UIScreen.main.scale
+        renderer.scale = displayScale
         renderer.proposedSize = .init(width: 280, height: 350)
         return renderer.uiImage
     }
