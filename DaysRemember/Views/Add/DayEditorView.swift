@@ -63,8 +63,9 @@ struct DayEditorView: View {
         _location = State(initialValue: day?.location ?? "")
         _coverFocusX = State(initialValue: day?.coverFocusX ?? 0.5)
         _coverFocusY = State(initialValue: day?.coverFocusY ?? 0.5)
+        // -1 means "follow the global reminder settings" (no per-day override).
         let offset = day?.reminderOffsets?.first
-        let index = offset.flatMap { value in Self.reminders.firstIndex(where: { $0.offset == value }) } ?? 3
+        let index = offset.flatMap { value in Self.reminders.firstIndex(where: { $0.offset == value }) } ?? -1
         _remindIndex = State(initialValue: index)
     }
 
@@ -81,6 +82,8 @@ struct DayEditorView: View {
                     coverPreviewPicker.padding(.bottom, 18)
                     photoStrip.padding(.bottom, 22)
                     formCard.padding(.bottom, 16)
+                    SectionLabel(text: "提醒").padding(.bottom, 10)
+                    reminderPicker.padding(.bottom, 22)
                     SectionLabel(text: "分类").padding(.bottom, 10)
                     categoryPills.padding(.bottom, 22)
                     SectionLabel(text: "心情笔记").padding(.bottom, 10)
@@ -311,7 +314,7 @@ struct DayEditorView: View {
                     set: { recurring = !$0 }
                 ))
             }
-            FormRow(label: "地点") {
+            FormRow(label: "地点", isLast: true) {
                 TextField("可选", text: $location)
                     .font(Theme.sans(14, relativeTo: .body))
                     .foregroundStyle(Theme.ink2)
@@ -319,33 +322,43 @@ struct DayEditorView: View {
                     .submitLabel(.done)
                     .accessibilityLabel("地点")
             }
-            FormRow(label: "提醒", isLast: true) {
-                HStack(spacing: 6) {
-                    ForEach(Self.reminders.indices, id: \.self) { index in
-                        Button {
-                            if remindIndex != index { Haptics.selection() }
-                            remindIndex = index
-                        } label: {
-                            Text(Self.reminders[index].label)
-                                .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
-                                .foregroundStyle(remindIndex == index ? Theme.terracotta : Theme.ink2)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 7)
-                                .background(remindIndex == index ? Theme.terracottaSoft : .clear)
-                                .clipShape(RoundedRectangle(cornerRadius: 7))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 7)
-                                        .strokeBorder(remindIndex == index ? Theme.terracotta.opacity(0.2) : .clear,
-                                                      lineWidth: 0.5)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("提醒\(Self.reminders[index].label)")
-                        .accessibilityAddTraits(remindIndex == index ? [.isSelected] : [])
-                    }
+        }
+    }
+
+    /// Reminder offsets as wrapping chips (so 5 options never overflow), with a
+    /// leading "默认" that follows the global reminder settings (remindIndex -1).
+    private var reminderPicker: some View {
+        FlowLayout(spacing: 8) {
+            reminderChip(label: "默认", selected: remindIndex < 0) { remindIndex = -1 }
+            ForEach(Self.reminders.indices, id: \.self) { index in
+                reminderChip(label: Self.reminders[index].label, selected: remindIndex == index) {
+                    remindIndex = index
                 }
             }
         }
+    }
+
+    private func reminderChip(label: String, selected: Bool,
+                              action: @escaping () -> Void) -> some View {
+        Button {
+            if !selected { Haptics.selection() }
+            action()
+        } label: {
+            Text(label)
+                .font(Theme.sans(13, weight: .medium, relativeTo: .body))
+                .foregroundStyle(selected ? Theme.terracotta : Theme.ink2)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(selected ? Theme.terracottaSoft : Theme.card)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule().strokeBorder(selected ? Theme.terracotta.opacity(0.24) : Theme.hairline,
+                                           lineWidth: 0.5)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label == "默认" ? "默认提醒，跟随全局设置" : "提醒\(label)")
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     private var categoryPills: some View {
@@ -414,7 +427,7 @@ struct DayEditorView: View {
             categoryID: category.id,
             coverFocusX: coverFocusX,
             coverFocusY: coverFocusY,
-            reminderOffsets: [Self.reminders[remindIndex].offset],
+            reminderOffsets: remindIndex < 0 ? nil : [Self.reminders[remindIndex].offset],
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             location: location.trimmingCharacters(in: .whitespacesAndNewlines),
             pinned: editingDay?.pinned ?? false,
