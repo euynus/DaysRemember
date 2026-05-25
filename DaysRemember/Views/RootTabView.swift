@@ -87,6 +87,7 @@ struct RootTabView: View {
                 DetailView(day: day)
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationBarBackButtonHidden(true)
+                    .enableSwipeBack()
             }
         }
     }
@@ -99,6 +100,7 @@ struct RootTabView: View {
                     DetailView(day: day)
                         .toolbar(.hidden, for: .navigationBar)
                         .navigationBarBackButtonHidden(true)
+                        .enableSwipeBack()
                 }
         }
     }
@@ -111,6 +113,7 @@ struct RootTabView: View {
                     DetailView(day: day)
                         .toolbar(.hidden, for: .navigationBar)
                         .navigationBarBackButtonHidden(true)
+                        .enableSwipeBack()
                 }
         }
     }
