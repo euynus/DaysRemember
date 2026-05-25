@@ -5,6 +5,7 @@ struct HomeView: View {
     @State private var filter: Filter = .all
     @State private var isSearching = false
     @State private var searchText = ""
+    @FocusState private var searchFocused: Bool
     var onOpen: (Day) -> Void = { _ in }
     var onAdd: () -> Void = {}
 
@@ -100,6 +101,7 @@ struct HomeView: View {
                 .font(Theme.sans(14))
                 .textInputAutocapitalization(.never)
                 .submitLabel(.search)
+                .focused($searchFocused)
             if !searchText.isEmpty {
                 Button("清除") { searchText = "" }
                     .font(Theme.sans(13, weight: .medium))
@@ -118,6 +120,11 @@ struct HomeView: View {
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .accessibilityLabel("搜索日子")
+        // Focus + raise the keyboard as soon as the field is inserted, so opening
+        // search is a single tap instead of tap-to-reveal then tap-to-type. Defer
+        // one runloop: setting @FocusState synchronously in the .onAppear of a
+        // just-inserted field races the responder chain and often no-ops on iOS 17.
+        .onAppear { Task { @MainActor in searchFocused = true } }
     }
 
     private var chips: some View {
