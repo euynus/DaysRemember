@@ -70,9 +70,10 @@ struct OnboardingView: View {
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) { page += 1 }
                             } label: {
-                                HStack(spacing: 4) {
+                                HStack(spacing: 6) {
                                     Text("下一步")
-                                    Text("→")
+                                    Image(systemName: "arrow.right")
+                                        .font(.system(size: 13, weight: .semibold))
                                 }
                                 .font(Theme.sans(15, weight: .medium))
                                 .foregroundStyle(.white)
