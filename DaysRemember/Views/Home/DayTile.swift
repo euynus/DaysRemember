@@ -29,7 +29,12 @@ struct DayTile: View {
             .shadow(color: .black.opacity(0.05), radius: 16, y: 6)
         }
         .buttonStyle(PressableTileStyle())
-        .accessibilityLabel("\(day.title)，\(info.days) \(info.labelShort)")
+        .accessibilityLabel(
+            "\(day.title)，"
+            + (info.isToday ? "就是今天" : "\(info.labelShort) \(info.days) 天")
+            + (day.pinned ? "，已置顶" : "")
+        )
+        .accessibilityHint("长按可置顶、编辑或分享")
     }
 
     @ViewBuilder
