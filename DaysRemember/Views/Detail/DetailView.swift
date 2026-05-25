@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct DetailView: View {
-    @EnvironmentObject var store: DayStore
+    @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
     let day: Day
     @State private var showShare = false
@@ -50,7 +50,7 @@ struct DetailView: View {
             ShareCardView(day: currentDay)
         }
         .sheet(isPresented: $showEditor) {
-            DayEditorView(day: currentDay)
+            DayEditorView(day: currentDay).environment(store)
         }
         .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("删除", role: .destructive) {

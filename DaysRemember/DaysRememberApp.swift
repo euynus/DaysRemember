@@ -2,20 +2,15 @@ import SwiftUI
 
 @main
 struct DaysRememberApp: App {
-    @StateObject private var store = DayStore()
-    @StateObject private var settings = AppSettings()
+    @State private var store = DayStore()
+    @State private var settings = AppSettings()
     @State private var router = DeepLinkRouter()
-
-    init() {
-        // Wire the store to settings so it can re-schedule notifications on day changes.
-        // (Has to be in `body` for @StateObject access — this just sets the static link.)
-    }
 
     var body: some Scene {
         WindowGroup {
             RootGate()
-                .environmentObject(store)
-                .environmentObject(settings)
+                .environment(store)
+                .environment(settings)
                 .environment(router)
                 .environment(\.locale, Locale(identifier: "zh_CN"))
                 .task {
@@ -37,8 +32,8 @@ struct DaysRememberApp: App {
 }
 
 private struct RootGate: View {
-    @EnvironmentObject var settings: AppSettings
-    @EnvironmentObject var store: DayStore
+    @Environment(AppSettings.self) var settings
+    @Environment(DayStore.self) var store
     @Environment(DeepLinkRouter.self) var router
 
     var body: some View {

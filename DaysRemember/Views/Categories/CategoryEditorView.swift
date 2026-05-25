@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CategoryEditorView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var store: DayStore
+    @Environment(DayStore.self) var store
 
     private let category: CategoryDefinition?
     @State private var name: String

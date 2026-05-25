@@ -1,20 +1,20 @@
 import Foundation
-import Combine
 import SwiftUI
 #if canImport(WidgetKit)
 import WidgetKit
 #endif
 
 @MainActor
-final class DayStore: ObservableObject {
-    @Published var days: [Day] {
+@Observable
+final class DayStore {
+    var days: [Day] {
         didSet {
             save()
             rescheduleNotifications()
             reloadWidgetTimelines()
         }
     }
-    @Published var categories: [CategoryDefinition] {
+    var categories: [CategoryDefinition] {
         didSet {
             saveCategories()
         }
@@ -303,24 +303,45 @@ final class DayStore: ObservableObject {
 }
 
 @MainActor
-final class AppSettings: ObservableObject {
-    @AppStorage("hasOnboarded") var hasOnboarded: Bool = false
-    @AppStorage("notif.pre7") var notifPre7: Bool = true
-    @AppStorage("notif.pre3") var notifPre3: Bool = true
-    @AppStorage("notif.pre1") var notifPre1: Bool = false
-    @AppStorage("notif.day0") var notifDay0: Bool = true
-    @AppStorage("notif.memory") var memoryEnabled: Bool = true
-    @AppStorage("notif.moments") var momentsEnabled: Bool = true
-    @AppStorage("notif.quiet") var quietHours: Bool = true
-    @AppStorage("notif.hour") var notificationHour: Int = 9
-    @AppStorage("notif.minute") var notificationMinute: Int = 0
+@Observable
+final class AppSettings {
+    // Stored, UserDefaults-backed (replaces @AppStorage, which @Observable can't
+    // observe). Same keys & standard store as before so existing settings carry over.
+    var hasOnboarded: Bool { didSet { persist(hasOnboarded, "hasOnboarded"); scheduleCloudPush() } }
+    var notifPre7: Bool { didSet { persist(notifPre7, "notif.pre7"); scheduleCloudPush() } }
+    var notifPre3: Bool { didSet { persist(notifPre3, "notif.pre3"); scheduleCloudPush() } }
+    var notifPre1: Bool { didSet { persist(notifPre1, "notif.pre1"); scheduleCloudPush() } }
+    var notifDay0: Bool { didSet { persist(notifDay0, "notif.day0"); scheduleCloudPush() } }
+    var memoryEnabled: Bool { didSet { persist(memoryEnabled, "notif.memory"); scheduleCloudPush() } }
+    var momentsEnabled: Bool { didSet { persist(momentsEnabled, "notif.moments"); scheduleCloudPush() } }
+    var quietHours: Bool { didSet { persist(quietHours, "notif.quiet"); scheduleCloudPush() } }
+    var notificationHour: Int { didSet { persist(notificationHour, "notif.hour"); scheduleCloudPush() } }
+    var notificationMinute: Int { didSet { persist(notificationMinute, "notif.minute"); scheduleCloudPush() } }
 
-    private let cloud = ICloudSyncStore.shared
-    private var cloudSyncEnabled = false
-    private var cloudChangeToken: UUID?
-    private var settingsCancellable: AnyCancellable?
-    private var isApplyingCloudChange = false
-    private var onCloudSettingsApplied: (() -> Void)?
+    @ObservationIgnored private let defaults = UserDefaults.standard
+    @ObservationIgnored private let cloud = ICloudSyncStore.shared
+    @ObservationIgnored private var cloudSyncEnabled = false
+    @ObservationIgnored private var cloudChangeToken: UUID?
+    @ObservationIgnored private var pushTask: Task<Void, Never>?
+    @ObservationIgnored private var isApplyingCloudChange = false
+    @ObservationIgnored private var onCloudSettingsApplied: (() -> Void)?
+
+    init() {
+        let d = UserDefaults.standard
+        hasOnboarded = d.object(forKey: "hasOnboarded") as? Bool ?? false
+        notifPre7 = d.object(forKey: "notif.pre7") as? Bool ?? true
+        notifPre3 = d.object(forKey: "notif.pre3") as? Bool ?? true
+        notifPre1 = d.object(forKey: "notif.pre1") as? Bool ?? false
+        notifDay0 = d.object(forKey: "notif.day0") as? Bool ?? true
+        memoryEnabled = d.object(forKey: "notif.memory") as? Bool ?? true
+        momentsEnabled = d.object(forKey: "notif.moments") as? Bool ?? true
+        quietHours = d.object(forKey: "notif.quiet") as? Bool ?? true
+        notificationHour = d.object(forKey: "notif.hour") as? Int ?? 9
+        notificationMinute = d.object(forKey: "notif.minute") as? Int ?? 0
+    }
+
+    private func persist(_ value: Bool, _ key: String) { defaults.set(value, forKey: key) }
+    private func persist(_ value: Int, _ key: String) { defaults.set(value, forKey: key) }
 
     func enableCloudSync(onRemoteApply: @escaping () -> Void = {}) {
         onCloudSettingsApplied = onRemoteApply
@@ -330,17 +351,19 @@ final class AppSettings: ObservableObject {
             guard changedKeys == nil || changedKeys?.contains(ICloudSyncStore.Key.settings) == true else { return }
             self?.pullSettingsIfNewer()
         }
-        // Debounce so rapid toggles (e.g. flipping several reminder offsets in a row)
-        // coalesce into one KVS write instead of one push per @AppStorage emission.
-        // 300 ms also covers the "objectWillChange fires before the value commits"
-        // gap that the old Task.yield handled.
-        settingsCancellable = objectWillChange
-            .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
-            .sink { [weak self] _ in
-                guard let self, self.cloudSyncEnabled, !self.isApplyingCloudChange else { return }
-                self.pushSettingsToCloud()
-            }
         reconcileSettingsWithCloud()
+    }
+
+    /// Debounced iCloud push, triggered from each setting's didSet (replaces the old
+    /// Combine objectWillChange.debounce). Coalesces rapid toggles into one KVS write.
+    private func scheduleCloudPush() {
+        guard cloudSyncEnabled, !isApplyingCloudChange else { return }
+        pushTask?.cancel()
+        pushTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard let self, !Task.isCancelled else { return }
+            self.pushSettingsToCloud()
+        }
     }
 
     private var snapshot: AppSettingsSnapshot {
@@ -366,7 +389,7 @@ final class AppSettings: ObservableObject {
         return true
     }
 
-    private func pushSettingsToCloud(updatedAt: TimeInterval = Date().timeIntervalSinceReferenceDate) {
+    private func pushSettingsToCloud(updatedAt: TimeInterval = Date.now.timeIntervalSinceReferenceDate) {
         cloud.push(snapshot, for: ICloudSyncStore.Key.settings, updatedAt: updatedAt)
     }
 

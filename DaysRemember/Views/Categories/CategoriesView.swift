@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CategoriesView: View {
-    @EnvironmentObject var store: DayStore
+    @Environment(DayStore.self) var store
     var onOpen: (Day) -> Void = { _ in }
 
     @State private var editing = false
@@ -24,7 +24,7 @@ struct CategoriesView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
         .sheet(isPresented: $showingEditor) {
-            CategoryEditorView(category: editingCategory)
+            CategoryEditorView(category: editingCategory).environment(store)
         }
         .confirmationDialog("删除分类后迁移日子到哪里？",
                             isPresented: Binding(

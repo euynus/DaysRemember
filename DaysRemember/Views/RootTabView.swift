@@ -31,7 +31,7 @@ enum AppTab: String, Hashable, CaseIterable {
 }
 
 struct RootTabView: View {
-    @EnvironmentObject private var store: DayStore
+    @Environment(DayStore.self) private var store
     @Environment(DeepLinkRouter.self) private var router
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
@@ -53,7 +53,7 @@ struct RootTabView: View {
                 TabBar(current: tab, onSelect: { tab = $0 })
             }
             .ignoresSafeArea(.keyboard)
-            .sheet(isPresented: $addingDay) { AddDayView() }
+            .sheet(isPresented: $addingDay) { AddDayView().environment(store) }
             .onOpenURL { handleDeepLink($0) }
             .onChange(of: router.dayID) { _, id in routePending(id) }
             // Also catch a tap that set the id before this view began observing

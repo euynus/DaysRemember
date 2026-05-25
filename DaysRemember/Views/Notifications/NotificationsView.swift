@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 
 struct NotificationsView: View {
-    @EnvironmentObject var settings: AppSettings
-    @EnvironmentObject var store: DayStore
+    @Environment(AppSettings.self) var settings
+    @Environment(DayStore.self) var store
     @Environment(\.scenePhase) private var scenePhase
     @State private var permissionDenied = false
 

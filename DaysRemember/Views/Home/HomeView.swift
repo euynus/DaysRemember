@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject var store: DayStore
+    @Environment(DayStore.self) var store
     @State private var filter: Filter = .all
     @State private var isSearching = false
     @State private var searchText = ""

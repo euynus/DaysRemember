@@ -3,7 +3,7 @@ import PhotosUI
 
 struct DayEditorView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var store: DayStore
+    @Environment(DayStore.self) var store
 
     private let editingDay: Day?
     @State private var title: String

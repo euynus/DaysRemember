@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CalendarMonthView: View {
-    @EnvironmentObject var store: DayStore
+    @Environment(DayStore.self) var store
     @State private var month: Int
     @State private var year: Int
     @State private var selectedEvents: [Day] = []

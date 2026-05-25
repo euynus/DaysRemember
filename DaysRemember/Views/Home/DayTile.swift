@@ -126,7 +126,7 @@ struct PressableTileStyle: ButtonStyle {
 /// without opening Detail. Self-contained: owns its sheet + dialog state and reads
 /// the live `Day` back from the store so the actions reflect the latest edit.
 struct DayContextMenu: ViewModifier {
-    @EnvironmentObject private var store: DayStore
+    @Environment(DayStore.self) private var store
     let day: Day
     @State private var showEditor = false
     @State private var showShare = false
@@ -156,7 +156,7 @@ struct DayContextMenu: ViewModifier {
                     Label("删除", systemImage: "trash")
                 }
             }
-            .sheet(isPresented: $showEditor) { DayEditorView(day: current) }
+            .sheet(isPresented: $showEditor) { DayEditorView(day: current).environment(store) }
             .sheet(isPresented: $showShare) { ShareCardView(day: current) }
             .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm,
                                 titleVisibility: .visible) {
