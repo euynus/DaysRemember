@@ -39,7 +39,10 @@ private struct RootGate: View {
     var body: some View {
         if let override = DebugLaunch.screenOverride {
             override.makeView(store: store)
-        } else if settings.hasOnboarded {
+        } else if settings.hasOnboarded || DebugLaunch.isAutomated {
+            // Automated runs (screenshots, UI tests) launch onto a fresh install
+            // with no persisted onboarding flag — skip the intro so they land in the
+            // app. Onboarding itself is still screenshottable via `--screen onboarding`.
             RootTabView()
         } else {
             // Drop any reminder/widget link queued before onboarding finished, so it
