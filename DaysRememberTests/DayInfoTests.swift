@@ -27,6 +27,7 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(cal.startOfDay(for: info.displayDate),
                        cal.startOfDay(for: date(2027, 1, 1)))
         XCTAssertNil(info.yearsAgo)
+        XCTAssertNil(info.anniversaryNumber)
     }
 
     func testNonRecurringPastIsMarkedPast() {
@@ -60,6 +61,8 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(cal.component(.day, from: info.displayDate), 25)
         XCTAssertFalse(info.isPast)
         XCTAssertEqual(info.yearsAgo, 6)
+        // Upcoming this year → 6th anniversary (not 7).
+        XCTAssertEqual(info.anniversaryNumber, 6)
     }
 
     func testRecurringGregorianRollsToNextYearAfterAnniversary() {
@@ -70,6 +73,8 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(cal.component(.month, from: info.displayDate), 3)
         XCTAssertEqual(cal.component(.day, from: info.displayDate), 8)
         XCTAssertFalse(info.isPast)
+        // Already passed this year → rolled to 2027 → 7th anniversary.
+        XCTAssertEqual(info.anniversaryNumber, 7)
     }
 
     func testRecurringGregorianOnAnniversaryIsToday() {
@@ -80,6 +85,8 @@ final class DayInfoTests: XCTestCase {
         XCTAssertTrue(info.isToday)
         XCTAssertFalse(info.isPast)
         XCTAssertEqual(info.yearsAgo, 6)
+        // The anniversary is today → 6th occurrence.
+        XCTAssertEqual(info.anniversaryNumber, 6)
     }
 
     // MARK: - Recurring lunar

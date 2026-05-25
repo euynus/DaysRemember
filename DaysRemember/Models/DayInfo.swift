@@ -7,6 +7,9 @@ struct DayInfo {
     var isToday: Bool
     var displayDate: Date
     var yearsAgo: Int?
+    /// For recurring days: which occurrence the upcoming `displayDate` is (1-based).
+    /// `nil` for non-recurring days.
+    var anniversaryNumber: Int?
 
     static func compute(_ d: Day, today: Date = Today.date) -> DayInfo {
         let cal = CNDate.calendar
@@ -57,13 +60,20 @@ struct DayInfo {
         let years = d.recurring
             ? (cal.component(.year, from: todayStart) - cal.component(.year, from: d.date))
             : nil
+        // Years between the original date and the upcoming occurrence — this is the
+        // anniversary number. (Distinct from yearsAgo, which is measured from today's
+        // year and over-counts by one before the anniversary rolls to next year.)
+        let anniversary = d.recurring
+            ? max(1, cal.component(.year, from: displayDate) - cal.component(.year, from: d.date))
+            : nil
 
         return DayInfo(
             days: abs(diff),
             isPast: diff < 0,
             isToday: diff == 0,
             displayDate: displayDate,
-            yearsAgo: years
+            yearsAgo: years,
+            anniversaryNumber: anniversary
         )
     }
 
