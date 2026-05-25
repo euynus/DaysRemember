@@ -54,7 +54,7 @@ struct DayTile: View {
                     Text("\(info.days)")
                         .font(Theme.serif(56, weight: .medium))
                         .monospacedDigit()
-                    Text("\(info.labelShort) · 天")
+                    Text(info.isToday ? info.labelShort : "\(info.labelShort) · 天")
                         .font(Theme.sans(13))
                         .foregroundStyle(Color.white.opacity(0.9))
                 }

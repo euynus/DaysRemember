@@ -119,7 +119,7 @@ struct DetailView: View {
                 .minimumScaleFactor(0.5)
                 .padding(.top, 28)
                 .padding(.bottom, 6)
-            Text("\(info.label) · 天")
+            Text(info.isToday ? info.label : "\(info.label) · 天")
                 .font(Theme.sans(14))
                 .tracking(3.5)
                 .foregroundStyle(Color.white.opacity(0.8))
