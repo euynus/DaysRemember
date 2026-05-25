@@ -317,6 +317,7 @@ struct DayEditorView: View {
                     .foregroundStyle(Theme.ink2)
                     .multilineTextAlignment(.trailing)
                     .submitLabel(.done)
+                    .accessibilityLabel("地点")
             }
             FormRow(label: "提醒", isLast: true) {
                 HStack(spacing: 6) {
@@ -390,6 +391,7 @@ struct DayEditorView: View {
                 .scrollContentBackground(.hidden)
                 .frame(maxWidth: .infinity, minHeight: 90)
                 .padding(12)
+                .accessibilityLabel("心情笔记")
         }
         .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: 18))
