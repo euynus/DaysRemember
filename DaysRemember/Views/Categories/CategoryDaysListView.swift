@@ -18,6 +18,7 @@ struct CategoryDaysListView: View {
                 } else {
                     VStack(spacing: 8) {
                         ForEach(days) { day in
+                            let info = DayInfo.compute(day)
                             Button { onOpen(day) } label: {
                                 HStack(spacing: 12) {
                                     PhotoTile(day: day, flat: true, cornerRadius: 10)
@@ -31,9 +32,17 @@ struct CategoryDaysListView: View {
                                             .foregroundStyle(Theme.muted)
                                     }
                                     Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 12, weight: .semibold))
-                                        .foregroundStyle(Theme.muted)
+                                    VStack(alignment: .trailing, spacing: 1) {
+                                        Text(info.isToday ? "今天" : "\(info.days)")
+                                            .font(Theme.serif(18, weight: .semibold, relativeTo: .title3))
+                                            .foregroundStyle(Theme.terracotta)
+                                            .monospacedDigit()
+                                        if !info.isToday {
+                                            Text(info.labelShort)
+                                                .font(Theme.sans(10, relativeTo: .caption2))
+                                                .foregroundStyle(Theme.muted)
+                                        }
+                                    }
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 10)
@@ -41,7 +50,11 @@ struct CategoryDaysListView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 14))
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel(day.title)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(
+                                "\(day.title)，"
+                                + (info.isToday ? "就是今天" : "\(info.labelShort) \(info.days) 天")
+                            )
                         }
                     }
                     .padding(.horizontal, 20)
