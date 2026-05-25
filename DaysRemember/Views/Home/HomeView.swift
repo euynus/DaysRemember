@@ -272,6 +272,11 @@ struct TodaySpotlight: View {
                 )
             }
             .buttonStyle(.plain)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(
+                "即将到来，\(day.title)，"
+                + (info.isToday ? "就是今天" : "\(info.days) 天后")
+            )
             .padding(.horizontal, 20)
             .padding(.bottom, 4)
         }
