@@ -31,6 +31,7 @@ enum AppTab: String, Hashable, CaseIterable {
 }
 
 struct RootTabView: View {
+    @EnvironmentObject private var store: DayStore
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
@@ -52,6 +53,18 @@ struct RootTabView: View {
             }
             .ignoresSafeArea(.keyboard)
             .sheet(isPresented: $addingDay) { AddDayView() }
+            .onOpenURL { handleDeepLink($0) }
+    }
+
+    /// `daysremember://day/<id>` (tapped from the widget) opens that day's detail
+    /// on the Home stack. No-ops safely if the id no longer exists.
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "daysremember" else { return }
+        let id = url.lastPathComponent
+        guard let day = store.days.first(where: { $0.id == id }) else { return }
+        tab = .home
+        homePath = NavigationPath()
+        homePath.append(day)
     }
 
     @ViewBuilder

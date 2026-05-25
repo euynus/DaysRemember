@@ -77,12 +77,16 @@ struct DaysWidgetEntryView: View {
 
     var body: some View {
         if let day = entry.day {
-            switch family {
-            case .systemSmall: WidgetSmall(day: day)
-            case .systemMedium: WidgetMedium(day: day)
-            case .systemLarge: WidgetLarge(day: day)
-            default: WidgetSmall(day: day)
+            Group {
+                switch family {
+                case .systemSmall: WidgetSmall(day: day)
+                case .systemMedium: WidgetMedium(day: day)
+                case .systemLarge: WidgetLarge(day: day)
+                default: WidgetSmall(day: day)
+                }
             }
+            // Tapping the widget opens that specific day's detail.
+            .widgetURL(URL(string: "daysremember://day/\(day.id)"))
         } else {
             ZStack {
                 LinearGradient(
