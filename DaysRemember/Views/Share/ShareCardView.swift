@@ -125,7 +125,10 @@ struct ShareCardView: View {
     private var templatePicker: some View {
         HStack(spacing: 8) {
             ForEach(Template.allCases, id: \.self) { t in
-                Button { template = t } label: {
+                Button {
+                    if template != t { Haptics.selection() }
+                    template = t
+                } label: {
                     Text(t.label)
                         .font(Theme.sans(12, weight: .medium))
                         .foregroundStyle(template == t ? Theme.terracotta : Theme.ink2)

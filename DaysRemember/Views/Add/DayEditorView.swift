@@ -183,7 +183,10 @@ struct DayEditorView: View {
     private var coverPreviewPicker: some View {
         HStack(spacing: 6) {
             ForEach(CoverPreview.allCases, id: \.self) { preview in
-                Button { coverPreview = preview } label: {
+                Button {
+                    if coverPreview != preview { Haptics.selection() }
+                    coverPreview = preview
+                } label: {
                     Text(preview.label)
                         .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
                         .foregroundStyle(coverPreview == preview ? Theme.terracotta : Theme.ink2)
@@ -214,6 +217,7 @@ struct DayEditorView: View {
                 HStack(spacing: 8) {
                     ForEach(Self.pickerOptions, id: \.self) { preset in
                         Button {
+                            if photo != preset || photoData != nil { Haptics.selection() }
                             photo = preset
                             photoData = nil
                             resetFocus()
@@ -318,6 +322,7 @@ struct DayEditorView: View {
                 HStack(spacing: 6) {
                     ForEach(Self.reminders.indices, id: \.self) { index in
                         Button {
+                            if remindIndex != index { Haptics.selection() }
                             remindIndex = index
                         } label: {
                             Text(Self.reminders[index].label)
@@ -345,7 +350,10 @@ struct DayEditorView: View {
     private var categoryPills: some View {
         FlowLayout(spacing: 8) {
             ForEach(store.categories) { category in
-                Button { categoryID = category.id } label: {
+                Button {
+                    if categoryID != category.id { Haptics.selection() }
+                    categoryID = category.id
+                } label: {
                     Label(category.name, systemImage: category.icon)
                         .font(Theme.sans(13, weight: .medium, relativeTo: .body))
                         .foregroundStyle(categoryID == category.id ? category.colorToken.color : Theme.ink2)
