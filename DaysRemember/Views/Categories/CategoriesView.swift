@@ -80,8 +80,15 @@ struct CategoriesView: View {
         .padding(.bottom, 8)
     }
 
+    /// One pass over `days` keyed by category, so each tile is an O(1) lookup
+    /// instead of re-filtering all days per tile (was O(categories × days)).
+    private var categoryCounts: [String: Int] {
+        Dictionary(store.days.map { ($0.categoryID, 1) }, uniquingKeysWith: +)
+    }
+
     private var grid: some View {
-        VStack(spacing: 10) {
+        let counts = categoryCounts
+        return VStack(spacing: 10) {
             NavigationLink {
                 CategoryDaysListView(title: "全部日子", days: store.days(in: nil), onOpen: onOpen)
             } label: {
@@ -94,16 +101,15 @@ struct CategoriesView: View {
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10),
                                 GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                ForEach(store.categories) { categoryTile($0) }
+                ForEach(store.categories) { categoryTile($0, count: counts[$0.id] ?? 0) }
             }
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
     }
 
-    private func categoryTile(_ category: CategoryDefinition) -> some View {
-        let count = store.days.filter { $0.categoryID == category.id }.count
-        return ZStack(alignment: .topTrailing) {
+    private func categoryTile(_ category: CategoryDefinition, count: Int) -> some View {
+        ZStack(alignment: .topTrailing) {
             NavigationLink {
                 CategoryDaysListView(title: category.name,
                                      days: store.days(in: category.id),
