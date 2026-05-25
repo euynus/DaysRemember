@@ -34,4 +34,24 @@ final class LunarTests: XCTestCase {
         XCTAssertFalse(s.isEmpty)
         XCTAssertTrue(s.contains("月"))
     }
+
+    /// solarToLunar must always yield month 1...12 and day 1...30 — the formatters
+    /// index fixed-size arrays (CN_MONTH / CN_DAY_PREFIX / CN_NUM), so any out-of-range
+    /// month/day would trap. Sweep day-by-day across years including new-year boundaries.
+    /// (Verified exhaustively over the full 1900–2100 table; this guards the boundaries.)
+    func testConversionStaysInRangeAcrossYearBoundaries() {
+        let cal = CNDate.calendar
+        for year in [1900, 1901, 1984, 2000, 2033, 2099, 2100] {
+            // January–February brackets every Spring Festival transition.
+            var day = date(year, 1, 1)
+            let end = date(year, 3, 1)
+            while day < end {
+                let l = Lunar.solarToLunar(day)
+                XCTAssertTrue((1...12).contains(l.month), "month \(l.month) out of range for \(day)")
+                XCTAssertTrue((1...30).contains(l.day), "day \(l.day) out of range for \(day)")
+                _ = Lunar.fmtFull(day) // would trap on an out-of-range index
+                day = cal.date(byAdding: .day, value: 1, to: day)!
+            }
+        }
+    }
 }
