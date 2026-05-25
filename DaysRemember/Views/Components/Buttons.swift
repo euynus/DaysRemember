@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Top-of-screen circular button with cream/ink fill (used on Home: search & "+").
 struct IconBtn: View {
-    enum Kind { case search, plus, back, ellipsis, star, chevronLeft, chevronRight }
+    enum Kind { case search, plus }
     let kind: Kind
     var accent: Bool = false
     var action: () -> Void = {}
@@ -25,11 +25,6 @@ struct IconBtn: View {
         switch kind {
         case .search: Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .semibold))
         case .plus: Image(systemName: "plus").font(.system(size: 17, weight: .bold))
-        case .back: Image(systemName: "chevron.left").font(.system(size: 16, weight: .bold))
-        case .ellipsis: Image(systemName: "ellipsis").font(.system(size: 17, weight: .bold))
-        case .star: Image(systemName: "star").font(.system(size: 16, weight: .semibold))
-        case .chevronLeft: Image(systemName: "chevron.left").font(.system(size: 14, weight: .bold))
-        case .chevronRight: Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold))
         }
     }
 
@@ -37,11 +32,6 @@ struct IconBtn: View {
         switch kind {
         case .search: return "搜索"
         case .plus: return "新增日子"
-        case .back: return "返回"
-        case .ellipsis: return "更多"
-        case .star: return "置顶"
-        case .chevronLeft: return "上一个"
-        case .chevronRight: return "下一个"
         }
     }
 }

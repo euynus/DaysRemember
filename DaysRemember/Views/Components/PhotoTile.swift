@@ -119,16 +119,3 @@ struct PhotoTile: View {
     }
 }
 
-extension View {
-    /// 180° gradient overlay that matches `.photo::after` in `styles.css`.
-    func bottomScrim(opacity: Double = 0.55) -> some View {
-        overlay {
-            LinearGradient(
-                colors: [.black.opacity(0), .black.opacity(opacity)],
-                startPoint: UnitPoint(x: 0.5, y: 0.35),
-                endPoint: .bottom
-            )
-            .allowsHitTesting(false)
-        }
-    }
-}
