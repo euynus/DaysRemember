@@ -118,14 +118,19 @@ final class NotificationManager {
     }
 
     private func body(for day: Day, offset: Int) -> String {
+        let lead: String
         switch offset {
         case 0:
-            return "今天是「\(day.title)」"
+            lead = "今天是「\(day.title)」"
         case 1:
-            return "「\(day.title)」就是明天"
+            lead = "「\(day.title)」就是明天"
         default:
-            return "「\(day.title)」还有 \(offset) 天"
+            lead = "「\(day.title)」还有 \(offset) 天"
         }
+        // Append the place when there is one, for a more contextual reminder
+        // ("「蜜月旅行」还有 7 天 · 京都").
+        let location = day.location.trimmingCharacters(in: .whitespacesAndNewlines)
+        return location.isEmpty ? lead : "\(lead) · \(location)"
     }
 
     nonisolated static func triggerDate(displayDate: Date, offset: Int, hour: Int, minute: Int,
