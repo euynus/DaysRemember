@@ -55,17 +55,22 @@ struct RootTabView: View {
             .ignoresSafeArea(.keyboard)
             .sheet(isPresented: $addingDay) { AddDayView() }
             .onOpenURL { handleDeepLink($0) }
-            .onChange(of: router.dayID) { _, id in
-                guard let id else { return }
-                openDay(id: id)
-                router.dayID = nil
-            }
+            .onChange(of: router.dayID) { _, id in routePending(id) }
+            // Also catch a tap that set the id before this view began observing
+            // (cold launch from a notification).
+            .task { routePending(router.dayID) }
     }
 
     /// `daysremember://day/<id>` (tapped from the widget) opens that day's detail.
     private func handleDeepLink(_ url: URL) {
         guard url.scheme == "daysremember" else { return }
         openDay(id: url.lastPathComponent)
+    }
+
+    private func routePending(_ id: String?) {
+        guard let id else { return }
+        openDay(id: id)
+        router.dayID = nil
     }
 
     /// Open a day's detail on the Home stack. No-ops safely if the id no longer exists.
