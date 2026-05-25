@@ -6,10 +6,46 @@ import UIKit
 ///
 /// Identifier scheme: `dr.day.<dayId>.pre.<offsetDays>` — lets us cancel a single day's
 /// pending requests without disturbing others, and re-sync everything on settings change.
+/// Bridges a tapped reminder (or widget link) to SwiftUI navigation: `RootTabView`
+/// observes `dayID`, opens that day's detail, and clears it.
+@MainActor
+final class DeepLinkRouter: ObservableObject {
+    @Published var dayID: String?
+}
+
+/// UNUserNotificationCenter delegate — routes a tapped reminder to its day, and lets
+/// reminders surface as a banner while the app is in the foreground.
+final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    private let router: DeepLinkRouter
+    init(router: DeepLinkRouter) { self.router = router; super.init() }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification) async
+        -> UNNotificationPresentationOptions {
+        [.banner, .sound]
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse) async {
+        guard let id = response.notification.request.content.userInfo["dayID"] as? String else { return }
+        await MainActor.run { router.dayID = id }
+    }
+}
+
 @MainActor
 final class NotificationManager {
     static let shared = NotificationManager()
     private init() {}
+
+    /// Strong ref to the delegate — `UNUserNotificationCenter.delegate` is weak.
+    private var notificationDelegate: NotificationDelegate?
+
+    /// Install the tap-routing / foreground-presentation delegate. Call once at launch.
+    func configureDelegate(router: DeepLinkRouter) {
+        let delegate = NotificationDelegate(router: router)
+        notificationDelegate = delegate
+        UNUserNotificationCenter.current().delegate = delegate
+    }
 
     /// Quiet hours bounds — notifications are pushed past the upper bound when they fall inside.
     nonisolated private static let quietStart = 22
@@ -83,6 +119,7 @@ final class NotificationManager {
                 content.body = body(for: day, offset: offset)
                 content.sound = .default
                 content.threadIdentifier = "dr.day.\(day.id)"
+                content.userInfo = ["dayID": day.id]  // lets a tap route to this day
 
                 let comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: trigger)
                 let request = UNNotificationRequest(

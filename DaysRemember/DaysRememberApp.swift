@@ -4,6 +4,7 @@ import SwiftUI
 struct DaysRememberApp: App {
     @StateObject private var store = DayStore()
     @StateObject private var settings = AppSettings()
+    @StateObject private var router = DeepLinkRouter()
 
     init() {
         // Wire the store to settings so it can re-schedule notifications on day changes.
@@ -15,6 +16,7 @@ struct DaysRememberApp: App {
             RootGate()
                 .environmentObject(store)
                 .environmentObject(settings)
+                .environmentObject(router)
                 .environment(\.locale, Locale(identifier: "zh_CN"))
                 .task {
                     store.settings = settings
@@ -22,6 +24,7 @@ struct DaysRememberApp: App {
                     settings.enableCloudSync {
                         store.rescheduleNotifications()
                     }
+                    NotificationManager.shared.configureDelegate(router: router)
                     // Skip the system permission prompt during automated screenshots —
                     // it would block the simulator and can't be dismissed via simctl.
                     if !DebugLaunch.isAutomated {

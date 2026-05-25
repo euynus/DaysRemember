@@ -32,6 +32,7 @@ enum AppTab: String, Hashable, CaseIterable {
 
 struct RootTabView: View {
     @EnvironmentObject private var store: DayStore
+    @EnvironmentObject private var router: DeepLinkRouter
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
@@ -54,13 +55,22 @@ struct RootTabView: View {
             .ignoresSafeArea(.keyboard)
             .sheet(isPresented: $addingDay) { AddDayView() }
             .onOpenURL { handleDeepLink($0) }
+            .onChange(of: router.dayID) { _, id in
+                guard let id else { return }
+                openDay(id: id)
+                router.dayID = nil
+            }
     }
 
-    /// `daysremember://day/<id>` (tapped from the widget) opens that day's detail
-    /// on the Home stack. No-ops safely if the id no longer exists.
+    /// `daysremember://day/<id>` (tapped from the widget) opens that day's detail.
     private func handleDeepLink(_ url: URL) {
         guard url.scheme == "daysremember" else { return }
-        let id = url.lastPathComponent
+        openDay(id: url.lastPathComponent)
+    }
+
+    /// Open a day's detail on the Home stack. No-ops safely if the id no longer exists.
+    /// Shared by the widget URL and tapped-reminder routing.
+    private func openDay(id: String) {
         guard let day = store.days.first(where: { $0.id == id }) else { return }
         tab = .home
         homePath = NavigationPath()
