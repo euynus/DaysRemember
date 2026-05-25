@@ -70,6 +70,18 @@ targets:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/时光.app/时光"
         BUNDLE_LOADER: "$(TEST_HOST)"
         GENERATE_INFOPLIST_FILE: YES
+  DaysRememberUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: DaysRememberUITests
+    dependencies:
+      - target: DaysRemember
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.shiguang.daysremember.uitests
+        TEST_TARGET_NAME: DaysRemember
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   DaysRemember:
     build:
@@ -81,6 +93,7 @@ schemes:
       config: Debug
       targets:
         - DaysRememberTests
+        - DaysRememberUITests
     profile:
       config: Release
     analyze:
