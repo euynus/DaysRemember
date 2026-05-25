@@ -44,7 +44,7 @@ struct HomeView: View {
             guard !query.isEmpty else { return true }
             let categoryName = store.category(for: d).name
             return [d.title, d.location, d.note, categoryName]
-                .contains { $0.localizedCaseInsensitiveContains(query) }
+                .contains { $0.localizedStandardContains(query) }
         }
         return store.sortedDays(matched)
     }
