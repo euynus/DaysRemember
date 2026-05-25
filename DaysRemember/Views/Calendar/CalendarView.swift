@@ -257,9 +257,9 @@ struct CalendarMonthView: View {
                 }
             } label: { cell }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(d)日，\(events.count) 个日子")
+                .accessibilityLabel("\(isToday ? "今天，" : "")\(d)日，\(events.count) 个日子")
         } else {
-            cell
+            cell.accessibilityLabel(isToday ? "今天，\(d)日" : "\(d)日")
         }
     }
 
