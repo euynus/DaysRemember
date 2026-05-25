@@ -60,12 +60,20 @@ struct DayInfo {
         let years = d.recurring
             ? (cal.component(.year, from: todayStart) - cal.component(.year, from: d.date))
             : nil
-        // Years between the original date and the upcoming occurrence — this is the
-        // anniversary number. (Distinct from yearsAgo, which is measured from today's
-        // year and over-counts by one before the anniversary rolls to next year.)
-        let anniversary = d.recurring
-            ? max(1, cal.component(.year, from: displayDate) - cal.component(.year, from: d.date))
-            : nil
+        // Years between the original date and the upcoming occurrence — the anniversary
+        // number. (Distinct from yearsAgo, which is measured from today's year and
+        // over-counts before the anniversary rolls to next year.)
+        let anniversary: Int?
+        if !d.recurring {
+            anniversary = nil
+        } else if d.lunar {
+            // Count in LUNAR years: a late-lunar-month anniversary (冬月/腊月) can resolve
+            // to a solar date in the next Gregorian year, which a solar-year diff would
+            // over-count by one.
+            anniversary = max(1, Lunar.solarToLunar(displayDate).year - Lunar.solarToLunar(d.date).year)
+        } else {
+            anniversary = max(1, cal.component(.year, from: displayDate) - cal.component(.year, from: d.date))
+        }
 
         return DayInfo(
             days: abs(diff),
