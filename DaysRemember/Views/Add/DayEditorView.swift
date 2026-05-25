@@ -145,7 +145,7 @@ struct DayEditorView: View {
                     .tracking(2)
                     .foregroundStyle(Color.white.opacity(0.8))
                 TextField("日子名称", text: $title,
-                          prompt: Text("日子名称").foregroundColor(.white.opacity(0.55)))
+                          prompt: Text("日子名称").foregroundStyle(.white.opacity(0.55)))
                     .font(Theme.serif(22, weight: .semibold, relativeTo: .title2))
                     .foregroundStyle(.white)
                     .tint(.white)
