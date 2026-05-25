@@ -4,6 +4,7 @@ import UIKit
 struct NotificationsView: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var store: DayStore
+    @Environment(\.scenePhase) private var scenePhase
     @State private var permissionDenied = false
 
     /// Toggle binding that re-syncs scheduled notifications whenever flipped.
@@ -80,7 +81,16 @@ struct NotificationsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
-        .task { permissionDenied = await NotificationManager.shared.currentStatus() == .denied }
+        .task { await refreshPermission() }
+        // Re-check after the user returns from Settings (the .task won't re-run while
+        // the view stays "appeared"), so the banner clears once they enable it.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await refreshPermission() } }
+        }
+    }
+
+    private func refreshPermission() async {
+        permissionDenied = await NotificationManager.shared.currentStatus() == .denied
     }
 
     /// Shown when the user has denied notification permission — the reminder toggles
