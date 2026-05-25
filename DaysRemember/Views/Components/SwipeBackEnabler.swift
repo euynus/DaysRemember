@@ -16,11 +16,13 @@ struct SwipeBackEnabler: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        DispatchQueue.main.async {
+        let coordinator = context.coordinator
+        // Defer one main-actor hop so the controller is in the nav hierarchy first.
+        Task { @MainActor in
             guard let nav = uiViewController.navigationController else { return }
-            context.coordinator.nav = nav
+            coordinator.nav = nav
             nav.interactivePopGestureRecognizer?.isEnabled = true
-            nav.interactivePopGestureRecognizer?.delegate = context.coordinator
+            nav.interactivePopGestureRecognizer?.delegate = coordinator
         }
     }
 
