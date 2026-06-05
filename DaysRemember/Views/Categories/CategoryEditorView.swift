@@ -1,5 +1,8 @@
 import SwiftUI
 
+// Scrapbook category editor — a live preview card (sticker + name + color label),
+// a white name field, a sticker/icon grid, and the CategoryColorToken swatch row.
+// Existing custom categories also get a delete button that migrates their days.
 struct CategoryEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DayStore.self) var store
@@ -8,6 +11,7 @@ struct CategoryEditorView: View {
     @State private var name: String
     @State private var icon: String
     @State private var colorToken: CategoryColorToken
+    @State private var confirmingDelete = false
 
     init(category: CategoryDefinition? = nil) {
         self.category = category
@@ -20,150 +24,195 @@ struct CategoryEditorView: View {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// Curated SF Symbols suited to anniversaries / life events — a visual grid
-    /// replaces raw symbol-name entry so the icon can never come out blank.
+    private var canDelete: Bool {
+        guard let category else { return false }
+        // System categories are immutable; deletion needs a migration target.
+        return !category.isSystem && store.categories.contains { $0.id != category.id }
+    }
+
+    /// Stickers offered for an icon — same flat art used across the scrapbook.
+    private static let stickerChoices: [StickerName] = [
+        .heart, .balloon, .plane, .cap, .house, .star,
+        .cake, .gift, .ring, .camera, .paw, .sun, .sparkle,
+    ]
+
+    /// Curated SF Symbols suited to anniversaries / life events — kept so custom
+    /// categories that were created before stickers still round-trip their icon.
     private static let iconChoices = [
-        "heart", "house", "airplane", "briefcase", "sparkles", "star",
-        "gift", "birthday.cake", "graduationcap", "book", "cup.and.saucer", "fork.knife",
-        "camera", "music.note", "gamecontroller", "leaf", "pawprint", "figure.run",
-        "dumbbell", "mappin.and.ellipse", "sun.max", "moon.stars", "flame", "drop",
-        "balloon.2", "party.popper", "crown", "bell", "flag", "tag",
+        "heart", "house", "airplane", "graduationcap", "sparkles", "star",
+        "gift", "birthday.cake", "camera", "pawprint", "sun.max", "moon.stars",
+        "leaf", "cup.and.saucer", "music.note", "flag", "bell", "tag",
     ]
 
     var body: some View {
         VStack(spacing: 0) {
             navBar
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 22) {
                     preview
-                    form
-                    iconPicker
+                    nameField
+                    stickerPicker
                     colorPicker
+                    if canDelete { deleteButton }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 22)
                 .padding(.top, 18)
-                .padding(.bottom, 32)
+                .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
         }
-        .background(Theme.bg.ignoresSafeArea())
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Theme.bg)
         .sensoryFeedback(.selection, trigger: icon)
+        .sensoryFeedback(.selection, trigger: colorToken)
+        .confirmationDialog("删除分类后迁移日子到哪里？",
+                            isPresented: $confirmingDelete,
+                            titleVisibility: .visible) {
+            if let category {
+                ForEach(store.categories.filter { $0.id != category.id }) { target in
+                    Button("迁移到 \(target.name)") {
+                        Haptics.warning()
+                        store.deleteCategory(id: category.id, migrateTo: target.id)
+                        dismiss()
+                    }
+                }
+            }
+            Button("取消", role: .cancel) {}
+        }
     }
 
     private var navBar: some View {
-        HStack {
-            Button("取消") { dismiss() }
-                .font(Theme.sans(15, weight: .medium, relativeTo: .body))
-                .foregroundStyle(Theme.ink2)
-                .buttonStyle(.plain)
-                .navTextButton()
-            Spacer()
-            Text(category == nil ? "新建分类" : "编辑分类")
-                .font(Theme.serif(17, weight: .semibold, relativeTo: .headline))
-            Spacer()
+        NavHeader(title: category == nil ? "新建分类" : "编辑分类") {
+            dismiss()
+        } trailing: {
             Button("保存", action: save)
-                .font(Theme.sans(15, weight: .semibold, relativeTo: .body))
-                .foregroundStyle(Theme.terracotta)
+                .font(Theme.sans(15, weight: .bold))
+                .foregroundStyle(canSave ? Theme.ink : Theme.muted)
+                .frame(minWidth: 42, minHeight: 42, alignment: .trailing)
+                .contentShape(Rectangle())
                 .buttonStyle(.plain)
                 .disabled(!canSave)
-                .opacity(canSave ? 1 : 0.45)
-                .navTextButton()
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 8)
     }
+
+    // MARK: - Live preview card
 
     private var preview: some View {
         HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(colorToken.color)
-                .frame(width: 50, height: 50)
-                .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 14))
+            Sticker(name: selectedSticker, size: 44, rotate: -8)
+                .frame(width: 56, height: 56)
+                .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
                 Text(name.isEmpty ? "分类名称" : name)
-                    .font(Theme.serif(20, weight: .semibold, relativeTo: .title3))
-                    .foregroundStyle(Theme.ink)
+                    .font(Theme.sans(20, weight: .heavy))
+                    .tracking(-0.4)
+                    .foregroundStyle(name.isEmpty ? Theme.muted : Theme.ink)
                 Text(colorToken.label)
-                    .font(Theme.sans(12, relativeTo: .caption))
+                    .font(Theme.sans(12, weight: .bold))
                     .foregroundStyle(colorToken.color)
             }
             Spacer()
         }
         .padding(16)
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white))
+        .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
+        .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 12, x: 0, y: 8)
     }
 
-    private var form: some View {
-        InsetCard(radius: 18) {
-            FormRow(label: "名称", isLast: true) {
-                TextField("例如：朋友", text: $name)
-                    .font(Theme.sans(14, relativeTo: .body))
-                    .foregroundStyle(Theme.ink2)
-                    .multilineTextAlignment(.trailing)
-                    .submitLabel(.done)
-            }
+    /// The preview sticker: a chosen sticker name (if `icon` holds one) else a
+    /// sensible default so SF-symbol-backed legacy icons still show a sticker.
+    private var selectedSticker: StickerName {
+        StickerName(rawValue: icon) ?? .star
+    }
+
+    // MARK: - Name field
+
+    private var nameField: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader("名称")
+            TextField("例如：朋友", text: $name)
+                .font(Theme.sans(16, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .submitLabel(.done)
+                .padding(.horizontal, 16)
+                .frame(height: 52)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white))
+                .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
         }
     }
 
-    private var iconPicker: some View {
+    // MARK: - Sticker picker
+
+    private var stickerPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(text: "图标")
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6),
+            SectionHeader("贴纸")
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
                       spacing: 10) {
-                ForEach(Self.iconChoices, id: \.self) { symbol in
-                    let selected = icon == symbol
+                ForEach(Self.stickerChoices, id: \.self) { sticker in
+                    let selected = icon == sticker.rawValue
                     Button {
-                        icon = symbol
+                        icon = sticker.rawValue
                     } label: {
-                        Image(systemName: symbol)
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(selected ? colorToken.color : Theme.ink2)
+                        Sticker(name: sticker, size: 30)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 46)
-                            .background(selected ? colorToken.soft : Theme.card)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .frame(height: 56)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(selected ? colorToken.soft : Color.white)
+                            )
                             .overlay {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .strokeBorder(selected ? colorToken.color.opacity(0.3) : Theme.hairline,
-                                                  lineWidth: selected ? 1.5 : 0.5)
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .strokeBorder(selected ? colorToken.color : Theme.hairline,
+                                                  lineWidth: selected ? 2 : 0.5)
                             }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("图标 \(symbol)")
+                    .buttonStyle(PressScale(scale: 0.92))
+                    .accessibilityLabel("贴纸 \(sticker.rawValue)")
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }
         }
     }
 
+    // MARK: - Color picker
+
     private var colorPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(text: "颜色")
-            FlowLayout(spacing: 8) {
+            SectionHeader("颜色")
+            HStack(spacing: 12) {
                 ForEach(CategoryColorToken.allCases) { token in
+                    let selected = colorToken == token
                     Button { colorToken = token } label: {
-                        HStack(spacing: 6) {
-                            Circle().fill(token.color).frame(width: 10, height: 10)
-                            Text(token.label)
-                        }
-                        .font(Theme.sans(13, weight: .medium, relativeTo: .body))
-                        .foregroundStyle(colorToken == token ? token.color : Theme.ink2)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                        .background(colorToken == token ? token.soft : Theme.card)
-                        .clipShape(Capsule())
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(colorToken == token ? token.color.opacity(0.24) : Theme.hairline,
-                                              lineWidth: 0.5)
-                        }
+                        Circle()
+                            .fill(token.color)
+                            .frame(width: 38, height: 38)
+                            .overlay {
+                                Circle().strokeBorder(Color.white, lineWidth: selected ? 3 : 0)
+                            }
+                            .overlay {
+                                Circle().strokeBorder(token.color, lineWidth: selected ? 2 : 0)
+                                    .padding(-3)
+                            }
+                            .shadow(color: Color(hex: 0x15171C).opacity(0.12), radius: 3, x: 0, y: 2)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressScale(scale: 0.9))
+                    .accessibilityLabel("颜色 \(token.label)")
+                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
+                Spacer()
             }
         }
+    }
+
+    // MARK: - Delete
+
+    private var deleteButton: some View {
+        PillButton(title: "删除分类", style: .ghost, fill: true) {
+            confirmingDelete = true
+        }
+        .padding(.top, 4)
     }
 
     private func save() {

@@ -1,106 +1,98 @@
 import SwiftUI
+import UIKit
 
 /// Maps the prototype's CSS variables (`styles.css`) to Swift-side colors and fonts.
+///
+/// Travel-scrapbook aesthetic: a cool light-gray paper canvas, near-black headings,
+/// pastel sticky-note palette, flat-sticker category tints, bold Inter sans + two
+/// handwriting accents (Caveat for Latin, Ma Shan Zheng for Chinese). The app is
+/// locked to a light appearance (see Info.plist `UIUserInterfaceStyle`), so tokens
+/// are plain light-mode colors rather than adaptive pairs.
 enum Theme {
-    // Backgrounds & ink — from styles.css :root and .sg-dark
-    static let bg = Color.adaptive(light: Color(hex: 0xF7F3EE), dark: Color(hex: 0x15120F))
-    static let bg2 = Color.adaptive(light: Color(hex: 0xEEE6DC), dark: Color(hex: 0x1F1A16))
-    static let card = Color.adaptive(light: Color(hex: 0xFFFCF7), dark: Color(hex: 0x241F1A))
-    static let ink = Color.adaptive(light: Color(hex: 0x241D18), dark: Color(hex: 0xF3EDE4))
-    static let ink2 = Color.adaptive(light: Color(hex: 0x5E544B), dark: Color(hex: 0xC8BDB0))
-    static let muted = Color.adaptive(light: Color(hex: 0x8D8276), dark: Color(hex: 0x93897D))
-    static let accentForeground = Color.adaptive(light: Color(hex: 0xFFF8F1), dark: Color(hex: 0x241D18))
+    // MARK: - Canvas & ink  (styles.css :root)
+    static let bg = Color(hex: 0xEDECEF)            // cool light gray canvas
+    static let bg2 = Color(hex: 0xE4E3E7)
+    static let card = Color(hex: 0xFFFFFF)
+    static let ink = Color(hex: 0x15171C)           // near-black headings
+    static let ink2 = Color(hex: 0x5B6068)
+    static let muted = Color(hex: 0x9AA0A8)
+    /// Primary pill accent = ink; foreground on it = white.
+    static let accent = Color(hex: 0x15171C)
+    static let accentForeground = Color.white
 
-    static let hairline = Color.adaptive(
-        light: Color(.sRGB, red: 31/255, green: 26/255, blue: 21/255, opacity: 0.08),
-        dark: Color(.sRGB, red: 240/255, green: 234/255, blue: 224/255, opacity: 0.08)
-    )
-    static let hairlineStrong = Color.adaptive(
-        light: Color(.sRGB, red: 31/255, green: 26/255, blue: 21/255, opacity: 0.14),
-        dark: Color(.sRGB, red: 240/255, green: 234/255, blue: 224/255, opacity: 0.14)
-    )
+    static let hairline = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.08)
+    static let hairlineStrong = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.14)
 
-    // Accents — tuned for a warmer but clearer app palette.
-    static let terracotta = Color.adaptive(
-        lightOklch: (0.58, 0.105, 33), darkOklch: (0.74, 0.10, 33))
-    static let terracottaSoft = Color.adaptive(
-        lightOklch: (0.91, 0.045, 33), darkOklch: (0.30, 0.055, 33))
-    static let sage = Color.adaptive(
-        lightOklch: (0.57, 0.07, 150), darkOklch: (0.72, 0.075, 150))
-    static let sageSoft = Color.adaptive(
-        lightOklch: (0.92, 0.04, 150), darkOklch: (0.30, 0.045, 150))
-    static let dusty = Color.adaptive(
-        lightOklch: (0.58, 0.07, 250), darkOklch: (0.72, 0.075, 250))
-    static let dustySoft = Color.adaptive(
-        lightOklch: (0.92, 0.035, 250), darkOklch: (0.30, 0.045, 250))
-    static let amber = Color.adaptive(
-        lightOklch: (0.70, 0.10, 78), darkOklch: (0.78, 0.105, 78))
-    static let amberSoft = Color.adaptive(
-        lightOklch: (0.93, 0.045, 78), darkOklch: (0.31, 0.055, 78))
-    static let rose = Color.adaptive(
-        lightOklch: (0.63, 0.095, 12), darkOklch: (0.74, 0.10, 12))
-    static let roseSoft = Color.adaptive(
-        lightOklch: (0.92, 0.04, 12), darkOklch: (0.30, 0.05, 12))
+    // MARK: - Sticky-note palette  (paper + matching handwriting ink)
+    static let noteBlue = Color(hex: 0xBCDDF0)
+    static let noteBlueInk = Color(hex: 0x3A7CA0)
+    static let noteYellow = Color(hex: 0xFBE7A2)
+    static let noteYellowInk = Color(hex: 0x9B7A1E)
+    static let notePink = Color(hex: 0xF8C9D6)
+    static let notePinkInk = Color(hex: 0xB05670)
+    static let noteGreen = Color(hex: 0xC5E5C9)
+    static let noteGreenInk = Color(hex: 0x4E8A57)
+    static let notePeach = Color(hex: 0xFAD4BC)
+    static let notePeachInk = Color(hex: 0xB5663C)
+
+    // MARK: - Category sticker tints (flat illustration colors)
+    static let catLove = Color(hex: 0xF2778E)
+    static let catFamily = Color(hex: 0xF5A623)
+    static let catTravel = Color(hex: 0x4FB0D8)
+    static let catWork = Color(hex: 0x5FB97D)
+    static let catLife = Color(hex: 0xE0795A)
+
+    // MARK: - Category palette (named tokens used by DayCategory / CategoryColorToken)
+    // These are the same five CategoryColorToken cases, remapped to the scrapbook
+    // tints. The token *names* are persisted in `categories.v1`, so they stay; only
+    // the colors change. `*Soft` resolves to the matching sticky-note paper, mirroring
+    // the prototype's CATEGORY_SOFT map (love→pink, family→peach, travel→blue,
+    // work→green, life→yellow).
+    static let rose = catLove
+    static let roseSoft = notePink
+    static let amber = catFamily
+    static let amberSoft = notePeach
+    static let dusty = catTravel
+    static let dustySoft = noteBlue
+    static let sage = catWork
+    static let sageSoft = noteGreen
+    static let terracotta = catLife
+    static let terracottaSoft = noteYellow
 
     // MARK: - Fonts
-    /// Serif stack: Noto Serif SC → Songti SC → system serif
-    static func serif(_ size: CGFloat, weight: Font.Weight = .regular,
-                      relativeTo textStyle: Font.TextStyle = .body) -> Font {
-        if UIFont(name: "NotoSerifSC-Regular", size: size) != nil {
-            return .custom(notoName(family: "NotoSerifSC", weight: weight), size: size, relativeTo: textStyle)
-        }
-        // Songti SC ships discrete weight faces; choose the face directly. Calling
-        // `.weight()` on a custom font is unreliable (it doesn't switch to the named
-        // bold face), and the design depends on the serif weight hierarchy.
-        let songti = songtiName(for: weight)
-        if UIFont(name: songti, size: size) != nil {
-            return .custom(songti, size: size, relativeTo: textStyle)
-        }
-        return .system(size: size, weight: weight, design: .serif)
-    }
 
-    /// Sans stack: Noto Sans SC → PingFang SC → system
+    /// Bold sans stack: Inter → PingFang SC → system. Carries the headings, titles,
+    /// meta rows, and the big tabular countdown numbers (use `.monospacedDigit()`).
     static func sans(_ size: CGFloat, weight: Font.Weight = .regular,
                      relativeTo textStyle: Font.TextStyle = .body) -> Font {
-        if UIFont(name: "NotoSansSC-Regular", size: size) != nil {
-            return .custom(notoName(family: "NotoSansSC", weight: weight), size: size, relativeTo: textStyle)
-        }
-        let pingfang = pingFangName(for: weight)
-        if UIFont(name: pingfang, size: size) != nil {
-            return .custom(pingfang, size: size, relativeTo: textStyle)
+        if FontAvailability.inter {
+            return .custom("Inter", size: size, relativeTo: textStyle).weight(weight)
         }
         return .system(size: size, weight: weight)
     }
 
-    /// Map a Font.Weight to one of the three Noto SC face suffixes we ship.
-    private static func notoName(family: String, weight: Font.Weight) -> String {
-        let suffix: String
-        switch weight {
-        case .semibold, .bold, .heavy, .black: suffix = "SemiBold"
-        case .medium: suffix = "Medium"
-        default: suffix = "Regular"
+    /// Latin handwriting accent (Caveat) — English-style dates, "My Memory", eyebrows.
+    static func hand(_ size: CGFloat, relativeTo textStyle: Font.TextStyle = .body) -> Font {
+        if FontAvailability.caveat {
+            return .custom("Caveat-Regular", size: size, relativeTo: textStyle)
         }
-        return "\(family)-\(suffix)"
+        return .system(size: size, weight: .semibold, design: .rounded)
     }
 
-    /// Songti SC weight faces — Light / Regular / Bold / Black (no Medium/Semibold).
-    private static func songtiName(for weight: Font.Weight) -> String {
-        switch weight {
-        case .ultraLight, .thin, .light: return "STSongti-SC-Light"
-        case .semibold, .bold: return "STSongti-SC-Bold"
-        case .heavy, .black: return "STSongti-SC-Black"
-        default: return "STSongti-SC-Regular" // regular, medium
+    /// Chinese handwriting accent (Ma Shan Zheng) — sticky-note counts, mood notes.
+    static func handCN(_ size: CGFloat, relativeTo textStyle: Font.TextStyle = .body) -> Font {
+        if FontAvailability.maShanZheng {
+            return .custom("MaShanZheng-Regular", size: size, relativeTo: textStyle)
         }
+        return .system(size: size, weight: .medium, design: .serif)
     }
 
-    /// PingFang SC weight faces — Ultralight … Semibold (no Bold/Heavy/Black).
-    private static func pingFangName(for weight: Font.Weight) -> String {
-        switch weight {
-        case .ultraLight: return "PingFangSC-Ultralight"
-        case .thin, .light: return "PingFangSC-Light"
-        case .medium: return "PingFangSC-Medium"
-        case .semibold, .bold, .heavy, .black: return "PingFangSC-Semibold"
-        default: return "PingFangSC-Regular" // regular
-        }
-    }
+}
+
+/// Resolved-once availability of the bundled custom fonts. `UIFont(name:)` is the
+/// reliable "is this registered?" probe; caching avoids hitting it per text view.
+enum FontAvailability {
+    static let inter = UIFont(name: "Inter", size: 12) != nil
+    static let caveat = UIFont(name: "Caveat-Regular", size: 12) != nil
+    static let maShanZheng = UIFont(name: "MaShanZheng-Regular", size: 12) != nil
 }

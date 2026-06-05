@@ -1,5 +1,8 @@
 import SwiftUI
 
+// Scrapbook month calendar — port of screens/Calendar.jsx. A white calendar card
+// over the paper canvas, today filled ink, marked days dotted in their category
+// color, then a "本月日子" list of mini-polaroid scrapbook rows.
 struct CalendarMonthView: View {
     @Environment(DayStore.self) var store
     @State private var month: Int
@@ -16,7 +19,9 @@ struct CalendarMonthView: View {
         self.onOpen = onOpen
     }
 
-    private static let monthNames = ["一","二","三","四","五","六","七","八","九","十","十一","十二"]
+    private static let monthCN = ["一","二","三","四","五","六","七","八","九","十","十一","十二"]
+    private static let monthEN = ["January","February","March","April","May","June",
+                                  "July","August","September","October","November","December"]
     private static let weekdayCN = ["日","一","二","三","四","五","六"]
 
     private var daysInMonth: Int {
@@ -65,28 +70,31 @@ struct CalendarMonthView: View {
 
     var body: some View {
         let eventsByDay = computeEventsByDay()
+        let monthDays = eventsByDay.keys.sorted().flatMap { eventsByDay[$0] ?? [] }
         return VStack(spacing: 0) {
-            navBar
-            monthSwitcher
-            weekdayRow
+            NavHeader(title: "日历")
+            monthHeader
+            calendarCard(eventsByDay: eventsByDay)
+                .padding(.horizontal, 22)
             ScrollView(.vertical, showsIndicators: false) {
-                grid(eventsByDay: eventsByDay)
-                if !eventsByDay.isEmpty {
-                    SectionLabel(text: "本月日子")
-                        .padding(.top, 22)
-                        .padding(.bottom, 12)
-                        .padding(.leading, 4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    monthList(eventsByDay: eventsByDay)
-                } else {
-                    ContentUnavailableView("本月没有日子", systemImage: "calendar",
-                                           description: Text("切换月份查看其他记录。"))
-                        .foregroundStyle(Theme.muted)
-                        .padding(.top, 42)
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader("本月日子")
+                    if monthDays.isEmpty {
+                        Text("本月没有记录的日子")
+                            .font(Theme.handCN(20))
+                            .foregroundStyle(Theme.muted)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 24)
+                    } else {
+                        ForEach(monthDays) { day in
+                            monthRow(day)
+                        }
+                    }
                 }
+                .padding(.horizontal, 22)
+                .padding(.top, 18)
+                .padding(.bottom, 120)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 96)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
@@ -102,147 +110,117 @@ struct CalendarMonthView: View {
         }
     }
 
-    private var navBar: some View {
-        HStack {
-            Color.clear.frame(width: 18, height: 18)
-            Spacer()
-            Text("日历").font(Theme.serif(17, weight: .semibold))
-            Spacer()
-            Button("今天") {
+    // MARK: - Month header
+
+    private var monthHeader: some View {
+        HStack(alignment: .bottom) {
+            // Tapping the title jumps back to the current month (preserves the old
+            // "今天" jump without a separate control).
+            Button {
                 let cal = CNDate.calendar; let today = Today.date
                 year = cal.component(.year, from: today)
                 month = cal.component(.month, from: today) - 1
-            }
-            .font(Theme.sans(14, weight: .medium))
-            .foregroundStyle(Theme.terracotta)
-            .buttonStyle(.plain)
-            .navTextButton()
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 8)
-    }
-
-    private var monthSwitcher: some View {
-        HStack {
-            Button {
-                if month == 0 { month = 11; year -= 1 } else { month -= 1 }
             } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Theme.ink)
-                    .frame(width: 44, height: 44)
-                    .background(Theme.card)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: "\(Self.monthCN[month])月")
+                        .font(Theme.sans(32, weight: .heavy))
+                        .tracking(-0.9)
+                        .foregroundStyle(Theme.ink)
+                    Text(verbatim: "\(Self.monthEN[month]) \(year)")
+                        .font(Theme.hand(24))
+                        .foregroundStyle(Theme.catTravel)
+                        .lineLimit(1)
+                }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("上个月")
+            .accessibilityLabel("\(year)年\(Self.monthCN[month])月，回到本月")
             Spacer()
-            VStack(spacing: 2) {
-                Text(verbatim: "\(year) 年 \(Self.monthNames[month])月")
-                    .font(Theme.serif(28, weight: .semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Text(seasonLabel)
-                    .font(Theme.sans(12))
-                    .foregroundStyle(Theme.muted)
-            }
-            Spacer()
-            Button {
-                if month == 11 { month = 0; year += 1 } else { month += 1 }
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Theme.ink)
-                    .frame(width: 44, height: 44)
-                    .background(Theme.card)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("下个月")
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 10)
-    }
-
-    private var seasonLabel: String {
-        let m = month + 1
-        let season = (m >= 3 && m <= 5) ? "春"
-            : (m >= 6 && m <= 8) ? "夏"
-            : (m >= 9 && m <= 11) ? "秋" : "冬"
-        return "\(Self.monthNames[month])月 · \(season)"
-    }
-
-    private var weekdayRow: some View {
-        HStack(spacing: 0) {
-            ForEach(Self.weekdayCN, id: \.self) { d in
-                Text(d)
-                    .font(Theme.sans(11))
-                    .foregroundStyle(Theme.muted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+            HStack(spacing: 8) {
+                FAB(systemName: "chevron.left", size: 38, iconSize: 15) {
+                    if month == 0 { month = 11; year -= 1 } else { month -= 1 }
+                }
+                .accessibilityLabel("上个月")
+                FAB(systemName: "chevron.right", size: 38, iconSize: 15) {
+                    if month == 11 { month = 0; year += 1 } else { month += 1 }
+                }
+                .accessibilityLabel("下个月")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 4)
+        .padding(.horizontal, 24)
+        .padding(.top, 6)
+        .padding(.bottom, 12)
     }
 
-    private func grid(eventsByDay: [Int: [Day]]) -> some View {
+    // MARK: - Calendar card
+
+    private func calendarCard(eventsByDay: [Int: [Day]]) -> some View {
         let cal = CNDate.calendar
         let today = Today.date
         let isCurrentMonth = (cal.component(.year, from: today) == year)
             && (cal.component(.month, from: today) - 1 == month)
         let todayDay = cal.component(.day, from: today)
+        let cols = Array(repeating: GridItem(.flexible(), spacing: 1), count: 7)
 
-        let cells: [Int] = Array(0..<firstDow).map { _ in 0 } + Array(1...daysInMonth)
-        let cols = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
-
-        return LazyVGrid(columns: cols, spacing: 4) {
-            ForEach(cells.indices, id: \.self) { i in
-                let d = cells[i]
-                if d == 0 {
-                    Color.clear.aspectRatio(1, contentMode: .fit)
-                } else {
-                    let events = eventsByDay[d] ?? []
-                    let isToday = isCurrentMonth && d == todayDay
-                    cellView(d: d, events: events, isToday: isToday)
+        return VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach(Self.weekdayCN, id: \.self) { d in
+                    Text(d)
+                        .font(Theme.sans(11, weight: .bold))
+                        .foregroundStyle(Theme.muted)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 8)
+                }
+            }
+            LazyVGrid(columns: cols, spacing: 1) {
+                ForEach(0..<42, id: \.self) { i in
+                    let inMonth = i >= firstDow && i < firstDow + daysInMonth
+                    let d = i - firstDow + 1
+                    if inMonth {
+                        let events = eventsByDay[d] ?? []
+                        cellView(d: d, events: events, isToday: isCurrentMonth && d == todayDay)
+                    } else {
+                        Color.clear.aspectRatio(1, contentMode: .fit)
+                    }
                 }
             }
         }
+        .padding(EdgeInsets(top: 14, leading: 12, bottom: 12, trailing: 12))
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white))
+        .floatShadow()
     }
 
     @ViewBuilder
     private func cellView(d: Int, events: [Day], isToday: Bool) -> some View {
         let hasEvents = !events.isEmpty
-        let cell = VStack(spacing: 2) {
+        let dotColor = events.first.map { store.category(for: $0).colorToken.color } ?? Theme.muted
+        let cal = CNDate.calendar
+        let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? Today.date
+        let term = SolarTerms.name(for: cellDate) ?? SolarTerms.lunarHoliday(for: cellDate)
+
+        let cell = VStack(spacing: 1) {
             Text("\(d)")
-                .font(Theme.sans(13, weight: isToday ? .semibold : .medium))
+                .font(Theme.sans(14, weight: isToday ? .heavy : .semibold))
                 .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .foregroundStyle(isToday ? Theme.accentForeground : (hasEvents ? Theme.ink : Theme.ink2))
+                .foregroundStyle(isToday ? Color.white : Theme.ink)
+            if let term {
+                Text(term)
+                    .font(Theme.sans(7.5, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(isToday ? Color.white.opacity(0.8) : Theme.catTravel)
+            }
             if hasEvents {
-                HStack(spacing: 2) {
-                    ForEach(0..<min(events.count, 3), id: \.self) { _ in
-                        Circle()
-                            .fill(isToday ? Theme.accentForeground : Theme.terracotta)
-                            .frame(width: 3, height: 3)
-                    }
-                }
+                Circle()
+                    .fill(isToday ? Color.white : dotColor)
+                    .frame(width: 5, height: 5)
+                    .padding(.top, 1)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .aspectRatio(1, contentMode: .fit)
         .background {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isToday ? Theme.terracotta : (hasEvents ? Theme.card : .clear))
-        }
-        .overlay {
-            if hasEvents && !isToday {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(Theme.hairline, lineWidth: 0.5)
-            }
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(isToday ? Theme.ink : (hasEvents ? Theme.bg : .clear))
         }
 
         if hasEvents {
@@ -250,54 +228,79 @@ struct CalendarMonthView: View {
                 if events.count == 1, let first = events.first {
                     onOpen(first)
                 } else {
-                    selectedDayTitle = "\(year) 年 \(Self.monthNames[month])月 \(d) 日"
+                    selectedDayTitle = "\(year)年\(Self.monthCN[month])月\(d)日"
                     selectedEvents = events
                 }
             } label: { cell }
-                .buttonStyle(.plain)
+                .buttonStyle(PressScale(scale: 0.92))
                 .accessibilityLabel("\(isToday ? "今天，" : "")\(d)日，\(events.count) 个日子")
         } else {
             cell.accessibilityLabel(isToday ? "今天，\(d)日" : "\(d)日")
         }
     }
 
-    private func monthList(eventsByDay: [Int: [Day]]) -> some View {
-        VStack(spacing: 8) {
-            ForEach(eventsByDay.keys.sorted(), id: \.self) { day in
-                if let evts = eventsByDay[day] {
-                    ForEach(evts, id: \.id) { e in
-                        Button { onOpen(e) } label: {
-                            HStack(spacing: 12) {
-                                Text("\(day)")
-                                    .font(Theme.serif(18, weight: .semibold))
-                                    .foregroundStyle(Theme.terracotta)
-                                    .monospacedDigit()
-                                    .frame(width: 38)
-                                PhotoTile(day: e, flat: true, cornerRadius: 10)
-                                    .frame(width: 36, height: 36)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(e.title).font(Theme.sans(13, weight: .medium))
-                                    Text(e.categoryLabel).font(Theme.sans(11)).foregroundStyle(Theme.muted)
-                                }
-                                Spacer()
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(Theme.card)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(Theme.hairline, lineWidth: 0.5)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
+    // MARK: - This-month list
+
+    private func monthRow(_ day: Day) -> some View {
+        let info = DayInfo.compute(day)
+        let cat = store.category(for: day)
+        let cal = CNDate.calendar
+        let dayNum = cal.component(.day, from: info.displayDate)
+        let countdown = info.isToday ? "Today" : (info.isPast ? "+\(info.days)" : "\(info.days)d")
+
+        return Button { onOpen(day) } label: {
+            HStack(spacing: 14) {
+                VStack(spacing: 3) {
+                    Text("\(dayNum)")
+                        .font(Theme.sans(22, weight: .heavy))
+                        .monospacedDigit()
+                        .foregroundStyle(cat.colorToken.color)
+                    Text(CNDate.weekday(info.displayDate).replacingOccurrences(of: "星期", with: "周"))
+                        .font(Theme.sans(10, weight: .semibold))
+                        .foregroundStyle(Theme.muted)
                 }
+                .frame(width: 44)
+
+                VStack(spacing: 0) {
+                    PhotoTile(day: day, flat: true, cornerRadius: 6)
+                        .frame(width: 38, height: 38)
+                }
+                .polaroidCard(rotation: -3, padding: 4)
+                .frame(width: 46)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(day.title)
+                        .font(Theme.sans(15, weight: .bold))
+                        .tracking(-0.1)
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                    Text(subtitle(for: day, label: cat.name))
+                        .font(Theme.sans(12, weight: .medium))
+                        .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(countdown)
+                    .font(Theme.hand(20))
+                    .foregroundStyle(Theme.ink2)
             }
+            .padding(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 14))
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white))
+            .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 2, x: 0, y: 1)
         }
+        .buttonStyle(PressScale())
+    }
+
+    private func subtitle(for day: Day, label: String) -> String {
+        var parts = [label]
+        if day.recurring { parts.append("每年") }
+        if day.lunar { parts.append("农历") }
+        return parts.joined(separator: " · ")
     }
 }
 
+// Multi-event day picker (a single calendar cell can carry several days).
 private struct CalendarEventPicker: View {
     @Environment(\.dismiss) private var dismiss
     let title: String
@@ -308,48 +311,50 @@ private struct CalendarEventPicker: View {
         VStack(spacing: 0) {
             HStack {
                 Button("取消") { dismiss() }
-                    .font(Theme.sans(15, weight: .medium, relativeTo: .body))
+                    .font(Theme.sans(15, weight: .semibold))
                     .foregroundStyle(Theme.ink2)
                     .buttonStyle(.plain)
                 Spacer()
-                Text(title)
-                    .font(Theme.serif(17, weight: .semibold, relativeTo: .headline))
+                Text(title).font(Theme.sans(16, weight: .bold))
                 Spacer()
-                Color.clear.frame(width: 32, height: 32)
+                Color.clear.frame(width: 36, height: 32)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 22)
             .padding(.top, 22)
             .padding(.bottom, 12)
 
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 8) {
+                VStack(spacing: 10) {
                     ForEach(events) { event in
                         Button {
                             onOpen(event)
                             dismiss()
                         } label: {
-                            HStack(spacing: 12) {
-                                PhotoTile(day: event, flat: true, cornerRadius: 10)
-                                    .frame(width: 42, height: 42)
+                            HStack(spacing: 14) {
+                                VStack(spacing: 0) {
+                                    PhotoTile(day: event, flat: true, cornerRadius: 6)
+                                        .frame(width: 38, height: 38)
+                                }
+                                .polaroidCard(rotation: -3, padding: 4)
+                                .frame(width: 46)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(event.title)
-                                        .font(Theme.sans(14, weight: .medium, relativeTo: .body))
+                                        .font(Theme.sans(15, weight: .bold))
                                         .foregroundStyle(Theme.ink)
                                     Text(event.categoryLabel)
-                                        .font(Theme.sans(12, relativeTo: .caption))
+                                        .font(Theme.sans(12, weight: .medium))
                                         .foregroundStyle(Theme.muted)
                                 }
                                 Spacer()
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(Theme.card)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .padding(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 14))
+                            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white))
+                            .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 2, x: 0, y: 1)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressScale())
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 22)
                 .padding(.bottom, 24)
             }
         }

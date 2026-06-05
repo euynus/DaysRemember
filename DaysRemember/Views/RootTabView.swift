@@ -49,8 +49,13 @@ struct RootTabView: View {
 
     var body: some View {
         content
-            .safeAreaInset(edge: .bottom, spacing: 0) {
+            // Floating scrapbook pill: the bar hovers over full-height content
+            // (tab screens already pad ~120 at the bottom to clear it).
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .bottom) {
                 TabBar(current: tab, onSelect: { tab = $0 })
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 30)
             }
             .ignoresSafeArea(.keyboard)
             .sheet(isPresented: $addingDay) { AddDayView().environment(store) }
@@ -144,46 +149,46 @@ private extension View {
     }
 }
 
+/// Floating scrapbook pill (`.toolbar` in the prototype): a white translucent
+/// capsule; the active tab is an ink capsule with icon + label, inactive tabs
+/// are icon-only in `Theme.muted`.
 struct TabBar: View {
     let current: AppTab
     let onSelect: (AppTab) -> Void
 
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             ForEach(AppTab.allCases, id: \.self) { t in
                 Button {
                     onSelect(t)
                 } label: {
-                    VStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: current == t ? t.iconNameFilled : t.iconName)
                             .font(.system(size: 20, weight: current == t ? .semibold : .regular))
-                            .foregroundStyle(current == t ? Theme.ink : Theme.muted)
-                        Text(t.label)
-                            .font(Theme.sans(10, weight: .medium))
-                            .foregroundStyle(current == t ? Theme.ink : Theme.muted)
+                        if current == t {
+                            Text(t.label)
+                                .font(Theme.sans(13, weight: .bold))
+                        }
                     }
+                    .foregroundStyle(current == t ? Theme.accentForeground : Theme.muted)
                     .frame(maxWidth: .infinity)
-                    .frame(minHeight: 44)
-                    .padding(.vertical, 6)
+                    .frame(height: 44)
+                    .background {
+                        if current == t {
+                            Capsule(style: .continuous).fill(Theme.ink)
+                        }
+                    }
+                    .contentShape(Capsule(style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(t.label)
                 .accessibilityValue(current == t ? "当前标签" : "")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 28)
-        .background(
-            ZStack {
-                Theme.card
-                Rectangle().fill(Theme.hairline).frame(height: 0.5)
-                    .frame(maxHeight: .infinity, alignment: .top)
-            }
-            // Extend the cream fill into the home-indicator strip so scroll content
-            // never shows through that gap below the tab icons.
-            .ignoresSafeArea(edges: .bottom)
-        )
+        .padding(8)
+        .background(.regularMaterial, in: Capsule(style: .continuous))
+        .shadow(color: Theme.ink.opacity(0.06), radius: 3, x: 0, y: 2)
+        .shadow(color: Theme.ink.opacity(0.12), radius: 15, x: 0, y: 12)
         .sensoryFeedback(.selection, trigger: current)
     }
 }

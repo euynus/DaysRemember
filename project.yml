@@ -46,6 +46,12 @@ targets:
       - path: DaysRemember/Lunar
       - path: DaysRemember/Theme
       - path: DaysRemember/Store/SharedStorage.swift
+      # Scrapbook primitives (stickers, sticky notes, polaroid frame) — self-contained
+      # SwiftUI, no app-only deps — so the widget renders the same style.
+      - path: DaysRemember/Views/Components/ScrapbookKit.swift
+      # Handwriting + Inter fonts so the widget renders the scrapbook style too.
+      - path: DaysRemember/Resources/Fonts
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.shiguang.daysremember.widget

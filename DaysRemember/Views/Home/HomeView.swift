@@ -14,18 +14,7 @@ struct HomeView: View {
     }
 
     private var filters: [Filter] {
-        [.all, .pinned] + store.categories.map { .category($0.id) }
-    }
-
-    /// Warm, time-of-day greeting in place of a static "你好".
-    private var greeting: String {
-        switch CNDate.calendar.component(.hour, from: Today.date) {
-        case 5..<11: return "早安"
-        case 11..<13: return "午安"
-        case 13..<18: return "下午好"
-        case 18..<23: return "晚上好"
-        default: return "夜深了"
-        }
+        [.all, .pinned] + store.categories.filter(\.isSystem).map { .category($0.id) }
     }
 
     private var filteredDays: [Day] {
@@ -49,13 +38,26 @@ struct HomeView: View {
         return store.sortedDays(matched)
     }
 
+    /// Nearest upcoming (future or today), uncapped — mirrors the JSX hero pick.
+    private var hero: Day? {
+        store.days
+            .map { ($0, DayInfo.compute($0)) }
+            .filter { !$0.1.isPast }
+            .min { $0.1.days < $1.1.days }?
+            .0
+    }
+
+    /// Feed days for the current filter, with the hero removed when it's on screen.
+    private var feedDays: [Day] {
+        guard filter == .all, let hero, searchText.isEmpty else { return filteredDays }
+        return filteredDays.filter { $0.id != hero.id }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
             if isSearching { searchField }
             chips
-            TodaySpotlight(store: store, onOpen: onOpen)
-            TodayStrip()
             ScrollView(.vertical, showsIndicators: false) {
                 if filteredDays.isEmpty {
                     let empty = emptyStateCopy()
@@ -66,12 +68,21 @@ struct HomeView: View {
                         .padding(.top, 56)
                         .padding(.horizontal, 24)
                 } else {
-                    MosaicGrid(days: filteredDays, onOpen: onOpen)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 16)
+                    VStack(spacing: 0) {
+                        if filter == .all, searchText.isEmpty, let hero {
+                            HeroPolaroid(day: hero, onOpen: onOpen)
+                                .dayContextMenu(day: hero)
+                                .padding(.bottom, feedDays.isEmpty ? 0 : 26)
+                        }
+                        if !feedDays.isEmpty {
+                            MosaicGrid(days: feedDays, onOpen: onOpen)
+                        }
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.top, 4)
+                    .padding(.bottom, 130) // floating tab-bar clearance
                 }
             }
-            .padding(.bottom, 96) // tab-bar clearance
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
@@ -80,29 +91,40 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(CNDate.short(Today.date)) · \(CNDate.weekday(Today.date))")
-                    .font(Theme.sans(12))
-                    .tracking(3.6)
-                    .foregroundStyle(Theme.muted)
-                Text(greeting)
-                    .font(Theme.serif(30, weight: .semibold))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("你好，今天")
+                    .font(Theme.sans(34, weight: .heavy))
+                    .tracking(-1)
                     .foregroundStyle(Theme.ink)
+                MetaRow(metaItems)
             }
-            Spacer()
-            HStack(spacing: 6) {
-                IconBtn(kind: .search) {
+            Spacer(minLength: 8)
+            HStack(spacing: 8) {
+                FAB(systemName: "magnifyingglass", size: 42) {
                     withAnimation(.easeInOut(duration: 0.18)) {
                         isSearching.toggle()
                         if !isSearching { searchText = "" }
                     }
                 }
-                IconBtn(kind: .plus, accent: true, action: onAdd)
+                FAB(systemName: "plus", size: 42, dark: true, action: onAdd)
             }
+            .padding(.top, 2)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 62)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 22)
+        .padding(.top, 60)
+        .padding(.bottom, 6)
+    }
+
+    /// Today's date · lunar day · solar term (colored) — the JSX header `.meta` line.
+    private var metaItems: [MetaItem] {
+        var items: [MetaItem] = [
+            MetaItem(text: "\(CNDate.short(Today.date)) \(CNDate.weekday(Today.date))"),
+            MetaItem(text: Lunar.fmt(Today.date)),
+        ]
+        if let term = SolarTerms.name(for: Today.date) {
+            items.append(MetaItem(text: term, color: Theme.catTravel, bold: true))
+        }
+        return items
     }
 
     private var searchField: some View {
@@ -110,26 +132,26 @@ struct HomeView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Theme.muted)
             TextField("搜索标题、地点、备注、分类", text: $searchText)
-                .font(Theme.sans(14))
+                .font(Theme.sans(14, weight: .medium))
                 .textInputAutocapitalization(.never)
                 .submitLabel(.search)
                 .focused($searchFocused)
             if !searchText.isEmpty {
                 Button("清除") { searchText = "" }
-                    .font(Theme.sans(13, weight: .medium))
-                    .foregroundStyle(Theme.terracotta)
+                    .font(Theme.sans(13, weight: .semibold))
+                    .foregroundStyle(Theme.catLove)
                     .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 22)
         .padding(.top, 8)
         .accessibilityLabel("搜索日子")
         // Focus + raise the keyboard as soon as the field is inserted, so opening
@@ -141,19 +163,16 @@ struct HomeView: View {
 
     private var chips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: 9) {
                 ForEach(filters, id: \.self) { f in
-                    let colors = colors(for: f)
-                    FilterChip(label: label(for: f), active: f == filter,
-                               tint: colors.tint, softTint: colors.soft) {
-                        filter = f
-                    }
+                    Chip(label(for: f), selected: f == filter) { filter = f }
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 22)
         }
+        .scrollClipDisabled()
         .padding(.top, 14)
-        .padding(.bottom, 12)
+        .padding(.bottom, 8)
     }
 
     private func label(for filter: Filter) -> String {
@@ -161,16 +180,6 @@ struct HomeView: View {
         case .all: return "全部"
         case .pinned: return "置顶"
         case .category(let id): return store.category(for: id).name
-        }
-    }
-
-    private func colors(for filter: Filter) -> (tint: Color, soft: Color) {
-        switch filter {
-        case .all, .pinned:
-            return (Theme.terracotta, Theme.terracottaSoft)
-        case .category(let id):
-            let category = store.category(for: id)
-            return (category.colorToken.color, category.colorToken.soft)
         }
     }
 
@@ -191,100 +200,6 @@ struct HomeView: View {
             return ("这里还没有日子",
                     "calendar.badge.plus",
                     "点右上角加号，记录第一个重要日子。")
-        }
-    }
-}
-
-/// "Today" strip — lunar date + 节气 + 传统节日.
-struct TodayStrip: View {
-    var body: some View {
-        let lunar = Lunar.fmtFull(Today.date)
-        let term = SolarTerms.name(for: Today.date)
-        let holi = SolarTerms.lunarHoliday(for: Today.date)
-        return HStack(spacing: 8) {
-            Text(lunar)
-                .font(Theme.serif(11))
-                .foregroundStyle(Theme.muted)
-            if let term {
-                Text("· \(term)")
-                    .font(Theme.serif(11, weight: .semibold))
-                    .foregroundStyle(Theme.terracotta)
-            }
-            if let holi {
-                Text("· \(holi)")
-                    .font(Theme.serif(11, weight: .semibold))
-                    .foregroundStyle(Theme.terracotta)
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
-    }
-}
-
-/// "即将到来" card surfaces the nearest upcoming day.
-struct TodaySpotlight: View {
-    var store: DayStore
-    var onOpen: (Day) -> Void
-
-    var body: some View {
-        if let day = store.nearestUpcoming() {
-            let info = DayInfo.compute(day)
-            Button { onOpen(day) } label: {
-                HStack(spacing: 14) {
-                    PhotoTile(day: day, flat: true, cornerRadius: 14)
-                        .frame(width: 52, height: 52)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("即将到来")
-                            .font(Theme.sans(11, weight: .semibold))
-                            .tracking(2.2)
-                            .foregroundStyle(Theme.terracotta)
-                        Text(day.title)
-                            .font(Theme.sans(15, weight: .semibold))
-                            .foregroundStyle(Theme.ink)
-                            .lineLimit(1)
-                    }
-                    Spacer()
-                    VStack(alignment: .trailing, spacing: 2) {
-                        if info.isToday {
-                            Text("今天")
-                                .font(Theme.serif(22, weight: .semibold))
-                                .foregroundStyle(Theme.terracotta)
-                        } else {
-                            Text("\(info.days)")
-                                .font(Theme.serif(28, weight: .semibold))
-                                .foregroundStyle(Theme.terracotta)
-                                .monospacedDigit()
-                            Text("天后")
-                                .font(Theme.sans(10))
-                                .foregroundStyle(Theme.muted)
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            Theme.card,
-                            Theme.terracottaSoft
-                        ],
-                        startPoint: .leading, endPoint: .trailing)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(Theme.hairline, lineWidth: 0.5)
-                }
-            }
-            .buttonStyle(.plain)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(
-                "即将到来，\(day.title)，"
-                + (info.isToday ? "就是今天" : "\(info.days) 天后")
-            )
-            .padding(.horizontal, 20)
-            .padding(.bottom, 4)
         }
     }
 }

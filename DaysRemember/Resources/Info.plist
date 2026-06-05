@@ -35,6 +35,14 @@
   <array>
     <string>UIInterfaceOrientationPortrait</string>
   </array>
+  <key>UIUserInterfaceStyle</key>
+  <string>Light</string>
+  <key>UIAppFonts</key>
+  <array>
+    <string>Caveat.ttf</string>
+    <string>Inter.ttf</string>
+    <string>MaShanZheng.ttf</string>
+  </array>
   <key>CFBundleLocalizations</key>
   <array>
     <string>zh_CN</string>

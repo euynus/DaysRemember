@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// Paged scrapbook onboarding: a tilted-polaroid art area over a copy block
+/// (handwritten eyebrow, big bold title, sub paragraph), page dots and a dark
+/// pill advance button. The final page's "开始记录" CTA calls `onFinish`.
 struct OnboardingView: View {
     @State private var page: Int
     var onFinish: () -> Void = {}
@@ -11,157 +14,114 @@ struct OnboardingView: View {
 
     private struct PageDef {
         var kind: Kind
-        var eyebrow: String? = nil
+        var eyebrow: String
         var title: String
-        var sub: String?
-        enum Kind { case hero, count, photo, final }
+        var sub: String
+        enum Kind { case welcome, count, collage, start }
     }
 
     private let pages: [PageDef] = [
-        .init(kind: .hero, eyebrow: "时光",
-              title: "记住那些\n重要的日子",
-              sub: "结婚纪念、宝宝出生、一场旅行，\n让时间被温柔地记录。"),
-        .init(kind: .count,
-              title: "倒数，或者纪念",
-              sub: "过去的可以回望，\n未来的值得期待。"),
-        .init(kind: .photo,
-              title: "加上一张照片\n让日子有温度",
-              sub: "一张图胜过千言万语。"),
-        .init(kind: .final,
-              title: "让时间被好好珍藏",
-              sub: "现在开始，记录你的第一个日子。"),
+        .init(kind: .welcome, eyebrow: "Days Remember",
+              title: "把重要的日子\n做成手账",
+              sub: "结婚纪念、宝宝出生、一场说走就走的旅行，\n都贴进你的时光手账。"),
+        .init(kind: .count, eyebrow: "Countdown",
+              title: "倒数，\n或者纪念",
+              sub: "过去的可以回望，未来的值得期待。"),
+        .init(kind: .collage, eyebrow: "Collage",
+              title: "照片、贴纸、\n便利贴",
+              sub: "每一天都值得被认真装点。"),
+        .init(kind: .start, eyebrow: "Let’s go",
+              title: "现在，\n贴上第一张",
+              sub: "我们陪你一起记住。"),
     ]
 
     var body: some View {
-        let isFinal = (page == pages.count - 1)
-        let textColor: Color = isFinal ? .white : Theme.ink
-        let subColor: Color = isFinal ? Color.white.opacity(0.8) : Theme.ink2
+        let isStart = (page == pages.count - 1)
 
-        ZStack {
-            background(isFinal: isFinal)
-
-            VStack(spacing: 0) {
-                TabView(selection: $page) {
-                    ForEach(pages.indices, id: \.self) { index in
-                        pageContent(index, textColor: textColor, subColor: subColor)
-                            .tag(index)
-                    }
+        VStack(spacing: 0) {
+            // Swipeable art area.
+            TabView(selection: $page) {
+                ForEach(pages.indices, id: \.self) { index in
+                    artView(pages[index].kind)
+                        .padding(.horizontal, 28)
+                        .padding(.top, 70)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .tag(index)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-
-                Spacer()
-
-                VStack(spacing: 24) {
-                    HStack(spacing: 6) {
-                        ForEach(pages.indices, id: \.self) { i in
-                            Capsule()
-                                .fill(dotColor(i: i, isFinal: isFinal))
-                                .frame(width: i == page ? 22 : 6, height: 6)
-                                .animation(.easeInOut(duration: 0.18), value: page)
-                        }
-                    }
-                    if !isFinal {
-                        HStack {
-                            Button("跳过") { page = pages.count - 1 }
-                                .font(Theme.sans(14, weight: .medium))
-                                .foregroundStyle(Theme.muted)
-                                .buttonStyle(.plain)
-                            Spacer()
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) { page += 1 }
-                            } label: {
-                                HStack(spacing: 6) {
-                                    Text("下一步")
-                                    Image(systemName: "arrow.right")
-                                        .font(.system(size: 13, weight: .semibold))
-                                }
-                                .font(Theme.sans(15, weight: .medium))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 28)
-                                .padding(.vertical, 14)
-                                .background(Theme.terracotta)
-                                .clipShape(Capsule())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    } else {
-                        Button(action: onFinish) {
-                            Text("开始记录 ✨")
-                                .font(Theme.sans(16, weight: .semibold))
-                                .foregroundStyle(Color(oklch: 0.45, 0.09, 25))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(.white)
-                                .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 32)
-                .padding(.bottom, 48)
             }
-        }
-        .preferredColorScheme(isFinal ? .dark : nil)
-        .ignoresSafeArea()
-    }
+            .tabViewStyle(.page(indexDisplayMode: .never))
 
-    private func pageContent(_ index: Int, textColor: Color, subColor: Color) -> some View {
-        let cur = pages[index]
-        return VStack(spacing: 0) {
-            Spacer().frame(height: 80)
-
+            // Copy + controls.
             VStack(alignment: .leading, spacing: 0) {
-                Group {
-                    switch cur.kind {
-                    case .hero: HeroArt()
-                    case .count: CountDemoArt()
-                    case .photo: PhotoDemoArt()
-                    case .final: FinalArt()
-                    }
-                }
+                Text(pages[page].eyebrow)
+                    .font(Theme.hand(26))
+                    .foregroundStyle(Theme.catTravel)
+                    .padding(.bottom, 10)
+                Text(pages[page].title)
+                    .font(Theme.sans(34, weight: .heavy))
+                    .tracking(-1.0)
+                    .lineSpacing(34 * 0.1)
+                    .foregroundStyle(Theme.ink)
+                Text(pages[page].sub)
+                    .font(Theme.sans(15, weight: .medium))
+                    .lineSpacing(15 * 0.6)
+                    .foregroundStyle(Theme.ink2)
+                    .padding(.top, 14)
 
-                VStack(alignment: .leading, spacing: 16) {
-                    if let eyebrow = cur.eyebrow {
-                        Text(eyebrow)
-                            .font(Theme.serif(14, relativeTo: .subheadline))
-                            .tracking(5.6)
-                            .foregroundStyle(Theme.terracotta)
-                    }
-                    Text(cur.title)
-                        .font(Theme.serif(32, weight: .semibold, relativeTo: .largeTitle))
-                        .lineSpacing(32 * 0.3)
-                        .foregroundStyle(textColor)
-                    if let sub = cur.sub {
-                        Text(sub)
-                            .font(Theme.sans(15, relativeTo: .body))
-                            .lineSpacing(15 * 0.7)
-                            .foregroundStyle(subColor)
-                    }
+                HStack {
+                    pageDots
+                    Spacer()
+                    advanceButton(isStart: isStart)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 36)
+                .padding(.top, 28)
             }
-            .padding(.horizontal, 32)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 30)
+            .padding(.bottom, 44)
         }
-    }
-
-    private func dotColor(i: Int, isFinal: Bool) -> Color {
-        let active = i == page
-        if isFinal { return active ? .white : Color.white.opacity(0.3) }
-        return active ? Theme.terracotta : Theme.hairlineStrong
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Theme.bg.ignoresSafeArea())
+        .animation(.easeInOut(duration: 0.2), value: page)
     }
 
     @ViewBuilder
-    private func background(isFinal: Bool) -> some View {
-        if isFinal {
-            LinearGradient(
-                colors: [Color(oklch: 0.55, 0.11, 30), Color(oklch: 0.35, 0.08, 20)],
-                startPoint: UnitPoint(x: 0.4, y: 0),
-                endPoint: UnitPoint(x: 0.6, y: 1)
-            )
-            .ignoresSafeArea()
+    private func artView(_ kind: PageDef.Kind) -> some View {
+        switch kind {
+        case .welcome: WelcomeArt()
+        case .count: CountArt()
+        case .collage: CollageArt()
+        case .start: StartArt()
+        }
+    }
+
+    private var pageDots: some View {
+        HStack(spacing: 6) {
+            ForEach(pages.indices, id: \.self) { i in
+                Capsule()
+                    .fill(i == page ? Theme.ink : Theme.hairlineStrong)
+                    .frame(width: i == page ? 22 : 7, height: 7)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func advanceButton(isStart: Bool) -> some View {
+        if isStart {
+            PillButton(title: "开始记录", style: .dark,
+                       trailingSystemName: "arrow.right", action: onFinish)
         } else {
-            Theme.bg.ignoresSafeArea()
+            // Compact 56-wide dark pill with just an arrow.
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { page += 1 }
+            } label: {
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 56, height: 48)
+                    .background(Capsule().fill(Theme.accent))
+                    .shadow(color: Color(hex: 0x15171C).opacity(0.26), radius: 9, x: 0, y: 6)
+            }
+            .buttonStyle(PressScale())
         }
     }
 }

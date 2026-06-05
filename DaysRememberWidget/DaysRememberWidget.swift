@@ -16,7 +16,12 @@ struct DaysRememberWidget: Widget {
         StaticConfiguration(kind: kind, provider: DaysProvider()) { entry in
             DaysWidgetEntryView(entry: entry)
                 .containerBackground(for: .widget) {
-                    Theme.bg
+                    // Cool paper canvas with a faint top bloom, matching the app.
+                    ZStack {
+                        Theme.bg
+                        RadialGradient(colors: [Color.white.opacity(0.5), .clear],
+                                       center: .top, startRadius: 0, endRadius: 240)
+                    }
                 }
         }
         .contentMarginsDisabled()
@@ -88,172 +93,180 @@ struct DaysWidgetEntryView: View {
             // Tapping the widget opens that specific day's detail.
             .widgetURL(URL(string: "daysremember://day/\(day.id)"))
         } else {
-            ZStack {
-                LinearGradient(
-                    colors: [Theme.card, Theme.terracottaSoft],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                VStack(spacing: 6) {
-                    Text("时光")
-                        .font(Theme.serif(20, weight: .semibold))
-                        .foregroundStyle(Theme.terracotta)
-                    Text(entry.hasAnyDays ? "暂无即将到来的日子" : "还没有日子")
-                        .font(Theme.sans(12))
-                        .foregroundStyle(Theme.muted)
-                }
-            }
+            WidgetEmpty(hasAnyDays: entry.hasAnyDays)
         }
     }
 }
+
+private func countdownLabel(_ info: DayInfo) -> String {
+    if info.isToday { return "今天" }
+    return info.isPast ? "天前" : "天后"
+}
+
+// MARK: - Small — a compact polaroid
 
 private struct WidgetSmall: View {
     let day: Day
     var body: some View {
         let info = DayInfo.compute(day)
-        ZStack {
-            WidgetPhotoTile(day: day, scrim: true)
-
+        VStack(spacing: 6) {
+            ZStack(alignment: .topTrailing) {
+                WidgetPhoto(day: day, scrim: false)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 78)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                Sticker(name: stickerFor(day), size: 26, rotate: 8)
+                    .padding(5)
+            }
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("时光")
-                        .font(Theme.sans(10, weight: .semibold))
-                        .tracking(1.4)
-                        .foregroundStyle(Color.white.opacity(0.82))
-                    Spacer()
-                    Circle()
-                        .fill(Color.white.opacity(0.76))
-                        .frame(width: 6, height: 6)
-                }
-
-                Spacer(minLength: 4)
-
                 Text(day.title)
-                    .font(Theme.sans(12, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.92))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                HStack(alignment: .lastTextBaseline, spacing: 4) {
+                    .font(Theme.sans(12, weight: .heavy))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(info.days)")
-                        .font(Theme.serif(46, weight: .medium))
-                        .monospacedDigit()
-                        .foregroundStyle(.white)
-                        .minimumScaleFactor(0.75)
-                    Text(label(info))
-                        .font(Theme.sans(11, weight: .medium))
-                        .foregroundStyle(Color.white.opacity(0.82))
-                        .lineLimit(1)
+                        .font(Theme.sans(30, weight: .heavy)).monospacedDigit()
+                        .foregroundStyle(Theme.ink)
+                    Text(countdownLabel(info))
+                        .font(Theme.sans(11, weight: .semibold))
+                        .foregroundStyle(Theme.muted)
                 }
             }
-            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white))
+        .padding(6)
     }
 }
+
+// MARK: - Medium — text + photo polaroid
 
 private struct WidgetMedium: View {
     let day: Day
     var body: some View {
         let info = DayInfo.compute(day)
-        HStack(spacing: 14) {
-            VStack(alignment: .leading) {
+        let nc = noteColorFor(day.id)
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("即将到来")
-                    .font(Theme.sans(10, weight: .semibold))
-                    .tracking(1.6)
-                    .foregroundStyle(Theme.terracotta)
+                    .font(Theme.sans(10, weight: .bold)).tracking(1.4)
+                    .foregroundStyle(Theme.catTravel)
                 Text(day.title)
-                    .font(Theme.serif(18, weight: .semibold))
+                    .font(Theme.sans(17, weight: .heavy))
                     .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .padding(.top, 3)
-
-                Spacer(minLength: 8)
-
-                HStack(alignment: .lastTextBaseline, spacing: 6) {
+                    .lineLimit(1).minimumScaleFactor(0.75)
+                    .padding(.top, 2)
+                Spacer(minLength: 6)
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
                     Text("\(info.days)")
-                        .font(Theme.serif(42, weight: .medium))
-                        .foregroundStyle(Theme.terracotta)
-                        .monospacedDigit()
-                    Text(label(info))
-                        .font(Theme.sans(12, weight: .medium))
+                        .font(Theme.sans(42, weight: .heavy)).monospacedDigit()
+                        .foregroundStyle(Theme.ink)
+                    Text(countdownLabel(info))
+                        .font(Theme.sans(13, weight: .semibold))
                         .foregroundStyle(Theme.muted)
                 }
-                Text(CNDate.short(info.displayDate))
-                    .font(Theme.sans(11, weight: .medium))
-                    .foregroundStyle(Theme.muted)
-                    .padding(.top, 1)
+                Text(enDate(info.displayDate))
+                    .font(Theme.hand(20))
+                    .foregroundStyle(Theme.ink2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            WidgetPhotoTile(day: day, scrim: false)
-                .frame(width: 104, height: 104)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.65), lineWidth: 1)
+            ZStack(alignment: .topTrailing) {
+                WidgetPhoto(day: day, scrim: false)
+                    .frame(width: 116, height: 116)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                Sticker(name: stickerFor(day), size: 28, rotate: 8)
+                    .offset(x: 6, y: -8)
+            }
+            .padding(7)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white))
+            .overlay(alignment: .bottomLeading) {
+                if let years = info.anniversaryNumber, day.recurring {
+                    StickyNote(color: nc.paper, ink: nc.ink, rotate: -6, size: .s) {
+                        Text("\(years)年").font(Theme.handCN(16))
+                    }
+                    .offset(x: -10, y: 8)
                 }
+            }
         }
-        .padding(16)
-        .background(
-            LinearGradient(
-                colors: [Theme.card, Theme.terracottaSoft],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .padding(14)
     }
 }
+
+// MARK: - Large — full polaroid
 
 private struct WidgetLarge: View {
     let day: Day
     var body: some View {
         let info = DayInfo.compute(day)
-        ZStack(alignment: .bottomLeading) {
-            WidgetPhotoTile(day: day, scrim: true)
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text(day.categoryLabel)
-                        .font(Theme.sans(10, weight: .semibold))
-                        .tracking(1.6)
-                        .foregroundStyle(Color.white.opacity(0.78))
-                    Spacer()
-                }
-
-                Spacer()
-
-                Text(day.title)
-                    .font(Theme.serif(24, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.82)
-                HStack(alignment: .lastTextBaseline, spacing: 8) {
-                    Text("\(info.days)")
-                        .font(Theme.serif(72, weight: .medium))
-                        .foregroundStyle(.white)
-                        .monospacedDigit()
-                        .minimumScaleFactor(0.8)
-                    Text(label(info))
-                        .font(Theme.sans(13, weight: .medium))
-                        .foregroundStyle(Color.white.opacity(0.82))
-                }
-                .padding(.top, 4)
-                Text(CNDate.short(info.displayDate))
-                    .font(Theme.sans(12, weight: .medium))
-                    .foregroundStyle(Color.white.opacity(0.72))
-                    .padding(.top, 2)
+        let nc = noteColorFor(day.id)
+        VStack(spacing: 0) {
+            ZStack(alignment: .topTrailing) {
+                WidgetPhoto(day: day, scrim: false)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 150)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                Sticker(name: stickerFor(day), size: 40, rotate: 8).padding(8)
             }
-            .padding(20)
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(day.title)
+                        .font(Theme.sans(20, weight: .heavy))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                    Text(enDate(info.displayDate))
+                        .font(Theme.hand(22)).foregroundStyle(Theme.ink2)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text("\(info.days)")
+                            .font(Theme.sans(52, weight: .heavy)).monospacedDigit()
+                            .foregroundStyle(day.category.color)
+                        Text(countdownLabel(info))
+                            .font(Theme.sans(14, weight: .semibold))
+                            .foregroundStyle(Theme.muted)
+                    }
+                    .padding(.top, 2)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 6)
+            .padding(.top, 10)
+        }
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white))
+        .overlay(alignment: .topLeading) {
+            StickyNote(color: nc.paper, ink: nc.ink, rotate: 6, clip: true, size: .s) {
+                VStack(spacing: 0) {
+                    Text("\(info.days)").font(Theme.sans(20, weight: .heavy)).monospacedDigit()
+                    Text(countdownLabel(info)).font(Theme.handCN(13))
+                }
+            }
+            .offset(x: 8, y: 2)
+        }
+        .padding(10)
+    }
+}
+
+// MARK: - Empty
+
+private struct WidgetEmpty: View {
+    let hasAnyDays: Bool
+    var body: some View {
+        VStack(spacing: 8) {
+            Sticker(name: .star, size: 40, rotate: -8)
+            Text("时光")
+                .font(Theme.sans(18, weight: .heavy))
+                .foregroundStyle(Theme.ink)
+            Text(hasAnyDays ? "暂无即将到来的日子" : "还没有日子")
+                .font(Theme.sans(12, weight: .medium))
+                .foregroundStyle(Theme.muted)
         }
     }
 }
 
-private func label(_ info: DayInfo) -> String {
-    if info.isToday { return "就是今天" }
-    return info.isPast ? "已过 · 天" : "天后"
-}
+// MARK: - Photo (self-contained: gradient + grain, or user image)
 
-private struct WidgetPhotoTile: View {
+private struct WidgetPhoto: View {
     let day: Day
     var scrim: Bool = false
 
@@ -269,14 +282,11 @@ private struct WidgetPhotoTile: View {
                 day.photo.background()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-
             if scrim {
                 LinearGradient(
-                    colors: [.black.opacity(0.08), .black.opacity(0.22), .black.opacity(0.72)],
-                    startPoint: UnitPoint(x: 0.5, y: 0.15),
-                    endPoint: .bottom
+                    colors: [.black.opacity(0.05), .black.opacity(0.55)],
+                    startPoint: UnitPoint(x: 0.5, y: 0.3), endPoint: .bottom
                 )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .clipped()
@@ -286,18 +296,13 @@ private struct WidgetPhotoTile: View {
         let size = fillSize(image: image.size, in: container)
         let xOffset = (container.width - size.width) * CGFloat(min(1, max(0, day.coverFocusX)))
         let yOffset = (container.height - size.height) * CGFloat(min(1, max(0, day.coverFocusY)))
-
-        return Image(uiImage: image)
-            .resizable()
+        return Image(uiImage: image).resizable()
             .frame(width: size.width, height: size.height)
             .offset(x: xOffset, y: yOffset)
     }
 
     private func fillSize(image: CGSize, in container: CGSize) -> CGSize {
-        guard image.width > 0, image.height > 0,
-              container.width > 0, container.height > 0 else {
-            return container
-        }
+        guard image.width > 0, image.height > 0, container.width > 0, container.height > 0 else { return container }
         let imageAspect = image.width / image.height
         let containerAspect = container.width / container.height
         if imageAspect > containerAspect {

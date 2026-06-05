@@ -13,6 +13,10 @@ struct DaysRememberApp: App {
                 .environment(settings)
                 .environment(router)
                 .environment(\.locale, Locale(identifier: "zh_CN"))
+                // Travel-scrapbook palette is a light "paper" aesthetic — lock the app
+                // to light (also enforced via Info.plist UIUserInterfaceStyle).
+                .preferredColorScheme(.light)
+                .tint(Theme.ink)
                 .task {
                     store.settings = settings
                     store.enableCloudSync()

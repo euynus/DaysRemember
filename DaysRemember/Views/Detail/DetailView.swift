@@ -1,5 +1,9 @@
 import SwiftUI
 
+// Scrapbook detail page — port of `screens/Detail.jsx`. The cool paper canvas, a
+// tilted hero polaroid with a clipped countdown sticky + washi tape, an optional
+// lined-paper handwritten note, info chips, and a memories strip. All edit /
+// share / pin / delete wiring is preserved from the prior implementation.
 struct DetailView: View {
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
@@ -16,35 +20,34 @@ struct DetailView: View {
         let day = currentDay
         let info = DayInfo.compute(day)
 
-        ZStack {
-            Color.black.ignoresSafeArea()
+        VStack(spacing: 0) {
+            topBar
+            titleBlock(day: day, info: info)
 
-            // Background photo + scrim
-            ZStack {
-                PhotoTile(day: day, flat: true, cornerRadius: 0)
-                LinearGradient(
-                    colors: [
-                        .black.opacity(0.35),
-                        .black.opacity(0.10),
-                        .black.opacity(0.85),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-            .ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    hero(day: day, info: info)
 
-            VStack(spacing: 0) {
-                topControls
-                Spacer()
-                counter(day: day, info: info)
-                Spacer()
-                infoCard(day: day, info: info)
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 46)
+                    if !day.note.isEmpty {
+                        linedNote(day.note)
+                            .padding(.top, 26)
+                    }
+
+                    infoChips(day: day, info: info)
+                        .padding(.top, 22)
+
+                    SectionHeader("这一天的相册")
+                        .padding(.top, 26)
+                        .padding(.bottom, 6)
+                    memoriesStrip(day: day)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
         }
-        .foregroundStyle(.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Theme.bg.ignoresSafeArea())
         .sensoryFeedback(.impact(flexibility: .soft), trigger: day.pinned)
         .sheet(isPresented: $showShare) {
             ShareCardView(day: currentDay)
@@ -64,32 +67,34 @@ struct DetailView: View {
         }
     }
 
-    private var topControls: some View {
-        HStack {
-            GlassButton(accessibilityLabel: "返回") { dismiss() } content: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .bold))
-            }
+    // MARK: - Top bar (back + pin + more)
+
+    private var topBar: some View {
+        HStack(alignment: .top) {
+            FAB(systemName: "chevron.left", action: { dismiss() })
+                .accessibilityLabel("返回")
             Spacer()
             HStack(spacing: 8) {
-                GlassButton(accessibilityLabel: currentDay.pinned ? "取消置顶" : "置顶", action: togglePinned) {
-                    Image(systemName: currentDay.pinned ? "star.fill" : "star")
-                        .font(.system(size: 14, weight: .semibold))
-                }
+                FAB(systemName: currentDay.pinned ? "star.fill" : "star", action: togglePinned)
+                    .accessibilityLabel(currentDay.pinned ? "取消置顶" : "置顶")
                 Menu {
                     Button("编辑", systemImage: "pencil") { showEditor = true }
                     Button("分享", systemImage: "square.and.arrow.up") { showShare = true }
                     Button("删除", systemImage: "trash", role: .destructive) { showDeleteConfirm = true }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 14, weight: .bold))
-                        .glassCircle()
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 46, height: 46)
+                        .background(Circle().fill(Color.white))
+                        .floatShadow()
                 }
                 .accessibilityLabel("更多操作")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 62)
+        .padding(.horizontal, 18)
+        .padding(.top, 58)
+        .padding(.bottom, 6)
     }
 
     private func togglePinned() {
@@ -100,98 +105,164 @@ struct DetailView: View {
         }
     }
 
-    private func counter(day: Day, info: DayInfo) -> some View {
-        VStack(spacing: 0) {
-            Text(day.categoryLabel.uppercased())
-                .font(Theme.sans(11))
-                .tracking(3.3)
-                .foregroundStyle(Color.white.opacity(0.8))
-                .padding(.bottom, 10)
+    // MARK: - Title + meta
+
+    private func titleBlock(day: Day, info: DayInfo) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             Text(day.title)
-                .font(Theme.serif(28, weight: .medium))
-                .multilineTextAlignment(.center)
+                .font(Theme.sans(32, weight: .heavy))
+                .tracking(-0.6)
+                .foregroundStyle(Theme.ink)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
-            Text("\(info.days)")
-                .font(Theme.serif(120, weight: .medium))
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .padding(.top, 28)
-                .padding(.bottom, 6)
-            Text(info.isToday ? info.label : "\(info.label) · 天")
-                .font(Theme.sans(14))
-                .tracking(3.5)
-                .foregroundStyle(Color.white.opacity(0.8))
+            MetaRow(metaItems(day: day, info: info))
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 32)
-        // Read the whole counter as one natural sentence instead of four fragments
-        // ("category", "title", "132", "还有 · 天").
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "\(day.title)，\(day.categoryLabel)，"
-            + (info.isToday ? "就是今天" : "\(info.label) \(info.days) 天")
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.top, 10)
+        .padding(.bottom, 4)
     }
 
-    private func infoCard(day: Day, info: DayInfo) -> some View {
-        VStack(spacing: 0) {
-            InfoRow(label: "日期",
-                    value: "\(CNDate.full(info.displayDate)) · \(CNDate.weekday(info.displayDate))")
-            InfoRow(label: "农历", value: Lunar.fmtFull(info.displayDate))
-            if let term = SolarTerms.name(for: info.displayDate) {
-                InfoRow(label: "节气", value: term)
+    private func metaItems(day: Day, info: DayInfo) -> [String] {
+        var items = [CNDate.full(info.displayDate), CNDate.weekday(info.displayDate)]
+        if day.recurring { items.append("每年") }
+        return items
+    }
+
+    // MARK: - Hero polaroid + countdown sticky + tape
+
+    private func hero(day: Day, info: DayInfo) -> some View {
+        let nc = noteColorFor(day.id)
+        let countLabel = info.isToday ? "今天" : (info.isPast ? "天前" : "天后")
+
+        return ZStack(alignment: .topLeading) {
+            // Polaroid card
+            VStack(spacing: 0) {
+                PhotoTile(day: day, cornerRadius: 12)
+                    .frame(height: 280)
+                HStack {
+                    Text(enDate(info.displayDate))
+                        .font(Theme.hand(26))
+                        .foregroundStyle(Theme.ink2)
+                    Spacer()
+                    Sticker(name: stickerFor(day), size: 42, rotate: 8)
+                }
+                .padding(.top, 12)
+                .padding(.horizontal, 6)
+                .padding(.bottom, 4)
             }
-            if let h = SolarTerms.lunarHoliday(for: info.displayDate) {
-                InfoRow(label: "传统节日", value: h)
+            .polaroidCard(rotation: -1.5)
+            .padding(.top, 8)
+
+            // Washi tape (top-left)
+            Tape(color: Color(.sRGB, red: 180/255, green: 221/255, blue: 240/255, opacity: 0.75), width: 70)
+                .rotationEffect(.degrees(-6))
+                .offset(x: 24, y: -2)
+
+            // Countdown sticky (top-right, clipped)
+            StickyNote(color: nc.paper, ink: nc.ink, rotate: 6, clip: true, size: .l) {
+                VStack(spacing: 0) {
+                    Text("\(info.days)")
+                        .font(Theme.sans(48, weight: .bold))
+                        .monospacedDigit()
+                    Text(countLabel)
+                        .font(Theme.handCN(18))
+                }
+                .multilineTextAlignment(.center)
             }
-            if day.lunar {
-                InfoRow(label: "按农历重复", value: "每年农历相同日期")
-            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.trailing, 10)
+            .offset(y: -2)
+        }
+    }
+
+    // MARK: - Lined-paper handwritten note
+
+    private func linedNote(_ text: String) -> some View {
+        ZStack(alignment: .top) {
+            Text(text)
+                .font(Theme.handCN(21))
+                .lineSpacing(28 - 21)
+                .foregroundStyle(Color(hex: 0x3A3A3A))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 18)
+                .padding(.top, 18)
+                .padding(.bottom, 16)
+                .background(
+                    RuledLines()
+                        .background(Color(hex: 0xFFFDF6))
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 1, x: 0, y: 1)
+                .shadow(color: Color(hex: 0x15171C).opacity(0.08), radius: 10, x: 0, y: 8)
+                .rotationEffect(.degrees(0.4))
+
+            Paperclip().offset(y: -10)
+        }
+    }
+
+    // MARK: - Info chips (wrap)
+
+    private func infoChips(day: Day, info: DayInfo) -> some View {
+        FlowLayout(spacing: 10) {
             if !day.location.isEmpty {
-                InfoRow(label: "地点", value: day.location)
+                InfoChip(systemName: "mappin.and.ellipse", text: day.location)
+            }
+            InfoChip(systemName: "moon", text: Lunar.fmt(info.displayDate))
+            if let term = SolarTerms.name(for: info.displayDate) {
+                InfoChip(systemName: "leaf", text: term)
             }
             if day.recurring {
-                InfoRow(label: "重复", value: "每年 · 第 \(info.anniversaryNumber ?? 1) 次")
+                let n = (info.yearsAgo ?? 0) + (info.isPast ? 0 : 1)
+                InfoChip(systemName: "arrow.triangle.2.circlepath", text: "第 \(n) 次")
             }
-            if !day.note.isEmpty {
-                Divider().background(Color.white.opacity(0.2)).padding(.top, 12)
-                Text("\u{201C}\(day.note)\u{201D}")
-                    .font(Theme.serif(14).italic())
-                    .lineSpacing(14 * 0.7)
-                    .foregroundStyle(Color.white.opacity(0.92))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 12)
+            if day.lunar {
+                InfoChip(systemName: "moon", text: "农历重复")
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.black.opacity(0.32))
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
+    }
+
+    // MARK: - Memories strip
+
+    private func memoriesStrip(day: Day) -> some View {
+        let presets: [PhotoStyle] = [.japan, .home, .wedding, .baby]
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(Array(presets.enumerated()), id: \.offset) { idx, style in
+                    VStack(spacing: 0) {
+                        // The day's own photo leads; presets fill the rest of the strip.
+                        if idx == 0 {
+                            PhotoTile(day: day, cornerRadius: 8)
+                                .frame(width: 96, height: 96)
+                        } else {
+                            PhotoTile(style: style, imageData: nil, cornerRadius: 8)
+                                .frame(width: 96, height: 96)
+                        }
+                    }
+                    .polaroidCard(rotation: idx % 2 == 1 ? 2 : -2, padding: 5)
+                }
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 2)
         }
     }
 }
 
-struct InfoRow: View {
-    let label: String
-    let value: String
+/// Repeating horizontal rule lines for the lined-paper note background
+/// (the `repeating-linear-gradient` in Detail.jsx).
+private struct RuledLines: View {
+    var spacing: CGFloat = 28
     var body: some View {
-        HStack {
-            Text(label)
-                .font(Theme.sans(13))
-                .foregroundStyle(Color.white.opacity(0.65))
-            Spacer()
-            Text(value)
-                .font(Theme.sans(13, weight: .medium))
-                .foregroundStyle(.white)
+        GeometryReader { geo in
+            Path { p in
+                var y = spacing
+                while y < geo.size.height {
+                    p.move(to: CGPoint(x: 0, y: y))
+                    p.addLine(to: CGPoint(x: geo.size.width, y: y))
+                    y += spacing
+                }
+            }
+            .stroke(Color(hex: 0x15171C).opacity(0.06), lineWidth: 1)
         }
-        .padding(.vertical, 5)
     }
 }

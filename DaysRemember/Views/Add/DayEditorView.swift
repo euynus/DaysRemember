@@ -1,6 +1,10 @@
 import SwiftUI
 import PhotosUI
 
+// Scrapbook add/edit composer — a faithful port of `screens/Add.jsx`. DayEditorView
+// is the shared form; AddDayView wraps it. Every wire from the previous version is
+// preserved: title, category, cover (preset PhotoStyle + PhotosPicker + focus drag),
+// date, solar/lunar, recurring, per-day reminder offset, note, location, save / cancel.
 struct DayEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DayStore.self) var store
@@ -19,9 +23,9 @@ struct DayEditorView: View {
     @State private var location: String
     @State private var coverFocusX: Double
     @State private var coverFocusY: Double
-    @State private var coverPreview: CoverPreview = .home
     @State private var dragStartX: Double?
     @State private var dragStartY: Double?
+    @State private var showDatePicker = false
 
     private static let pickerOptions: [PhotoStyle] = [
         .wedding, .baby, .birthday, .japan, .study, .work, .pet, .home,
@@ -29,26 +33,6 @@ struct DayEditorView: View {
     private static let reminders: [(label: String, offset: Int)] = [
         ("当天", 0), ("1天", 1), ("3天", 3), ("7天", 7)
     ]
-
-    private enum CoverPreview: String, CaseIterable {
-        case home, detail, share
-
-        var label: String {
-            switch self {
-            case .home: return "首页"
-            case .detail: return "详情"
-            case .share: return "分享"
-            }
-        }
-
-        var aspect: CGFloat {
-            switch self {
-            case .home: return 1.55
-            case .detail: return 0.78
-            case .share: return 0.80
-            }
-        }
-    }
 
     init(day: Day? = nil) {
         editingDay = day
@@ -73,99 +57,147 @@ struct DayEditorView: View {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    // Preview-only countdown for the live polaroid sticky note.
+    private var previewInfo: DayInfo {
+        DayInfo.compute(Day(
+            id: editingDay?.id ?? "preview",
+            title: title,
+            date: selectedDate,
+            recurring: recurring,
+            lunar: !solar,
+            category: .life,
+            photo: photo
+        ))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             navBar
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    coverEditor.padding(.bottom, 14)
-                    coverPreviewPicker.padding(.bottom, 18)
-                    photoStrip.padding(.bottom, 22)
-                    formCard.padding(.bottom, 16)
-                    SectionLabel(text: "提醒").padding(.bottom, 10)
-                    reminderPicker.padding(.bottom, 22)
-                    SectionLabel(text: "分类").padding(.bottom, 10)
+                    livePreview
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 8)
+                        .padding(.bottom, 26)
+
+                    SectionHeader("标题").padding(.bottom, 10)
+                    titleField.padding(.bottom, 22)
+
+                    SectionHeader("封面").padding(.bottom, 10)
+                    coverPicker.padding(.bottom, 22)
+
+                    formCard.padding(.bottom, 22)
+
+                    SectionHeader("分类").padding(.bottom, 10)
                     categoryPills.padding(.bottom, 22)
-                    SectionLabel(text: "心情笔记").padding(.bottom, 10)
+
+                    SectionHeader("心情笔记").padding(.bottom, 10)
                     notesCard
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
+                .padding(.horizontal, 22)
+                .padding(.bottom, 40)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
-        .sensoryFeedback(.selection, trigger: coverPreview)
+        .sheet(isPresented: $showDatePicker) { datePickerSheet }
         .sensoryFeedback(.selection, trigger: photo)
         .sensoryFeedback(.selection, trigger: remindIndex)
         .sensoryFeedback(.selection, trigger: categoryID)
+        .sensoryFeedback(.selection, trigger: solar)
+        .sensoryFeedback(.selection, trigger: recurring)
     }
+
+    // MARK: - Nav bar
 
     private var navBar: some View {
         HStack {
             Button("取消") { dismiss() }
-                .font(Theme.sans(15, weight: .medium, relativeTo: .body))
+                .font(Theme.sans(16, weight: .semibold))
                 .foregroundStyle(Theme.ink2)
-                .buttonStyle(.plain)
-                .navTextButton()
+                .buttonStyle(PressScale())
+
             Spacer()
             Text(editingDay == nil ? "新的日子" : "编辑日子")
-                .font(Theme.serif(17, weight: .semibold, relativeTo: .headline))
+                .font(Theme.sans(16, weight: .bold))
                 .foregroundStyle(Theme.ink)
             Spacer()
-            Button("保存", action: saveDay)
-                .font(Theme.sans(15, weight: .semibold, relativeTo: .body))
-                .foregroundStyle(Theme.terracotta)
-                .buttonStyle(.plain)
+
+            PillButton(title: "保存", style: .dark, height: 38, action: saveDay)
                 .disabled(!canSave)
                 .opacity(canSave ? 1 : 0.45)
-                .navTextButton()
         }
         .padding(.horizontal, 20)
-        .padding(.top, 60)
+        .padding(.top, 56)
         .padding(.bottom, 8)
     }
 
-    private var coverEditor: some View {
-        ZStack(alignment: .bottomLeading) {
-            PhotoTile(style: photo, imageData: photoData,
-                      focusX: coverFocusX, focusY: coverFocusY,
-                      cornerRadius: 22)
-                .aspectRatio(coverPreview.aspect, contentMode: .fit)
-                .overlay(alignment: .center) {
-                    if photoData != nil {
-                        Circle()
-                            .strokeBorder(.white.opacity(0.8), lineWidth: 1)
-                            .background(Circle().fill(.black.opacity(0.18)))
-                            .frame(width: 18, height: 18)
-                            .allowsHitTesting(false)
-                    }
-                }
-                .gesture(focusDrag)
+    // MARK: - Live preview polaroid
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(store.category(for: categoryID).name.uppercased())
-                    .font(Theme.sans(10, relativeTo: .caption))
-                    .tracking(2)
-                    .foregroundStyle(Color.white.opacity(0.8))
-                TextField("日子名称", text: $title,
-                          prompt: Text("日子名称").foregroundStyle(.white.opacity(0.55)))
-                    .font(Theme.serif(22, weight: .semibold, relativeTo: .title2))
-                    .foregroundStyle(.white)
-                    .tint(.white)
-                    .submitLabel(.done)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .overlay(alignment: .bottom) {
-                        Rectangle().fill(Color.white.opacity(0.4))
-                            .frame(height: 1)
-                            .offset(y: 4)
+    private var livePreview: some View {
+        ZStack(alignment: .top) {
+            VStack(spacing: 0) {
+                PhotoTile(style: photo, imageData: photoData,
+                          focusX: coverFocusX, focusY: coverFocusY,
+                          flat: true, cornerRadius: 12)
+                    .frame(width: 194, height: 200)
+                    .overlay(alignment: .center) {
+                        if photoData != nil {
+                            Circle()
+                                .strokeBorder(.white.opacity(0.85), lineWidth: 1)
+                                .background(Circle().fill(.black.opacity(0.18)))
+                                .frame(width: 18, height: 18)
+                                .allowsHitTesting(false)
+                        }
                     }
+                    .gesture(focusDrag)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title.isEmpty ? "新的日子" : title)
+                        .font(Theme.sans(16, weight: .bold))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text(enDate(previewInfo.displayDate))
+                        .font(Theme.hand(20))
+                        .foregroundStyle(Theme.ink2)
+                }
+                .frame(width: 194, alignment: .leading)
+                .padding(.horizontal, 4)
+                .padding(.top, 10)
+                .padding(.bottom, 2)
             }
-            .padding(16)
+            .polaroidCard(rotation: -1.5)
+            .overlay(alignment: .bottomLeading) {
+                Sticker(name: stickerForCurrentCategory, size: 36, rotate: -10)
+                    .offset(x: 14, y: 6)
+            }
+
+            // Countdown sticky note, clipped top-right (Add.jsx: note-blue, rotate 7).
+            countdownNote
+                .offset(x: 92, y: -6)
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("封面预览")
+        .frame(width: 240, height: 280)
+    }
+
+    private var countdownNote: some View {
+        StickyNote(color: Theme.noteBlue, ink: Theme.noteBlueInk, rotate: 7, clip: true, size: .s) {
+            VStack(spacing: 0) {
+                Text("\(abs(previewInfo.days))")
+                    .font(Theme.sans(26, weight: .bold))
+                    .monospacedDigit()
+                Text(previewInfo.isToday ? "今天" : (previewInfo.isPast ? "天前" : "天后"))
+                    .font(Theme.handCN(15))
+            }
+            .foregroundStyle(Theme.noteBlueInk)
+        }
+    }
+
+    private var stickerForCurrentCategory: StickerName {
+        if let cat = DayCategory(rawValue: categoryID) {
+            return StickerMap.byCategory[cat] ?? .star
+        }
+        return .star
     }
 
     private var focusDrag: some Gesture {
@@ -178,8 +210,8 @@ struct DayEditorView: View {
                 }
                 let startX = dragStartX ?? coverFocusX
                 let startY = dragStartY ?? coverFocusY
-                coverFocusX = clamp(startX - Double(value.translation.width / 240))
-                coverFocusY = clamp(startY - Double(value.translation.height / 240))
+                coverFocusX = clamp(startX - Double(value.translation.width / 200))
+                coverFocusY = clamp(startY - Double(value.translation.height / 200))
             }
             .onEnded { _ in
                 dragStartX = nil
@@ -187,102 +219,81 @@ struct DayEditorView: View {
             }
     }
 
-    private var coverPreviewPicker: some View {
-        HStack(spacing: 6) {
-            ForEach(CoverPreview.allCases, id: \.self) { preview in
-                Button {
-                    coverPreview = preview
-                } label: {
-                    Text(preview.label)
-                        .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
-                        .foregroundStyle(coverPreview == preview ? Theme.terracotta : Theme.ink2)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(coverPreview == preview ? Theme.terracottaSoft : Theme.card)
-                        .clipShape(RoundedRectangle(cornerRadius: 9))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 9)
-                                .strokeBorder(coverPreview == preview ? Theme.terracotta.opacity(0.2) : Theme.hairline,
-                                              lineWidth: 0.5)
-                        }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(preview.label)封面比例")
-                .accessibilityAddTraits(coverPreview == preview ? [.isSelected] : [])
-            }
-        }
+    // MARK: - Title
+
+    private var titleField: some View {
+        TextField("", text: $title,
+                  prompt: Text("给这一天起个名字").foregroundStyle(Theme.muted))
+            .font(Theme.sans(17, weight: .bold))
+            .foregroundStyle(Theme.ink)
+            .tint(Theme.ink)
+            .submitLabel(.done)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white))
+            .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
+            .accessibilityLabel("日子名称")
     }
 
-    private var photoStrip: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(text: "封面")
-            ScrollView(.horizontal, showsIndicators: false) {
-                // Reserve the same 62×62 cell every item so the selected ring renders
-                // on all four sides — earlier the ring was an overlay with padding(-3)
-                // that the HStack/ScrollView clipped on top and bottom.
-                HStack(spacing: 8) {
-                    ForEach(Self.pickerOptions, id: \.self) { preset in
-                        Button {
-                            photo = preset
-                            photoData = nil
-                            resetFocus()
-                        } label: {
-                            coverChoiceTile {
-                                PhotoTile(style: preset, flat: true, cornerRadius: 14)
-                                    .frame(width: 56, height: 56)
-                            } selected: {
-                                photo == preset && photoData == nil
-                            }
+    // MARK: - Cover picker
+
+    private var coverPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(Self.pickerOptions, id: \.self) { preset in
+                    Button {
+                        photo = preset
+                        photoData = nil
+                        resetFocus()
+                    } label: {
+                        miniPolaroid(selected: photo == preset && photoData == nil) {
+                            PhotoTile(style: preset, flat: true, cornerRadius: 8)
+                                .frame(width: 50, height: 50)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("选择\(preset.displayName)封面")
-                        .accessibilityAddTraits(photo == preset && photoData == nil ? [.isSelected] : [])
                     }
-                    photosPickerTile
+                    .buttonStyle(PressScale(scale: 0.95))
+                    .accessibilityLabel("选择\(preset.displayName)封面")
+                    .accessibilityAddTraits(photo == preset && photoData == nil ? [.isSelected] : [])
                 }
-                .padding(.vertical, 3)
+                photosPickerTile
             }
+            .padding(.vertical, 4)
+            .padding(.horizontal, 1)
         }
     }
 
-    /// 62×62 cell that wraps a 56×56 thumbnail and renders the selected-state ring
-    /// on all four edges without overflowing into the parent layout.
-    private func coverChoiceTile<Content: View>(@ViewBuilder content: () -> Content,
-                                                 selected: () -> Bool) -> some View {
-        ZStack {
-            content()
-            if selected() {
-                RoundedRectangle(cornerRadius: 17, style: .continuous)
-                    .strokeBorder(Theme.terracotta, lineWidth: 2.5)
+    /// White mini polaroid card (~58 wide) with a 3pt ink outline when selected.
+    private func miniPolaroid<Content: View>(selected: Bool,
+                                             @ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(4)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(selected ? Theme.ink : Color.clear, lineWidth: 3)
             }
-        }
-        .frame(width: 62, height: 62)
+            .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 2, x: 0, y: 2)
     }
 
     private var photosPickerTile: some View {
         PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
-            coverChoiceTile {
+            Group {
                 if let data = photoData, let ui = UIImage(data: data) {
-                    Image(uiImage: ui)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 56, height: 56)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 14)
-                            .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4]))
-                            .foregroundStyle(Theme.hairlineStrong)
-                        Image(systemName: "photo.badge.plus")
-                            .font(.system(size: 18, weight: .regular))
-                            .foregroundStyle(Theme.muted)
+                    miniPolaroid(selected: true) {
+                        Image(uiImage: ui)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 50, height: 50)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
-                    .frame(width: 56, height: 56)
-                    .background(Theme.card)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                } else {
+                    Image(systemName: "plus")
+                        .font(.system(size: 22, weight: .regular))
+                        .foregroundStyle(Theme.muted)
+                        .frame(width: 58, height: 58)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white))
+                        .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
                 }
-            } selected: {
-                photoData != nil
             }
         }
         .accessibilityLabel("选择相册封面")
@@ -296,119 +307,190 @@ struct DayEditorView: View {
         }
     }
 
+    // MARK: - Form list
+
     private var formCard: some View {
-        InsetCard(radius: 18) {
-            FormRow(label: "日期") {
-                VStack(alignment: .trailing, spacing: 4) {
-                    DatePicker("", selection: $selectedDate, displayedComponents: .date)
-                        .labelsHidden()
-                    Text("农历 \(Lunar.fmt(selectedDate))")
-                        .font(Theme.sans(11, relativeTo: .caption))
+        CardList {
+            // 日期 → opens the date picker sheet.
+            Button { showDatePicker = true } label: {
+                HStack(spacing: 14) {
+                    Text("日期").font(Theme.sans(15, weight: .semibold)).foregroundStyle(Theme.ink)
+                    Spacer(minLength: 8)
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text(CNDate.full(selectedDate))
+                            .font(Theme.sans(14, weight: .semibold))
+                            .foregroundStyle(Theme.ink2)
+                        if !solar {
+                            Text("农历 \(Lunar.fmt(selectedDate))")
+                                .font(Theme.sans(12, weight: .medium))
+                                .foregroundStyle(Theme.muted)
+                        }
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Theme.muted)
                 }
+                .cardRow()
+                .contentShape(Rectangle())
             }
-            FormRow(label: "日历") {
-                SegBtnPair(leftLabel: "公历", rightLabel: "农历", leftSelected: $solar)
+            .buttonStyle(PressScale(scale: 0.99))
+
+            RowDivider()
+            formRawRow(label: "日历") {
+                SegPicker(options: [(true, "公历"), (false, "农历")], selection: $solar)
             }
-            FormRow(label: "类型") {
-                SegBtnPair(leftLabel: "一次", rightLabel: "每年", leftSelected: Binding(
-                    get: { !recurring },
-                    set: { recurring = !$0 }
-                ))
+
+            RowDivider()
+            formRawRow(label: "类型") {
+                SegPicker(options: [(false, "一次"), (true, "每年")], selection: $recurring)
             }
-            FormRow(label: "地点", isLast: true) {
+
+            RowDivider()
+            formRawRow(label: "提醒") {
+                HStack(spacing: 6) {
+                    reminderChip(label: "默认", selected: remindIndex < 0) { remindIndex = -1 }
+                    ForEach(Self.reminders.indices, id: \.self) { index in
+                        reminderChip(label: Self.reminders[index].label,
+                                     selected: remindIndex == index) { remindIndex = index }
+                    }
+                }
+            }
+
+            RowDivider()
+            HStack(spacing: 14) {
+                Text("地点").font(Theme.sans(15, weight: .semibold)).foregroundStyle(Theme.ink)
+                Spacer(minLength: 8)
                 TextField("可选", text: $location)
-                    .font(Theme.sans(14, relativeTo: .body))
+                    .font(Theme.sans(14, weight: .semibold))
                     .foregroundStyle(Theme.ink2)
+                    .tint(Theme.ink)
                     .multilineTextAlignment(.trailing)
                     .submitLabel(.done)
                     .accessibilityLabel("地点")
             }
+            .cardRow()
         }
     }
 
-    /// Reminder offsets as wrapping chips (so 5 options never overflow), with a
-    /// leading "默认" that follows the global reminder settings (remindIndex -1).
-    private var reminderPicker: some View {
-        FlowLayout(spacing: 8) {
-            reminderChip(label: "默认", selected: remindIndex < 0) { remindIndex = -1 }
-            ForEach(Self.reminders.indices, id: \.self) { index in
-                reminderChip(label: Self.reminders[index].label, selected: remindIndex == index) {
-                    remindIndex = index
-                }
-            }
+    private func formRawRow<Content: View>(label: String,
+                                           @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 14) {
+            Text(label).font(Theme.sans(15, weight: .semibold)).foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            content()
         }
+        .cardRow()
     }
 
+    /// Small selectable reminder chip (ink fill when selected, like the JSX seg buttons).
     private func reminderChip(label: String, selected: Bool,
                               action: @escaping () -> Void) -> some View {
-        Button {
-            action()
-        } label: {
+        Button(action: action) {
             Text(label)
-                .font(Theme.sans(13, weight: .medium, relativeTo: .body))
-                .foregroundStyle(selected ? Theme.terracotta : Theme.ink2)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(selected ? Theme.terracottaSoft : Theme.card)
-                .clipShape(Capsule())
-                .overlay {
-                    Capsule().strokeBorder(selected ? Theme.terracotta.opacity(0.24) : Theme.hairline,
-                                           lineWidth: 0.5)
-                }
+                .font(Theme.sans(12, weight: .bold))
+                .foregroundStyle(selected ? Color.white : Theme.ink2)
+                .padding(.horizontal, 11)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(selected ? Theme.ink : Theme.bg2)
+                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScale(scale: 0.94))
         .accessibilityLabel(label == "默认" ? "默认提醒，跟随全局设置" : "提醒\(label)")
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
+    // MARK: - Category pills
+
     private var categoryPills: some View {
         FlowLayout(spacing: 8) {
             ForEach(store.categories) { category in
-                Button {
+                Chip(category.name, selected: categoryID == category.id) {
+                    Sticker(name: stickerForCategory(category), size: 18)
+                } action: {
                     categoryID = category.id
-                } label: {
-                    Label(category.name, systemImage: category.icon)
-                        .font(Theme.sans(13, weight: .medium, relativeTo: .body))
-                        .foregroundStyle(categoryID == category.id ? category.colorToken.color : Theme.ink2)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                        .background(categoryID == category.id ? category.colorToken.soft : Theme.card)
-                        .clipShape(Capsule())
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(categoryID == category.id ? category.colorToken.color.opacity(0.24) : Theme.hairline,
-                                              lineWidth: 0.5)
-                        }
                 }
-                .buttonStyle(.plain)
                 .accessibilityLabel("分类 \(category.name)")
                 .accessibilityAddTraits(categoryID == category.id ? [.isSelected] : [])
             }
         }
     }
 
+    private func stickerForCategory(_ category: CategoryDefinition) -> StickerName {
+        if let cat = DayCategory(rawValue: category.id) {
+            return StickerMap.byCategory[cat] ?? .star
+        }
+        return .star
+    }
+
+    // MARK: - Notes card (lined paper)
+
     private var notesCard: some View {
         ZStack(alignment: .topLeading) {
             if note.isEmpty {
                 Text("写下这一天的心情…")
-                    .font(Theme.serif(14, relativeTo: .body).italic())
+                    .font(Theme.handCN(20))
                     .foregroundStyle(Theme.muted)
                     .padding(16)
                     .allowsHitTesting(false)
             }
             TextEditor(text: $note)
-                .font(Theme.serif(14, relativeTo: .body).italic())
-                .lineSpacing(14 * 0.7)
-                .foregroundStyle(Theme.ink2)
+                .font(Theme.handCN(20))
+                .foregroundStyle(Theme.ink)
+                .tint(Theme.ink)
                 .scrollContentBackground(.hidden)
-                .frame(maxWidth: .infinity, minHeight: 90)
+                .frame(maxWidth: .infinity, minHeight: 92)
                 .padding(12)
                 .accessibilityLabel("心情笔记")
         }
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(hex: 0xFFFDF6))
+                .overlay(LinedPaper().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous)))
+        )
+        .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 1, x: 0, y: 1)
     }
+
+    // MARK: - Date picker sheet
+
+    private var datePickerSheet: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button("取消") { showDatePicker = false }
+                    .font(Theme.sans(15, weight: .semibold))
+                    .foregroundStyle(Theme.ink2)
+                Spacer()
+                Text("选择日期").font(Theme.sans(16, weight: .bold)).foregroundStyle(Theme.ink)
+                Spacer()
+                Button("完成") { showDatePicker = false }
+                    .font(Theme.sans(15, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 8)
+
+            DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .tint(Theme.ink)
+                .labelsHidden()
+                .padding(.horizontal, 16)
+
+            if !solar {
+                Text("农历 \(Lunar.fmtFull(selectedDate))")
+                    .font(Theme.sans(13, weight: .medium))
+                    .foregroundStyle(Theme.muted)
+                    .padding(.top, 4)
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Theme.bg.ignoresSafeArea())
+        .presentationDetents([.medium, .large])
+    }
+
+    // MARK: - Save
 
     private func saveDay() {
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -466,5 +548,24 @@ struct DayEditorView: View {
             image.draw(in: CGRect(origin: .zero, size: target))
         }
         return resized.jpegData(compressionQuality: quality)
+    }
+}
+
+/// Repeating ruled lines for the mood-note card (Add.jsx repeating-linear-gradient).
+private struct LinedPaper: View {
+    var body: some View {
+        Canvas { ctx, size in
+            let spacing: CGFloat = 28
+            var y: CGFloat = spacing
+            let line = Color(hex: 0x15171C).opacity(0.06)
+            while y < size.height {
+                var p = Path()
+                p.move(to: CGPoint(x: 0, y: y))
+                p.addLine(to: CGPoint(x: size.width, y: y))
+                ctx.stroke(p, with: .color(line), lineWidth: 1)
+                y += spacing
+            }
+        }
+        .allowsHitTesting(false)
     }
 }

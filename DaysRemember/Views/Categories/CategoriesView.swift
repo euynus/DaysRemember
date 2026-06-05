@@ -1,5 +1,9 @@
 import SwiftUI
 
+// Scrapbook categories — a 2-col grid of white tilted cards, each pinned with a
+// flat category sticker and a small count sticky note. The first "全部日子" card
+// spans both columns and shows peek polaroids. A dashed card creates new
+// categories. Faithful port of `screens/Categories.jsx`.
 struct CategoriesView: View {
     @Environment(DayStore.self) var store
     var onOpen: (Day) -> Void = { _ in }
@@ -11,15 +15,27 @@ struct CategoriesView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            topBar
+            NavHeader(title: "分类") {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) { editing.toggle() }
+                } label: {
+                    Text(editing ? "完成" : "编辑")
+                        .font(Theme.sans(15, weight: .bold))
+                        .foregroundStyle(Theme.ink2)
+                        .frame(minWidth: 42, minHeight: 42, alignment: .trailing)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
             header
             ScrollView(.vertical, showsIndicators: false) {
                 grid
-                addCategoryButton
-                    .padding(.top, 24)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 96)
+                addCategoryCard
+                    .padding(.top, 18)
+                    .padding(.horizontal, 22)
+                    .padding(.bottom, 120)
             }
+            .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
@@ -45,196 +61,242 @@ struct CategoriesView: View {
         }
     }
 
-    private var topBar: some View {
-        HStack {
-            Color.clear.frame(width: 44, height: 44)
-            Spacer()
-            Text("分类")
-                .font(Theme.serif(17, weight: .semibold, relativeTo: .headline))
-            Spacer()
-            Button(editing ? "完成" : "编辑") {
-                withAnimation(.easeInOut(duration: 0.18)) { editing.toggle() }
-            }
-            .font(Theme.sans(14, weight: .medium, relativeTo: .body))
-            .foregroundStyle(Theme.terracotta)
-            .buttonStyle(.plain)
-            .frame(minHeight: 44, alignment: .trailing)
-            .contentShape(Rectangle())
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 8)
-    }
-
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("你的分类")
-                .font(Theme.serif(30, weight: .semibold, relativeTo: .largeTitle))
+                .font(Theme.sans(32, weight: .heavy))
+                .tracking(-1)
                 .foregroundStyle(Theme.ink)
-            Text("共 \(store.days.count) 个日子 · \(store.categories.count) 个分类")
-                .font(Theme.sans(13, relativeTo: .body))
-                .foregroundStyle(Theme.muted)
+            MetaRow(["\(store.days.count) 个日子", "\(store.categories.count) 个分类"])
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 18)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 24)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
     }
 
     /// One pass over `days` keyed by category, so each tile is an O(1) lookup
-    /// instead of re-filtering all days per tile (was O(categories × days)).
+    /// instead of re-filtering all days per tile.
     private var categoryCounts: [String: Int] {
         Dictionary(store.days.map { ($0.categoryID, 1) }, uniquingKeysWith: +)
     }
 
     private var grid: some View {
         let counts = categoryCounts
-        return VStack(spacing: 10) {
+        // The hero card lives *above* the grid (not via `gridCellColumns(2)`, whose
+        // width proposal to spanned content is unreliable and squeezed its label).
+        return VStack(spacing: 16) {
+            heroCard
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 16),
+                                GridItem(.flexible(), spacing: 16)], spacing: 16) {
+                ForEach(Array(store.categories.enumerated()), id: \.element.id) { idx, category in
+                    categoryTile(category, count: counts[category.id] ?? 0, index: idx + 1)
+                }
+            }
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 20)
+    }
+
+    // MARK: - Hero "全部日子" card (spans both columns, peek polaroids)
+
+    private var heroCard: some View {
+        let count = store.days.count
+        return cardShell(rotation: -0.8, height: 130) {
             NavigationLink {
                 CategoryDaysListView(title: "全部日子", days: store.days(in: nil), onOpen: onOpen)
             } label: {
-                tileView(title: "全部日子", subtitle: "\(store.days.count) 个日子",
-                         icon: "square.grid.2x2.fill", color: Theme.terracotta,
-                         soft: Theme.terracottaSoft, hero: true)
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Sticker(name: .star, size: 46, rotate: -8)
+                        Text("全部日子")
+                            .font(Theme.sans(20, weight: .heavy))
+                            .tracking(-0.4)
+                            .foregroundStyle(Theme.ink)
+                            .lineLimit(1)
+                            .padding(.top, 10)
+                        Text("\(count) 个日子")
+                            .font(Theme.sans(12, weight: .bold))
+                            .foregroundStyle(Theme.muted)
+                            .lineLimit(1)
+                            .padding(.top, 2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    peekPolaroids
+                        .fixedSize()
+                }
+                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressScale())
             .disabled(editing)
-
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10),
-                                GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                ForEach(store.categories) { categoryTile($0, count: counts[$0.id] ?? 0) }
-            }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
+        .overlay(alignment: .topTrailing) {
+            countSticky(count, note: noteColorFor("all"))
+                .padding(.trailing, 16)
+                .offset(y: -2)
+        }
     }
 
-    private func categoryTile(_ category: CategoryDefinition, count: Int) -> some View {
-        ZStack(alignment: .topTrailing) {
+    private var peekPolaroids: some View {
+        let stack: [PhotoStyle] = [.wedding, .baby, .japan]
+        return HStack(spacing: -14) {
+            ForEach(stack.indices, id: \.self) { j in
+                PhotoTile(style: stack[j], flat: true, cornerRadius: 9)
+                    .frame(width: 48, height: 48)
+                    .polaroidCard(rotation: j % 2 == 1 ? 5 : -5, padding: 3)
+                    .zIndex(Double(stack.count - j))
+            }
+        }
+    }
+
+    // MARK: - Per-category tile
+
+    private func categoryTile(_ category: CategoryDefinition, count: Int, index: Int) -> some View {
+        cardShell(rotation: index % 2 == 1 ? 0.8 : -0.8, height: 124) {
             NavigationLink {
                 CategoryDaysListView(title: category.name,
                                      days: store.days(in: category.id),
                                      onOpen: onOpen)
             } label: {
-                tileView(title: category.name, subtitle: "\(count) 个日子",
-                         icon: category.icon, color: category.colorToken.color,
-                         soft: category.colorToken.soft, hero: false)
-            }
-            .buttonStyle(.plain)
-            .disabled(editing)
-
-            if editing && !category.isSystem {
-                HStack(spacing: 6) {
-                    Button {
-                        editingCategory = category
-                        showingEditor = true
-                    } label: {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 11, weight: .semibold))
-                            .frame(width: 28, height: 28)
-                            .background(Theme.card.opacity(0.9), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("编辑\(category.name)")
-
-                    Button {
-                        deletingCategory = category
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Theme.rose)
-                            .frame(width: 28, height: 28)
-                            .background(Theme.card.opacity(0.9), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("删除\(category.name)")
+                VStack(alignment: .leading, spacing: 0) {
+                    Sticker(name: stickerFor(category), size: 36, rotate: -8)
+                    Spacer(minLength: 6)
+                    Text(category.name)
+                        .font(Theme.sans(16, weight: .heavy))
+                        .tracking(-0.3)
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Text("\(count) 个日子")
+                        .font(Theme.sans(12, weight: .bold))
+                        .foregroundStyle(Theme.muted)
+                        .padding(.top, 2)
                 }
-                .padding(10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressScale())
+            .disabled(editing)
+        }
+        .overlay(alignment: .topTrailing) {
+            countSticky(count, note: noteColorFor(category.id))
+                .offset(x: 6, y: -2)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if editing && !category.isSystem {
+                editControls(for: category)
+                    .padding(8)
             }
         }
     }
 
-    private func tileView(title: String, subtitle: String, icon: String, color: Color,
-                          soft: Color, hero: Bool) -> some View {
-        ZStack(alignment: .topLeading) {
-            soft
-            VStack(alignment: .leading, spacing: 7) {
-                Image(systemName: icon)
-                    .font(.system(size: hero ? 28 : 22, weight: .semibold))
-                    .foregroundStyle(color)
-                    .frame(width: hero ? 36 : 30, height: hero ? 36 : 30, alignment: .leading)
-                Text(title)
-                    .font(Theme.serif(hero ? 20 : 16, weight: .semibold, relativeTo: hero ? .title3 : .headline))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Text(subtitle)
-                    .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
-                    .foregroundStyle(color)
-            }
+    /// Maps a category to a flat sticker (system enum → fixed sticker; custom → star).
+    private func stickerFor(_ category: CategoryDefinition) -> StickerName {
+        switch category.id {
+        case "love": return .heart
+        case "family": return .balloon
+        case "travel": return .plane
+        case "work": return .cap
+        case "life": return .house
+        default:
+            return StickerMap.byCategory[DayCategory(rawValue: category.id) ?? .life] ?? .star
+        }
+    }
+
+    // MARK: - Shared card chrome
+
+    /// White rounded-20 polaroid-ish card with soft double shadow + tilt.
+    private func cardShell<Content: View>(rotation: Double, height: CGFloat,
+                                          @ViewBuilder content: () -> Content) -> some View {
+        content()
             .padding(16)
-
-            if hero {
-                stackedPhotoPeek
-                    .frame(maxWidth: .infinity, alignment: .topTrailing)
-                    .padding(14)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: hero ? 140 : 110)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay {
-            RoundedRectangle(cornerRadius: 20)
-                .strokeBorder(Theme.hairline, lineWidth: 0.5)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title)，\(subtitle)")
+            .frame(height: height)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white)
+            )
+            .compositingGroup()
+            .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
+            .shadow(color: Color(hex: 0x15171C).opacity(0.07), radius: 12, x: 0, y: 8)
+            .rotationEffect(.degrees(rotation))
+            .padding(.top, 10)   // headroom for the sticky note / sticker overhang
     }
 
-    private var stackedPhotoPeek: some View {
-        let stack: [PhotoStyle] = [.wedding, .baby, .japan]
-        return HStack(spacing: -10) {
-            ForEach(stack.indices, id: \.self) { index in
-                PhotoTile(style: stack[index], flat: true, cornerRadius: 10)
-                    .frame(width: 36, height: 36)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Theme.bg, lineWidth: 2)
-                    }
-                    .zIndex(Double(stack.count - index))
-            }
+    private func countSticky(_ count: Int, note: NoteColor) -> some View {
+        StickyNote(color: note.paper, ink: Theme.ink.opacity(0.6), rotate: 7, size: .s) {
+            Text("\(count)")
+                .font(Theme.sans(18, weight: .bold))
+                .monospacedDigit()
         }
     }
 
-    private var addCategoryButton: some View {
+    private func editControls(for category: CategoryDefinition) -> some View {
+        HStack(spacing: 6) {
+            Button {
+                editingCategory = category
+                showingEditor = true
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(Color.white))
+                    .floatShadow()
+            }
+            .buttonStyle(PressScale(scale: 0.9))
+            .accessibilityLabel("编辑\(category.name)")
+
+            Button {
+                deletingCategory = category
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Theme.catLove)
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(Color.white))
+                    .floatShadow()
+            }
+            .buttonStyle(PressScale(scale: 0.9))
+            .accessibilityLabel("删除\(category.name)")
+        }
+    }
+
+    // MARK: - Dashed "新建分类" card
+
+    private var addCategoryCard: some View {
         Button {
             editingCategory = nil
             showingEditor = true
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10).fill(Theme.bg2)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.bg2)
                     Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(Theme.muted)
-                        .font(.system(size: 15, weight: .semibold))
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 40, height: 40)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("新建分类").font(Theme.sans(14, weight: .medium, relativeTo: .body))
-                    Text("自己定义标签和颜色").font(Theme.sans(12, relativeTo: .caption)).foregroundStyle(Theme.muted)
+                    Text("新建分类").font(Theme.sans(15, weight: .bold)).foregroundStyle(Theme.ink)
+                    Text("挑一个贴纸和颜色")
+                        .font(Theme.sans(12, weight: .medium))
+                        .foregroundStyle(Theme.muted)
                 }
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Theme.card)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white)
+            )
             .overlay {
-                RoundedRectangle(cornerRadius: 18)
-                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4]))
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
                     .foregroundStyle(Theme.hairlineStrong)
             }
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScale())
         .accessibilityLabel("新建分类")
     }
 }

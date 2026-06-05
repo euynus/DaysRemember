@@ -1,32 +1,72 @@
 import SwiftUI
 
-struct DayTile: View {
-    enum Size { case hero, wide, sq }
+/// A feed polaroid — photo card with a clipped countdown sticky note, pinned-star
+/// badge, handwritten date, and a category sticker peeking from the bottom-left.
+/// Port of `DayPolaroid` in `screens/Home.jsx`.
+struct DayPolaroid: View {
     let day: Day
-    let size: Size
-    var action: () -> Void = {}
+    /// Feed index — drives the per-card rotation cadence.
+    var idx: Int = 0
+    var onOpen: (Day) -> Void = { _ in }
+
+    private let rotations: [Double] = [-1.6, 1.4, -1.0, 1.8, -1.3, 1.1]
 
     var body: some View {
         let info = DayInfo.compute(day)
-        Button(action: action) {
-            ZStack(alignment: .bottomLeading) {
-                PhotoTile(day: day, cornerRadius: 20)
+        let nc = noteColorFor(day.id)
+        let rot = rotations[idx % rotations.count]
+        let label = info.isToday ? "今天" : (info.isPast ? "天前" : "天后")
 
-                if day.pinned {
-                    pinnedBadge
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                        .padding(10)
-                        .allowsHitTesting(false)
+        Button { onOpen(day) } label: {
+            ZStack(alignment: .topLeading) {
+                // Polaroid card — leaves top/right room for the sticky note and the
+                // bottom-left room for the sticker to overhang.
+                VStack(spacing: 0) {
+                    ZStack(alignment: .topLeading) {
+                        PhotoTile(day: day, flat: true, cornerRadius: 12)
+                            .frame(height: 132)
+                        if day.pinned { pinnedBadge.padding(7) }
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(day.title)
+                            .font(Theme.sans(14, weight: .heavy))
+                            .tracking(-0.3)
+                            .foregroundStyle(Theme.ink)
+                            .lineLimit(1)
+                        Text(enDate(info.displayDate))
+                            .font(Theme.hand(18))
+                            .foregroundStyle(Theme.ink2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
+                    .padding(.top, 8)
+                    .padding(.bottom, 2)
                 }
+                .polaroidCard(rotation: rot, padding: 7)
+                .padding(.top, 12)     // room for the sticky note's overhang
+                .padding(.trailing, 4)
 
-                content(info: info)
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 12)
-                    .foregroundStyle(.white)
+                // Category sticker peeking bottom-left.
+                Sticker(name: stickerFor(day), size: 30, rotate: -10)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                    .offset(x: -8, y: 0)
+                    .allowsHitTesting(false)
+
+                // Countdown sticky note clipped top-right.
+                StickyNote(color: nc.paper, ink: nc.ink, rotate: 6, size: .s) {
+                    VStack(spacing: 0) {
+                        Text("\(info.days)")
+                            .font(Theme.sans(22, weight: .bold))
+                            .monospacedDigit()
+                        Text(label)
+                            .font(Theme.handCN(11))
+                    }
+                    .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .offset(x: 4, y: 2)
+                .allowsHitTesting(false)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .shadow(color: .black.opacity(0.06), radius: 1, y: 1)
-            .shadow(color: .black.opacity(0.05), radius: 16, y: 6)
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityLabel(
@@ -37,80 +77,80 @@ struct DayTile: View {
         .accessibilityHint("长按可置顶、编辑或分享")
     }
 
-    @ViewBuilder
-    private func content(info: DayInfo) -> some View {
-        switch size {
-        case .hero:
-            VStack(alignment: .leading, spacing: 8) {
-                Text(day.categoryLabel.uppercased())
-                    .font(Theme.sans(12))
-                    .tracking(1.8)
-                    .foregroundStyle(Color.white.opacity(0.85))
-                Text(day.title)
-                    .font(Theme.serif(22, weight: .semibold))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.75)
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("\(info.days)")
-                        .font(Theme.serif(56, weight: .medium))
-                        .monospacedDigit()
-                    Text(info.isToday ? info.labelShort : "\(info.labelShort) · 天")
-                        .font(Theme.sans(13))
-                        .foregroundStyle(Color.white.opacity(0.9))
-                }
-            }
-        case .wide:
-            HStack(alignment: .lastTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(day.categoryLabel.uppercased())
-                        .font(Theme.sans(10))
-                        .tracking(1.5)
-                        .foregroundStyle(Color.white.opacity(0.8))
-                    Text(day.title)
-                        .font(Theme.serif(17, weight: .semibold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 0) {
-                    Text("\(info.days)")
-                        .font(Theme.serif(36, weight: .medium))
-                        .monospacedDigit()
-                    Text(info.labelShort)
-                        .font(Theme.sans(10))
-                        .foregroundStyle(Color.white.opacity(0.85))
-                }
-            }
-        case .sq:
-            VStack(alignment: .leading, spacing: 4) {
-                Text(day.categoryLabel)
-                    .font(Theme.sans(11))
-                    .foregroundStyle(Color.white.opacity(0.8))
-                Text(day.title)
-                    .font(Theme.serif(14, weight: .semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text("\(info.days)")
-                        .font(Theme.serif(28, weight: .medium))
-                        .monospacedDigit()
-                    Text(info.labelShort)
-                        .font(Theme.sans(10))
-                        .foregroundStyle(Color.white.opacity(0.85))
-                }
-            }
-        }
-    }
-
     private var pinnedBadge: some View {
         ZStack {
-            Circle().fill(Color.white.opacity(0.2))
+            Circle().fill(Color.white.opacity(0.9))
             Image(systemName: "star.fill")
                 .font(.system(size: 10))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.catLove)
         }
-        .frame(width: 24, height: 24)
-        .background(.ultraThinMaterial, in: Circle())
+        .frame(width: 22, height: 22)
+    }
+}
+
+/// The big "即将到来" hero polaroid at the top of the feed — the nearest upcoming day
+/// with an eyebrow on the photo, title + handwritten date caption, a sticker, and a
+/// clipped countdown sticky note. Port of `HeroPolaroid` in `screens/Home.jsx`.
+struct HeroPolaroid: View {
+    let day: Day
+    var onOpen: (Day) -> Void = { _ in }
+
+    var body: some View {
+        let info = DayInfo.compute(day)
+        let nc = noteColorFor(day.id)
+
+        Button { onOpen(day) } label: {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 0) {
+                    ZStack(alignment: .bottomLeading) {
+                        PhotoTile(day: day, cornerRadius: 12)
+                            .frame(height: 230)
+                        Text("即将到来")
+                            .font(Theme.sans(11, weight: .bold))
+                            .tracking(1.8)
+                            .foregroundStyle(.white.opacity(0.9))
+                            .padding(.leading, 14)
+                            .padding(.bottom, 12)
+                    }
+                    HStack(alignment: .bottom) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(day.title)
+                                .font(Theme.sans(20, weight: .heavy))
+                                .tracking(-0.4)
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                            Text(enDate(info.displayDate))
+                                .font(Theme.hand(22))
+                                .foregroundStyle(Theme.ink2)
+                        }
+                        Spacer(minLength: 8)
+                        Sticker(name: stickerFor(day), size: 44, rotate: 8)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.top, 12)
+                    .padding(.bottom, 6)
+                }
+                .polaroidCard(rotation: -1.2)
+                .padding(.top, 10)     // room for the sticky note's overhang
+
+                StickyNote(color: nc.paper, ink: nc.ink, rotate: 5, clip: true, size: .m) {
+                    VStack(spacing: 0) {
+                        Text("\(info.days)")
+                            .font(Theme.sans(34, weight: .bold))
+                            .monospacedDigit()
+                        Text("天后")
+                            .font(Theme.handCN(15))
+                    }
+                    .multilineTextAlignment(.center)
+                }
+                .offset(x: -6, y: 0)
+                .allowsHitTesting(false)
+            }
+        }
+        .buttonStyle(PressableTileStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("即将到来，\(day.title)，\(info.days) 天后")
+        .accessibilityHint("长按可置顶、编辑或分享")
     }
 }
 
