@@ -1,9 +1,7 @@
-/* Screen: Home — asymmetric photo grid */
+/* Screen: Home — travel scrapbook feed of polaroids */
 
-function HomeScreen({ dark, onOpenDay, onAdd, density = 'comfy', variant = 'mosaic' }) {
+function HomeScreen({ onOpenDay, onAdd }) {
   const [filter, setFilter] = React.useState('all');
-  const [showSwipe, setShowSwipe] = React.useState(null);
-
   const filters = [
     { id: 'all', label: '全部' },
     { id: 'pinned', label: '置顶' },
@@ -12,209 +10,134 @@ function HomeScreen({ dark, onOpenDay, onAdd, density = 'comfy', variant = 'mosa
     { id: 'travel', label: '旅行' },
     { id: 'work', label: '工作' },
   ];
+  const filtered = DAYS.filter(d => filter === 'all' ? true : filter === 'pinned' ? d.pinned : d.category === filter);
 
-  const filtered = DAYS.filter(d => {
-    if (filter === 'all') return true;
-    if (filter === 'pinned') return d.pinned;
-    return d.category === filter;
-  });
+  // nearest upcoming as hero
+  const hero = DAYS.map(d => ({ d, info: dayInfo(d) }))
+    .filter(x => !x.info.isPast).sort((a,b) => a.info.days - b.info.days)[0];
+  const rest = filtered.filter(d => !hero || d.id !== hero.d.id);
+
+  const lunar = typeof fmtLunarFull === 'function' ? fmtLunarFull(TODAY) : '';
+  const term = typeof solarTerm === 'function' ? solarTerm(TODAY) : null;
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+    <div className="sg-canvas" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div style={{ padding: '62px 20px 8px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 2 }}>4月23日 · 星期四</div>
-            <h1 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em' }}>你好，今天</h1>
+      <div style={{ padding: '60px 22px 6px', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 34, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.05 }}>你好，今天</h1>
+          <div className="meta" style={{ marginTop: 8 }}>
+            <span>4月23日 星期四</span>
+            <span className="dot"/>
+            <span>{lunar.replace('农历','').split('·').pop().trim()}</span>
+            {term && <><span className="dot"/><span style={{ color: 'var(--cat-travel)', fontWeight: 700 }}>{term}</span></>}
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <IconBtn icon="search"/>
-            <IconBtn icon="plus" onClick={onAdd} accent/>
-          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginTop: 2 }}>
+          <button className="fab" style={{ width: 42, height: 42 }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M12 12l4 4"/></svg>
+          </button>
+          <button className="fab" onClick={onAdd} style={{ width: 42, height: 42, background: 'var(--ink)', color: '#fff' }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 3v12M3 9h12"/></svg>
+          </button>
         </div>
       </div>
 
       {/* Filter chips */}
-      <div style={{ display: 'flex', gap: 8, padding: '14px 20px 12px', overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none' }}>
+      <div style={{ display: 'flex', gap: 9, padding: '14px 22px 8px', overflowX: 'auto', flexShrink: 0, scrollbarWidth: 'none' }}>
         {filters.map(f => (
-          <button key={f.id} onClick={() => setFilter(f.id)} style={{
-            border: 'none', flexShrink: 0,
-            background: filter === f.id ? 'var(--ink)' : 'var(--card)',
-            color: filter === f.id ? 'var(--bg)' : 'var(--ink-2)',
-            padding: '7px 14px', borderRadius: 999,
-            font: '500 13px var(--sans)', cursor: 'pointer',
-            boxShadow: filter === f.id ? 'none' : '0 1px 2px rgba(0,0,0,0.04)',
-          }}>{f.label}</button>
+          <button key={f.id} className={`chip ${filter===f.id?'on':''}`} style={{ flexShrink: 0 }} onClick={() => setFilter(f.id)}>{f.label}</button>
         ))}
       </div>
 
-      {/* Today spotlight */}
-      <TodaySpotlight/>
-      <TodayStrip/>
+      <div className="sg-scroll" style={{ flex: 1, padding: '12px 22px 130px' }}>
+        {/* Hero polaroid */}
+        {hero && (filter === 'all') && <HeroPolaroid day={hero.d} info={hero.info} onOpen={onOpenDay}/>}
 
-      {/* Grid */}
-      <div className="sg-scroll" style={{ flex: 1, padding: '16px 20px 24px' }}>
-        <MosaicGrid days={filtered} onOpen={onOpenDay} showSwipe={showSwipe} setShowSwipe={setShowSwipe}/>
-      </div>
-    </div>
-  );
-}
-
-function IconBtn({ icon, onClick, accent }) {
-  return (
-    <button onClick={onClick} style={{
-      width: 40, height: 40, borderRadius: 14, border: 'none',
-      background: accent ? 'var(--ink)' : 'var(--card)',
-      color: accent ? 'var(--bg)' : 'var(--ink)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-    }}>
-      {icon === 'search' && <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M12 12l4 4"/></svg>}
-      {icon === 'plus' && <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 3v12M3 9h12"/></svg>}
-    </button>
-  );
-}
-
-function TodayStrip() {
-  if (typeof fmtLunar !== 'function') return null;
-  const lunar = fmtLunarFull(TODAY);
-  const term = typeof solarTerm === 'function' ? solarTerm(TODAY) : null;
-  const holi = typeof lunarHoliday === 'function' ? lunarHoliday(TODAY) : null;
-  return (
-    <div style={{ padding: '10px 20px 0', flexShrink: 0 }}>
-      <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--serif)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span>{lunar}</span>
-        {term && <span style={{ color: 'var(--terracotta)', fontWeight: 600 }}>· {term}</span>}
-        {holi && <span style={{ color: 'var(--terracotta)', fontWeight: 600 }}>· {holi}</span>}
-      </div>
-    </div>
-  );
-}
-
-function TodaySpotlight() {
-  // Find the nearest upcoming within 10 days
-  const soon = DAYS
-    .map(d => ({ d, info: dayInfo(d) }))
-    .filter(x => !x.info.isPast && x.info.days <= 100)
-    .sort((a,b) => a.info.days - b.info.days)[0];
-  if (!soon) return null;
-  const { d, info } = soon;
-  return (
-    <div style={{ padding: '0 20px 4px', flexShrink: 0 }}>
-      <div className="sg-tap" style={{
-        position: 'relative', borderRadius: 20, overflow: 'hidden',
-        background: 'linear-gradient(100deg, oklch(0.96 0.02 30) 0%, oklch(0.9 0.04 35) 100%)',
-        padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14,
-        border: '1px solid var(--hairline)',
-      }}>
-        <div className={`photo ${d.photo} photo-flat`} style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0 }}/>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, color: 'var(--terracotta)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 2, fontWeight: 600 }}>即将到来</div>
-          <div style={{ fontSize: 15, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title}</div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, color: 'var(--terracotta)', lineHeight: 1 }} className="sg-tnum">{info.days}</div>
-          <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>天后</div>
+        {/* Feed grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: hero && filter==='all' ? 26 : 4 }}>
+          {rest.map((d, i) => <DayPolaroid key={d.id} day={d} idx={i} onOpen={onOpenDay}/>)}
         </div>
       </div>
     </div>
   );
 }
 
-function MosaicGrid({ days, onOpen, showSwipe, setShowSwipe }) {
-  // Asymmetric tile plan — first is hero 2x2, then mix
+function HeroPolaroid({ day, info, onOpen }) {
+  const [nc, ni] = noteColorFor(day.id);
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-      {days.map((d, i) => {
-        const plan = tilePlan(i, days.length);
-        return <DayTile key={d.id} day={d} size={plan} onClick={() => onOpen(d)} showSwipe={showSwipe===d.id} onSwipe={() => setShowSwipe(showSwipe===d.id?null:d.id)}/>;
-      })}
-    </div>
-  );
-}
-
-function tilePlan(i, total) {
-  // Hero at 0, wide at 3, hero again at 7 etc.
-  if (i === 0) return 'hero';        // 2x2
-  if (i === 3) return 'wide';        // 2x1
-  if (i === 6) return 'wide';
-  return 'sq';                        // 1x1
-}
-
-function DayTile({ day, size, onClick, showSwipe, onSwipe }) {
-  const info = dayInfo(day);
-  const label = info.isToday ? '就是今天' : info.isPast ? '已过' : '还有';
-  const accent = info.isPast ? '#FFF' : '#FFF';
-
-  const spans = {
-    hero: { gridColumn: 'span 2', gridRow: 'span 2', height: 280 },
-    wide: { gridColumn: 'span 2', height: 140 },
-    sq: { height: 180 },
-  }[size];
-
-  return (
-    <div
-      onClick={onClick}
-      className="photo sg-tap grain"
-      style={{
-        ...spans,
-        borderRadius: 20,
-        position: 'relative',
-        cursor: 'pointer',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.05)',
-      }}
-    >
-      <div className={`photo ${day.photo}`} style={{ position: 'absolute', inset: 0, borderRadius: 20 }}/>
-
-      {day.pinned && (
-        <div style={{
-          position: 'absolute', top: 10, right: 10, zIndex: 2,
-          background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
-          width: 24, height: 24, borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <svg width="11" height="11" viewBox="0 0 11 11" fill="#FFF"><path d="M5.5 0L7 3.5L10.5 4L8 6.5L8.7 10L5.5 8.3L2.3 10L3 6.5L0.5 4L4 3.5Z"/></svg>
-        </div>
-      )}
-
-      <div style={{
-        position: 'absolute', left: 14, right: 14, bottom: 12, zIndex: 2,
-        color: '#FFF',
-      }}>
-        {size === 'hero' ? (
-          <>
-            <div style={{ fontSize: 12, opacity: 0.85, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 4 }}>{day.categoryLabel}</div>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginBottom: 8, lineHeight: 1.2 }}>{day.title}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 56, fontWeight: 500, lineHeight: 0.9, letterSpacing: '-0.03em' }} className="sg-tnum">{info.days}</div>
-              <div style={{ fontSize: 13, opacity: 0.9 }}>{label} · 天</div>
-            </div>
-          </>
-        ) : size === 'wide' ? (
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 10, opacity: 0.8, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 3 }}>{day.categoryLabel}</div>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 17, fontWeight: 600 }}>{day.title}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 36, fontWeight: 500, lineHeight: 0.9, letterSpacing: '-0.03em' }} className="sg-tnum">{info.days}</div>
-              <div style={{ fontSize: 10, opacity: 0.85 }}>{label}</div>
-            </div>
+    <div className="sg-tap" onClick={() => onOpen && onOpen(day)} style={{ position: 'relative', cursor: 'pointer', paddingTop: 10 }}>
+      <div className="polaroid" style={{ transform: 'rotate(-1.2deg)' }}>
+        <div className={`photo ${day.photo}`} style={{ height: 230, position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.4) 100%)' }}/>
+          {/* eyebrow on photo */}
+          <div style={{ position: 'absolute', left: 14, bottom: 12, color: '#fff' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.9 }}>即将到来</div>
           </div>
-        ) : (
-          <>
-            <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 2 }}>{day.categoryLabel}</div>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 14, fontWeight: 600, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{day.title}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 500, lineHeight: 0.9, letterSpacing: '-0.03em' }} className="sg-tnum">{info.days}</div>
-              <div style={{ fontSize: 10, opacity: 0.85 }}>{label}</div>
-            </div>
-          </>
-        )}
+        </div>
+        {/* caption strip */}
+        <div style={{ padding: '12px 8px 6px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>{day.title}</div>
+            <div className="sg-hand" style={{ fontSize: 22, color: 'var(--ink-2)', lineHeight: 1, marginTop: 2 }}>{enDate(info.displayDate)}</div>
+          </div>
+          <Sticker name={stickerFor(day)} size={44} rotate={8} style={{ flexShrink: 0 }}/>
+        </div>
+      </div>
+      {/* sticky note clipped, countdown */}
+      <div style={{ position: 'absolute', top: -2, right: 6, zIndex: 4 }}>
+        <StickyNote color={nc} ink={ni} clip rotate={5} size="m">
+          <div style={{ textAlign: 'center', lineHeight: 0.95 }}>
+            <div style={{ fontSize: 34, fontWeight: 700 }} className="sg-tnum">{info.days}</div>
+            <div style={{ fontSize: 15 }}>天后</div>
+          </div>
+        </StickyNote>
       </div>
     </div>
   );
 }
 
-Object.assign(window, { HomeScreen, DayTile });
+function DayPolaroid({ day, idx, onOpen }) {
+  const info = dayInfo(day);
+  const [nc, ni] = noteColorFor(day.id);
+  const rot = [(-1.6), 1.4, -1.0, 1.8, -1.3, 1.1][idx % 6];
+  const label = info.isToday ? '今天' : info.isPast ? '天前' : '天后';
+  return (
+    <div className="sg-tap" onClick={() => onOpen && onOpen(day)} style={{ position: 'relative', cursor: 'pointer', paddingTop: 12 }}>
+      <div className="polaroid" style={{ transform: `rotate(${rot}deg)`, padding: '7px 7px 7px' }}>
+        <div className={`photo ${day.photo}`} style={{ height: 132, position: 'relative' }}>
+          {day.pinned && (
+            <div style={{ position: 'absolute', top: 7, left: 7, width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="10" height="10" viewBox="0 0 11 11" fill="var(--cat-love)"><path d="M5.5 0L7 3.5L10.5 4L8 6.5L8.7 10L5.5 8.3L2.3 10L3 6.5L0.5 4L4 3.5Z"/></svg>
+            </div>
+          )}
+        </div>
+        <div style={{ padding: '8px 4px 2px' }}>
+          <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{day.title}</div>
+          <div className="sg-hand" style={{ fontSize: 18, color: 'var(--ink-2)', lineHeight: 1, marginTop: 1 }}>{enDate(info.displayDate)}</div>
+        </div>
+      </div>
+      {/* countdown sticky note */}
+      <div style={{ position: 'absolute', top: 2, right: -4, zIndex: 4 }}>
+        <StickyNote color={nc} ink={ni} rotate={6} size="s">
+          <div style={{ textAlign: 'center', lineHeight: 0.9, padding: '0 1px' }}>
+            <div style={{ fontSize: 22, fontWeight: 700 }} className="sg-tnum">{info.days}</div>
+            <div style={{ fontSize: 11 }}>{label}</div>
+          </div>
+        </StickyNote>
+      </div>
+      {/* category sticker peek */}
+      <div style={{ position: 'absolute', bottom: 6, left: -8, zIndex: 4 }}>
+        <Sticker name={stickerFor(day)} size={30} rotate={-10}/>
+      </div>
+    </div>
+  );
+}
+
+// English-style date for handwritten accent: "03 Jun 2026"
+function enDate(d) {
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+  return `${String(d.getDate()).padStart(2,'0')} ${m} ${d.getFullYear()}`;
+}
+
+Object.assign(window, { HomeScreen, DayPolaroid, enDate });

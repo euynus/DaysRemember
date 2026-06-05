@@ -1,117 +1,107 @@
-/* Screen: Calendar — month grid */
+/* Screen: Calendar — scrapbook month view */
 
 function CalendarScreen({ onBack, onOpenDay }) {
-  const [month, setMonth] = React.useState(3); // 0-indexed; April
-  const [year] = React.useState(2024);
-
-  const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'][month];
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const firstDow = new Date(year, month, 1).getDay();
-
-  // Map day-of-month → list of DAYS that fall on it
-  const eventsByDay = {};
-  DAYS.forEach(d => {
-    const dt = new Date(d.date);
-    if (d.recurring) {
-      // anniversary recurs
-      if (dt.getMonth() === month) {
-        const day = dt.getDate();
-        eventsByDay[day] = eventsByDay[day] || [];
-        eventsByDay[day].push(d);
-      }
-    } else if (dt.getMonth() === month && dt.getFullYear() === year) {
-      const day = dt.getDate();
-      eventsByDay[day] = eventsByDay[day] || [];
-      eventsByDay[day].push(d);
-    }
-  });
+  const [month, setMonth] = React.useState(new Date(2026, 3, 1)); // April 2026
+  const y = month.getFullYear(), m = month.getMonth();
+  const first = new Date(y, m, 1).getDay();
+  const dim = new Date(y, m+1, 0).getDate();
+  const prevDim = new Date(y, m, 0).getDate();
 
   const cells = [];
-  for (let i = 0; i < firstDow; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  for (let i = 0; i < first; i++) cells.push({ day: prevDim - first + 1 + i, out: true });
+  for (let i = 1; i <= dim; i++) cells.push({ day: i, out: false });
+  while (cells.length < 42) cells.push({ day: cells.length - first - dim + 1, out: true });
 
-  const today = new Date(2024,3,23);
-  const isToday = (d) => d === today.getDate() && month === today.getMonth();
+  const marked = {};
+  DAYS.forEach(d => {
+    let c = d.date;
+    if (d.recurring) c = new Date(y, d.date.getMonth(), d.date.getDate());
+    if (c.getFullYear() === y && c.getMonth() === m) marked[c.getDate()] = d;
+  });
+  const monthDays = Object.values(marked).sort((a,b) => a.date.getDate() - b.date.getDate());
+  const monthCN = ['一','二','三','四','五','六','七','八','九','十','十一','十二'][m];
+  const monthEN = ['January','February','March','April','May','June','July','August','September','October','November','December'][m];
 
   return (
-    <div style={{ height: '100%', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '60px 20px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <button onClick={onBack} style={{ border: 'none', background: 'transparent', color: 'var(--ink)', cursor: 'pointer', padding: 4 }}>
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 3L5 9l6 6"/></svg>
-        </button>
-        <div style={{ fontFamily: 'var(--serif)', fontSize: 17, fontWeight: 600 }}>日历</div>
-        <button style={{ border: 'none', background: 'transparent', color: 'var(--terracotta)', font: '500 14px var(--sans)', cursor: 'pointer' }}>今天</button>
-      </div>
+    <div className="sg sg-canvas" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <NavBar onBack={onBack} title="日历"/>
 
-      {/* Month switcher */}
-      <div style={{ padding: '14px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <button onClick={()=>setMonth(m=>(m+11)%12)} style={{ border: 'none', background: 'var(--card)', width: 36, height: 36, borderRadius: 12, cursor: 'pointer' }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 2L3 7l6 5"/></svg>
-        </button>
-        <div style={{ textAlign: 'center' }}>
-          <h1 style={{ margin: 0, fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em' }}>{year} 年 {monthName}月</h1>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>三月 · 春</div>
+      <div style={{ padding: '6px 24px 12px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em' }}>{monthCN}月</h1>
+          <div className="sg-hand" style={{ fontSize: 24, color: 'var(--cat-travel)', lineHeight: 1, marginTop: 2 }}>{monthEN} {y}</div>
         </div>
-        <button onClick={()=>setMonth(m=>(m+1)%12)} style={{ border: 'none', background: 'var(--card)', width: 36, height: 36, borderRadius: 12, cursor: 'pointer' }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 2l6 5-6 5"/></svg>
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="fab" style={{ width: 38, height: 38 }} onClick={() => setMonth(new Date(y, m-1, 1))}>
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2L4 6l4 4"/></svg>
+          </button>
+          <button className="fab" style={{ width: 38, height: 38 }} onClick={() => setMonth(new Date(y, m+1, 1))}>
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2l4 4-4 4"/></svg>
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', padding: '0 16px', flexShrink: 0,
-        fontSize: 11, color: 'var(--muted)', textAlign: 'center', marginBottom: 4 }}>
-        {['日','一','二','三','四','五','六'].map(d => <div key={d} style={{ padding: '6px 0' }}>{d}</div>)}
-      </div>
-
-      <div className="sg-scroll" style={{ flex: 1, padding: '0 16px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-          {cells.map((d, i) => {
-            if (!d) return <div key={i} style={{ aspectRatio: '1' }}/>;
-            const events = eventsByDay[d] || [];
-            const has = events.length > 0;
-            const isT = isToday(d);
+      {/* calendar card */}
+      <div style={{ margin: '0 22px', background: '#fff', borderRadius: 22, padding: '14px 12px 12px', flexShrink: 0, boxShadow: '0 1px 2px rgba(21,23,28,0.05), 0 8px 20px rgba(21,23,28,0.06)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          {['日','一','二','三','四','五','六'].map(d => (
+            <div key={d} style={{ textAlign: 'center', fontSize: 11, color: 'var(--muted)', fontWeight: 700, padding: '2px 0 8px' }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: '1fr', gap: 1 }}>
+          {cells.map((c, i) => {
+            const isToday = !c.out && c.day === 23;
+            const mark = !c.out && marked[c.day];
             return (
-              <div key={i} onClick={() => has && onOpenDay && onOpenDay(events[0])} style={{
-                aspectRatio: '1', borderRadius: 10, padding: 4,
-                background: isT ? 'var(--terracotta)' : has ? 'var(--card)' : 'transparent',
-                color: isT ? '#FFF' : has ? 'var(--ink)' : 'var(--ink-2)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                cursor: has ? 'pointer' : 'default',
-                border: has && !isT ? '1px solid var(--hairline)' : 'none',
-                position: 'relative',
+              <div key={i} onClick={() => mark && onOpenDay && onOpenDay(mark)} style={{
+                aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 11, position: 'relative', cursor: mark ? 'pointer' : 'default',
+                background: isToday ? 'var(--ink)' : (mark ? 'var(--bg)' : 'transparent'),
+                color: isToday ? '#fff' : (c.out ? 'var(--muted)' : 'var(--ink)'), opacity: c.out ? 0.3 : 1,
               }}>
-                <div style={{ fontSize: 13, fontWeight: isT ? 600 : 500 }} className="sg-tnum">{d}</div>
-                {has && (
-                  <div style={{ display: 'flex', gap: 2, marginTop: 2 }}>
-                    {events.slice(0,3).map((e, j) => (
-                      <div key={j} style={{ width: 3, height: 3, borderRadius: '50%',
-                        background: isT ? '#FFF' : 'var(--terracotta)' }}/>
-                    ))}
-                  </div>
-                )}
+                <div style={{ fontSize: 14, fontWeight: isToday ? 800 : 600 }} className="sg-tnum">{c.day}</div>
+                {!c.out && typeof solarTerm === 'function' && (() => {
+                  const dt = new Date(y, m, c.day);
+                  const t = solarTerm(dt) || lunarHoliday(dt);
+                  if (t) return <div style={{ fontSize: 7.5, marginTop: 1, color: isToday ? 'rgba(255,255,255,0.8)' : 'var(--cat-travel)', fontWeight: 700 }}>{t}</div>;
+                  return null;
+                })()}
+                {mark && <div style={{ width: 5, height: 5, borderRadius: '50%', background: isToday ? '#fff' : CATEGORY_COLORS[mark.category], marginTop: 2 }}/>}
               </div>
             );
           })}
         </div>
+      </div>
 
-        {/* This-month list */}
-        <div style={{ marginTop: 22, fontSize: 11, color: 'var(--muted)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 12, fontWeight: 600, padding: '0 4px' }}>本月日子</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {Object.entries(eventsByDay).sort((a,b)=>+a[0]-+b[0]).map(([day, evts]) => (
-            evts.map(e => (
-              <div key={e.id} onClick={()=>onOpenDay&&onOpenDay(e)} className="sg-tap" style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
-                background: 'var(--card)', borderRadius: 14, cursor: 'pointer',
-                border: '1px solid var(--hairline)',
+      {/* this month days */}
+      <div className="sg-scroll" style={{ flex: 1, padding: '18px 22px 120px' }}>
+        <div className="sg-sec">本月日子</div>
+        {monthDays.length === 0 && <div style={{ padding: 16, textAlign: 'center', color: 'var(--muted)' }} className="sg-hand-cn">本月没有记录的日子</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {monthDays.map((d) => {
+            const info = dayInfo(d);
+            return (
+              <div key={d.id} onClick={() => onOpenDay && onOpenDay(d)} className="sg-tap" style={{
+                display: 'flex', alignItems: 'center', gap: 14, background: '#fff', borderRadius: 18, padding: '10px 12px', cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(21,23,28,0.05)',
               }}>
-                <div style={{ width: 38, textAlign: 'center', fontFamily: 'var(--serif)', fontSize: 18, fontWeight: 600, color: 'var(--terracotta)' }} className="sg-tnum">{day}</div>
-                <div className={`photo ${e.photo} photo-flat`} style={{ width: 36, height: 36, borderRadius: 10 }}/>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{e.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{e.categoryLabel}</div>
+                <div style={{ width: 44, textAlign: 'center', flexShrink: 0 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: CATEGORY_COLORS[d.category], lineHeight: 1 }} className="sg-tnum">{info.displayDate.getDate()}</div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 3, fontWeight: 600 }}>{weekday(info.displayDate).replace('星期','周')}</div>
+                </div>
+                <div className="polaroid" style={{ width: 46, padding: 4, flexShrink: 0, transform: 'rotate(-3deg)' }}>
+                  <div className={`photo ${d.photo}`} style={{ height: 38 }}/>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em' }}>{d.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1, fontWeight: 500 }}>{d.categoryLabel}{d.recurring?' · 每年':''}{d.lunar?' · 农历':''}</div>
+                </div>
+                <div className="sg-hand" style={{ fontSize: 20, color: 'var(--ink-2)', flexShrink: 0 }}>
+                  {info.isToday ? 'Today' : info.isPast ? `+${info.days}` : `${info.days}d`}
                 </div>
               </div>
-            ))
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

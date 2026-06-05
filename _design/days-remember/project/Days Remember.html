@@ -6,13 +6,13 @@
 <title>时光 · Days Remember</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&family=Caveat:wght@400;500;600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <style>
-  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: "Noto Sans SC", -apple-system, system-ui, sans-serif; }
+  html, body { margin: 0; padding: 0; background: #EDECEF; font-family: "Inter", "PingFang SC", "Noto Sans SC", -apple-system, system-ui, sans-serif; }
   body { overflow: hidden; }
 </style>
 </head>
@@ -23,9 +23,9 @@
 <script type="text/babel" src="design-canvas.jsx"></script>
 <script type="text/babel" src="lunar.jsx"></script>
 <script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="screens/Stickers.jsx"></script>
 <script type="text/babel" src="screens/Onboarding.jsx"></script>
 <script type="text/babel" src="screens/Home.jsx"></script>
-<script type="text/babel" src="screens/HomeVariants.jsx"></script>
 <script type="text/babel" src="screens/Detail.jsx"></script>
 <script type="text/babel" src="screens/Add.jsx"></script>
 <script type="text/babel" src="screens/Categories.jsx"></script>
@@ -42,34 +42,28 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 }/*EDITMODE-END*/;
 
 /* ─────────────── Prototype shell: interactive flow ─────────────── */
-function Prototype({ variant = 'mosaic', dark = false, onlyScreen = null }) {
+function Prototype({ onlyScreen = null }) {
   const [screen, setScreen] = React.useState(onlyScreen || 'home');
   const [selectedDay, setSelectedDay] = React.useState(null);
 
   const openDay = (d) => { setSelectedDay(d); setScreen('detail'); };
   const back = () => setScreen('home');
 
-  const frameBg = dark ? '#000' : '#F5F1EA';
-
   const content = () => {
-    if (screen === 'home') {
-      if (variant === 'list') return <HomeListVariant onOpenDay={openDay} onAdd={() => setScreen('add')}/>;
-      if (variant === 'editorial') return <HomeEditorialVariant onOpenDay={openDay} onAdd={() => setScreen('add')}/>;
-      return <HomeScreen onOpenDay={openDay} onAdd={() => setScreen('add')}/>;
-    }
+    if (screen === 'home') return <HomeScreen onOpenDay={openDay} onAdd={() => setScreen('add')}/>;
     if (screen === 'detail') return <DetailScreen day={selectedDay || DAYS[0]} onBack={back}/>;
     if (screen === 'add') return <AddScreen onBack={back}/>;
     if (screen === 'categories') return <CategoriesScreen onBack={back}/>;
     if (screen === 'calendar') return <CalendarScreen onBack={back}/>;
     if (screen === 'widgets') return <WidgetsScreen onBack={back}/>;
     if (screen === 'notifications') return <NotificationsScreen onBack={back}/>;
-    if (screen === 'onboarding') return <Onboarding/>;
+    if (screen === 'onboarding') return <OnboardingPaged page={0}/>;
     if (screen === 'share') return <ShareCardScreen onBack={back}/>;
     return null;
   };
 
   return (
-    <div className={`sg ${dark ? 'sg-dark' : ''}`} style={{ width: '100%', height: '100%' }}>
+    <div className="sg" style={{ width: '100%', height: '100%' }}>
       {content()}
 
       {/* bottom tab bar — hidden on certain screens */}
@@ -88,23 +82,24 @@ function TabBar({ current, onNav }) {
     { id: 'notifications', label: '提醒', icon: 'bell' },
   ];
   return (
-    <div style={{
-      position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 30,
-      padding: '8px 16px 28px', display: 'flex',
-      background: 'var(--card)', borderTop: '0.5px solid var(--hairline)',
+    <div className="toolbar" style={{
+      position: 'absolute', left: 16, right: 16, bottom: 30, zIndex: 30,
+      justifyContent: 'space-between', padding: 8,
     }}>
       {tabs.map(t => {
         const on = current === t.id;
         return (
           <button key={t.id} onClick={() => onNav(t.id)} style={{
-            flex: 1, border: 'none', background: 'transparent',
-            color: on ? 'var(--ink)' : 'var(--muted)',
-            padding: '6px 0',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+            flex: 1, border: 'none',
+            background: on ? 'var(--ink)' : 'transparent',
+            color: on ? '#fff' : 'var(--muted)',
+            padding: '8px 0', borderRadius: 999, height: 44,
+            display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
             cursor: 'pointer', fontFamily: 'var(--sans)',
+            transition: 'background 0.2s, color 0.2s',
           }}>
             <TabIcon name={t.icon} stroke="currentColor" filled={on}/>
-            <span style={{ fontSize: 10, fontWeight: 500 }}>{t.label}</span>
+            {on && <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em' }}>{t.label}</span>}
           </button>
         );
       })}
@@ -144,151 +139,60 @@ function App() {
     });
   };
 
-  const dark = tweaks.dark;
-
   const frame = (child, key) => (
-    <div className={dark ? 'sg-dark' : ''} style={{ width: '100%', height: '100%' }} key={key}>
-      <IOSDevice width={402} height={874} dark={dark}>
-        {child}
-      </IOSDevice>
+    <div style={{ width: '100%', height: '100%' }} key={key}>
+      <IOSDevice width={402} height={874}>{child}</IOSDevice>
     </div>
   );
 
   return (
     <>
       <DesignCanvas minScale={0.2} maxScale={2}>
-        <DCSection id="hero" title="时光 · Days Remember" subtitle="一个温柔记录纪念日与倒数日的 iOS App · 中文">
-          <DCArtboard id="home" label="A · 首页 · 照片马赛克" width={402} height={874}>
-            {frame(<Prototype variant="mosaic" dark={dark}/>, 'home-main')}
+        <DCSection id="hero" title="时光 · Days Remember" subtitle="旅行手账风 · 拍立得卡片 · 便利贴 · 贴纸">
+          <DCArtboard id="home" label="A · 首页 · 手账墙" width={402} height={874}>
+            {frame(<Prototype/>, 'home-main')}
           </DCArtboard>
-          <DCArtboard id="detail" label="B · 日子详情页" width={402} height={874}>
-            {frame(<Prototype onlyScreen="detail" dark={dark}/>, 'detail')}
+          <DCArtboard id="detail" label="B · 日子详情" width={402} height={874}>
+            {frame(<Prototype onlyScreen="detail"/>, 'detail')}
           </DCArtboard>
           <DCArtboard id="add" label="C · 添加新日子" width={402} height={874}>
-            {frame(<Prototype onlyScreen="add" dark={dark}/>, 'add')}
+            {frame(<Prototype onlyScreen="add"/>, 'add')}
           </DCArtboard>
           <DCArtboard id="share" label="D · 分享卡片" width={402} height={874}>
-            {frame(<Prototype onlyScreen="share" dark={dark}/>, 'share')}
+            {frame(<Prototype onlyScreen="share"/>, 'share')}
           </DCArtboard>
         </DCSection>
 
         <DCSection id="browse" title="浏览与组织" subtitle="分类、日历、小组件、提醒设置">
           <DCArtboard id="categories" label="E · 分类" width={402} height={874}>
-            {frame(<Prototype onlyScreen="categories" dark={dark}/>, 'cat')}
+            {frame(<Prototype onlyScreen="categories"/>, 'cat')}
           </DCArtboard>
           <DCArtboard id="calendar" label="F · 日历" width={402} height={874}>
-            {frame(<Prototype onlyScreen="calendar" dark={dark}/>, 'calendar')}
+            {frame(<Prototype onlyScreen="calendar"/>, 'calendar')}
           </DCArtboard>
           <DCArtboard id="widgets" label="G · 小组件预览" width={402} height={874}>
-            {frame(<Prototype onlyScreen="widgets" dark={dark}/>, 'widgets')}
+            {frame(<Prototype onlyScreen="widgets"/>, 'widgets')}
           </DCArtboard>
           <DCArtboard id="notifications" label="H · 提醒设置" width={402} height={874}>
-            {frame(<Prototype onlyScreen="notifications" dark={dark}/>, 'notif')}
+            {frame(<Prototype onlyScreen="notifications"/>, 'notif')}
           </DCArtboard>
         </DCSection>
 
         <DCSection id="onboarding" title="首次启动" subtitle="四屏欢迎流程">
-          <DCArtboard id="ob1" label="① 欢迎" width={402} height={874}>
-            {frame(<OnboardingAt page={0}/>, 'ob1')}
-          </DCArtboard>
-          <DCArtboard id="ob2" label="② 倒数与纪念" width={402} height={874}>
-            {frame(<OnboardingAt page={1}/>, 'ob2')}
-          </DCArtboard>
-          <DCArtboard id="ob3" label="③ 加照片" width={402} height={874}>
-            {frame(<OnboardingAt page={2}/>, 'ob3')}
-          </DCArtboard>
-          <DCArtboard id="ob4" label="④ 开始" width={402} height={874}>
-            {frame(<OnboardingAt page={3}/>, 'ob4')}
-          </DCArtboard>
-        </DCSection>
-
-        <DCSection id="variants" title="首页变体" subtitle="除了照片马赛克，另外两种探索方向">
-          <DCArtboard id="list" label="列表 · 按时间" width={402} height={874}>
-            {frame(<Prototype variant="list" dark={dark}/>, 'list')}
-          </DCArtboard>
-          <DCArtboard id="editorial" label="编辑 · 置顶特写" width={402} height={874}>
-            {frame(<Prototype variant="editorial" dark={dark}/>, 'ed')}
-          </DCArtboard>
+          <DCArtboard id="ob1" label="① 欢迎" width={402} height={874}>{frame(<OnboardingPaged page={0}/>, 'ob1')}</DCArtboard>
+          <DCArtboard id="ob2" label="② 倒数与纪念" width={402} height={874}>{frame(<OnboardingPaged page={1}/>, 'ob2')}</DCArtboard>
+          <DCArtboard id="ob3" label="③ 加照片" width={402} height={874}>{frame(<OnboardingPaged page={2}/>, 'ob3')}</DCArtboard>
+          <DCArtboard id="ob4" label="④ 开始" width={402} height={874}>{frame(<OnboardingPaged page={3}/>, 'ob4')}</DCArtboard>
         </DCSection>
       </DesignCanvas>
 
       {tweaksVisible && (
         <div className="tweaks">
           <h4>Tweaks</h4>
-          <div className="row">
-            <span>外观</span>
-            <div className="seg">
-              <button className={!dark ? 'on' : ''} onClick={() => setTweak('dark', false)}>浅色</button>
-              <button className={dark ? 'on' : ''} onClick={() => setTweak('dark', true)}>深色</button>
-            </div>
-          </div>
-          <div style={{ fontSize: 11, color: '#8A8074', marginTop: 6, lineHeight: 1.5 }}>点击任一屏幕的对角线按钮进入聚焦模式，方向键可切换。</div>
+          <div style={{ fontSize: 11, color: '#9AA0A8', lineHeight: 1.5 }}>点击任一屏幕角上的展开按钮进入聚焦模式，方向键可切换屏幕。</div>
         </div>
       )}
     </>
-  );
-}
-
-function OnboardingAt({ page }) {
-  // force Onboarding at a specific page by seeding state
-  const ref = React.useRef(null);
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => { setMounted(true); }, []);
-  return (
-    <OnboardingPaged page={page}/>
-  );
-}
-
-// Stateless variant of Onboarding for preview at each page
-function OnboardingPaged({ page }) {
-  const pages = [
-    { kind: 'hero', eyebrow: '时光', title: '记住那些\n重要的日子', sub: '结婚纪念、宝宝出生、一场旅行，\n让时间被温柔地记录。' },
-    { kind: 'count', big: '2387', title: '倒数，或者纪念', sub: '过去的可以回望，\n未来的值得期待。' },
-    { kind: 'photo', title: '加上一张照片\n让日子有温度', sub: '一张图胜过千言万语，记录也更诚恳。' },
-    { kind: 'final', title: '让时间被好好珍藏', sub: '现在开始，记录你的第一个日子。' },
-  ];
-  const cur = pages[page];
-  const isFinal = page === 3;
-  const textColor = isFinal ? '#FFF' : 'var(--ink)';
-  const subColor = isFinal ? 'rgba(255,255,255,0.8)' : 'var(--ink-2)';
-
-  return (
-    <div className="sg" style={{
-      height: '100%', display: 'flex', flexDirection: 'column',
-      background: isFinal
-        ? 'linear-gradient(170deg, oklch(0.55 0.11 30) 0%, oklch(0.35 0.08 20) 100%)'
-        : 'var(--bg)',
-    }}>
-      <div style={{ flex: 1, padding: '80px 32px 0', overflow: 'hidden' }}>
-        {cur.kind === 'hero' && <HeroArt/>}
-        {cur.kind === 'count' && <CountDemoArt/>}
-        {cur.kind === 'photo' && <PhotoDemoArt/>}
-        {cur.kind === 'final' && <FinalArt/>}
-        <div style={{ marginTop: 36, color: textColor }}>
-          {cur.eyebrow && <div style={{ fontFamily: 'var(--serif)', fontSize: 14, letterSpacing: '0.4em', color: 'var(--terracotta)', marginBottom: 24, textTransform: 'uppercase' }}>{cur.eyebrow}</div>}
-          <h1 style={{ fontFamily: 'var(--serif)', fontWeight: 600, fontSize: 32, lineHeight: 1.3, margin: 0, whiteSpace: 'pre-line', letterSpacing: '-0.01em' }}>{cur.title}</h1>
-          {cur.sub && <p style={{ margin: '16px 0 0', fontSize: 15, lineHeight: 1.7, color: subColor, whiteSpace: 'pre-line' }}>{cur.sub}</p>}
-        </div>
-      </div>
-      <div style={{ padding: '24px 32px 48px' }}>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 24, justifyContent: 'center' }}>
-          {pages.map((_, i) => (
-            <div key={i} style={{
-              width: i === page ? 22 : 6, height: 6, borderRadius: 3,
-              background: i === page ? (isFinal ? '#FFF' : 'var(--terracotta)') : (isFinal ? 'rgba(255,255,255,0.3)' : 'var(--hairline-strong)'),
-            }}/>
-          ))}
-        </div>
-        {!isFinal ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <button style={{ border: 'none', background: 'transparent', color: 'var(--muted)', font: '500 14px var(--sans)' }}>跳过</button>
-            <button className="sg-btn accent" style={{ padding: '14px 28px', borderRadius: 999 }}>下一步 →</button>
-          </div>
-        ) : (
-          <button className="sg-btn" style={{ width: '100%', padding: '16px', borderRadius: 999, background: '#FFF', color: 'oklch(0.45 0.09 25)', fontSize: 16, fontWeight: 600 }}>开始记录 ✨</button>
-        )}
-      </div>
-    </div>
   );
 }
 

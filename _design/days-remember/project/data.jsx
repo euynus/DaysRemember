@@ -175,18 +175,18 @@ function dayInfo(d, today = TODAY) {
 }
 
 const CATEGORY_COLORS = {
-  love: 'var(--rose)',
-  family: 'var(--amber)',
-  travel: 'var(--dusty)',
-  work: 'var(--sage)',
-  life: 'var(--terracotta)',
+  love: 'var(--cat-love)',
+  family: 'var(--cat-family)',
+  travel: 'var(--cat-travel)',
+  work: 'var(--cat-work)',
+  life: 'var(--cat-life)',
 };
 const CATEGORY_SOFT = {
-  love: 'var(--rose-soft)',
-  family: 'var(--amber-soft)',
-  travel: 'var(--dusty-soft)',
-  work: 'var(--sage-soft)',
-  life: 'var(--terracotta-soft)',
+  love: 'var(--note-pink)',
+  family: 'var(--note-peach)',
+  travel: 'var(--note-blue)',
+  work: 'var(--note-green)',
+  life: 'var(--note-yellow)',
 };
 
 Object.assign(window, { TODAY, DAYS, dayInfo, daysBetween, fmtCN, fmtCNShort, weekday, CATEGORY_COLORS, CATEGORY_SOFT });

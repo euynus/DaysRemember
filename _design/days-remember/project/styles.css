@@ -1,51 +1,43 @@
-/* 时光 — warm, emotional countdown app */
+/* 时光 · Days Remember — Travel Scrapbook aesthetic
+   Cool light-gray canvas · polaroid photo cards · sticky notes ·
+   flat stickers · bold black headings · handwritten accents. */
 
 :root {
-  --bg: #F5F1EA;
-  --bg-2: #EFE9DF;
+  --bg: #EDECEF;          /* cool light gray canvas */
+  --bg-2: #E4E3E7;
   --card: #FFFFFF;
-  --ink: #1F1A15;
-  --ink-2: #5A5148;
-  --muted: #8A8074;
-  --hairline: rgba(31, 26, 21, 0.08);
-  --hairline-strong: rgba(31, 26, 21, 0.14);
+  --ink: #15171C;         /* near-black headings */
+  --ink-2: #5B6068;
+  --muted: #9AA0A8;
+  --hairline: rgba(21, 23, 28, 0.08);
+  --hairline-strong: rgba(21, 23, 28, 0.14);
 
-  --terracotta: oklch(0.62 0.12 35);
-  --terracotta-soft: oklch(0.92 0.04 35);
-  --sage: oklch(0.62 0.08 155);
-  --sage-soft: oklch(0.93 0.03 155);
-  --dusty: oklch(0.62 0.08 245);
-  --dusty-soft: oklch(0.93 0.025 245);
-  --amber: oklch(0.72 0.12 75);
-  --amber-soft: oklch(0.94 0.04 75);
-  --rose: oklch(0.68 0.11 10);
-  --rose-soft: oklch(0.94 0.03 10);
+  /* sticky-note palette */
+  --note-blue: #BCDDF0;
+  --note-blue-ink: #3A7CA0;
+  --note-yellow: #FBE7A2;
+  --note-yellow-ink: #9B7A1E;
+  --note-pink: #F8C9D6;
+  --note-pink-ink: #B05670;
+  --note-green: #C5E5C9;
+  --note-green-ink: #4E8A57;
+  --note-peach: #FAD4BC;
+  --note-peach-ink: #B5663C;
 
-  --serif: "Noto Serif SC", "Songti SC", "PingFang SC", serif;
-  --sans: "Noto Sans SC", "PingFang SC", -apple-system, "SF Pro Text", system-ui, sans-serif;
+  /* accent for primary pills */
+  --accent: #15171C;
+
+  /* category sticker tints (flat illustration colors) */
+  --cat-love: #F2778E;
+  --cat-family: #F5A623;
+  --cat-travel: #4FB0D8;
+  --cat-work: #5FB97D;
+  --cat-life: #E0795A;
+
+  --sans: "Inter", "PingFang SC", "Noto Sans SC", -apple-system, system-ui, sans-serif;
+  --hand: "Caveat", "Ma Shan Zheng", cursive;       /* english handwriting */
+  --hand-cn: "Ma Shan Zheng", "Caveat", cursive;     /* chinese handwriting */
   --mono: "SF Mono", ui-monospace, monospace;
-}
-
-.sg-dark {
-  --bg: #161310;
-  --bg-2: #1E1A16;
-  --card: #221E1A;
-  --ink: #F0EAE0;
-  --ink-2: #BDB3A6;
-  --muted: #877E72;
-  --hairline: rgba(240, 234, 224, 0.08);
-  --hairline-strong: rgba(240, 234, 224, 0.14);
-
-  --terracotta: oklch(0.72 0.12 35);
-  --terracotta-soft: oklch(0.32 0.06 35);
-  --sage: oklch(0.72 0.08 155);
-  --sage-soft: oklch(0.32 0.04 155);
-  --dusty: oklch(0.72 0.08 245);
-  --dusty-soft: oklch(0.32 0.04 245);
-  --amber: oklch(0.78 0.12 75);
-  --amber-soft: oklch(0.34 0.06 75);
-  --rose: oklch(0.74 0.11 10);
-  --rose-soft: oklch(0.32 0.05 10);
 }
 
 .sg {
@@ -53,131 +45,184 @@
   color: var(--ink);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01", "cv11";
   letter-spacing: -0.01em;
 }
 .sg * { box-sizing: border-box; }
-.sg-serif { font-family: var(--serif); }
-.sg-mono { font-family: var(--mono); font-feature-settings: "tnum"; }
+.sg-hand { font-family: var(--hand); }
+.sg-hand-cn { font-family: var(--hand-cn); }
 .sg-tnum { font-variant-numeric: tabular-nums; }
 
-/* Photo placeholder tiles — use CSS gradients layered to suggest real photos */
-.photo {
-  position: relative;
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
+/* canvas — subtle paper texture so collage feels tactile */
+.sg-canvas {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.5), transparent 60%),
+    var(--bg);
 }
-.photo::after {
-  content: "";
-  position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);
-  pointer-events: none;
-}
-.photo-flat::after { display: none; }
 
-/* wedding rings — warm cream + gold */
+/* ─── Photo placeholders — luminous color-graded "travel photo" scenes ─── */
+.photo { position: relative; background-size: cover; background-position: center; overflow: hidden; }
+/* faint photographic grain on every photo */
+.photo::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  opacity: 0.4; mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
 .photo-wedding {
   background:
-    radial-gradient(circle at 30% 40%, oklch(0.88 0.05 60) 0%, oklch(0.78 0.09 45) 40%, oklch(0.55 0.09 30) 100%);
+    radial-gradient(120% 85% at 30% 18%, oklch(0.95 0.06 88) 0%, transparent 52%),
+    linear-gradient(158deg, oklch(0.86 0.08 68) 0%, oklch(0.68 0.11 48) 58%, oklch(0.5 0.10 36) 100%);
 }
-/* baby — soft pink/peach */
 .photo-baby {
   background:
-    radial-gradient(circle at 70% 30%, oklch(0.93 0.04 25) 0%, oklch(0.82 0.07 20) 50%, oklch(0.65 0.09 15) 100%);
+    radial-gradient(115% 85% at 62% 22%, oklch(0.97 0.03 32) 0%, transparent 55%),
+    linear-gradient(158deg, oklch(0.93 0.05 22) 0%, oklch(0.85 0.07 16) 56%, oklch(0.74 0.085 10) 100%);
 }
-/* birthday cake — warm candles glow */
 .photo-birthday {
   background:
-    radial-gradient(ellipse at 50% 70%, oklch(0.88 0.12 70) 0%, oklch(0.68 0.15 45) 50%, oklch(0.35 0.1 25) 100%);
+    radial-gradient(100% 75% at 50% 82%, oklch(0.92 0.11 62) 0%, transparent 56%),
+    linear-gradient(158deg, oklch(0.84 0.12 28) 0%, oklch(0.67 0.15 20) 60%, oklch(0.5 0.13 14) 100%);
 }
-/* travel japan — indigo/sakura */
 .photo-japan {
   background:
-    linear-gradient(160deg, oklch(0.78 0.08 10) 0%, oklch(0.55 0.1 260) 60%, oklch(0.32 0.08 270) 100%);
+    radial-gradient(120% 80% at 72% 16%, oklch(0.93 0.08 72) 0%, transparent 46%),
+    linear-gradient(165deg, oklch(0.80 0.09 242) 0%, oklch(0.56 0.11 256) 56%, oklch(0.38 0.08 266) 100%);
 }
-/* graduation — study blue */
 .photo-study {
   background:
-    linear-gradient(180deg, oklch(0.4 0.08 250) 0%, oklch(0.25 0.06 255) 100%);
+    radial-gradient(90% 70% at 76% 20%, oklch(0.72 0.09 252) 0%, transparent 50%),
+    linear-gradient(170deg, oklch(0.44 0.09 256) 0%, oklch(0.27 0.07 262) 100%);
 }
-/* memorial — muted gray */
 .photo-memorial {
   background:
-    linear-gradient(180deg, oklch(0.7 0.02 230) 0%, oklch(0.45 0.02 230) 100%);
+    radial-gradient(110% 80% at 50% 22%, oklch(0.88 0.02 230) 0%, transparent 55%),
+    linear-gradient(165deg, oklch(0.80 0.02 232) 0%, oklch(0.55 0.025 236) 100%);
 }
-/* work anniversary — sage */
 .photo-work {
   background:
-    linear-gradient(160deg, oklch(0.78 0.05 150) 0%, oklch(0.5 0.07 155) 100%);
+    radial-gradient(115% 82% at 66% 20%, oklch(0.94 0.05 142) 0%, transparent 50%),
+    linear-gradient(158deg, oklch(0.81 0.07 150) 0%, oklch(0.56 0.085 156) 100%);
 }
-/* pet */
 .photo-pet {
   background:
-    linear-gradient(165deg, oklch(0.85 0.06 70) 0%, oklch(0.55 0.08 50) 100%);
+    radial-gradient(115% 82% at 34% 24%, oklch(0.95 0.06 82) 0%, transparent 50%),
+    linear-gradient(158deg, oklch(0.87 0.08 72) 0%, oklch(0.63 0.10 56) 100%);
 }
-/* housewarming */
 .photo-home {
   background:
-    linear-gradient(160deg, oklch(0.82 0.04 55) 0%, oklch(0.48 0.06 30) 100%);
+    radial-gradient(115% 82% at 60% 20%, oklch(0.94 0.05 62) 0%, transparent 50%),
+    linear-gradient(158deg, oklch(0.85 0.07 52) 0%, oklch(0.59 0.095 36) 100%);
 }
-/* health streak — green */
 .photo-health {
   background:
-    linear-gradient(160deg, oklch(0.8 0.09 140) 0%, oklch(0.45 0.08 150) 100%);
+    radial-gradient(115% 82% at 60% 22%, oklch(0.95 0.07 146) 0%, transparent 52%),
+    linear-gradient(158deg, oklch(0.86 0.09 146) 0%, oklch(0.56 0.09 151) 100%);
 }
 
-/* subtle film-grain overlay to make gradients feel photographic */
-.grain::before {
-  content: "";
-  position: absolute; inset: 0;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.45'/></svg>");
-  mix-blend-mode: overlay;
-  pointer-events: none;
+/* ─── Polaroid photo card ─── */
+.polaroid {
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 8px 8px 8px;
+  box-shadow:
+    0 1px 2px rgba(21,23,28,0.06),
+    0 10px 26px rgba(21,23,28,0.12);
+}
+.polaroid .photo { border-radius: 12px; }
+
+/* ─── Sticky note ─── */
+.sticky {
+  position: relative;
+  border-radius: 6px 8px 7px 9px;
+  padding: 10px 12px;
+  font-family: var(--hand-cn);
+  line-height: 1.15;
+  box-shadow: 0 6px 14px rgba(21,23,28,0.16);
+  transform: rotate(-3deg);
 }
 
-/* shared button */
-.sg-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  gap: 6px; border-radius: 14px; border: none;
-  padding: 12px 18px; font: 500 15px/1 var(--sans);
-  background: var(--ink); color: var(--bg);
-  cursor: pointer; letter-spacing: 0.02em;
+/* ─── Flat sticker wrapper — white outline + drop shadow ─── */
+.sticker {
+  filter: drop-shadow(0 4px 6px rgba(21,23,28,0.18));
+  display: inline-flex;
 }
-.sg-btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--hairline-strong); }
-.sg-btn.accent { background: var(--terracotta); color: #fff; }
 
-.sg-chip {
+/* ─── Floating circular button (FAB) ─── */
+.fab {
+  width: 46px; height: 46px; border-radius: 999px;
+  background: #FFFFFF; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink);
+  box-shadow: 0 2px 4px rgba(21,23,28,0.06), 0 8px 20px rgba(21,23,28,0.1);
+  transition: transform 0.16s cubic-bezier(.2,.7,.3,1);
+}
+.fab:active { transform: scale(0.92); }
+
+/* ─── Pills ─── */
+.pill {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 48px; padding: 0 22px; border-radius: 999px; border: none;
+  font: 700 16px/1 var(--sans); letter-spacing: -0.01em; cursor: pointer;
+  transition: transform 0.16s cubic-bezier(.2,.7,.3,1);
+}
+.pill:active { transform: scale(0.96); }
+.pill-dark { background: var(--accent); color: #fff; box-shadow: 0 6px 18px rgba(21,23,28,0.26); }
+.pill-white { background: #fff; color: var(--ink); box-shadow: 0 2px 4px rgba(21,23,28,0.06), 0 8px 20px rgba(21,23,28,0.1); }
+.pill-ghost { background: var(--bg-2); color: var(--ink); }
+
+/* ─── Floating toolbar (white pill containing circular icons) ─── */
+.toolbar {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.92);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  border-radius: 999px; padding: 8px;
+  box-shadow: 0 2px 6px rgba(21,23,28,0.06), 0 12px 30px rgba(21,23,28,0.12);
+}
+.toolbar-ic {
+  width: 44px; height: 44px; border-radius: 999px; border: none; cursor: pointer;
+  background: #fff; color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+/* ─── Meta row (bullet separated) ─── */
+.meta { display: flex; align-items: center; gap: 9px; color: var(--ink-2); font-size: 14px; font-weight: 500; flex-wrap: wrap; }
+.meta .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+
+/* ─── Chips ─── */
+.chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 11px; border-radius: 999px;
-  font-size: 12px; font-weight: 500;
-  background: var(--bg-2); color: var(--ink-2);
+  height: 36px; padding: 0 15px; border-radius: 999px;
+  font: 600 14px/1 var(--sans); cursor: pointer; border: none;
+  background: #fff; color: var(--ink-2);
+  box-shadow: 0 1px 2px rgba(21,23,28,0.05);
 }
+.chip.on { background: var(--ink); color: #fff; box-shadow: none; }
 
-/* tappable card with press feel */
-.sg-tap { transition: transform 0.2s cubic-bezier(.2,.7,.3,1); }
-.sg-tap:active { transform: scale(0.98); }
+/* tap feedback */
+.sg-tap { transition: transform 0.18s cubic-bezier(.2,.7,.3,1); }
+.sg-tap:active { transform: scale(0.97); }
 
-/* hide scrollbars inside phone */
+/* grouped list */
+.sg-list { background: #fff; border-radius: 22px; overflow: hidden; box-shadow: 0 1px 2px rgba(21,23,28,0.05); }
+.sg-cell { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 12px 18px; border-bottom: 1px solid var(--hairline); }
+.sg-cell:last-child { border-bottom: none; }
+
+/* scroll */
 .sg-scroll { overflow-y: auto; scrollbar-width: none; }
 .sg-scroll::-webkit-scrollbar { display: none; }
 
-/* number tick animation */
-@keyframes tick-up {
-  0% { transform: translateY(100%); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
-}
+/* section label */
+.sg-sec { font-size: 13px; color: var(--muted); font-weight: 700; letter-spacing: 0.02em; padding-left: 4px; margin-bottom: 10px; }
 
 /* tweak panel */
 .tweaks {
   position: fixed; right: 20px; bottom: 20px; z-index: 9999;
-  background: #fff; border-radius: 16px; padding: 14px 16px;
+  background: #fff; border-radius: 18px; padding: 14px 16px;
   box-shadow: 0 18px 48px rgba(0,0,0,0.16), 0 1px 3px rgba(0,0,0,0.08);
-  font: 500 13px var(--sans); color: #1F1A15;
-  min-width: 220px;
+  font: 600 13px var(--sans); color: #15171C; min-width: 220px;
 }
-.tweaks h4 { margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #8A8074; font-weight: 600; }
+.tweaks h4 { margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #9AA0A8; font-weight: 700; }
 .tweaks .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; }
-.tweaks .seg { display: inline-flex; background: #EFE9DF; border-radius: 8px; padding: 2px; }
-.tweaks .seg button { border: none; background: transparent; padding: 5px 10px; border-radius: 6px; cursor: pointer; font: 500 12px var(--sans); color: #5A5148; }
-.tweaks .seg button.on { background: #fff; color: #1F1A15; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.tweaks .seg { display: inline-flex; background: #EDECEF; border-radius: 9px; padding: 2px; }
+.tweaks .seg button { border: none; background: transparent; padding: 6px 12px; border-radius: 7px; cursor: pointer; font: 600 12px var(--sans); color: #5B6068; }
+.tweaks .seg button.on { background: #fff; color: #15171C; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
