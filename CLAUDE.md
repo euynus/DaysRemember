@@ -56,7 +56,7 @@ xcrun simctl launch <UDID> com.shiguang.daysremember --screen onboarding --page 
 
 `DayStore.days.didSet` chains three side effects in order: `save()` → `rescheduleNotifications()` → `reloadWidgetTimelines()`. So *any* mutation — `add`, `update`, `delete`, `resetToSamples` — automatically persists, re-syncs `UNUserNotificationCenter`, and pokes `WidgetCenter`. `categories.didSet` only persists; notifications and widgets don't depend on it. `add(_:)` and `update(_:)` route through `normalized(_:)`, which reconciles the day's `categoryID` / `categoryLabel` against the current category list and clamps `coverFocusX/Y` into `[0, 1]`.
 
-`AppSettings` is a separate `ObservableObject` of `@AppStorage` toggles (onboarding flag, per-offset reminders, quiet hours, daily `notificationHour`/`notificationMinute`, and `memoryEnabled` / `momentsEnabled` placeholder switches). It's wired to `DayStore` via `store.settings = settings` in `DaysRememberApp.swift`'s `.task` — that pattern avoids the circular dependency between the two `@StateObject`s.
+`AppSettings` is a separate `ObservableObject` of `@AppStorage` toggles (onboarding flag, per-offset reminders, quiet hours, daily `notificationHour`/`notificationMinute`, plus `momentsEnabled` (每日晨间问候 — a repeating 08:00 greeting) and `memoryEnabled` (时光回忆 — a yearly "想起这一天" for past days); both are scheduled in `NotificationManager.sync`). It's wired to `DayStore` via `store.settings = settings` in `DaysRememberApp.swift`'s `.task` — that pattern avoids the circular dependency between the two `@StateObject`s.
 
 ### iCloud sync
 
