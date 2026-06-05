@@ -151,6 +151,19 @@ struct DayEditorView: View {
                         }
                     }
                     .gesture(focusDrag)
+                    // Drag repositions a picked photo's crop; expose a VoiceOver-settable
+                    // alternative so it's adjustable without a drag.
+                    .accessibilityElement()
+                    .accessibilityLabel("封面取景")
+                    .accessibilityHint(photoData != nil ? "上下轻扫调整照片裁剪位置" : "封面预览")
+                    .accessibilityAdjustableAction { direction in
+                        guard photoData != nil else { return }
+                        switch direction {
+                        case .increment: coverFocusY = clamp(coverFocusY - 0.1)
+                        case .decrement: coverFocusY = clamp(coverFocusY + 0.1)
+                        @unknown default: break
+                        }
+                    }
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title.isEmpty ? "新的日子" : title)

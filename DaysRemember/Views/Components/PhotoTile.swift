@@ -21,12 +21,17 @@ private enum PhotoDecodeCache {
     }
 
     private static func fingerprint(_ data: Data) -> NSString {
-        // Two different JPEGs almost always differ in either total length or the first
-        // few header bytes (JFIF/EXIF markers vary). 9 chars: count + 8 prefix bytes.
+        // Sample count + head/middle/tail bytes. Header-only keys collide for images
+        // that share a JFIF/EXIF prefix and length (e.g. same-camera shots); sampling
+        // three regions makes a collision astronomically unlikely.
         var key = "\(data.count):"
-        data.withUnsafeBytes { buf in
-            for byte in buf.bindMemory(to: UInt8.self).prefix(8) {
-                key.append(String(byte, radix: 16))
+        data.withUnsafeBytes { raw in
+            let buf = raw.bindMemory(to: UInt8.self)
+            guard buf.count > 0 else { return }
+            for start in [0, max(0, buf.count / 2 - 4), max(0, buf.count - 8)] {
+                for i in start..<min(start + 8, buf.count) {
+                    key.append(String(buf[i], radix: 16))
+                }
             }
         }
         return key as NSString

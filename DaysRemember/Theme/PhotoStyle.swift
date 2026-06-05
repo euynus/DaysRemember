@@ -35,40 +35,323 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    /// Background gradient — luminous, color-graded "travel photo" scene matching the
-    /// corresponding `.photo-*` rule in `styles.css`: a diagonal base gradient with a
-    /// soft radial "sun bloom" highlight, plus a faint film grain (see `ScrapbookPhoto`).
+    /// Preset cover art: a scrapbook-style paper collage built from the original
+    /// gradient/hand-drawn scene plus stickers, a handwritten note, and soft shadows.
     @ViewBuilder
     func background() -> some View {
-        switch self {
-        case .wedding, .baby, .birthday, .japan, .study,
-             .memorial, .work, .pet, .home, .health:
-            GradientPhotoView(spec: Self.gradientSpec(for: self))
-        case .sketchLove:
-            HandDrawnPhotoBackground(scene: .love)
-        case .sketchFamily:
-            HandDrawnPhotoBackground(scene: .family)
-        case .sketchTravel:
-            HandDrawnPhotoBackground(scene: .travel)
-        case .sketchWork:
-            HandDrawnPhotoBackground(scene: .work)
-        case .sketchLife:
-            HandDrawnPhotoBackground(scene: .life)
-        case .sketchMountain:
-            HandDrawnPhotoBackground(scene: .mountain)
-        case .sketchSea:
-            HandDrawnPhotoBackground(scene: .sea)
-        case .sketchCafe:
-            HandDrawnPhotoBackground(scene: .cafe)
-        case .sketchGarden:
-            HandDrawnPhotoBackground(scene: .garden)
-        }
+        ScrapbookTemplateBackground(style: self)
     }
 }
 
 private enum HandDrawnScene: String {
     case love, family, travel, work, life
     case mountain, sea, cafe, garden
+}
+
+private extension PhotoStyle {
+    var handDrawnScene: HandDrawnScene? {
+        switch self {
+        case .sketchLove: return .love
+        case .sketchFamily: return .family
+        case .sketchTravel: return .travel
+        case .sketchWork: return .work
+        case .sketchLife: return .life
+        case .sketchMountain: return .mountain
+        case .sketchSea: return .sea
+        case .sketchCafe: return .cafe
+        case .sketchGarden: return .garden
+        default: return nil
+        }
+    }
+
+    var supportingStyle: PhotoStyle {
+        switch self {
+        case .wedding: return .baby
+        case .baby: return .birthday
+        case .birthday: return .home
+        case .japan: return .sketchTravel
+        case .study: return .work
+        case .memorial: return .sketchLife
+        case .work: return .study
+        case .pet: return .home
+        case .home: return .sketchFamily
+        case .health: return .sketchGarden
+        case .sketchLove: return .wedding
+        case .sketchFamily: return .home
+        case .sketchTravel: return .japan
+        case .sketchWork: return .work
+        case .sketchLife: return .birthday
+        case .sketchMountain: return .sketchGarden
+        case .sketchSea: return .sketchTravel
+        case .sketchCafe: return .home
+        case .sketchGarden: return .health
+        }
+    }
+
+    var primarySticker: StickerName {
+        switch self {
+        case .wedding, .sketchLove: return .heart
+        case .baby, .sketchFamily: return .balloon
+        case .birthday: return .cake
+        case .japan, .sketchTravel, .sketchMountain, .sketchSea: return .plane
+        case .study: return .cap
+        case .work, .sketchWork: return .star
+        case .pet: return .paw
+        case .home, .sketchLife, .sketchCafe, .sketchGarden: return .house
+        case .memorial, .health: return .sparkle
+        }
+    }
+
+    var secondarySticker: StickerName {
+        switch self {
+        case .wedding: return .ring
+        case .baby: return .star
+        case .birthday: return .gift
+        case .japan, .sketchTravel: return .camera
+        case .study, .sketchWork: return .star
+        case .memorial: return .camera
+        case .work: return .cap
+        case .pet: return .heart
+        case .home, .sketchFamily, .sketchLife: return .sun
+        case .health, .sketchGarden: return .heart
+        case .sketchLove: return .ring
+        case .sketchMountain: return .sun
+        case .sketchSea: return .camera
+        case .sketchCafe: return .camera
+        }
+    }
+
+    var noteText: String {
+        switch self {
+        case .wedding: return "Love\nDay"
+        case .baby: return "Tiny\nJoy"
+        case .birthday: return "Happy\nDay"
+        case .japan, .sketchTravel: return "Nice\nView"
+        case .study: return "Study\nPlan"
+        case .memorial: return "Soft\nMemory"
+        case .work, .sketchWork: return "Work\nPlan"
+        case .pet: return "Pet\nLove"
+        case .home, .sketchFamily, .sketchLife: return "Home\nLife"
+        case .health: return "Keep\nWell"
+        case .sketchLove: return "Sweet\nNote"
+        case .sketchMountain: return "Fresh\nAir"
+        case .sketchSea: return "Sea\nDay"
+        case .sketchCafe: return "Cafe\nTime"
+        case .sketchGarden: return "Bloom\nDay"
+        }
+    }
+
+    var notePalette: (paper: Color, ink: Color) {
+        switch self {
+        case .wedding, .sketchLove:
+            return (Theme.notePink, Theme.notePinkInk)
+        case .baby, .birthday, .home, .sketchFamily, .sketchLife:
+            return (Theme.noteYellow, Theme.noteYellowInk)
+        case .japan, .study, .sketchTravel, .sketchSea:
+            return (Theme.noteBlue, Theme.noteBlueInk)
+        case .work, .health, .sketchWork, .sketchMountain, .sketchGarden:
+            return (Theme.noteGreen, Theme.noteGreenInk)
+        case .memorial, .pet, .sketchCafe:
+            return (Theme.notePeach, Theme.notePeachInk)
+        }
+    }
+}
+
+private struct ScrapbookTemplateBackground: View {
+    let style: PhotoStyle
+
+    /// Below this rendered side length the multi-layer collage is illegible and reads
+    /// as clutter, so we fall back to the clean luminous photo. The full scrapbook
+    /// collage is reserved for large single-day showcase surfaces (Detail/Share).
+    private static let collageMinSide: CGFloat = 248
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+            let side = max(1, min(size.width, size.height))
+
+            if side < Self.collageMinSide {
+                // Feed/peek/picker sizes: clean photo, no grain (perf on scrolling lists).
+                PhotoTemplateArtwork(style: style, grain: false)
+                    .frame(width: size.width, height: size.height)
+                    .clipped()
+            } else {
+                collage(in: size, side: side)
+            }
+        }
+    }
+
+    private func collage(in size: CGSize, side: CGFloat) -> some View {
+        let mainWidth = size.width * 0.76
+        let mainHeight = size.height * 0.68
+        let supportWidth = size.width * 0.62
+        let supportHeight = size.height * 0.47
+
+        return ZStack {
+                ScrapbookPaperBackground()
+
+                TornPaperStrip()
+                    .fill(Color.white.opacity(0.98))
+                    .frame(width: size.width * 1.18, height: size.height * 0.26)
+                    .rotationEffect(.degrees(-4))
+                    .offset(x: -size.width * 0.03, y: -size.height * 0.33)
+                    .shadow(color: Theme.ink.opacity(0.12), radius: side * 0.018, x: 0, y: side * 0.015)
+
+                TemplatePhotoCard(style: style.supportingStyle)
+                    .frame(width: supportWidth, height: supportHeight)
+                    .rotationEffect(.degrees(7))
+                    .offset(x: size.width * 0.17, y: -size.height * 0.06)
+                    .opacity(0.82)
+
+                TemplatePhotoCard(style: style)
+                    .frame(width: mainWidth, height: mainHeight)
+                    .rotationEffect(.degrees(-5))
+                    .offset(x: -size.width * 0.09, y: size.height * 0.16)
+
+                // A single small sticker for charm. The internal note + tape were
+                // removed: the screens that show this cover (Detail/Share) add their
+                // own countdown sticky, washi tape, and sticker, so duplicating them
+                // here read as clutter — and the note baked in English copy.
+                Sticker(name: style.primarySticker, size: side * 0.2, rotate: -12)
+                    .offset(x: -size.width * 0.28, y: size.height * 0.24)
+                    .zIndex(5)
+            }
+            .frame(width: size.width, height: size.height)
+            .clipped()
+    }
+}
+
+private struct ScrapbookPaperBackground: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(hex: 0xF7F7F8), Theme.bg, Color(hex: 0xE4E3E7)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            RadialGradient(
+                colors: [Color.white.opacity(0.72), Color.white.opacity(0)],
+                center: .top,
+                startRadius: 0,
+                endRadius: 260
+            )
+            PhotoGrain()
+                .opacity(0.18)
+        }
+    }
+}
+
+private struct TemplatePhotoCard: View {
+    let style: PhotoStyle
+
+    var body: some View {
+        GeometryReader { proxy in
+            let side = max(1, min(proxy.size.width, proxy.size.height))
+            let padding = max(4, side * 0.045)
+            let radius = max(8, side * 0.075)
+
+            PhotoTemplateArtwork(style: style)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+                .padding(padding)
+                .background(
+                    RoundedRectangle(cornerRadius: radius + padding * 0.7, style: .continuous)
+                        .fill(Color.white)
+                )
+                .shadow(color: Theme.ink.opacity(0.08), radius: side * 0.012, x: 0, y: side * 0.006)
+                .shadow(color: Theme.ink.opacity(0.14), radius: side * 0.070, x: 0, y: side * 0.050)
+        }
+    }
+}
+
+private struct PhotoTemplateArtwork: View {
+    let style: PhotoStyle
+    var grain: Bool = true
+
+    @ViewBuilder
+    var body: some View {
+        if let scene = style.handDrawnScene {
+            HandDrawnPhotoBackground(scene: scene)
+        } else {
+            GradientPhotoView(spec: PhotoStyle.gradientSpec(for: style), grain: grain)
+        }
+    }
+}
+
+private struct TemplateNote: View {
+    let style: PhotoStyle
+
+    var body: some View {
+        GeometryReader { proxy in
+            let side = max(1, min(proxy.size.width, proxy.size.height))
+            let palette = style.notePalette
+
+            Text(style.noteText)
+                .font(Theme.hand(max(11, side * 0.32)))
+                .lineSpacing(-side * 0.035)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.48)
+                .foregroundStyle(palette.ink)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, side * 0.09)
+                .background(
+                    RoundedRectangle(cornerRadius: side * 0.10, style: .continuous)
+                        .fill(palette.paper)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: side * 0.10, style: .continuous)
+                                .strokeBorder(palette.ink.opacity(0.28), lineWidth: max(1, side * 0.018))
+                        )
+                )
+                .shadow(color: Theme.ink.opacity(0.14), radius: side * 0.10, x: 0, y: side * 0.08)
+                .overlay(alignment: .top) {
+                    Paperclip(size: max(12, side * 0.24), color: Color(hex: 0x89909A))
+                        .offset(y: -side * 0.23)
+                }
+        }
+    }
+}
+
+private struct ScaledTape: View {
+    var color: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            Rectangle()
+                .fill(color)
+                .overlay(alignment: .leading) { tornEdge(in: proxy.size) }
+                .overlay(alignment: .trailing) { tornEdge(in: proxy.size) }
+                .shadow(color: Theme.ink.opacity(0.10), radius: 1, x: 0, y: 1)
+        }
+    }
+
+    private func tornEdge(in size: CGSize) -> some View {
+        Rectangle()
+            .strokeBorder(style: StrokeStyle(lineWidth: max(1, size.height * 0.08), dash: [3, 2]))
+            .foregroundStyle(Color.white.opacity(0.55))
+            .frame(width: max(1, size.width * 0.04))
+    }
+}
+
+private struct TornPaperStrip: Shape {
+    func path(in rect: CGRect) -> Path {
+        let tearY = rect.minY + rect.height * 0.72
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: tearY))
+
+        let steps = 11
+        for index in stride(from: steps, through: 0, by: -1) {
+            let progress = CGFloat(index) / CGFloat(steps)
+            let x = rect.minX + rect.width * progress
+            let variance = index.isMultiple(of: 2) ? rect.height * 0.20 : -rect.height * 0.10
+            path.addLine(to: CGPoint(x: x, y: tearY + variance))
+        }
+
+        path.closeSubpath()
+        return path
+    }
 }
 
 /// Process-wide raster cache for the hand-drawn covers. Each scene has ~50-200

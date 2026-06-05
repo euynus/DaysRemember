@@ -70,7 +70,6 @@ struct ShareCardView: View {
         .sheet(isPresented: $sharing) {
             if let img = sharedImage {
                 ShareSheet(activityItems: [img])
-                    .presentationDetents([.medium, .large])
             }
         }
     }
@@ -79,20 +78,33 @@ struct ShareCardView: View {
 
     @MainActor
     private func renderCardImage() -> UIImage? {
-        let renderer = ImageRenderer(content: card.frame(width: 320))
+        // Render onto an opaque paper margin so the exported image has filled corners
+        // and room for the card's drop shadow (a bare card leaves transparent corners
+        // and clips the shadow at the 320pt edge).
+        let content = card.frame(width: 320).padding(24).background(Theme.bg)
+        let renderer = ImageRenderer(content: content)
         renderer.scale = displayScale
-        renderer.proposedSize = .init(width: 320, height: nil)
+        renderer.proposedSize = .init(width: 320 + 48, height: nil)
+        renderer.isOpaque = true
         return renderer.uiImage
     }
 
     private func presentShareSheet() {
-        guard let img = renderCardImage() else { return }
+        guard let img = renderCardImage() else {
+            Haptics.warning()
+            flashToast("生成失败，请重试")
+            return
+        }
         sharedImage = img
         sharing = true
     }
 
     private func saveToPhotos() {
-        guard let img = renderCardImage() else { return }
+        guard let img = renderCardImage() else {
+            Haptics.warning()
+            flashToast("生成失败，请重试")
+            return
+        }
         Task {
             do {
                 try await PhotoSaver.save(image: img)
@@ -198,7 +210,7 @@ private struct PostcardCard: View {
             VStack(spacing: 6) {
                 ZStack(alignment: .top) {
                     VStack(spacing: 0) {
-                        PhotoTile(day: day, cornerRadius: 12).frame(height: 260)
+                        PhotoTile(day: day, flat: true, cornerRadius: 12).frame(height: 260)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(day.title)
                                 .font(Theme.sans(18, weight: .heavy))
@@ -265,7 +277,7 @@ private struct NoteCard: View {
         Postcard {
             VStack(spacing: 16) {
                 ZStack(alignment: .topTrailing) {
-                    PhotoTile(day: day, cornerRadius: 16).frame(height: 180)
+                    PhotoTile(day: day, flat: true, cornerRadius: 16).frame(height: 180)
                     Tape(width: 70).offset(y: -10)
                 }
                 StickyNote(color: nc.paper, ink: nc.ink, rotate: -3, size: .l) {
@@ -308,6 +320,8 @@ private struct MinimalPostcard: View {
                         .font(Theme.sans(96, weight: .heavy))
                         .monospacedDigit()
                         .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                     Text(info.isPast ? "天前" : "天后")
                         .font(Theme.handCN(22))
                         .foregroundStyle(Theme.ink2)
@@ -337,13 +351,13 @@ private struct CollagePostcard: View {
             VStack(spacing: 12) {
                 HStack(spacing: 8) {
                     VStack(spacing: 0) {
-                        PhotoTile(day: day, cornerRadius: 12).frame(height: 150)
+                        PhotoTile(day: day, flat: true, cornerRadius: 12).frame(height: 150)
                     }
                     .polaroidCard(rotation: -3)
                     .frame(maxWidth: .infinity)
 
                     VStack(spacing: 8) {
-                        PhotoTile(style: day.photo, cornerRadius: 10).frame(height: 70)
+                        PhotoTile(style: day.photo, flat: true, cornerRadius: 10).frame(height: 70)
                         StickyNote(color: nc.paper, ink: nc.ink, rotate: 5, size: .s) {
                             VStack(spacing: 0) {
                                 Text("\(info.days)")

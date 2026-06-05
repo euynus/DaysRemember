@@ -17,6 +17,10 @@ struct DaysRememberApp: App {
                 // to light (also enforced via Info.plist UIUserInterfaceStyle).
                 .preferredColorScheme(.light)
                 .tint(Theme.ink)
+                // The scrapbook chrome (sticky notes, tab bar, calendar cells) is
+                // art-directed at fixed sizes; clamp the upper Dynamic Type bound so
+                // very large accessibility sizes don't break those layouts.
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 .task {
                     store.settings = settings
                     store.enableCloudSync()
@@ -26,7 +30,11 @@ struct DaysRememberApp: App {
                     NotificationManager.shared.configureDelegate(router: router)
                     // Skip the system permission prompt during automated screenshots —
                     // it would block the simulator and can't be dismissed via simctl.
-                    if !DebugLaunch.isAutomated {
+                    var automated = false
+                    #if DEBUG
+                    automated = DebugLaunch.isAutomated
+                    #endif
+                    if !automated {
                         _ = await NotificationManager.shared.requestAuthorization()
                     }
                     store.rescheduleNotifications()
@@ -41,6 +49,7 @@ private struct RootGate: View {
     @Environment(DeepLinkRouter.self) var router
 
     var body: some View {
+        #if DEBUG
         if let override = DebugLaunch.screenOverride {
             override.makeView(store: store)
         } else if settings.hasOnboarded || DebugLaunch.isAutomated {
@@ -49,17 +58,30 @@ private struct RootGate: View {
             // app. Onboarding itself is still screenshottable via `--screen onboarding`.
             RootTabView()
         } else {
-            // Drop any reminder/widget link queued before onboarding finished, so it
-            // doesn't fire a surprise navigation the moment RootTabView first mounts.
-            OnboardingView(onFinish: {
-                router.dayID = nil
-                settings.hasOnboarded = true
-            })
+            onboarding
         }
+        #else
+        if settings.hasOnboarded {
+            RootTabView()
+        } else {
+            onboarding
+        }
+        #endif
+    }
+
+    /// Drop any reminder/widget link queued before onboarding finished, so it doesn't
+    /// fire a surprise navigation the moment RootTabView first mounts.
+    private var onboarding: some View {
+        OnboardingView(onFinish: {
+            router.dayID = nil
+            settings.hasOnboarded = true
+        })
     }
 }
 
+#if DEBUG
 /// `xcrun simctl launch ... --screen detail|add|share|onboarding [--day <id>]`
+/// DEBUG-only — never compiled into the App Store / Release build.
 @MainActor
 enum DebugLaunch {
     enum Screen: String {
@@ -113,3 +135,4 @@ enum DebugLaunch {
         return Int(args[i + 1])
     }
 }
+#endif

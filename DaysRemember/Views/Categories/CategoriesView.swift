@@ -130,7 +130,7 @@ struct CategoriesView: View {
             .disabled(editing)
         }
         .overlay(alignment: .topTrailing) {
-            countSticky(count, note: noteColorFor("all"))
+            countSticky(count, note: allNoteColor)
                 .padding(.trailing, 16)
                 .offset(y: -2)
         }
@@ -178,7 +178,7 @@ struct CategoriesView: View {
             .disabled(editing)
         }
         .overlay(alignment: .topTrailing) {
-            countSticky(count, note: noteColorFor(category.id))
+            countSticky(count, note: noteColor(for: category))
                 .offset(x: 6, y: -2)
         }
         .overlay(alignment: .bottomTrailing) {
@@ -189,7 +189,9 @@ struct CategoriesView: View {
         }
     }
 
-    /// Maps a category to a flat sticker (system enum → fixed sticker; custom → star).
+    /// Maps a category to a flat sticker. System categories use a fixed sticker;
+    /// custom categories use the sticker the user picked in the editor (stored in
+    /// `category.icon` as a StickerName raw value).
     private func stickerFor(_ category: CategoryDefinition) -> StickerName {
         switch category.id {
         case "love": return .heart
@@ -198,8 +200,24 @@ struct CategoriesView: View {
         case "work": return .cap
         case "life": return .house
         default:
-            return StickerMap.byCategory[DayCategory(rawValue: category.id) ?? .life] ?? .star
+            return StickerName(rawValue: category.icon) ?? .star
         }
+    }
+
+    /// Count sticky-note color, color-matched to the category (the prototype pairs each
+    /// note with the category's color family) rather than hashed.
+    private func noteColor(for category: CategoryDefinition) -> NoteColor {
+        switch category.colorToken {
+        case .rose: return NoteColor(paper: Theme.notePink, ink: Theme.notePinkInk)
+        case .amber: return NoteColor(paper: Theme.notePeach, ink: Theme.notePeachInk)
+        case .dusty: return NoteColor(paper: Theme.noteBlue, ink: Theme.noteBlueInk)
+        case .sage: return NoteColor(paper: Theme.noteGreen, ink: Theme.noteGreenInk)
+        case .terracotta: return NoteColor(paper: Theme.notePeach, ink: Theme.notePeachInk)
+        }
+    }
+
+    private var allNoteColor: NoteColor {
+        NoteColor(paper: Theme.noteYellow, ink: Theme.noteYellowInk)
     }
 
     // MARK: - Shared card chrome

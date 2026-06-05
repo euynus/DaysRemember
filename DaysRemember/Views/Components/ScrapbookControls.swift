@@ -44,6 +44,10 @@ struct FAB: View {
                 .frame(width: size, height: size)
                 .background(Circle().fill(dark ? Theme.ink : Color.white))
                 .floatShadow()
+                // Keep the tappable area at the 44pt HIG minimum even when the visible
+                // circle is smaller (e.g. the 38/42pt calendar & header FABs).
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(PressScale(scale: 0.9))
     }
@@ -282,6 +286,7 @@ struct SegPicker<Value: Hashable>: View {
 // MARK: - Green toggle + toggle cell
 
 /// Custom pill toggle matching the design (50×30 track, 26 knob, green = cat-work).
+/// Purely visual — accessibility is owned by the enclosing row (e.g. `ToggleCell`).
 struct ScrapToggle: View {
     @Binding var isOn: Bool
     var body: some View {
@@ -295,13 +300,12 @@ struct ScrapToggle: View {
         }
         .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isOn)
         .onTapGesture { isOn.toggle() }
-        .accessibilityElement()
-        .accessibilityAddTraits(.isButton)
-        .accessibilityValue(isOn ? "开" : "关")
+        .accessibilityHidden(true)
     }
 }
 
 /// A grouped-list cell: title (+ optional subtitle) and a trailing green toggle.
+/// Exposed to VoiceOver as a single switch element with a name and on/off value.
 struct ToggleCell: View {
     let label: String
     var sub: String? = nil
@@ -321,5 +325,10 @@ struct ToggleCell: View {
         .cardRow()
         .contentShape(Rectangle())
         .onTapGesture { isOn.toggle() }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(sub.map { "\(label)，\($0)" } ?? label)
+        .accessibilityValue(isOn ? "开" : "关")
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityAction { isOn.toggle() }
     }
 }

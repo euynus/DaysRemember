@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import CoreText
 
 /// Maps the prototype's CSS variables (`styles.css`) to Swift-side colors and fonts.
 ///
@@ -65,10 +66,50 @@ enum Theme {
     /// meta rows, and the big tabular countdown numbers (use `.monospacedDigit()`).
     static func sans(_ size: CGFloat, weight: Font.Weight = .regular,
                      relativeTo textStyle: Font.TextStyle = .body) -> Font {
-        if FontAvailability.inter {
-            return .custom("Inter", size: size, relativeTo: textStyle).weight(weight)
+        if FontAvailability.inter, let ui = interUIFont(size: size, weight: weight) {
+            // Scale for Dynamic Type while preserving the true variable-font weight.
+            let scaled = UIFontMetrics(forTextStyle: Self.uiTextStyle(for: textStyle)).scaledFont(for: ui)
+            return Font(scaled)
         }
         return .system(size: size, weight: weight)
+    }
+
+    /// Inter is a variable font; `Font.custom(...).weight()` synthesizes faux-bold
+    /// instead of moving the `wght` axis. Build the true weight via the variation axis.
+    private static func interUIFont(size: CGFloat, weight: Font.Weight) -> UIFont? {
+        let wght: CGFloat
+        switch weight {
+        case .ultraLight: wght = 100
+        case .thin: wght = 200
+        case .light: wght = 300
+        case .medium: wght = 500
+        case .semibold: wght = 600
+        case .bold: wght = 700
+        case .heavy: wght = 800
+        case .black: wght = 900
+        default: wght = 400
+        }
+        let descriptor = UIFontDescriptor(fontAttributes: [
+            .name: "Inter",
+            UIFontDescriptor.AttributeName(rawValue: kCTFontVariationAttribute as String): [2003265652: wght],
+        ])
+        return UIFont(descriptor: descriptor, size: size)
+    }
+
+    private static func uiTextStyle(for style: Font.TextStyle) -> UIFont.TextStyle {
+        switch style {
+        case .largeTitle: return .largeTitle
+        case .title: return .title1
+        case .title2: return .title2
+        case .title3: return .title3
+        case .headline: return .headline
+        case .subheadline: return .subheadline
+        case .callout: return .callout
+        case .footnote: return .footnote
+        case .caption: return .caption1
+        case .caption2: return .caption2
+        default: return .body
+        }
     }
 
     /// Latin handwriting accent (Caveat) — English-style dates, "My Memory", eyebrows.

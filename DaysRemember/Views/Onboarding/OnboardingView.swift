@@ -46,6 +46,7 @@ struct OnboardingView: View {
                         .padding(.horizontal, 28)
                         .padding(.top, 70)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityHidden(true)   // decorative collage
                         .tag(index)
                 }
             }
@@ -102,6 +103,9 @@ struct OnboardingView: View {
                     .frame(width: i == page ? 22 : 7, height: 7)
             }
         }
+        .accessibilityElement()
+        .accessibilityLabel("进度")
+        .accessibilityValue("第 \(page + 1) 页，共 \(pages.count) 页")
     }
 
     @ViewBuilder

@@ -31,21 +31,25 @@ struct GradientSpec {
     }
 }
 
-/// Renders a `GradientSpec`: diagonal base + radial bloom + film grain.
+/// Renders a `GradientSpec`: diagonal base + radial bloom + (optional) film grain.
 struct GradientPhotoView: View {
     let spec: GradientSpec
+    /// Grain uses a soft-light blend (offscreen compositing). It's barely visible on
+    /// small tiles, so the feed disables it to avoid blending on every scrolling cell.
+    var grain: Bool = true
 
     var body: some View {
         ZStack {
             LinearGradient(stops: spec.stops, startPoint: spec.start, endPoint: spec.end)
             // Bloom sits on top of the base (CSS lists the radial first = topmost layer).
+            // ×1.2 widens the circular fraction toward the CSS 100–120% ellipse extent.
             EllipticalGradient(
                 colors: [spec.bloom, spec.bloom.opacity(0)],
                 center: spec.bloomCenter,
                 startRadiusFraction: 0,
-                endRadiusFraction: spec.bloomEnd
+                endRadiusFraction: spec.bloomEnd * 1.2
             )
-            PhotoGrain()
+            if grain { PhotoGrain() }
         }
     }
 }

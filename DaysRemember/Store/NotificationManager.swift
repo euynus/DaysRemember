@@ -86,8 +86,10 @@ final class NotificationManager {
     func sync(days: [Day], settings: AppSettings) async {
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests()
+        // All of our requests are namespaced "dr." (per-day, daily greeting, memories) —
+        // clear them all and rebuild from the current days + settings.
         let stale = pending
-            .filter { $0.identifier.hasPrefix("dr.day.") }
+            .filter { $0.identifier.hasPrefix("dr.") }
             .map(\.identifier)
         if !stale.isEmpty {
             center.removePendingNotificationRequests(withIdentifiers: stale)
@@ -131,6 +133,49 @@ final class NotificationManager {
                 try? await center.add(request)
             }
         }
+
+        // 每日晨间问候 — one repeating 08:00 greeting.
+        if settings.momentsEnabled {
+            let content = UNMutableNotificationContent()
+            content.title = "时光"
+            content.body = "早安 · 今天也要好好生活，珍惜每一个值得记住的日子。"
+            content.sound = .default
+            content.threadIdentifier = "dr.daily"
+            var comps = DateComponents()
+            comps.hour = 8
+            comps.minute = 0
+            let request = UNNotificationRequest(
+                identifier: "dr.daily.greeting",
+                content: content,
+                trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
+            )
+            try? await center.add(request)
+        }
+
+        // 时光回忆 · 一年前的今天 — yearly resurfacing of past one-off days. Recurring
+        // days already get their own anniversary reminders above, so `isPast` (true only
+        // for non-recurring days whose date has passed) is the right filter.
+        if settings.memoryEnabled {
+            let hour = min(23, max(0, settings.notificationHour))
+            let minute = min(59, max(0, settings.notificationMinute))
+            for day in days where DayInfo.compute(day).isPast {
+                let content = UNMutableNotificationContent()
+                content.title = "时光回忆"
+                content.body = "想起这一天 · 「\(day.title)」"
+                content.sound = .default
+                content.threadIdentifier = "dr.memory"
+                content.userInfo = ["dayID": day.id]
+                var comps = cal.dateComponents([.month, .day], from: day.date)
+                comps.hour = hour
+                comps.minute = minute
+                let request = UNNotificationRequest(
+                    identifier: "dr.memory.\(day.id)",
+                    content: content,
+                    trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
+                )
+                try? await center.add(request)
+            }
+        }
     }
 
     private func offsets(for day: Day, settings: AppSettings) -> [Int] {
@@ -154,7 +199,7 @@ final class NotificationManager {
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests()
         let toRemove = pending
-            .filter { $0.identifier.hasPrefix("dr.day.\(dayId).") }
+            .filter { $0.identifier.hasPrefix("dr.day.\(dayId).") || $0.identifier == "dr.memory.\(dayId)" }
             .map(\.identifier)
         if !toRemove.isEmpty {
             center.removePendingNotificationRequests(withIdentifiers: toRemove)

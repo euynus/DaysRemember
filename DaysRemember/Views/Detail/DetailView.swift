@@ -35,11 +35,6 @@ struct DetailView: View {
 
                     infoChips(day: day, info: info)
                         .padding(.top, 22)
-
-                    SectionHeader("这一天的相册")
-                        .padding(.top, 26)
-                        .padding(.bottom, 6)
-                    memoriesStrip(day: day)
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 40)
@@ -213,8 +208,7 @@ struct DetailView: View {
                 InfoChip(systemName: "leaf", text: term)
             }
             if day.recurring {
-                let n = (info.yearsAgo ?? 0) + (info.isPast ? 0 : 1)
-                InfoChip(systemName: "arrow.triangle.2.circlepath", text: "第 \(n) 次")
+                InfoChip(systemName: "arrow.triangle.2.circlepath", text: "第 \(info.anniversaryNumber ?? 1) 次")
             }
             if day.lunar {
                 InfoChip(systemName: "moon", text: "农历重复")
@@ -222,30 +216,6 @@ struct DetailView: View {
         }
     }
 
-    // MARK: - Memories strip
-
-    private func memoriesStrip(day: Day) -> some View {
-        let presets: [PhotoStyle] = [.japan, .home, .wedding, .baby]
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(Array(presets.enumerated()), id: \.offset) { idx, style in
-                    VStack(spacing: 0) {
-                        // The day's own photo leads; presets fill the rest of the strip.
-                        if idx == 0 {
-                            PhotoTile(day: day, cornerRadius: 8)
-                                .frame(width: 96, height: 96)
-                        } else {
-                            PhotoTile(style: style, imageData: nil, cornerRadius: 8)
-                                .frame(width: 96, height: 96)
-                        }
-                    }
-                    .polaroidCard(rotation: idx % 2 == 1 ? 2 : -2, padding: 5)
-                }
-            }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 2)
-        }
-    }
 }
 
 /// Repeating horizontal rule lines for the lined-paper note background
