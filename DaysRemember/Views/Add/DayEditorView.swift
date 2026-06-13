@@ -181,9 +181,11 @@ struct DayEditorView: View {
                 .padding(.bottom, 2)
             }
             .polaroidCard(rotation: -1.5)
+            // Keep the sticker on the photo's lower-left corner — over the
+            // caption it would hide the live date preview.
             .overlay(alignment: .bottomLeading) {
                 Sticker(name: stickerForCurrentCategory, size: 36, rotate: -10)
-                    .offset(x: 14, y: 6)
+                    .offset(x: -12, y: -50)
             }
 
             // Countdown sticky note, clipped top-right (Add.jsx: note-blue, rotate 7).

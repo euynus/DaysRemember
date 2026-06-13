@@ -117,12 +117,14 @@ struct WidgetsPreviewView: View {
                             .font(Theme.sans(40, weight: .heavy))
                             .monospacedDigit()
                             .foregroundStyle(Theme.ink)
-                        Text("天 · 已相伴")
+                        // Match the real widget's copy: "已相伴" only fits a day
+                        // counting up; a future anniversary counts down.
+                        Text(info.isPast ? "天 · 已相伴" : "天后")
                             .font(Theme.sans(13, weight: .semibold))
                             .foregroundStyle(Theme.muted)
                     }
                     Spacer()
-                    Sticker(name: .ring, size: 32, rotate: 8)
+                    Sticker(name: stickerFor(pinned), size: 32, rotate: 8)
                 }
                 .padding(.horizontal, 6)
                 .padding(.top, 10)
@@ -131,10 +133,12 @@ struct WidgetsPreviewView: View {
             .frame(width: 280)
             .polaroidCard(rotation: -1.5)
 
-            StickyNote(color: Theme.notePink, ink: Theme.notePinkInk, rotate: 8, size: .s) {
-                Text("7年啦")
+            if let n = info.anniversaryNumber {
+                StickyNote(color: Theme.notePink, ink: Theme.notePinkInk, rotate: 8, size: .s) {
+                    Text("\(n)年啦")
+                }
+                .offset(x: 6, y: -6)
             }
-            .offset(x: 6, y: -6)
         }
     }
 

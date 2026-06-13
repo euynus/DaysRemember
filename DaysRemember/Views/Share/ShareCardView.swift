@@ -242,9 +242,11 @@ private struct PostcardCard: View {
                         }
                         .offset(x: 6, y: 8)
                     }
+                    // Straddle the photo/caption boundary so the slapped-on
+                    // sticker never covers the title or date on the export.
                     .overlay(alignment: .bottomLeading) {
                         Sticker(name: stickerFor(day), size: 40, rotate: -12)
-                            .offset(x: -8, y: -24)
+                            .offset(x: -14, y: -58)
                     }
                     .overlay(alignment: .topLeading) {
                         Sticker(name: .star, size: 28, rotate: 10)
