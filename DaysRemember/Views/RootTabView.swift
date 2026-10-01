@@ -49,15 +49,8 @@ struct RootTabView: View {
 
     var body: some View {
         content
-            // Floating scrapbook pill: the bar hovers over full-height content
-            // (tab screens already pad ~120 at the bottom to clear it).
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .overlay(alignment: .bottom) {
-                TabBar(current: tab, onSelect: { tab = $0 })
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 30)
-            }
-            .ignoresSafeArea(.keyboard)
+            .tint(Theme.accent)
             .sheet(isPresented: $addingDay) { AddDayView().environment(store) }
             .onOpenURL { handleDeepLink($0) }
             .onChange(of: router.dayID) { _, id in routePending(id) }
@@ -89,23 +82,19 @@ struct RootTabView: View {
 
     @ViewBuilder
     private var content: some View {
-        ZStack {
+        TabView(selection: $tab) {
             homeStack
-                .opacity(tab == .home ? 1 : 0)
-                .allowsHitTesting(tab == .home)
-                .accessibilityHidden(tab != .home)
+                .tabItem { Label("日子", systemImage: "square.stack") }
+                .tag(AppTab.home)
             calendarStack
-                .opacity(tab == .calendar ? 1 : 0)
-                .allowsHitTesting(tab == .calendar)
-                .accessibilityHidden(tab != .calendar)
+                .tabItem { Label("日历", systemImage: "calendar") }
+                .tag(AppTab.calendar)
             categoriesStack
-                .opacity(tab == .categories ? 1 : 0)
-                .allowsHitTesting(tab == .categories)
-                .accessibilityHidden(tab != .categories)
+                .tabItem { Label("分类", systemImage: "square.grid.2x2") }
+                .tag(AppTab.categories)
             NotificationsView()
-                .opacity(tab == .notifications ? 1 : 0)
-                .allowsHitTesting(tab == .notifications)
-                .accessibilityHidden(tab != .notifications)
+                .tabItem { Label("提醒", systemImage: "bell") }
+                .tag(AppTab.notifications)
         }
     }
 
@@ -146,49 +135,5 @@ private extension View {
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationBarBackButtonHidden(true)
         }
-    }
-}
-
-/// Floating scrapbook pill (`.toolbar` in the prototype): a white translucent
-/// capsule; the active tab is an ink capsule with icon + label, inactive tabs
-/// are icon-only in `Theme.muted`.
-struct TabBar: View {
-    let current: AppTab
-    let onSelect: (AppTab) -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            ForEach(AppTab.allCases, id: \.self) { t in
-                Button {
-                    onSelect(t)
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: current == t ? t.iconNameFilled : t.iconName)
-                            .font(.system(size: 20, weight: current == t ? .semibold : .regular))
-                        if current == t {
-                            Text(t.label)
-                                .font(Theme.sans(13, weight: .bold))
-                        }
-                    }
-                    .foregroundStyle(current == t ? Theme.accentForeground : Theme.muted)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background {
-                        if current == t {
-                            Capsule(style: .continuous).fill(Theme.ink)
-                        }
-                    }
-                    .contentShape(Capsule(style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(t.label)
-                .accessibilityValue(current == t ? "当前标签" : "")
-            }
-        }
-        .padding(8)
-        .background(.regularMaterial, in: Capsule(style: .continuous))
-        .shadow(color: Theme.ink.opacity(0.06), radius: 3, x: 0, y: 2)
-        .shadow(color: Theme.ink.opacity(0.12), radius: 15, x: 0, y: 12)
-        .sensoryFeedback(.selection, trigger: current)
     }
 }

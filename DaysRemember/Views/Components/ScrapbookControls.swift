@@ -42,8 +42,7 @@ struct FAB: View {
                 .font(.system(size: iconSize, weight: .semibold))
                 .foregroundStyle(dark ? Color.white : Theme.ink)
                 .frame(width: size, height: size)
-                .background(Circle().fill(dark ? Theme.ink : Color.white))
-                .floatShadow()
+                .background(Circle().fill(dark ? Theme.accent : Color.white))
                 // Keep the tappable area at the 44pt HIG minimum even when the visible
                 // circle is smaller (e.g. the 38/42pt calendar & header FABs).
                 .frame(minWidth: 44, minHeight: 44)
@@ -125,7 +124,7 @@ struct Chip: View {
             .foregroundStyle(selected ? Color.white : Theme.ink2)
             .frame(height: 36)
             .padding(.horizontal, 15)
-            .background(Capsule().fill(selected ? Theme.ink : Color.white))
+            .background(Capsule().fill(selected ? Theme.accent : Color.white))
             .shadow(color: selected ? .clear : shadowInk.opacity(0.05), radius: 1, x: 0, y: 1)
         }
         .buttonStyle(PressScale(scale: 0.95))
@@ -188,7 +187,6 @@ struct SectionHeader: View {
     var body: some View {
         Text(title)
             .font(Theme.sans(13, weight: .bold))
-            .tracking(0.3)
             .foregroundStyle(Theme.muted)
             .padding(.leading, 4)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -203,20 +201,19 @@ struct NavHeader<Trailing: View>: View {
     @ViewBuilder var trailing: () -> Trailing
 
     var body: some View {
-        ZStack {
-            Text(title).font(Theme.sans(16, weight: .bold))
-            HStack {
-                if let onBack {
-                    FAB(systemName: "chevron.left", size: 42, action: onBack)
-                } else {
-                    Color.clear.frame(width: 42, height: 42)
-                }
-                Spacer()
-                trailing()
+        HStack(spacing: 12) {
+            if let onBack {
+                FAB(systemName: "chevron.left", size: 42, action: onBack)
+                    .accessibilityLabel("返回")
             }
+            Text(title)
+                .font(Theme.sans(onBack == nil ? 28 : 20, weight: .bold))
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            trailing()
         }
         .padding(.horizontal, 18)
-        .padding(.top, 56)
+        .padding(.top, 12)
         .padding(.bottom, 8)
     }
 }
@@ -234,8 +231,8 @@ struct CardList<Content: View>: View {
     @ViewBuilder var content: () -> Content
     var body: some View {
         VStack(spacing: 0) { content() }
-            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white))
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .shadow(color: shadowInk.opacity(0.05), radius: 1, x: 0, y: 1)
     }
 }
@@ -254,81 +251,38 @@ extension View {
     }
 }
 
-// MARK: - Segmented control (.seg)
+// MARK: - Native form controls
 
 struct SegPicker<Value: Hashable>: View {
     let options: [(value: Value, label: String)]
     @Binding var selection: Value
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(options, id: \.value) { opt in
-                let on = opt.value == selection
-                Text(opt.label)
-                    .font(Theme.sans(13, weight: .bold))
-                    .foregroundStyle(on ? Theme.ink : Theme.ink2)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill(on ? Color.white : Color.clear)
-                            .shadow(color: on ? shadowInk.opacity(0.08) : .clear, radius: 1, x: 0, y: 1)
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture { withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) { selection = opt.value } }
+        Picker("选项", selection: $selection) {
+            ForEach(options, id: \.value) { option in
+                Text(option.label).tag(option.value)
             }
         }
-        .padding(2)
-        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Theme.bg2))
+        .pickerStyle(.segmented)
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 
-// MARK: - Green toggle + toggle cell
-
-/// Custom pill toggle matching the design (50×30 track, 26 knob, green = cat-work).
-/// Purely visual — accessibility is owned by the enclosing row (e.g. `ToggleCell`).
-struct ScrapToggle: View {
-    @Binding var isOn: Bool
-    var body: some View {
-        ZStack(alignment: isOn ? .trailing : .leading) {
-            Capsule().fill(isOn ? Theme.catWork : Theme.bg2)
-                .frame(width: 50, height: 30)
-            Circle().fill(Color.white)
-                .frame(width: 26, height: 26)
-                .shadow(color: .black.opacity(0.2), radius: 1.5, x: 0, y: 1)
-                .padding(2)
-        }
-        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isOn)
-        .onTapGesture { isOn.toggle() }
-        .accessibilityHidden(true)
-    }
-}
-
-/// A grouped-list cell: title (+ optional subtitle) and a trailing green toggle.
-/// Exposed to VoiceOver as a single switch element with a name and on/off value.
 struct ToggleCell: View {
     let label: String
     var sub: String? = nil
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
+        Toggle(isOn: $isOn) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(label).font(Theme.sans(15, weight: .semibold)).foregroundStyle(Theme.ink)
                 if let sub {
-                    Text(sub).font(Theme.sans(12, weight: .medium)).foregroundStyle(Theme.muted)
+                    Text(sub).font(Theme.sans(12)).foregroundStyle(Theme.ink2)
                 }
             }
-            Spacer(minLength: 8)
-            ScrapToggle(isOn: $isOn)
         }
+        .tint(Theme.accent)
         .cardRow()
-        .contentShape(Rectangle())
-        .onTapGesture { isOn.toggle() }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(sub.map { "\(label)，\($0)" } ?? label)
-        .accessibilityValue(isOn ? "开" : "关")
-        .accessibilityAddTraits(.isToggle)
-        .accessibilityAction { isOn.toggle() }
     }
 }

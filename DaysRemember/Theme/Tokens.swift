@@ -11,14 +11,14 @@ import CoreText
 /// are plain light-mode colors rather than adaptive pairs.
 enum Theme {
     // MARK: - Canvas & ink  (styles.css :root)
-    static let bg = Color(hex: 0xEDECEF)            // cool light gray canvas
-    static let bg2 = Color(hex: 0xE4E3E7)
+    static let bg = Color(hex: 0xF6F8F8)
+    static let bg2 = Color(hex: 0xE8EEEE)
     static let card = Color(hex: 0xFFFFFF)
     static let ink = Color(hex: 0x15171C)           // near-black headings
     static let ink2 = Color(hex: 0x5B6068)
-    static let muted = Color(hex: 0x9AA0A8)
+    static let muted = Color(hex: 0x69787C)
     /// Primary pill accent = ink; foreground on it = white.
-    static let accent = Color(hex: 0x15171C)
+    static let accent = Color(hex: 0x16756D)
     static let accentForeground = Color.white
 
     static let hairline = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.08)
