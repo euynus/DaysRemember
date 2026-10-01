@@ -30,12 +30,6 @@ struct CategoryEditorView: View {
         return !category.isSystem && store.categories.contains { $0.id != category.id }
     }
 
-    /// Stickers offered for an icon — same flat art used across the scrapbook.
-    private static let stickerChoices: [StickerName] = [
-        .heart, .balloon, .plane, .cap, .house, .star,
-        .cake, .gift, .ring, .camera, .paw, .sun, .sparkle,
-    ]
-
     /// Curated SF Symbols suited to anniversaries / life events — kept so custom
     /// categories that were created before stickers still round-trip their icon.
     private static let iconChoices = [
@@ -99,13 +93,14 @@ struct CategoryEditorView: View {
 
     private var preview: some View {
         HStack(spacing: 14) {
-            Sticker(name: selectedSticker, size: 44, rotate: -8)
+            Image(systemName: CategoryDefinition.symbolName(for: icon))
+                .font(.system(size: 28, weight: .medium))
+                .foregroundStyle(colorToken.color)
                 .frame(width: 56, height: 56)
-                .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
                 Text(name.isEmpty ? "分类名称" : name)
                     .font(Theme.sans(20, weight: .heavy))
-                    .tracking(-0.4)
                     .foregroundStyle(name.isEmpty ? Theme.muted : Theme.ink)
                 Text(colorToken.label)
                     .font(Theme.sans(12, weight: .bold))
@@ -115,15 +110,9 @@ struct CategoryEditorView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
         .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
         .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 12, x: 0, y: 8)
-    }
-
-    /// The preview sticker: a chosen sticker name (if `icon` holds one) else a
-    /// sensible default so SF-symbol-backed legacy icons still show a sticker.
-    private var selectedSticker: StickerName {
-        StickerName(rawValue: icon) ?? .star
     }
 
     // MARK: - Name field
@@ -138,7 +127,7 @@ struct CategoryEditorView: View {
                 .padding(.horizontal, 16)
                 .frame(height: 52)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white))
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
                 .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
         }
     }
@@ -147,29 +136,31 @@ struct CategoryEditorView: View {
 
     private var stickerPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader("贴纸")
+            SectionHeader("图标")
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
                       spacing: 10) {
-                ForEach(Self.stickerChoices, id: \.self) { sticker in
-                    let selected = icon == sticker.rawValue
+                ForEach(Self.iconChoices, id: \.self) { symbol in
+                    let selected = icon == symbol
                     Button {
-                        icon = sticker.rawValue
+                        icon = symbol
                     } label: {
-                        Sticker(name: sticker, size: 30)
+                        Image(systemName: symbol)
+                            .font(.system(size: 24))
+                            .foregroundStyle(selected ? Theme.accent : Theme.ink2)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .fill(selected ? colorToken.soft : Color.white)
                             )
                             .overlay {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .strokeBorder(selected ? colorToken.color : Theme.hairline,
                                                   lineWidth: selected ? 2 : 0.5)
                             }
                     }
                     .buttonStyle(PressScale(scale: 0.92))
-                    .accessibilityLabel("贴纸 \(sticker.rawValue)")
+                    .accessibilityLabel("图标 \(symbol)")
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }
@@ -188,6 +179,7 @@ struct CategoryEditorView: View {
                         Circle()
                             .fill(token.color)
                             .frame(width: 38, height: 38)
+                            .frame(minWidth: 44, minHeight: 44)
                             .overlay {
                                 Circle().strokeBorder(Color.white, lineWidth: selected ? 3 : 0)
                             }

@@ -77,6 +77,23 @@ struct CategoryDefinition: Identifiable, Codable, Hashable {
     var colorToken: CategoryColorToken
     var isSystem: Bool
 
+    /// Older custom categories stored sticker names rather than SF Symbols.
+    var symbolName: String {
+        Self.symbolName(for: icon)
+    }
+
+    static func symbolName(for icon: String) -> String {
+        switch icon {
+        case "plane": return "airplane"
+        case "cake": return "birthday.cake"
+        case "cap": return "graduationcap"
+        case "paw": return "pawprint"
+        case "sun": return "sun.max"
+        case "ring": return "circle.circle"
+        default: return icon
+        }
+    }
+
     static let system: [CategoryDefinition] = DayCategory.allCases.map { category in
         CategoryDefinition(
             id: category.rawValue,

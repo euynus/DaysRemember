@@ -2,6 +2,16 @@ import XCTest
 @testable import DaysRemember
 
 final class UIUXModelTests: XCTestCase {
+    func testLegacyCategoryIconsKeepTheirMeaning() {
+        let icons = ["plane": "airplane", "cake": "birthday.cake",
+                     "cap": "graduationcap", "paw": "pawprint",
+                     "sun": "sun.max", "ring": "circle.circle",
+                     "heart": "heart", "person.2": "person.2"]
+        for (stored, symbol) in icons {
+            XCTAssertEqual(CategoryDefinition.symbolName(for: stored), symbol)
+        }
+    }
+
     override func setUp() {
         super.setUp()
         SharedStorage.defaults.removeObject(forKey: "days.v1")
@@ -56,19 +66,23 @@ final class UIUXModelTests: XCTestCase {
     @MainActor
     func testSortedDaysOrdersByPinnedThenUpcomingThenDistance() {
         let store = DayStore()
+        let today = CNDate.calendar.startOfDay(for: Today.date)
+        func offset(_ days: Int) -> Date {
+            CNDate.calendar.date(byAdding: .day, value: days, to: today)!
+        }
         // Pinned but past — outranks every unpinned day regardless of distance.
         let pinnedPast = Day(id: "pinned-past", title: "pinned past",
-                             date: date(2024, 1, 1), category: .life, photo: .home,
+                             date: offset(-400), category: .life, photo: .home,
                              pinned: true)
         // Far-future, unpinned — should sort behind close-future.
         let farFuture = Day(id: "far", title: "far",
-                            date: date(2030, 6, 1), category: .life, photo: .home)
+                            date: offset(400), category: .life, photo: .home)
         // Close-future, unpinned — runner-up after pinned.
         let nearFuture = Day(id: "near", title: "near",
-                             date: date(2026, 7, 1), category: .life, photo: .home)
+                             date: offset(5), category: .life, photo: .home)
         // Past, unpinned — sorts last.
         let past = Day(id: "past", title: "past",
-                       date: date(2024, 6, 1), category: .life, photo: .home)
+                       date: offset(-5), category: .life, photo: .home)
 
         store.days = [past, farFuture, nearFuture, pinnedPast]
         let sorted = store.sortedDays(store.days)
