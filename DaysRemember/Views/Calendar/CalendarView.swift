@@ -73,6 +73,7 @@ struct CalendarMonthView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     monthHeader
                     calendarCard(eventsByDay: eventsByDay)
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     SectionHeader("本月日子")
                     if eventsByDay.isEmpty {
                         Text("本月没有记录的日子")

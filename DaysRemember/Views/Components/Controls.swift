@@ -1,18 +1,18 @@
 import SwiftUI
 
-// Shared scrapbook controls used across every screen — faithful ports of the CSS
-// classes in styles.css (.fab, .pill, .chip, .toolbar, .meta, .sg-sec, .sg-list,
-// .sg-cell, the segmented control, and the custom green toggle).
+// Shared controls for navigation, filtering, and forms.
 
 // MARK: - Press feedback
 
 /// Scales down briefly on press (the `.sg-tap` / `:active` transform in the design).
 struct PressScale: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var scale: CGFloat = 0.96
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? scale : 1)
-            .animation(.spring(response: 0.18, dampingFraction: 0.7), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? scale : 1)
+            .opacity(configuration.isPressed ? 0.8 : 1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 
@@ -73,7 +73,7 @@ struct PillButton: View {
             }
             .foregroundStyle(foreground)
             .frame(maxWidth: fill ? .infinity : nil)
-            .frame(height: height)
+            .frame(minHeight: height)
             .padding(.horizontal, 22)
             .background(Capsule().fill(background))
             .modifier(PillShadow(style: style))
@@ -122,7 +122,8 @@ struct Chip: View {
                 Text(title).font(Theme.sans(14, weight: .semibold))
             }
             .foregroundStyle(selected ? Color.white : Theme.ink2)
-            .frame(height: 36)
+            .padding(.vertical, 8)
+            .frame(minHeight: 44)
             .padding(.horizontal, 15)
             .background(Capsule().fill(selected ? Theme.accent : Color.white))
             .shadow(color: selected ? .clear : shadowInk.opacity(0.05), radius: 1, x: 0, y: 1)
@@ -143,7 +144,8 @@ struct InfoChip: View {
                 .foregroundStyle(Theme.ink2)
             Text(text).font(Theme.sans(14, weight: .semibold)).foregroundStyle(Theme.ink)
         }
-        .frame(height: 36)
+        .padding(.vertical, 8)
+        .frame(minHeight: 36)
         .padding(.horizontal, 15)
         .background(Capsule().fill(Color.white))
         .shadow(color: shadowInk.opacity(0.05), radius: 1, x: 0, y: 1)
@@ -152,8 +154,7 @@ struct InfoChip: View {
 
 // MARK: - Meta row (bullet separated)
 
-struct MetaItem: Identifiable {
-    let id = UUID()
+struct MetaItem {
     let text: String
     var color: Color = Theme.ink2
     var bold: Bool = false
@@ -166,12 +167,9 @@ struct MetaRow: View {
     init(_ strings: [String]) { self.items = strings.map { MetaItem(text: $0) } }
 
     var body: some View {
-        HStack(spacing: 9) {
-            ForEach(Array(items.enumerated()), id: \.element.id) { idx, item in
-                if idx > 0 {
-                    Circle().fill(Theme.muted).frame(width: 4, height: 4)
-                }
-                Text(item.text)
+        FlowLayout(spacing: 9) {
+            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                Text((idx > 0 ? "· " : "") + item.text)
                     .font(Theme.sans(14, weight: item.bold ? .bold : .medium))
                     .foregroundStyle(item.color)
             }
@@ -209,6 +207,8 @@ struct NavHeader<Trailing: View>: View {
             Text(title)
                 .font(Theme.sans(onBack == nil ? 28 : 20, weight: .bold))
                 .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
             Spacer(minLength: 8)
             trailing()
         }
