@@ -1,13 +1,11 @@
 import SwiftUI
 import PhotosUI
 
-// Scrapbook add/edit composer — a faithful port of `screens/Add.jsx`. DayEditorView
-// is the shared form; AddDayView wraps it. Every wire from the previous version is
-// preserved: title, category, cover (preset PhotoStyle + PhotosPicker + focus drag),
-// date, solar/lunar, recurring, per-day reminder offset, note, location, save / cancel.
+// Shared add/edit form. Changes remain local until Save.
 struct DayEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DayStore.self) var store
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let editingDay: Day?
     @State private var title: String
@@ -15,10 +13,13 @@ struct DayEditorView: View {
     @State private var photo: PhotoStyle
     @State private var photoData: Data?
     @State private var pickerItem: PhotosPickerItem?
+    @State private var isLoadingPhoto = false
+    @State private var photoError: String?
     @State private var recurring: Bool
     @State private var solar: Bool
-    @State private var remindIndex: Int
+    @State private var reminderOffsets: [Int]?
     @State private var selectedDate: Date
+    @State private var draftDate: Date
     @State private var note: String
     @State private var location: String
     @State private var coverFocusX: Double
@@ -28,7 +29,7 @@ struct DayEditorView: View {
     @State private var showDatePicker = false
 
     private static let pickerOptions: [PhotoStyle] = [
-        .wedding, .baby, .birthday, .japan, .study, .work, .pet, .home,
+        .systemDefault, .wedding, .baby, .birthday, .japan, .study, .work, .pet, .home,
     ] + PhotoStyle.categorySketchPresets
     private static let reminders: [(label: String, offset: Int)] = [
         ("当天", 0), ("1天", 1), ("3天", 3), ("7天", 7)
@@ -38,36 +39,21 @@ struct DayEditorView: View {
         editingDay = day
         _title = State(initialValue: day?.title ?? "")
         _categoryID = State(initialValue: day?.categoryID ?? DayCategory.life.rawValue)
-        _photo = State(initialValue: day?.photo ?? .study)
+        _photo = State(initialValue: day?.photo ?? .systemDefault)
         _photoData = State(initialValue: day?.photoData)
         _recurring = State(initialValue: day?.recurring ?? true)
         _solar = State(initialValue: !(day?.lunar ?? false))
         _selectedDate = State(initialValue: day?.date ?? Today.date)
+        _draftDate = State(initialValue: day?.date ?? Today.date)
         _note = State(initialValue: day?.note ?? "")
         _location = State(initialValue: day?.location ?? "")
         _coverFocusX = State(initialValue: day?.coverFocusX ?? 0.5)
         _coverFocusY = State(initialValue: day?.coverFocusY ?? 0.5)
-        // -1 means "follow the global reminder settings" (no per-day override).
-        let offset = day?.reminderOffsets?.first
-        let index = offset.flatMap { value in Self.reminders.firstIndex(where: { $0.offset == value }) } ?? -1
-        _remindIndex = State(initialValue: index)
+        _reminderOffsets = State(initialValue: day?.reminderOffsets)
     }
 
     private var canSave: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    // Preview-only countdown for the live polaroid sticky note.
-    private var previewInfo: DayInfo {
-        DayInfo.compute(Day(
-            id: editingDay?.id ?? "preview",
-            title: title,
-            date: selectedDate,
-            recurring: recurring,
-            lunar: !solar,
-            category: .life,
-            photo: photo
-        ))
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoadingPhoto
     }
 
     var body: some View {
@@ -101,8 +87,16 @@ struct DayEditorView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
         .sheet(isPresented: $showDatePicker) { datePickerSheet }
+        .alert("无法读取照片", isPresented: Binding(
+            get: { photoError != nil },
+            set: { if !$0 { photoError = nil } }
+        )) {
+            Button("好", role: .cancel) { photoError = nil }
+        } message: {
+            Text(photoError ?? "")
+        }
         .sensoryFeedback(.selection, trigger: photo)
-        .sensoryFeedback(.selection, trigger: remindIndex)
+        .sensoryFeedback(.selection, trigger: reminderOffsets)
         .sensoryFeedback(.selection, trigger: categoryID)
         .sensoryFeedback(.selection, trigger: solar)
         .sensoryFeedback(.selection, trigger: recurring)
@@ -123,96 +117,35 @@ struct DayEditorView: View {
                 .foregroundStyle(Theme.ink)
             Spacer()
 
-            PillButton(title: "保存", style: .dark, height: 38, action: saveDay)
+            PillButton(title: "保存", style: .dark, height: 44, action: saveDay)
                 .disabled(!canSave)
                 .opacity(canSave ? 1 : 0.45)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 56)
+        .padding(.top, 16)
         .padding(.bottom, 8)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 
-    // MARK: - Live preview polaroid
+    // MARK: - Cover preview
 
     private var livePreview: some View {
-        ZStack(alignment: .top) {
-            VStack(spacing: 0) {
-                PhotoTile(style: photo, imageData: photoData,
-                          focusX: coverFocusX, focusY: coverFocusY,
-                          flat: true, cornerRadius: 12)
-                    .frame(width: 194, height: 200)
-                    .overlay(alignment: .center) {
-                        if photoData != nil {
-                            Circle()
-                                .strokeBorder(.white.opacity(0.85), lineWidth: 1)
-                                .background(Circle().fill(.black.opacity(0.18)))
-                                .frame(width: 18, height: 18)
-                                .allowsHitTesting(false)
-                        }
-                    }
-                    .gesture(focusDrag)
-                    // Drag repositions a picked photo's crop; expose a VoiceOver-settable
-                    // alternative so it's adjustable without a drag.
-                    .accessibilityElement()
-                    .accessibilityLabel("封面取景")
-                    .accessibilityHint(photoData != nil ? "上下轻扫调整照片裁剪位置" : "封面预览")
-                    .accessibilityAdjustableAction { direction in
-                        guard photoData != nil else { return }
-                        switch direction {
-                        case .increment: coverFocusY = clamp(coverFocusY - 0.1)
-                        case .decrement: coverFocusY = clamp(coverFocusY + 0.1)
-                        @unknown default: break
-                        }
-                    }
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title.isEmpty ? "新的日子" : title)
-                        .font(Theme.sans(16, weight: .bold))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    Text(enDate(previewInfo.displayDate))
-                        .font(Theme.hand(20))
-                        .foregroundStyle(Theme.ink2)
+        PhotoTile(style: photo, imageData: photoData,
+                  focusX: coverFocusX, focusY: coverFocusY,
+                  flat: true, cornerRadius: 8)
+            .frame(height: 180)
+            .gesture(focusDrag)
+            .accessibilityElement()
+            .accessibilityLabel("封面取景")
+            .accessibilityHint(photoData != nil ? "上下轻扫调整照片裁剪位置" : "封面预览")
+            .accessibilityAdjustableAction { direction in
+                guard photoData != nil else { return }
+                switch direction {
+                case .increment: coverFocusY = clamp(coverFocusY - 0.1)
+                case .decrement: coverFocusY = clamp(coverFocusY + 0.1)
+                @unknown default: break
                 }
-                .frame(width: 194, alignment: .leading)
-                .padding(.horizontal, 4)
-                .padding(.top, 10)
-                .padding(.bottom, 2)
             }
-            .polaroidCard(rotation: -1.5)
-            // Keep the sticker on the photo's lower-left corner — over the
-            // caption it would hide the live date preview.
-            .overlay(alignment: .bottomLeading) {
-                Sticker(name: stickerForCurrentCategory, size: 36, rotate: -10)
-                    .offset(x: -12, y: -50)
-            }
-
-            // Countdown sticky note, clipped top-right (Add.jsx: note-blue, rotate 7).
-            countdownNote
-                .offset(x: 92, y: -6)
-        }
-        .frame(width: 240, height: 280)
-    }
-
-    private var countdownNote: some View {
-        StickyNote(color: Theme.noteBlue, ink: Theme.noteBlueInk, rotate: 7, clip: true, size: .s) {
-            VStack(spacing: 0) {
-                Text("\(abs(previewInfo.days))")
-                    .font(Theme.sans(26, weight: .bold))
-                    .monospacedDigit()
-                Text(previewInfo.isToday ? "今天" : (previewInfo.isPast ? "天前" : "天后"))
-                    .font(Theme.handCN(15))
-            }
-            .foregroundStyle(Theme.noteBlueInk)
-        }
-    }
-
-    private var stickerForCurrentCategory: StickerName {
-        if let cat = DayCategory(rawValue: categoryID) {
-            return StickerMap.byCategory[cat] ?? .star
-        }
-        return .star
     }
 
     private var focusDrag: some Gesture {
@@ -245,7 +178,7 @@ struct DayEditorView: View {
             .submitLabel(.done)
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
             .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
             .accessibilityLabel("日子名称")
     }
@@ -257,6 +190,7 @@ struct DayEditorView: View {
             HStack(spacing: 10) {
                 ForEach(Self.pickerOptions, id: \.self) { preset in
                     Button {
+                        pickerItem = nil
                         photo = preset
                         photoData = nil
                         resetFocus()
@@ -306,18 +240,28 @@ struct DayEditorView: View {
                         .font(.system(size: 22, weight: .regular))
                         .foregroundStyle(Theme.muted)
                         .frame(width: 58, height: 58)
-                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white))
+                        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
                         .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
                 }
             }
         }
         .accessibilityLabel("选择相册封面")
-        .onChange(of: pickerItem) { _, item in
-            guard let item else { return }
-            Task {
-                guard let data = try? await item.loadTransferable(type: Data.self) else { return }
-                photoData = compressedJPEGData(from: data) ?? data
+        .overlay { if isLoadingPhoto { ProgressView() } }
+        .task(id: pickerItem) {
+            guard let item = pickerItem else { isLoadingPhoto = false; return }
+            isLoadingPhoto = true
+            defer { if !Task.isCancelled { isLoadingPhoto = false } }
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self),
+                      let compressed = compressedJPEGData(from: data) else {
+                    throw CocoaError(.fileReadCorruptFile)
+                }
+                try Task.checkCancellation()
+                photoData = compressed
                 resetFocus()
+            } catch {
+                guard !Task.isCancelled else { return }
+                photoError = "照片未能加载，原封面已保留。请重新选择。"
             }
         }
     }
@@ -327,7 +271,10 @@ struct DayEditorView: View {
     private var formCard: some View {
         CardList {
             // 日期 → opens the date picker sheet.
-            Button { showDatePicker = true } label: {
+            Button {
+                draftDate = selectedDate
+                showDatePicker = true
+            } label: {
                 HStack(spacing: 14) {
                     Text("日期").font(Theme.sans(15, weight: .semibold)).foregroundStyle(Theme.ink)
                     Spacer(minLength: 8)
@@ -362,13 +309,20 @@ struct DayEditorView: View {
 
             RowDivider()
             formRawRow(label: "提醒") {
-                HStack(spacing: 6) {
-                    reminderChip(label: "默认", selected: remindIndex < 0) { remindIndex = -1 }
+                Picker("提醒", selection: $reminderOffsets) {
+                    Text("跟随全局设置").tag(Optional<[Int]>.none)
+                    Text("不提醒").tag(Optional<[Int]>([]))
                     ForEach(Self.reminders.indices, id: \.self) { index in
-                        reminderChip(label: Self.reminders[index].label,
-                                     selected: remindIndex == index) { remindIndex = index }
+                        Text(index == 0 ? "当天" : "提前 \(Self.reminders[index].offset) 天")
+                            .tag(Optional([Self.reminders[index].offset]))
+                    }
+                    if let offsets = reminderOffsets, !offsets.isEmpty,
+                       offsets.count != 1 || !Self.reminders.contains(where: { $0.offset == offsets[0] }) {
+                        Text("自定义（\(offsets.count)次）").tag(Optional(offsets))
                     }
                 }
+                .tint(Theme.accent)
+
             }
 
             RowDivider()
@@ -389,31 +343,15 @@ struct DayEditorView: View {
 
     private func formRawRow<Content: View>(label: String,
                                            @ViewBuilder content: () -> Content) -> some View {
-        HStack(spacing: 14) {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 14))
+        return layout {
             Text(label).font(Theme.sans(15, weight: .semibold)).foregroundStyle(Theme.ink)
-            Spacer(minLength: 8)
+            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
             content()
         }
         .cardRow()
-    }
-
-    /// Small selectable reminder chip (ink fill when selected, like the JSX seg buttons).
-    private func reminderChip(label: String, selected: Bool,
-                              action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(Theme.sans(12, weight: .bold))
-                .foregroundStyle(selected ? Color.white : Theme.ink2)
-                .padding(.horizontal, 11)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(selected ? Theme.ink : Theme.bg2)
-                )
-        }
-        .buttonStyle(PressScale(scale: 0.94))
-        .accessibilityLabel(label == "默认" ? "默认提醒，跟随全局设置" : "提醒\(label)")
-        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     // MARK: - Category pills
@@ -422,7 +360,8 @@ struct DayEditorView: View {
         FlowLayout(spacing: 8) {
             ForEach(store.categories) { category in
                 Chip(category.name, selected: categoryID == category.id) {
-                    Sticker(name: stickerForCategory(category), size: 18)
+                    Image(systemName: category.symbolName)
+                        .font(.system(size: 14))
                 } action: {
                     categoryID = category.id
                 }
@@ -432,26 +371,19 @@ struct DayEditorView: View {
         }
     }
 
-    private func stickerForCategory(_ category: CategoryDefinition) -> StickerName {
-        if let cat = DayCategory(rawValue: category.id) {
-            return StickerMap.byCategory[cat] ?? .star
-        }
-        return .star
-    }
-
     // MARK: - Notes card (lined paper)
 
     private var notesCard: some View {
         ZStack(alignment: .topLeading) {
             if note.isEmpty {
                 Text("写下这一天的心情…")
-                    .font(Theme.handCN(20))
+                    .font(Theme.sans(16))
                     .foregroundStyle(Theme.muted)
                     .padding(16)
                     .allowsHitTesting(false)
             }
             TextEditor(text: $note)
-                .font(Theme.handCN(20))
+                .font(Theme.sans(16))
                 .foregroundStyle(Theme.ink)
                 .tint(Theme.ink)
                 .scrollContentBackground(.hidden)
@@ -460,9 +392,8 @@ struct DayEditorView: View {
                 .accessibilityLabel("心情笔记")
         }
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(hex: 0xFFFDF6))
-                .overlay(LinedPaper().clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous)))
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Theme.card)
         )
         .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 1, x: 0, y: 1)
     }
@@ -478,7 +409,10 @@ struct DayEditorView: View {
                 Spacer()
                 Text("选择日期").font(Theme.sans(16, weight: .bold)).foregroundStyle(Theme.ink)
                 Spacer()
-                Button("完成") { showDatePicker = false }
+                Button("完成") {
+                    selectedDate = draftDate
+                    showDatePicker = false
+                }
                     .font(Theme.sans(15, weight: .bold))
                     .foregroundStyle(Theme.ink)
             }
@@ -486,14 +420,14 @@ struct DayEditorView: View {
             .padding(.top, 20)
             .padding(.bottom, 8)
 
-            DatePicker("", selection: $selectedDate, displayedComponents: .date)
+            DatePicker("选择日期", selection: $draftDate, displayedComponents: .date)
                 .datePickerStyle(.graphical)
                 .tint(Theme.ink)
                 .labelsHidden()
                 .padding(.horizontal, 16)
 
             if !solar {
-                Text("农历 \(Lunar.fmtFull(selectedDate))")
+                Text("农历 \(Lunar.fmtFull(draftDate))")
                     .font(Theme.sans(13, weight: .medium))
                     .foregroundStyle(Theme.muted)
                     .padding(.top, 4)
@@ -524,7 +458,7 @@ struct DayEditorView: View {
             categoryID: category.id,
             coverFocusX: coverFocusX,
             coverFocusY: coverFocusY,
-            reminderOffsets: remindIndex < 0 ? nil : [Self.reminders[remindIndex].offset],
+            reminderOffsets: reminderOffsets,
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             location: location.trimmingCharacters(in: .whitespacesAndNewlines),
             pinned: editingDay?.pinned ?? false,
@@ -563,24 +497,5 @@ struct DayEditorView: View {
             image.draw(in: CGRect(origin: .zero, size: target))
         }
         return resized.jpegData(compressionQuality: quality)
-    }
-}
-
-/// Repeating ruled lines for the mood-note card (Add.jsx repeating-linear-gradient).
-private struct LinedPaper: View {
-    var body: some View {
-        Canvas { ctx, size in
-            let spacing: CGFloat = 28
-            var y: CGFloat = spacing
-            let line = Color(hex: 0x15171C).opacity(0.06)
-            while y < size.height {
-                var p = Path()
-                p.move(to: CGPoint(x: 0, y: y))
-                p.addLine(to: CGPoint(x: size.width, y: y))
-                ctx.stroke(p, with: .color(line), lineWidth: 1)
-                y += spacing
-            }
-        }
-        .allowsHitTesting(false)
     }
 }
