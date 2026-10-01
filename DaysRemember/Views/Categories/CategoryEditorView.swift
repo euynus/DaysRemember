@@ -98,7 +98,7 @@ struct CategoryEditorView: View {
                 .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
                 Text(name.isEmpty ? "分类名称" : name)
-                    .font(Theme.sans(20, weight: .heavy))
+                    .font(Theme.sans(22, weight: .medium))
                     .foregroundStyle(name.isEmpty ? Theme.muted : Theme.ink)
                 Text(colorToken.label)
                     .font(Theme.sans(12, weight: .bold))
@@ -106,11 +106,9 @@ struct CategoryEditorView: View {
             }
             Spacer()
         }
-        .padding(16)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
-        .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
-        .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 12, x: 0, y: 8)
+        .overlay(alignment: .bottom) { RowDivider() }
     }
 
     // MARK: - Name field
@@ -119,14 +117,14 @@ struct CategoryEditorView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader("名称")
             TextField("例如：朋友", text: $name)
-                .font(Theme.sans(16, weight: .semibold))
+                .font(Theme.sans(17))
                 .foregroundStyle(Theme.ink)
                 .submitLabel(.done)
                 .padding(.horizontal, 16)
-                .frame(height: 52)
+                .frame(minHeight: 52)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
-                .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
+                .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline, lineWidth: 1) }
         }
     }
 

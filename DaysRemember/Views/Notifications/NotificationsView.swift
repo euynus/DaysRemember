@@ -5,6 +5,7 @@ struct NotificationsView: View {
     @Environment(AppSettings.self) var settings
     @Environment(DayStore.self) var store
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var permissionDenied = false
 
     /// Toggle binding that re-syncs scheduled notifications whenever flipped.
@@ -99,26 +100,33 @@ struct NotificationsView: View {
     private var previewCard: some View {
         let day = store.nearestUpcoming(within: 3650)
         let info = day.map { DayInfo.compute($0) }
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Label("下一个日子", systemImage: "bell.badge")
-                    .font(Theme.sans(12, weight: .semibold))
-                Spacer()
-                Text(sampleTimeDate, format: .dateTime.hour().minute())
-                    .font(Theme.sans(12))
+        return HStack(alignment: .top, spacing: 18) {
+            if let day, !dynamicTypeSize.isAccessibilitySize {
+                PhotoTile(day: day, flat: true, cornerRadius: 3)
+                    .frame(width: 80, height: 106)
             }
-            .foregroundStyle(Theme.accent)
-            Text(previewTitle(day: day, info: info))
-                .font(Theme.sans(24, weight: .bold))
-                .foregroundStyle(Theme.ink)
-            if let day {
-                Text(CNDate.full(DayInfo.compute(day).displayDate))
-                    .font(Theme.sans(14))
-                    .foregroundStyle(Theme.ink2)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label("下一个日子", systemImage: "bell.badge")
+                        .font(Theme.sans(12))
+                    Spacer()
+                    Text(sampleTimeDate, format: .dateTime.hour().minute())
+                        .font(Theme.sans(12))
+                }
+                .foregroundStyle(Theme.accent)
+                Text(previewTitle(day: day, info: info))
+                    .font(Theme.sans(19, weight: .medium))
+                    .foregroundStyle(Theme.ink)
+                if let info {
+                    Text(CNDate.full(info.displayDate))
+                        .font(Theme.sans(12))
+                        .foregroundStyle(Theme.ink2)
+                }
             }
-            Divider()
         }
-        .padding(.vertical, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 22)
+        .overlay(alignment: .bottom) { RowDivider() }
     }
 
     private var sampleTimeDate: Date {

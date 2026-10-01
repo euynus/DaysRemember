@@ -17,8 +17,6 @@ struct CalendarMonthView: View {
     }
 
     private static let monthCN = ["一","二","三","四","五","六","七","八","九","十","十一","十二"]
-    private static let monthEN = ["January","February","March","April","May","June",
-                                  "July","August","September","October","November","December"]
     private static let weekdayCN = ["日","一","二","三","四","五","六"]
 
     private var daysInMonth: Int {
@@ -120,13 +118,12 @@ struct CalendarMonthView: View {
                 month = cal.component(.month, from: today) - 1
             } label: {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: "\(year)年\(month + 1)月")
-                        .font(Theme.sans(24, weight: .bold))
+                    Text(verbatim: "\(year)年")
+                        .font(Theme.sans(12))
+                        .foregroundStyle(Theme.muted)
+                    Text("\(Self.monthCN[month])月")
+                        .font(Theme.sans(32, weight: .medium))
                         .foregroundStyle(Theme.ink)
-                    Text(verbatim: "\(Self.monthEN[month]) \(year)")
-                        .font(Theme.sans(13, weight: .medium))
-                        .foregroundStyle(Theme.catTravel)
-                        .lineLimit(1)
                 }
             }
             .buttonStyle(.plain)
@@ -161,7 +158,7 @@ struct CalendarMonthView: View {
             HStack(spacing: 0) {
                 ForEach(Self.weekdayCN, id: \.self) { d in
                     Text(d)
-                        .font(Theme.sans(11, weight: .bold))
+                        .font(Theme.sans(12))
                         .foregroundStyle(Theme.muted)
                         .frame(maxWidth: .infinity)
                         .padding(.bottom, 8)
@@ -180,8 +177,9 @@ struct CalendarMonthView: View {
                 }
             }
         }
-        .padding(EdgeInsets(top: 14, leading: 12, bottom: 12, trailing: 12))
-        .background(Theme.card)
+        .padding(.vertical, 14)
+        .overlay(alignment: .top) { RowDivider() }
+        .overlay(alignment: .bottom) { RowDivider() }
     }
 
     @ViewBuilder
@@ -194,7 +192,7 @@ struct CalendarMonthView: View {
 
         let cell = VStack(spacing: 1) {
             Text("\(d)")
-                .font(Theme.sans(14, weight: isToday ? .heavy : .semibold))
+                .font(Theme.sans(15, weight: isToday ? .semibold : .regular))
                 .monospacedDigit()
                 .foregroundStyle(isToday ? Color.white : Theme.ink)
             if let term {
@@ -214,7 +212,7 @@ struct CalendarMonthView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .aspectRatio(1, contentMode: .fit)
         .background {
-            RoundedRectangle(cornerRadius: 11, style: .continuous)
+            Circle()
                 .fill(isToday ? Theme.accent : (hasEvents ? Theme.bg2 : .clear))
         }
 
@@ -241,7 +239,7 @@ struct CalendarMonthView: View {
             HStack(spacing: 14) {
                 VStack(spacing: 4) {
                     Text("\(dayNumber)")
-                        .font(Theme.sans(26, weight: .semibold))
+                        .font(Theme.number(32))
                         .monospacedDigit()
                     Text("\(month + 1)月")
                         .font(Theme.sans(11))
@@ -252,7 +250,7 @@ struct CalendarMonthView: View {
                     .frame(width: 56, height: 62)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(day.title)
-                        .font(Theme.sans(16, weight: .semibold))
+                        .font(Theme.sans(16, weight: .medium))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(2)
                     Text(subtitle(for: day, label: store.category(for: day).name))

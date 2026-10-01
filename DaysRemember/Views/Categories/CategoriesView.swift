@@ -21,29 +21,26 @@ struct CategoriesView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     NavigationLink(value: CategoryRoute.all) {
-                        HStack(alignment: .firstTextBaseline) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("全部日子").font(Theme.sans(15, weight: .medium))
-                                Text("\(store.days.count)")
-                                    .font(Theme.sans(56, weight: .semibold))
-                                    .monospacedDigit()
-                            }
+                        HStack(alignment: .firstTextBaseline, spacing: 14) {
+                            Text("\(store.days.count)")
+                                .font(Theme.number(48))
+                            Text("全部日子").font(Theme.sans(14))
                             Spacer()
-                            Image(systemName: "arrow.up.right").font(.title2)
+                            Image(systemName: "arrow.up.right").font(.body)
                         }
-                        .foregroundStyle(Theme.accent)
-                        .padding(.vertical, 16)
+                        .foregroundStyle(Theme.ink)
+                        .padding(.vertical, 4)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     Divider()
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 280 : 145), spacing: 12)], spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 280 : 145), spacing: 18)], spacing: 24) {
                         ForEach(store.categories) { category in
                             categoryTile(category)
                         }
                     }
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             }
         }
@@ -58,24 +55,31 @@ struct CategoriesView: View {
 
     private func categoryTile(_ category: CategoryDefinition) -> some View {
         NavigationLink(value: CategoryRoute.category(category.id)) {
-            VStack(alignment: .leading, spacing: 18) {
-                Image(systemName: category.symbolName)
-                    .font(.system(size: 26, weight: .medium))
-                    .foregroundStyle(category.colorToken.color)
-                    .frame(height: 32)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(category.name)
-                        .font(Theme.sans(18, weight: .semibold))
+            VStack(alignment: .leading, spacing: 12) {
+                if let day = store.days(in: category.id).first {
+                    PhotoTile(day: day, flat: true, cornerRadius: 3)
+                        .frame(height: 118)
+                } else {
+                    Rectangle().fill(category.colorToken.soft)
+                        .frame(height: 118)
+                        .overlay {
+                            Image(systemName: category.symbolName)
+                                .font(.system(size: 30, weight: .light))
+                                .foregroundStyle(category.colorToken.color)
+                        }
+                }
+                HStack(alignment: .firstTextBaseline) {
+                    Label(category.name, systemImage: category.symbolName)
+                        .font(Theme.sans(15, weight: .medium))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(2)
-                    Text("\(store.days(in: category.id).count) 个日子")
-                        .font(Theme.sans(13))
-                        .foregroundStyle(Theme.ink2)
+                    Spacer(minLength: 4)
+                    Text("\(store.days(in: category.id).count)")
+                        .font(Theme.number(22))
+                        .foregroundStyle(Theme.muted)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
-            .padding(18)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 8))
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityIdentifier("category-\(category.id)")
@@ -94,6 +98,7 @@ struct CategoriesView: View {
                     Image(systemName: "ellipsis")
                         .frame(width: 44, height: 44)
                         .foregroundStyle(Theme.ink2)
+                        .background(Theme.bg, in: Circle())
                 }
                 .accessibilityLabel("编辑\(category.name)")
             }
