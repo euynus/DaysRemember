@@ -1,8 +1,5 @@
 import SwiftUI
 
-// Scrapbook month calendar — port of screens/Calendar.jsx. A white calendar card
-// over the paper canvas, today filled ink, marked days dotted in their category
-// color, then a "本月日子" list of mini-polaroid scrapbook rows.
 struct CalendarMonthView: View {
     @Environment(DayStore.self) var store
     @State private var month: Int
@@ -70,30 +67,30 @@ struct CalendarMonthView: View {
 
     var body: some View {
         let eventsByDay = computeEventsByDay()
-        let monthDays = eventsByDay.keys.sorted().flatMap { eventsByDay[$0] ?? [] }
         return VStack(spacing: 0) {
             NavHeader(title: "日历")
-            monthHeader
-            calendarCard(eventsByDay: eventsByDay)
-                .padding(.horizontal, 22)
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 18) {
+                    monthHeader
+                    calendarCard(eventsByDay: eventsByDay)
                     SectionHeader("本月日子")
-                    if monthDays.isEmpty {
+                    if eventsByDay.isEmpty {
                         Text("本月没有记录的日子")
-                            .font(Theme.handCN(20))
+                            .font(Theme.sans(15))
                             .foregroundStyle(Theme.muted)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 24)
                     } else {
-                        ForEach(monthDays) { day in
-                            monthRow(day)
+                        ForEach(eventsByDay.keys.sorted(), id: \.self) { dayNumber in
+                            ForEach(eventsByDay[dayNumber] ?? []) { day in
+                                monthRow(day, dayNumber: dayNumber)
+                            }
                         }
                     }
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 18)
-                .padding(.bottom, 120)
+                .padding(.bottom, 24)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -122,12 +119,11 @@ struct CalendarMonthView: View {
                 month = cal.component(.month, from: today) - 1
             } label: {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: "\(Self.monthCN[month])月")
-                        .font(Theme.sans(32, weight: .heavy))
-                        .tracking(-0.9)
+                    Text(verbatim: "\(year)年\(month + 1)月")
+                        .font(Theme.sans(24, weight: .bold))
                         .foregroundStyle(Theme.ink)
                     Text(verbatim: "\(Self.monthEN[month]) \(year)")
-                        .font(Theme.hand(24))
+                        .font(Theme.sans(13, weight: .medium))
                         .foregroundStyle(Theme.catTravel)
                         .lineLimit(1)
                 }
@@ -146,7 +142,6 @@ struct CalendarMonthView: View {
                 .accessibilityLabel("下个月")
             }
         }
-        .padding(.horizontal, 24)
         .padding(.top, 6)
         .padding(.bottom, 12)
     }
@@ -185,8 +180,7 @@ struct CalendarMonthView: View {
             }
         }
         .padding(EdgeInsets(top: 14, leading: 12, bottom: 12, trailing: 12))
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white))
-        .floatShadow()
+        .background(Theme.card)
     }
 
     @ViewBuilder
@@ -204,7 +198,7 @@ struct CalendarMonthView: View {
                 .foregroundStyle(isToday ? Color.white : Theme.ink)
             if let term {
                 Text(term)
-                    .font(Theme.sans(7.5, weight: .bold))
+                    .font(Theme.sans(9, weight: .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .foregroundStyle(isToday ? Color.white.opacity(0.8) : Theme.catTravel)
@@ -220,7 +214,7 @@ struct CalendarMonthView: View {
         .aspectRatio(1, contentMode: .fit)
         .background {
             RoundedRectangle(cornerRadius: 11, style: .continuous)
-                .fill(isToday ? Theme.ink : (hasEvents ? Theme.bg : .clear))
+                .fill(isToday ? Theme.accent : (hasEvents ? Theme.bg2 : .clear))
         }
 
         if hasEvents {
@@ -241,55 +235,38 @@ struct CalendarMonthView: View {
 
     // MARK: - This-month list
 
-    private func monthRow(_ day: Day) -> some View {
-        let info = DayInfo.compute(day)
-        let cat = store.category(for: day)
-        let cal = CNDate.calendar
-        let dayNum = cal.component(.day, from: info.displayDate)
-        let countdown = info.isToday ? "Today" : (info.isPast ? "+\(info.days)" : "\(info.days)d")
-
-        return Button { onOpen(day) } label: {
+    private func monthRow(_ day: Day, dayNumber: Int) -> some View {
+        Button { onOpen(day) } label: {
             HStack(spacing: 14) {
-                VStack(spacing: 3) {
-                    Text("\(dayNum)")
-                        .font(Theme.sans(22, weight: .heavy))
+                VStack(spacing: 4) {
+                    Text("\(dayNumber)")
+                        .font(Theme.sans(26, weight: .semibold))
                         .monospacedDigit()
-                        .foregroundStyle(cat.colorToken.color)
-                    Text(CNDate.weekday(info.displayDate).replacingOccurrences(of: "星期", with: "周"))
-                        .font(Theme.sans(10, weight: .semibold))
-                        .foregroundStyle(Theme.muted)
+                    Text("\(month + 1)月")
+                        .font(Theme.sans(11))
                 }
+                .foregroundStyle(Theme.accent)
                 .frame(width: 44)
-
-                VStack(spacing: 0) {
-                    PhotoTile(day: day, flat: true, cornerRadius: 6)
-                        .frame(width: 38, height: 38)
-                }
-                .polaroidCard(rotation: -3, padding: 4)
-                .frame(width: 46)
-
-                VStack(alignment: .leading, spacing: 1) {
+                PhotoTile(day: day, flat: true, cornerRadius: 8)
+                    .frame(width: 56, height: 62)
+                VStack(alignment: .leading, spacing: 6) {
                     Text(day.title)
-                        .font(Theme.sans(15, weight: .bold))
-                        .tracking(-0.1)
+                        .font(Theme.sans(16, weight: .semibold))
                         .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                    Text(subtitle(for: day, label: cat.name))
-                        .font(Theme.sans(12, weight: .medium))
-                        .foregroundStyle(Theme.muted)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                    Text(subtitle(for: day, label: store.category(for: day).name))
+                        .font(Theme.sans(12))
+                        .foregroundStyle(Theme.ink2)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(countdown)
-                    .font(Theme.hand(20))
-                    .foregroundStyle(Theme.ink2)
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(Theme.muted)
             }
-            .padding(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 14))
-            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white))
-            .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 2, x: 0, y: 1)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(PressScale())
+        .buttonStyle(PressableTileStyle())
     }
 
     private func subtitle(for day: Day, label: String) -> String {
@@ -335,7 +312,6 @@ private struct CalendarEventPicker: View {
                                     PhotoTile(day: event, flat: true, cornerRadius: 6)
                                         .frame(width: 38, height: 38)
                                 }
-                                .polaroidCard(rotation: -3, padding: 4)
                                 .frame(width: 46)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(event.title)
@@ -348,7 +324,7 @@ private struct CalendarEventPicker: View {
                                 Spacer()
                             }
                             .padding(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 14))
-                            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white))
+                            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
                             .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 2, x: 0, y: 1)
                         }
                         .buttonStyle(PressScale())
