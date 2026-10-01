@@ -3,6 +3,7 @@ import SwiftUI
 struct ShareCardView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
     @State private var template: Template = .polaroid
     @State private var sharedImage: SharedImage?
@@ -35,11 +36,14 @@ struct ShareCardView: View {
                 FAB(systemName: "square.and.arrow.down", size: 42, action: saveToPhotos)
                     .accessibilityLabel("保存到相册")
             }
+            templatePicker
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
             ScrollView {
                 VStack(spacing: 0) {
                     card.frame(maxWidth: 320)
-                    templatePicker.padding(.top, 18)
-                    shareGrid.padding(.top, 24)
+                        .environment(\.dynamicTypeSize, .large)
+                        .shadow(color: Theme.ink.opacity(0.06), radius: 12, y: 5)
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
@@ -48,6 +52,12 @@ struct ShareCardView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
+        .safeAreaInset(edge: .bottom) {
+            shareGrid
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(Theme.bg)
+        }
         .sensoryFeedback(.selection, trigger: template)
         .overlay(alignment: .top) {
             if let savedToast {
@@ -70,9 +80,7 @@ struct ShareCardView: View {
 
     @MainActor
     private func renderCardImage() -> UIImage? {
-        // Render onto an opaque paper margin so the exported image has filled corners
-        // and room for the card's drop shadow (a bare card leaves transparent corners
-        // and clips the shadow at the 320pt edge).
+        // Keep the printed card and its on-screen preview at the same text scale.
         let content = card.frame(width: 320).padding(24).background(Theme.bg)
             .environment(\.dynamicTypeSize, .large)
         let renderer = ImageRenderer(content: content)
@@ -133,16 +141,22 @@ struct ShareCardView: View {
     }
 
     private var shareGrid: some View {
-        HStack(spacing: 16) {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 10))
+            : AnyLayout(HStackLayout(spacing: 16))
+        return layout {
             Button(action: presentShareSheet) {
                 Label("分享图片", systemImage: "square.and.arrow.up")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.accent)
             Button(action: saveToPhotos) {
                 Label("保存", systemImage: "square.and.arrow.down")
-                    .frame(minHeight: 44)
+                    .lineLimit(1)
+                    .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, minHeight: 44)
             }
             .buttonStyle(.bordered)
             .tint(Theme.accent)
@@ -156,68 +170,69 @@ struct SharePostcard: View {
     let template: ShareCardView.Template
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack {
-                Text("时光").font(Theme.sans(13, weight: .semibold))
-                Spacer()
-                Text(CNDate.full(info.displayDate)).font(Theme.sans(11))
-            }
-            .foregroundStyle(Theme.ink2)
-            Divider()
-            switch template {
-            case .polaroid:
-                cover.frame(height: 240)
-                title
-                countdown
-                note
-            case .note:
-                title
-                note
-                cover.frame(height: 160)
-                countdown
-            case .minimal:
-                title
-                countdown.padding(.vertical, 32)
-                note
-            case .collage:
-                HStack(alignment: .top, spacing: 16) {
-                    cover.frame(width: 110, height: 200)
-                    VStack(alignment: .leading, spacing: 16) {
-                        title
-                        countdown
-                    }
+        VStack(alignment: .leading, spacing: 0) {
+            if template == .polaroid { cover.frame(height: 230) }
+            VStack(alignment: .leading, spacing: 20) {
+                HStack {
+                    Text("时光").foregroundStyle(Theme.accent)
+                    Spacer()
+                    Text(CNDate.full(info.displayDate)).foregroundStyle(Theme.muted)
                 }
-                note
+                .font(Theme.sans(11))
+                switch template {
+                case .polaroid:
+                    title
+                    countdown
+                    note
+                case .note:
+                    title
+                    note
+                    cover.frame(height: 150)
+                    countdown
+                case .minimal:
+                    title
+                    countdown.padding(.vertical, 28)
+                    note
+                case .collage:
+                    HStack(alignment: .top, spacing: 18) {
+                        cover.frame(width: 108, height: 210)
+                        VStack(alignment: .leading, spacing: 16) {
+                            title
+                            countdown
+                        }
+                    }
+                    note
+                }
+                Rectangle().fill(Theme.hairline).frame(height: 1)
             }
+            .padding(22)
         }
-        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 8))
+        .background(Theme.card)
     }
 
     private var cover: some View {
-        PhotoTile(day: day, flat: true, cornerRadius: 4)
+        PhotoTile(day: day, flat: true, cornerRadius: 0)
     }
 
     private var title: some View {
         Text(day.title)
-            .font(Theme.sans(23, weight: .bold))
+            .font(Theme.sans(23, weight: .medium))
             .foregroundStyle(Theme.ink)
             .fixedSize(horizontal: false, vertical: true)
     }
 
     private var countdown: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(info.isToday ? "今天" : "\(info.days)")
-                .font(Theme.sans(template == .minimal ? 76 : 44, weight: .semibold))
-                .monospacedDigit()
+                .font(info.isToday ? Theme.sans(34) : Theme.number(template == .minimal ? 112 : 66))
                 .foregroundStyle(Theme.accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
             if !info.isToday {
                 Text(info.isPast ? "天前" : "天后")
-                    .font(Theme.sans(13))
-                    .foregroundStyle(Theme.ink2)
+                    .font(Theme.sans(12))
+                    .foregroundStyle(Theme.muted)
             }
         }
     }
@@ -226,8 +241,8 @@ struct SharePostcard: View {
     private var note: some View {
         if !day.note.isEmpty {
             Text(day.note)
-                .font(Theme.sans(15))
-                .lineSpacing(5)
+                .font(Theme.sans(14))
+                .lineSpacing(6)
                 .foregroundStyle(Theme.ink2)
                 .fixedSize(horizontal: false, vertical: true)
         }

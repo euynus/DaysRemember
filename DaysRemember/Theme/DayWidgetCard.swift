@@ -14,7 +14,7 @@ struct DayWidgetCard: View {
             switch size {
             case .small:
                 VStack(alignment: .leading, spacing: 8) {
-                    PhotoTile(day: day, flat: true, cornerRadius: 6)
+                    PhotoTile(day: day, flat: true, cornerRadius: 2)
                         .frame(height: 46)
                     title
                     countdown
@@ -29,13 +29,13 @@ struct DayWidgetCard: View {
                         date
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    PhotoTile(day: day, flat: true, cornerRadius: 8)
+                    PhotoTile(day: day, flat: true, cornerRadius: 2)
                         .frame(width: 106)
                 }
             case .large:
                 VStack(alignment: .leading, spacing: 14) {
                     HStack { eyebrow; Spacer(); date }
-                    PhotoTile(day: day, flat: true, cornerRadius: 8)
+                    PhotoTile(day: day, flat: true, cornerRadius: 2)
                     title
                     countdown
                 }
@@ -43,7 +43,9 @@ struct DayWidgetCard: View {
         }
         .padding(size == .small ? 12 : 18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.bg)
+        .background(Theme.card)
+        // A widget has fixed physical bounds, unlike the surrounding app controls.
+        .dynamicTypeSize(...DynamicTypeSize.large)
     }
 
     private var eyebrow: some View {
@@ -54,7 +56,7 @@ struct DayWidgetCard: View {
 
     private var title: some View {
         Text(day.title)
-            .font(Theme.sans(size == .small ? 13 : 18, weight: .semibold))
+            .font(Theme.sans(size == .small ? 13 : 17, weight: .medium))
             .foregroundStyle(Theme.ink)
             .lineLimit(size == .medium ? 2 : 1)
             .minimumScaleFactor(0.7)
@@ -63,7 +65,7 @@ struct DayWidgetCard: View {
     private var countdown: some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
             Text(info.isToday ? "今天" : "\(info.days)")
-                .font(Theme.sans(size == .small ? 28 : 42, weight: .semibold))
+                .font(info.isToday ? Theme.sans(24) : Theme.number(size == .small ? 34 : 52))
                 .monospacedDigit()
                 .foregroundStyle(Theme.accent)
                 .lineLimit(1)
