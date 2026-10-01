@@ -1,9 +1,5 @@
 import SwiftUI
 
-// Scrapbook detail page — port of `screens/Detail.jsx`. The cool paper canvas, a
-// tilted hero polaroid with a clipped countdown sticky + washi tape, an optional
-// lined-paper handwritten note, info chips, and a memories strip. All edit /
-// share / pin / delete wiring is preserved from the prior implementation.
 struct DetailView: View {
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
@@ -22,10 +18,11 @@ struct DetailView: View {
 
         VStack(spacing: 0) {
             topBar
-            titleBlock(day: day, info: info)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
+                    titleBlock(day: day, info: info)
+                        .padding(.bottom, 24)
                     hero(day: day, info: info)
 
                     if !day.note.isEmpty {
@@ -88,7 +85,7 @@ struct DetailView: View {
             }
         }
         .padding(.horizontal, 18)
-        .padding(.top, 58)
+        .padding(.top, 12)
         .padding(.bottom, 6)
     }
 
@@ -106,14 +103,12 @@ struct DetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(day.title)
                 .font(Theme.sans(32, weight: .heavy))
-                .tracking(-0.6)
                 .foregroundStyle(Theme.ink)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
             MetaRow(metaItems(day: day, info: info))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24)
         .padding(.top, 10)
         .padding(.bottom, 4)
     }
@@ -124,76 +119,40 @@ struct DetailView: View {
         return items
     }
 
-    // MARK: - Hero polaroid + countdown sticky + tape
-
     private func hero(day: Day, info: DayInfo) -> some View {
-        let nc = noteColorFor(day.id)
-        let countLabel = info.isToday ? "今天" : (info.isPast ? "天前" : "天后")
-
-        return ZStack(alignment: .topLeading) {
-            // Polaroid card
-            VStack(spacing: 0) {
-                PhotoTile(day: day, cornerRadius: 12)
-                    .frame(height: 280)
-                HStack {
-                    Text(enDate(info.displayDate))
-                        .font(Theme.hand(26))
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(info.isToday ? "今天" : "\(info.days)")
+                    .font(Theme.sans(info.isToday ? 48 : 72, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.accent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                if !info.isToday {
+                    Text(info.isPast ? "天前" : "天后")
+                        .font(Theme.sans(18))
                         .foregroundStyle(Theme.ink2)
-                    Spacer()
-                    Sticker(name: stickerFor(day), size: 42, rotate: 8)
                 }
-                .padding(.top, 12)
-                .padding(.horizontal, 6)
-                .padding(.bottom, 4)
+                Spacer(minLength: 0)
             }
-            .polaroidCard(rotation: -1.5)
-            .padding(.top, 8)
-
-            // Washi tape (top-left)
-            Tape(color: Color(.sRGB, red: 180/255, green: 221/255, blue: 240/255, opacity: 0.75), width: 70)
-                .rotationEffect(.degrees(-6))
-                .offset(x: 24, y: -2)
-
-            // Countdown sticky (top-right, clipped)
-            StickyNote(color: nc.paper, ink: nc.ink, rotate: 6, clip: true, size: .l) {
-                VStack(spacing: 0) {
-                    Text("\(info.days)")
-                        .font(Theme.sans(48, weight: .bold))
-                        .monospacedDigit()
-                    Text(countLabel)
-                        .font(Theme.handCN(18))
-                }
-                .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(.trailing, 10)
-            .offset(y: -2)
+            PhotoTile(day: day, flat: true, cornerRadius: 8)
+                .frame(height: 260)
         }
     }
 
-    // MARK: - Lined-paper handwritten note
-
     private func linedNote(_ text: String) -> some View {
-        ZStack(alignment: .top) {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("记忆", systemImage: "text.alignleft")
+                .font(Theme.sans(12, weight: .semibold))
+                .foregroundStyle(Theme.accent)
             Text(text)
-                .font(Theme.handCN(21))
-                .lineSpacing(28 - 21)
-                .foregroundStyle(Color(hex: 0x3A3A3A))
+                .font(Theme.sans(17))
+                .lineSpacing(6)
+                .foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 18)
-                .padding(.top, 18)
-                .padding(.bottom, 16)
-                .background(
-                    RuledLines()
-                        .background(Color(hex: 0xFFFDF6))
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 1, x: 0, y: 1)
-                .shadow(color: Color(hex: 0x15171C).opacity(0.08), radius: 10, x: 0, y: 8)
-                .rotationEffect(.degrees(0.4))
-
-            Paperclip().offset(y: -10)
+                .textSelection(.enabled)
         }
+        .padding(.vertical, 16)
     }
 
     // MARK: - Info chips (wrap)
@@ -216,23 +175,4 @@ struct DetailView: View {
         }
     }
 
-}
-
-/// Repeating horizontal rule lines for the lined-paper note background
-/// (the `repeating-linear-gradient` in Detail.jsx).
-private struct RuledLines: View {
-    var spacing: CGFloat = 28
-    var body: some View {
-        GeometryReader { geo in
-            Path { p in
-                var y = spacing
-                while y < geo.size.height {
-                    p.move(to: CGPoint(x: 0, y: y))
-                    p.addLine(to: CGPoint(x: geo.size.width, y: y))
-                    y += spacing
-                }
-            }
-            .stroke(Color(hex: 0x15171C).opacity(0.06), lineWidth: 1)
-        }
-    }
 }
