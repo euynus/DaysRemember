@@ -21,19 +21,24 @@ struct DetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    titleBlock(day: day, info: info)
-                        .padding(.bottom, 24)
-                    hero(day: day, info: info)
-
-                    if !day.note.isEmpty {
-                        linedNote(day.note)
-                            .padding(.top, 26)
+                    PhotoTile(day: day, flat: true, cornerRadius: 0)
+                        .frame(height: 280)
+                    VStack(alignment: .leading, spacing: 20) {
+                        titleBlock(day: day, info: info)
+                        hero(day: day, info: info)
+                        RowDivider()
+                        if !day.note.isEmpty { linedNote(day.note) }
+                        infoChips(day: day, info: info)
+                        Button { showShare = true } label: {
+                            Label("分享这一天", systemImage: "square.and.arrow.up")
+                                .font(Theme.sans(15, weight: .medium))
+                                .frame(maxWidth: .infinity, minHeight: 48)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(Theme.accent)
                     }
-
-                    infoChips(day: day, info: info)
-                        .padding(.top, 22)
+                    .padding(24)
                 }
-                .padding(.horizontal, 24)
                 .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
@@ -75,11 +80,11 @@ struct DetailView: View {
                     Button("删除", systemImage: "trash", role: .destructive) { showDeleteConfirm = true }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 18))
                         .foregroundStyle(Theme.ink)
                         .frame(width: 46, height: 46)
                         .background(Circle().fill(Color.white))
-                        .floatShadow()
+                        .overlay { Circle().strokeBorder(Theme.hairline, lineWidth: 1) }
                 }
                 .accessibilityLabel("更多操作")
             }
@@ -102,15 +107,13 @@ struct DetailView: View {
     private func titleBlock(day: Day, info: DayInfo) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(day.title)
-                .font(Theme.sans(32, weight: .heavy))
+                .font(Theme.sans(28, weight: .medium))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
             MetaRow(metaItems(day: day, info: info))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 10)
-        .padding(.bottom, 4)
     }
 
     private func metaItems(day: Day, info: DayInfo) -> [String] {
@@ -123,36 +126,33 @@ struct DetailView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(info.isToday ? "今天" : "\(info.days)")
-                    .font(Theme.sans(info.isToday ? 48 : 72, weight: .semibold))
+                    .font(info.isToday ? Theme.sans(44) : Theme.number(100))
                     .monospacedDigit()
                     .foregroundStyle(Theme.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 if !info.isToday {
                     Text(info.isPast ? "天前" : "天后")
-                        .font(Theme.sans(18))
+                        .font(Theme.sans(14))
                         .foregroundStyle(Theme.ink2)
                 }
                 Spacer(minLength: 0)
             }
-            PhotoTile(day: day, flat: true, cornerRadius: 8)
-                .frame(height: 260)
         }
     }
 
     private func linedNote(_ text: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("记忆", systemImage: "text.alignleft")
-                .font(Theme.sans(12, weight: .semibold))
+                .font(Theme.sans(12))
                 .foregroundStyle(Theme.accent)
             Text(text)
-                .font(Theme.sans(17))
+                .font(Theme.sans(16))
                 .lineSpacing(6)
                 .foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .textSelection(.enabled)
         }
-        .padding(.vertical, 16)
     }
 
     // MARK: - Info chips (wrap)

@@ -76,10 +76,18 @@ struct HomeView: View {
                                 .padding(.bottom, feedDays.isEmpty ? 0 : 26)
                         }
                         if !feedDays.isEmpty {
+                            HStack {
+                                SectionHeader(filter == .all ? "日子清单" : label(for: filter))
+                                Text("\(feedDays.count)")
+                                    .font(Theme.sans(12))
+                                    .foregroundStyle(Theme.muted)
+                            }
+                            .padding(.top, 8)
+                            .padding(.bottom, 10)
                             DayList(days: feedDays, onOpen: onOpen)
                         }
                     }
-                    .padding(.horizontal, 22)
+                    .padding(.horizontal, 24)
                     .padding(.top, 4)
                     .padding(.bottom, 24)
                 }
@@ -95,7 +103,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center) {
                 Text("时光")
-                    .font(Theme.sans(34, weight: .heavy))
+                    .font(Theme.sans(30, weight: .medium))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -104,7 +112,7 @@ struct HomeView: View {
                     Button("小组件", systemImage: "rectangle.3.group") { showingWidgets = true }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 18, weight: .regular))
                         .foregroundStyle(Theme.ink2)
                         .frame(width: 44, height: 44)
                 }
@@ -121,9 +129,9 @@ struct HomeView: View {
             }
             MetaRow(metaItems)
         }
-        .padding(.horizontal, 22)
+        .padding(.horizontal, 24)
         .padding(.top, 16)
-        .padding(.bottom, 6)
+        .padding(.bottom, 12)
     }
 
     /// Today's date · lunar day · solar term (colored) — the JSX header `.meta` line.
@@ -174,16 +182,28 @@ struct HomeView: View {
 
     private var chips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 9) {
+            HStack(spacing: 24) {
                 ForEach(filters, id: \.self) { f in
-                    Chip(label(for: f), selected: f == filter) { filter = f }
+                    Button { filter = f } label: {
+                        Text(label(for: f))
+                            .font(Theme.sans(14, weight: f == filter ? .semibold : .regular))
+                            .foregroundStyle(f == filter ? Theme.ink : Theme.muted)
+                            .frame(minHeight: 44)
+                            .overlay(alignment: .bottom) {
+                                if f == filter {
+                                    Rectangle().fill(Theme.accent).frame(height: 2)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(f == filter ? .isSelected : [])
                 }
             }
-            .padding(.horizontal, 22)
+            .padding(.horizontal, 24)
         }
         .scrollClipDisabled()
-        .padding(.top, 14)
-        .padding(.bottom, 8)
+        .overlay(alignment: .bottom) { RowDivider() }
+        .padding(.bottom, 4)
     }
 
     private func label(for filter: Filter) -> String {

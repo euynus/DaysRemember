@@ -11,20 +11,17 @@ struct DayRow: View {
         Button { onOpen(day) } label: {
             HStack(spacing: 14) {
                 if !dynamicTypeSize.isAccessibilitySize {
-                    PhotoTile(day: day, flat: true, cornerRadius: 8)
-                        .frame(width: 76, height: 84)
+                    PhotoTile(day: day, flat: true, cornerRadius: 3)
+                        .frame(width: 62, height: 72)
                 }
                 VStack(alignment: .leading, spacing: 7) {
                     Text(day.title)
-                        .font(Theme.sans(17, weight: .semibold))
+                        .font(Theme.sans(16, weight: .medium))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                    Text(CNDate.short(info.displayDate))
+                    Text("\(CNDate.short(info.displayDate)) · \(store.category(for: day).name)")
                         .font(Theme.sans(12))
-                        .foregroundStyle(Theme.ink2)
-                    Label(store.category(for: day).name, systemImage: store.category(for: day).symbolName)
-                        .font(Theme.sans(11, weight: .medium))
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.muted)
                 }
                 Spacer(minLength: 4)
                 VStack(alignment: .trailing, spacing: 3) {
@@ -34,11 +31,11 @@ struct DayRow: View {
                             .foregroundStyle(Theme.catLove)
                     }
                     Text(info.isToday ? "今天" : "\(info.days)")
-                        .font(Theme.sans(info.isToday ? 22 : 30, weight: .semibold))
+                        .font(info.isToday ? Theme.sans(22) : Theme.number(38))
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(info.isPast ? Theme.ink2 : Theme.ink)
                     if !info.isToday {
                         Text(info.isPast ? "天前" : "天后")
                             .font(Theme.sans(11))
@@ -46,8 +43,9 @@ struct DayRow: View {
                     }
                 }
             }
-            .padding(12)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 8))
+            .padding(.vertical, 16)
+            .contentShape(Rectangle())
+            .overlay(alignment: .bottom) { RowDivider() }
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
@@ -57,52 +55,52 @@ struct DayRow: View {
 }
 
 struct UpcomingDayView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
     var onOpen: (Day) -> Void = { _ in }
 
     var body: some View {
         let info = DayInfo.compute(day)
         Button { onOpen(day) } label: {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Label("即将到来", systemImage: "sun.max")
-                        .font(Theme.sans(12, weight: .semibold))
+                    Text("即将到来")
+                        .font(Theme.sans(12, weight: .medium))
                         .foregroundStyle(Theme.accent)
                     Spacer()
-                    Text(CNDate.short(info.displayDate))
+                    Image(systemName: "arrow.up.right")
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.ink2)
                 }
-                PhotoTile(day: day, flat: true, cornerRadius: 8)
-                    .frame(height: 210)
-                    .overlay(alignment: .topTrailing) {
-                        VStack(spacing: 2) {
-                            Text(info.isToday ? "今天" : "\(info.days)")
-                                .font(Theme.sans(info.isToday ? 26 : 42, weight: .semibold))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.5)
-                            if !info.isToday {
-                                Text("天后").font(Theme.sans(12, weight: .medium))
-                            }
-                        }
-                        .foregroundStyle(Theme.ink)
-                        .padding(14)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
-                        .padding(12)
+                PhotoTile(day: day, flat: true, cornerRadius: 3)
+                    .frame(height: 224)
+                let layout = dynamicTypeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+                    : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+                layout {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(day.title)
+                            .font(Theme.sans(24, weight: .medium))
+                            .foregroundStyle(Theme.ink)
+                            .multilineTextAlignment(.leading)
+                        Text(CNDate.full(info.displayDate))
+                            .font(Theme.sans(12))
+                            .foregroundStyle(Theme.muted)
                     }
-                HStack {
-                    Text(day.title)
-                        .font(Theme.sans(25, weight: .bold))
-                        .foregroundStyle(Theme.ink)
-                        .multilineTextAlignment(.leading)
-                    Spacer(minLength: 8)
-                    Image(systemName: "arrow.up.right")
-                        .font(.title3)
-                        .foregroundStyle(Theme.accent)
+                    if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        Text(info.isToday ? "今天" : "\(info.days)")
+                            .font(info.isToday ? Theme.sans(32) : Theme.number(76))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                        if !info.isToday {
+                            Text("天后").font(Theme.sans(11))
+                        }
+                    }
+                    .foregroundStyle(Theme.accent)
                 }
             }
-            .padding(.vertical, 12)
+            .padding(.top, 18)
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)

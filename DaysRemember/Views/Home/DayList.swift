@@ -5,7 +5,7 @@ struct DayList: View {
     var onOpen: (Day) -> Void = { _ in }
 
     var body: some View {
-        LazyVStack(spacing: 12) {
+        LazyVStack(spacing: 0) {
             ForEach(days) { day in
                 DayRow(day: day, onOpen: onOpen)
                     .dayContextMenu(day: day)
