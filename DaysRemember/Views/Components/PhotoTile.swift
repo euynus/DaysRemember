@@ -38,8 +38,7 @@ private enum PhotoDecodeCache {
     }
 }
 
-/// A photo placeholder — colored gradient + optional bottom-darkening scrim.
-/// When `imageData` is non-nil it is rendered in place of the gradient.
+/// User photos take precedence over bundled covers; both obey the same clipping bounds.
 struct PhotoTile: View {
     let style: PhotoStyle
     var imageData: Data? = nil
@@ -67,9 +66,7 @@ struct PhotoTile: View {
 
     var body: some View {
         let pickedImage = imageData.flatMap(PhotoDecodeCache.decoded)
-        // Real photographs cover the full color range; the gradient palette already
-        // darkens at the bottom by design. So picked photos need a stronger scrim
-        // (and an earlier ramp) to keep white overlay text legible.
+        // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
         let scrimStartY = pickedImage != nil ? 0.25 : 0.35
 

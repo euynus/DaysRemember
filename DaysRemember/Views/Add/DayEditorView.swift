@@ -29,8 +29,8 @@ struct DayEditorView: View {
     @State private var showDatePicker = false
 
     private static let pickerOptions: [PhotoStyle] = [
-        .systemDefault, .wedding, .baby, .birthday, .japan, .study, .work, .pet, .home,
-    ] + PhotoStyle.categorySketchPresets
+        .systemDefault, .birthday, .japan, .study, .home,
+    ]
     private static let reminders: [(label: String, offset: Int)] = [
         ("当天", 0), ("1天", 1), ("3天", 3), ("7天", 7)
     ]
@@ -61,16 +61,12 @@ struct DayEditorView: View {
             navBar
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
+                    titleField.padding(.top, 12).padding(.bottom, 22)
                     livePreview
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
-                        .padding(.bottom, 26)
-
-                    SectionHeader("标题").padding(.bottom, 10)
-                    titleField.padding(.bottom, 22)
-
-                    SectionHeader("封面").padding(.bottom, 10)
-                    coverPicker.padding(.bottom, 22)
+                        .padding(.bottom, 12)
+                    coverPicker.padding(.bottom, 28)
 
                     formCard.padding(.bottom, 22)
 
@@ -132,8 +128,8 @@ struct DayEditorView: View {
     private var livePreview: some View {
         PhotoTile(style: photo, imageData: photoData,
                   focusX: coverFocusX, focusY: coverFocusY,
-                  flat: true, cornerRadius: 8)
-            .frame(height: 180)
+                  flat: true, cornerRadius: 3)
+            .frame(height: 200)
             .gesture(focusDrag)
             .accessibilityElement()
             .accessibilityLabel("封面取景")
@@ -172,14 +168,12 @@ struct DayEditorView: View {
     private var titleField: some View {
         TextField("", text: $title,
                   prompt: Text("给这一天起个名字").foregroundStyle(Theme.muted))
-            .font(Theme.sans(17, weight: .bold))
+            .font(Theme.sans(25, weight: .medium))
             .foregroundStyle(Theme.ink)
             .tint(Theme.ink)
             .submitLabel(.done)
-            .padding(.horizontal, 16)
             .padding(.vertical, 14)
-            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
-            .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
+            .overlay(alignment: .bottom) { RowDivider() }
             .accessibilityLabel("日子名称")
     }
 
@@ -189,20 +183,21 @@ struct DayEditorView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 ForEach(Self.pickerOptions, id: \.self) { preset in
+                    let selected = photoData == nil && photo.assetName == preset.assetName
                     Button {
                         pickerItem = nil
                         photo = preset
                         photoData = nil
                         resetFocus()
                     } label: {
-                        miniPolaroid(selected: photo == preset && photoData == nil) {
+                        miniPolaroid(selected: selected) {
                             PhotoTile(style: preset, flat: true, cornerRadius: 8)
                                 .frame(width: 50, height: 50)
                         }
                     }
                     .buttonStyle(PressScale(scale: 0.95))
                     .accessibilityLabel("选择\(preset.displayName)封面")
-                    .accessibilityAddTraits(photo == preset && photoData == nil ? [.isSelected] : [])
+                    .accessibilityAddTraits(selected ? [.isSelected] : [])
                 }
                 photosPickerTile
             }
@@ -211,17 +206,16 @@ struct DayEditorView: View {
         }
     }
 
-    /// White mini polaroid card (~58 wide) with a 3pt ink outline when selected.
+    /// Compact cover swatch with an explicit selection outline.
     private func miniPolaroid<Content: View>(selected: Bool,
                                              @ViewBuilder content: () -> Content) -> some View {
         content()
             .padding(4)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.white))
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(selected ? Theme.ink : Color.clear, lineWidth: 3)
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(selected ? Theme.accent : Theme.hairline, lineWidth: selected ? 2 : 1)
             }
-            .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 2, x: 0, y: 2)
     }
 
     private var photosPickerTile: some View {
@@ -395,7 +389,7 @@ struct DayEditorView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Theme.card)
         )
-        .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 1, x: 0, y: 1)
+        .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline, lineWidth: 1) }
     }
 
     // MARK: - Date picker sheet
