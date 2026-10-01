@@ -1,33 +1,7 @@
 import SwiftUI
 
-enum AppTab: String, Hashable, CaseIterable {
+enum AppTab: String, Hashable {
     case home, calendar, categories, notifications
-
-    var label: String {
-        switch self {
-        case .home: return "日子"
-        case .calendar: return "日历"
-        case .categories: return "分类"
-        case .notifications: return "提醒"
-        }
-    }
-
-    var iconName: String {
-        switch self {
-        case .home: return "square.grid.2x2"
-        case .calendar: return "calendar"
-        case .categories: return "tag"
-        case .notifications: return "bell"
-        }
-    }
-
-    /// `calendar` has no `.fill` variant, so we keep the same name and lean on weight for emphasis.
-    var iconNameFilled: String {
-        switch self {
-        case .calendar: return "calendar"
-        default: return iconName + ".fill"
-        }
-    }
 }
 
 struct RootTabView: View {
@@ -119,9 +93,19 @@ struct RootTabView: View {
 
     private var categoriesStack: some View {
         NavigationStack(path: $categoryPath) {
-            CategoriesView(onOpen: { day in categoryPath.append(day) })
+            CategoriesView()
                 .toolbar(.hidden, for: .navigationBar)
                 .dayDetailDestination()
+                .navigationDestination(for: CategoryRoute.self) { route in
+                    switch route {
+                    case .all:
+                        CategoryDaysListView(title: "全部日子", categoryID: nil,
+                                             onOpen: { categoryPath.append($0) })
+                    case .category(let id):
+                        CategoryDaysListView(title: store.category(for: id).name, categoryID: id,
+                                             onOpen: { categoryPath.append($0) })
+                    }
+                }
         }
     }
 }

@@ -5,6 +5,7 @@ struct HomeView: View {
     @State private var filter: Filter = .all
     @State private var isSearching = false
     @State private var searchText = ""
+    @State private var showingWidgets = false
     @FocusState private var searchFocused: Bool
     var onOpen: (Day) -> Void = { _ in }
     var onAdd: () -> Void = {}
@@ -70,12 +71,12 @@ struct HomeView: View {
                 } else {
                     VStack(spacing: 0) {
                         if filter == .all, searchText.isEmpty, let hero {
-                            HeroPolaroid(day: hero, onOpen: onOpen)
+                            UpcomingDayView(day: hero, onOpen: onOpen)
                                 .dayContextMenu(day: hero)
                                 .padding(.bottom, feedDays.isEmpty ? 0 : 26)
                         }
                         if !feedDays.isEmpty {
-                            MosaicGrid(days: feedDays, onOpen: onOpen)
+                            DayList(days: feedDays, onOpen: onOpen)
                         }
                     }
                     .padding(.horizontal, 22)
@@ -87,18 +88,27 @@ struct HomeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
         .sensoryFeedback(.selection, trigger: filter)
+        .sheet(isPresented: $showingWidgets) { WidgetsPreviewView() }
     }
 
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center) {
                 Text("时光")
                     .font(Theme.sans(34, weight: .heavy))
                     .foregroundStyle(Theme.ink)
-                MetaRow(metaItems)
-            }
-            Spacer(minLength: 8)
-            HStack(spacing: 8) {
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Spacer(minLength: 8)
+                Menu {
+                    Button("小组件", systemImage: "rectangle.3.group") { showingWidgets = true }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Theme.ink2)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("日子选项")
                 FAB(systemName: "magnifyingglass", size: 42) {
                     withAnimation(.easeInOut(duration: 0.18)) {
                         isSearching.toggle()
@@ -109,7 +119,7 @@ struct HomeView: View {
                 FAB(systemName: "plus", size: 42, dark: true, action: onAdd)
                     .accessibilityLabel("添加日子")
             }
-            .padding(.top, 2)
+            MetaRow(metaItems)
         }
         .padding(.horizontal, 22)
         .padding(.top, 16)

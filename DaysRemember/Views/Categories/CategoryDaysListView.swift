@@ -15,7 +15,7 @@ struct CategoryDaysListView: View {
                 if days.isEmpty {
                     ContentUnavailableView("还没有日子", systemImage: "calendar")
                 } else {
-                    MosaicGrid(days: days, onOpen: onOpen)
+                    DayList(days: days, onOpen: onOpen)
                         .padding(22)
                 }
             }

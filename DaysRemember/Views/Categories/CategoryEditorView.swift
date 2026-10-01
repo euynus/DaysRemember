@@ -1,8 +1,6 @@
 import SwiftUI
 
-// Scrapbook category editor — a live preview card (sticker + name + color label),
-// a white name field, a sticker/icon grid, and the CategoryColorToken swatch row.
-// Existing custom categories also get a delete button that migrates their days.
+// Category edits and deletion preserve the existing day migration behavior.
 struct CategoryEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DayStore.self) var store

@@ -1,22 +1,24 @@
 import SwiftUI
 
-struct DayPolaroid: View {
+struct DayRow: View {
     @Environment(DayStore.self) private var store
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
-    var idx: Int = 0
     var onOpen: (Day) -> Void = { _ in }
 
     var body: some View {
         let info = DayInfo.compute(day)
         Button { onOpen(day) } label: {
             HStack(spacing: 14) {
-                PhotoTile(day: day, flat: true, cornerRadius: 8)
-                    .frame(width: 76, height: 84)
+                if !dynamicTypeSize.isAccessibilitySize {
+                    PhotoTile(day: day, flat: true, cornerRadius: 8)
+                        .frame(width: 76, height: 84)
+                }
                 VStack(alignment: .leading, spacing: 7) {
                     Text(day.title)
                         .font(Theme.sans(17, weight: .semibold))
                         .foregroundStyle(Theme.ink)
-                        .lineLimit(2)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                     Text(CNDate.short(info.displayDate))
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.ink2)
@@ -34,6 +36,8 @@ struct DayPolaroid: View {
                     Text(info.isToday ? "今天" : "\(info.days)")
                         .font(Theme.sans(info.isToday ? 22 : 30, weight: .semibold))
                         .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .foregroundStyle(Theme.ink)
                     if !info.isToday {
                         Text(info.isPast ? "天前" : "天后")
@@ -52,7 +56,7 @@ struct DayPolaroid: View {
     }
 }
 
-struct HeroPolaroid: View {
+struct UpcomingDayView: View {
     let day: Day
     var onOpen: (Day) -> Void = { _ in }
 
@@ -76,6 +80,8 @@ struct HeroPolaroid: View {
                             Text(info.isToday ? "今天" : "\(info.days)")
                                 .font(Theme.sans(info.isToday ? 26 : 42, weight: .semibold))
                                 .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
                             if !info.isToday {
                                 Text("天后").font(Theme.sans(12, weight: .medium))
                             }
