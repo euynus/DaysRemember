@@ -40,7 +40,7 @@ struct NotificationsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
+            NavHeader(title: "提醒")
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     if permissionDenied { permissionBanner.padding(.bottom, 18) }
@@ -58,7 +58,7 @@ struct NotificationsView: View {
                     }
                     .padding(.bottom, 22)
 
-                    SectionHeader("每日 & 智能").padding(.bottom, 10)
+                    SectionHeader("每日提醒").padding(.bottom, 10)
                     CardList {
                         ToggleCell(label: "每日晨间问候", sub: "每天 08:00",
                                    isOn: reactiveBinding(\.momentsEnabled))
@@ -72,13 +72,13 @@ struct NotificationsView: View {
 
                     SectionHeader("勿扰").padding(.bottom, 10)
                     CardList {
-                        ToggleCell(label: "夜间勿扰", sub: "22:00 — 08:00 静音",
+                        ToggleCell(label: "夜间勿扰", sub: "22:00–08:00 的提醒顺延至早晨",
                                    isOn: reactiveBinding(\.quietHours))
                     }
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 18)
-                .padding(.bottom, 120)
+                .padding(.bottom, 24)
             }
             .scrollIndicators(.hidden)
         }
@@ -96,71 +96,29 @@ struct NotificationsView: View {
         permissionDenied = await NotificationManager.shared.currentStatus() == .denied
     }
 
-    // MARK: - Header
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("温柔地提醒你")
-                .font(Theme.sans(30, weight: .heavy))
-                .tracking(-0.9)
-                .foregroundStyle(Theme.ink)
-            Text("不吵你，只在那些重要的日子，轻轻敲一下。")
-                .font(Theme.sans(14, weight: .medium))
-                .foregroundStyle(Theme.ink2)
-                .lineSpacing(14 * 0.5)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24)
-        .padding(.top, 56)
-        .padding(.bottom, 2)
-    }
-
-    // MARK: - Preview notification card
-
-    /// Preview the next real reminder the user would actually receive, so the
-    /// mock matches their data and chosen time instead of a fixed example.
     private var previewCard: some View {
         let day = store.nearestUpcoming(within: 3650)
         let info = day.map { DayInfo.compute($0) }
-        return ZStack(alignment: .topLeading) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.ink)
-                        Text("时")
-                            .font(Theme.sans(13, weight: .heavy))
-                            .foregroundStyle(.white)
-                    }
-                    .frame(width: 28, height: 28)
-                    Text("时光 · Days Remember")
-                        .font(Theme.sans(12, weight: .heavy))
-                        .foregroundStyle(Theme.ink)
-                    Spacer(minLength: 8)
-                    Text(sampleTimeDate, format: .dateTime.hour().minute())
-                        .font(Theme.sans(11, weight: .semibold))
-                        .foregroundStyle(Theme.muted)
-                }
-                Text(previewTitle(day: day, info: info))
-                    .font(Theme.sans(14, weight: .bold))
-                    .foregroundStyle(Theme.ink)
-                Text(previewNote(day: day))
-                    .font(Theme.handCN(18))
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Label("下一个日子", systemImage: "bell.badge")
+                    .font(Theme.sans(12, weight: .semibold))
+                Spacer()
+                Text(sampleTimeDate, format: .dateTime.hour().minute())
+                    .font(Theme.sans(12))
+            }
+            .foregroundStyle(Theme.accent)
+            Text(previewTitle(day: day, info: info))
+                .font(Theme.sans(24, weight: .bold))
+                .foregroundStyle(Theme.ink)
+            if let day {
+                Text(CNDate.full(DayInfo.compute(day).displayDate))
+                    .font(Theme.sans(14))
                     .foregroundStyle(Theme.ink2)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white))
-            .shadow(color: Color(hex: 0x15171C).opacity(0.06), radius: 2, x: 0, y: 1)
-            .shadow(color: Color(hex: 0x15171C).opacity(0.08), radius: 24, x: 0, y: 10)
-            .rotationEffect(.degrees(-0.6))
-
-            Paperclip().offset(x: 30, y: -10)
+            Divider()
         }
-        .overlay(alignment: .topTrailing) {
-            Sticker(name: .heart, size: 34, rotate: 12).offset(x: -14, y: -6)
-        }
-        // Leave headroom for the clipped paperclip / sticker that overhang the top.
-        .padding(.top, 6)
+        .padding(.vertical, 12)
     }
 
     private var sampleTimeDate: Date {
@@ -176,17 +134,8 @@ struct NotificationsView: View {
         return "再 \(info.days) 天就是「\(day.title)」"
     }
 
-    private func previewNote(day: Day?) -> String {
-        guard let day else { return "那些值得记住的日子，都会轻轻提醒你。" }
-        if !day.note.isEmpty { return day.note }
-        let date = CNDate.short(DayInfo.compute(day).displayDate)
-        return day.location.isEmpty ? date : "\(day.location) · \(date)"
-    }
-
     // MARK: - Daily reminder time row
 
-    /// Keeps the configurable notification time (notificationHour/Minute) — surfaced
-    /// as a compact time picker so this scrapbook layout doesn't drop the feature.
     private var timeRow: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
@@ -198,7 +147,7 @@ struct NotificationsView: View {
                     .foregroundStyle(Theme.muted)
             }
             Spacer(minLength: 8)
-            DatePicker("", selection: reminderTime, displayedComponents: .hourAndMinute)
+            DatePicker("每日提醒时间", selection: reminderTime, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .tint(Theme.catWork)
         }
