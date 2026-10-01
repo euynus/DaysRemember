@@ -79,13 +79,13 @@ Two layout invariants every screen must follow:
 
 ### Theme
 
-The app uses a cool neutral canvas, near-black headings, teal actions, distinct category accents, and artwork or user photos. It remains **light-mode only** via `Info.plist` and `.preferredColorScheme(.light)`. Dynamic Type is supported; fixed seven-column date cells and the editor action bar cap scaling at XXXL to preserve usable geometry.
+The app uses an editorial photo-journal style: off-white canvas, ink headings, vermilion actions, fine separators, and photographic covers. Avoid heavy shadows, nested cards, and decorative illustration overlays. It remains **light-mode only** via `Info.plist` and `.preferredColorScheme(.light)`. Dynamic Type is supported; fixed seven-column date cells and the editor action bar cap scaling at XXXL. Printed share previews and fixed-size widgets constrain their internal text scale independently of app controls.
 
-`Theme/Tokens.swift` defines colors and scalable Inter/system typography. The five persisted `CategoryColorToken` names (`rose`/`amber`/`dusty`/`sage`/`terracotta`) remain stable. Use `.monospacedDigit()` for countdowns. XcodeGen flattens bundled resources, so `UIAppFonts` must use bare filenames rather than `Fonts/` paths.
+`Theme/Tokens.swift` defines colors, scalable Inter/system text, and Baskerville countdown numerals via `Theme.number`. The five persisted `CategoryColorToken` names (`rose`/`amber`/`dusty`/`sage`/`terracotta`) remain stable. XcodeGen flattens bundled resources, so `UIAppFonts` must use bare filenames rather than `Fonts/` paths.
 
 Reusable navigation, filters, metadata, grouped rows, native pickers, and toggles live in `Views/Components/Controls.swift`. Category icons use SF Symbols; `CategoryDefinition.symbolName` maps legacy stored sticker names to their equivalent symbols.
 
-`PhotoStyle` keeps existing raw identifiers but renders the bundled system cover or cached hand-drawn artwork. `PhotoTile` renders `Day.photoData` first, using `coverFocusX/Y`, then falls back to the preset. Both drawing and hit-testing are constrained to its frame. Always use `PhotoTile(day:)` when a `Day` is available.
+`PhotoStyle` keeps existing raw identifiers but maps them to five bundled AI-generated photographic assets through `assetName`. The editor compares asset names when highlighting a preset so legacy aliases remain selected. `PhotoTile` renders `Day.photoData` first, using `coverFocusX/Y`, then falls back to the preset. Both drawing and hit-testing are constrained to its frame. Always use `PhotoTile(day:)` when a `Day` is available.
 
 ### Categories
 

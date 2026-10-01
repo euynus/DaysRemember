@@ -212,4 +212,34 @@ final class EditFlowUITests: XCTestCase {
         app.buttons["取消"].tap()
         XCTAssertTrue(app.buttons["添加日子"].waitForExistence(timeout: 5))
     }
+
+    func testLegacyCoverRemainsSelectedInEditor() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--screen", "detail", "--day", "wedding"]
+        app.launch()
+        app.buttons["更多操作"].tap()
+        app.buttons["pencil"].firstMatch.tap()
+        let cover = app.buttons["选择花与光封面"]
+        XCTAssertTrue(cover.waitForExistence(timeout: 5))
+        XCTAssertTrue(cover.isSelected)
+        app.buttons["取消"].tap()
+    }
+
+    func testLargestAccessibilityShareActionsFit() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--screen", "share", "-UIPreferredContentSizeCategoryName",
+                               "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let share = app.buttons["分享图片"]
+        XCTAssertTrue(share.waitForExistence(timeout: 5))
+        for button in [share, app.buttons["保存"]] {
+            XCTAssertTrue(button.isHittable)
+            XCTAssertGreaterThan(button.frame.width, 250)
+            XCTAssertLessThan(button.frame.height, 150)
+        }
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Accessible share actions"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
 }

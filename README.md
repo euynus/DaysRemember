@@ -27,7 +27,7 @@ Then choose an available iPhone simulator (iOS 17+).
 
 ## UI and tests
 
-`Theme/Tokens.swift` defines the light palette and scalable Inter/system typography. Shared controls live in `Views/Components/Controls.swift`; `Theme/DayWidgetCard.swift` is used by both WidgetKit and the in-app gallery. Persisted category and cover identifiers remain compatible with existing data.
+The visual system uses an off-white canvas, ink typography, restrained vermilion accents, and an editorial photo layout. `Theme/Tokens.swift` provides scalable Inter/system text and Baskerville countdown numerals. Five bundled AI-generated photographic presets replace the old procedural illustrations; user-selected photos still take precedence. Shared controls live in `Views/Components/Controls.swift`; `Theme/DayWidgetCard.swift` is used by both WidgetKit and the in-app gallery. Persisted category and cover identifiers remain compatible with existing data.
 
 `DaysRememberTests` covers dates, lunar recurrence, persistence, settings, image crops, share rendering, and widget rendering. `DaysRememberUITests` exercises navigation, search, day CRUD across relaunch, category editing, system sharing, widget previews, and large accessibility text. Run `xcodebuild test -project DaysRemember.xcodeproj -scheme DaysRemember -destination 'platform=iOS Simulator,id=<UDID>' CODE_SIGNING_ALLOWED=NO`.
 

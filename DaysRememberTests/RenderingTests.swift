@@ -17,6 +17,7 @@ final class RenderingTests: XCTestCase {
 
     func testEveryCoverStaysInsideItsFrame() throws {
         for style in PhotoStyle.allCases {
+            XCTAssertNotNil(UIImage(named: style.assetName), "Missing cover: \(style.assetName)")
             let content = VStack(spacing: 0) {
                 PhotoTile(style: style, flat: true, cornerRadius: 0).frame(height: 80)
                 Color(.sRGB, red: 1, green: 0, blue: 0).frame(height: 20)
@@ -63,6 +64,10 @@ final class RenderingTests: XCTestCase {
                 .frame(width: CGFloat(width), height: CGFloat(height)))
             XCTAssertEqual(image.width, width)
             XCTAssertEqual(image.height, height)
+            let accessible = try render(DayWidgetCard(day: day, size: size)
+                .frame(width: CGFloat(width), height: CGFloat(height))
+                .environment(\.dynamicTypeSize, .accessibility5))
+            XCTAssertEqual(UIImage(cgImage: image).pngData(), UIImage(cgImage: accessible).pngData())
             attach(image, name: "Widget-\(width)x\(height)")
         }
     }
