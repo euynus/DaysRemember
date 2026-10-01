@@ -73,29 +73,30 @@ struct PhotoTile: View {
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
         let scrimStartY = pickedImage != nil ? 0.25 : 0.35
 
-        ZStack {
-            // Only the picked-photo path needs GeometryReader — it positions the
-            // image within its container according to the focus point. The gradient
-            // and rasterized hand-drawn covers fill naturally.
-            if let pickedImage {
-                GeometryReader { geo in
-                    focusedImage(pickedImage, in: geo.size)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
+        GeometryReader { geometry in
+            ZStack {
+                if let pickedImage {
+                    focusedImage(pickedImage, in: geometry.size)
+                        .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+                } else {
+                    style.background()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
                 }
-            } else {
-                style.background()
+                if !flat {
+                    LinearGradient(
+                        colors: [.black.opacity(0), .black.opacity(scrimEndOpacity)],
+                        startPoint: UnitPoint(x: 0.5, y: scrimStartY),
+                        endPoint: .bottom
+                    )
+                    .allowsHitTesting(false)
+                }
             }
-            if !flat {
-                LinearGradient(
-                    colors: [.black.opacity(0), .black.opacity(scrimEndOpacity)],
-                    startPoint: UnitPoint(x: 0.5, y: scrimStartY),
-                    endPoint: .bottom
-                )
-                .allowsHitTesting(false)
-            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .clipped()
         }
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        // Clipping pixels does not clip hit testing for a scaled-to-fill image.
+        .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .accessibilityHidden(true)
     }
 
@@ -123,4 +124,3 @@ struct PhotoTile: View {
         return CGSize(width: container.width, height: container.width / imageAspect)
     }
 }
-
