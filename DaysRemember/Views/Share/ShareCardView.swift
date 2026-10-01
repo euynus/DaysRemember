@@ -1,49 +1,43 @@
 import SwiftUI
 
-// Scrapbook share postcard — a faithful port of `screens/Share.jsx`.
-// The postcard preview is the view handed to ImageRenderer for the snapshot that
-// the system share sheet and save-to-Photos consume.
 struct ShareCardView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.displayScale) private var displayScale
     let day: Day
     @State private var template: Template = .polaroid
-    @State private var sharing = false
-    @State private var sharedImage: UIImage? = nil
+    @State private var sharedImage: SharedImage?
     @State private var savedToast: String? = nil
 
     enum Template: String, CaseIterable {
         case polaroid, note, minimal, collage
         var label: String {
             switch self {
-            case .polaroid: return "拍立得"; case .note: return "便利贴"
-            case .minimal: return "极简"; case .collage: return "拼贴"
+            case .polaroid: return "照片"; case .note: return "手记"
+            case .minimal: return "极简"; case .collage: return "双栏"
             }
         }
     }
 
+    private struct SharedImage: Identifiable {
+        let id = UUID()
+        let image: UIImage
+    }
+
     private var info: DayInfo { DayInfo.compute(day) }
 
-    // The card that gets rendered/shared. Switches layout per template; all four
-    // variants stay inside a 320-wide postcard so the snapshot is consistent.
-    @ViewBuilder
     private var card: some View {
-        switch template {
-        case .polaroid: PostcardCard(day: day, info: info)
-        case .note: NoteCard(day: day, info: info)
-        case .minimal: MinimalPostcard(day: day, info: info)
-        case .collage: CollagePostcard(day: day, info: info)
-        }
+        SharePostcard(day: day, info: info, template: template)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             NavHeader(title: "分享", onBack: { dismiss() }) {
                 FAB(systemName: "square.and.arrow.down", size: 42, action: saveToPhotos)
+                    .accessibilityLabel("保存到相册")
             }
             ScrollView {
                 VStack(spacing: 0) {
-                    card
+                    card.frame(maxWidth: 320)
                     templatePicker.padding(.top, 18)
                     shareGrid.padding(.top, 24)
                 }
@@ -67,10 +61,8 @@ struct ShareCardView: View {
                     .transition(.opacity)
             }
         }
-        .sheet(isPresented: $sharing) {
-            if let img = sharedImage {
-                ShareSheet(activityItems: [img])
-            }
+        .sheet(item: $sharedImage) { item in
+            ShareSheet(activityItems: [item.image])
         }
     }
 
@@ -82,6 +74,7 @@ struct ShareCardView: View {
         // and room for the card's drop shadow (a bare card leaves transparent corners
         // and clips the shadow at the 320pt edge).
         let content = card.frame(width: 320).padding(24).background(Theme.bg)
+            .environment(\.dynamicTypeSize, .large)
         let renderer = ImageRenderer(content: content)
         renderer.scale = displayScale
         renderer.proposedSize = .init(width: 320 + 48, height: nil)
@@ -95,8 +88,7 @@ struct ShareCardView: View {
             flashToast("生成失败，请重试")
             return
         }
-        sharedImage = img
-        sharing = true
+        sharedImage = SharedImage(image: img)
     }
 
     private func saveToPhotos() {
@@ -132,262 +124,112 @@ struct ShareCardView: View {
     // MARK: - Template chips
 
     private var templatePicker: some View {
-        HStack(spacing: 8) {
-            ForEach(Template.allCases, id: \.self) { t in
-                Chip(t.label, selected: template == t) { template = t }
-                    .accessibilityLabel("\(t.label)模板")
-                    .accessibilityAddTraits(template == t ? [.isSelected] : [])
+        Picker("分享模板", selection: $template) {
+            ForEach(Template.allCases, id: \.self) { item in
+                Text(item.label).tag(item)
             }
         }
+        .pickerStyle(.segmented)
     }
-
-    // MARK: - Share actions grid (微信 / 朋友圈 / 小红书 / 保存)
 
     private var shareGrid: some View {
-        HStack(spacing: 12) {
-            shareTile("微", label: "微信", color: Theme.catWork, action: presentShareSheet)
-            shareTile("圈", label: "朋友圈", color: Theme.catTravel, action: presentShareSheet)
-            shareTile("红", label: "小红书", color: Theme.catLove, action: presentShareSheet)
-            shareTile("↓", label: "保存", color: Theme.ink, action: saveToPhotos)
-        }
-    }
-
-    private func shareTile(_ glyph: String, label: String, color: Color,
-                           action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Text(glyph)
-                    .font(Theme.sans(18, weight: .heavy))
-                    .foregroundStyle(.white)
-                    .frame(width: 56, height: 56)
-                    .background(RoundedRectangle(cornerRadius: 17, style: .continuous).fill(color))
-                    .shadow(color: Theme.ink.opacity(0.12), radius: 12, x: 0, y: 4)
-                Text(label).font(Theme.sans(12, weight: .semibold)).foregroundStyle(Theme.ink2)
+        HStack(spacing: 16) {
+            Button(action: presentShareSheet) {
+                Label("分享图片", systemImage: "square.and.arrow.up")
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .frame(maxWidth: .infinity)
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.accent)
+            Button(action: saveToPhotos) {
+                Label("保存", systemImage: "square.and.arrow.down")
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            .tint(Theme.accent)
         }
-        .buttonStyle(PressScale(scale: 0.97))
-        .accessibilityLabel(label)
     }
 }
 
-// MARK: - Postcard frame
+struct SharePostcard: View {
+    let day: Day
+    let info: DayInfo
+    let template: ShareCardView.Template
 
-/// White rounded-24 postcard with the handwritten "My Memory" header. Hosts the
-/// per-template inner content.
-private struct Postcard<Content: View>: View {
-    @ViewBuilder var content: () -> Content
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack {
-                Text("My Memory")
-                    .font(Theme.hand(26))
-                    .foregroundStyle(Theme.catTravel)
+                Text("时光").font(Theme.sans(13, weight: .semibold))
                 Spacer()
-                Text("时光")
-                    .font(Theme.sans(11, weight: .heavy))
-                    .tracking(1.3)
-                    .foregroundStyle(Theme.muted)
+                Text(CNDate.full(info.displayDate)).font(Theme.sans(11))
             }
-            .padding(.bottom, 12)
-            content()
+            .foregroundStyle(Theme.ink2)
+            Divider()
+            switch template {
+            case .polaroid:
+                cover.frame(height: 240)
+                title
+                countdown
+                note
+            case .note:
+                title
+                note
+                cover.frame(height: 160)
+                countdown
+            case .minimal:
+                title
+                countdown.padding(.vertical, 32)
+                note
+            case .collage:
+                HStack(alignment: .top, spacing: 16) {
+                    cover.frame(width: 110, height: 200)
+                    VStack(alignment: .leading, spacing: 16) {
+                        title
+                        countdown
+                    }
+                }
+                note
+            }
         }
-        .padding(18)
-        .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color.white))
-        .compositingGroup()
-        .shadow(color: Theme.ink.opacity(0.06), radius: 1, x: 0, y: 1)
-        .shadow(color: Theme.ink.opacity(0.12), radius: 20, x: 0, y: 14)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 8))
     }
-}
 
-// MARK: - Template: 拍立得 (default scrapbook postcard)
+    private var cover: some View {
+        PhotoTile(day: day, flat: true, cornerRadius: 4)
+    }
 
-private struct PostcardCard: View {
-    let day: Day; let info: DayInfo
-    var body: some View {
-        let nc = noteColorFor(day.id)
-        Postcard {
-            VStack(spacing: 6) {
-                ZStack(alignment: .top) {
-                    VStack(spacing: 0) {
-                        PhotoTile(day: day, flat: true, cornerRadius: 12).frame(height: 260)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(day.title)
-                                .font(Theme.sans(18, weight: .heavy))
-                                .tracking(-0.3)
-                                .foregroundStyle(Theme.ink)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(enDate(info.displayDate))
-                                .font(Theme.hand(22))
-                                .foregroundStyle(Theme.ink2)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .padding(.horizontal, 6)
-                        .padding(.top, 12)
-                        .padding(.bottom, 4)
-                    }
-                    .polaroidCard(rotation: -2)
-                    .frame(width: 230)
+    private var title: some View {
+        Text(day.title)
+            .font(Theme.sans(23, weight: .bold))
+            .foregroundStyle(Theme.ink)
+            .fixedSize(horizontal: false, vertical: true)
+    }
 
-                    // Overlays: countdown sticky note + two stickers.
-                    .overlay(alignment: .topTrailing) {
-                        StickyNote(color: nc.paper, ink: nc.ink, rotate: 7, clip: true, size: .s) {
-                            VStack(spacing: 0) {
-                                Text("\(info.days)")
-                                    .font(Theme.sans(30, weight: .bold))
-                                    .monospacedDigit()
-                                Text(info.isPast ? "天了" : "天后")
-                                    .font(Theme.handCN(15))
-                            }
-                        }
-                        .offset(x: 6, y: 8)
-                    }
-                    // Straddle the photo/caption boundary so the slapped-on
-                    // sticker never covers the title or date on the export.
-                    .overlay(alignment: .bottomLeading) {
-                        Sticker(name: stickerFor(day), size: 40, rotate: -12)
-                            .offset(x: -14, y: -58)
-                    }
-                    .overlay(alignment: .topLeading) {
-                        Sticker(name: .star, size: 28, rotate: 10)
-                            .offset(x: 14, y: 28)
-                    }
-                }
-                .frame(width: 230)
-                .padding(.top, 6)
-
-                if !day.note.isEmpty {
-                    Text("「\(day.note)」")
-                        .font(Theme.handCN(19))
-                        .foregroundStyle(Color(hex: 0x3A3A3A))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
-                        .padding(.top, 6)
-                }
+    private var countdown: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(info.isToday ? "今天" : "\(info.days)")
+                .font(Theme.sans(template == .minimal ? 76 : 44, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+            if !info.isToday {
+                Text(info.isPast ? "天前" : "天后")
+                    .font(Theme.sans(13))
+                    .foregroundStyle(Theme.ink2)
             }
-            .frame(maxWidth: .infinity)
         }
     }
-}
 
-// MARK: - Template: 便利贴 (sticky-note forward)
-
-private struct NoteCard: View {
-    let day: Day; let info: DayInfo
-    var body: some View {
-        let nc = noteColorFor(day.id)
-        Postcard {
-            VStack(spacing: 16) {
-                ZStack(alignment: .topTrailing) {
-                    PhotoTile(day: day, flat: true, cornerRadius: 16).frame(height: 180)
-                    Tape(width: 70).offset(y: -10)
-                }
-                StickyNote(color: nc.paper, ink: nc.ink, rotate: -3, size: .l) {
-                    VStack(spacing: 4) {
-                        Text(day.title).font(Theme.sans(16, weight: .bold)).foregroundStyle(nc.ink)
-                        HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text("\(info.days)")
-                                .font(Theme.sans(40, weight: .bold))
-                                .monospacedDigit()
-                            Text(info.isPast ? "天了" : "天后")
-                                .font(Theme.handCN(20))
-                        }
-                        if !day.note.isEmpty {
-                            Text("「\(day.note)」")
-                                .font(Theme.handCN(16))
-                                .multilineTextAlignment(.center)
-                        }
-                    }
-                }
-                .padding(.horizontal, 12)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 8)
-        }
-    }
-}
-
-// MARK: - Template: 极简
-
-private struct MinimalPostcard: View {
-    let day: Day; let info: DayInfo
-    var body: some View {
-        Postcard {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(enDate(info.displayDate))
-                    .font(Theme.hand(22))
-                    .foregroundStyle(Theme.catTravel)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(info.days)")
-                        .font(Theme.sans(96, weight: .heavy))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                    Text(info.isPast ? "天前" : "天后")
-                        .font(Theme.handCN(22))
-                        .foregroundStyle(Theme.ink2)
-                }
-                Text(day.title)
-                    .font(Theme.sans(20, weight: .bold))
-                    .foregroundStyle(Theme.ink)
-                if !day.note.isEmpty {
-                    Text("「\(day.note)」")
-                        .font(Theme.handCN(17))
-                        .foregroundStyle(Color(hex: 0x3A3A3A))
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 18)
-        }
-    }
-}
-
-// MARK: - Template: 拼贴
-
-private struct CollagePostcard: View {
-    let day: Day; let info: DayInfo
-    var body: some View {
-        let nc = noteColorFor(day.id)
-        Postcard {
-            VStack(spacing: 12) {
-                HStack(spacing: 8) {
-                    VStack(spacing: 0) {
-                        PhotoTile(day: day, flat: true, cornerRadius: 12).frame(height: 150)
-                    }
-                    .polaroidCard(rotation: -3)
-                    .frame(maxWidth: .infinity)
-
-                    VStack(spacing: 8) {
-                        PhotoTile(style: day.photo, flat: true, cornerRadius: 10).frame(height: 70)
-                        StickyNote(color: nc.paper, ink: nc.ink, rotate: 5, size: .s) {
-                            VStack(spacing: 0) {
-                                Text("\(info.days)")
-                                    .font(Theme.sans(24, weight: .bold))
-                                    .monospacedDigit()
-                                Text(info.isPast ? "天了" : "天后")
-                                    .font(Theme.handCN(13))
-                            }
-                        }
-                    }
-                    .frame(width: 96)
-                }
-                .overlay(alignment: .topTrailing) {
-                    Sticker(name: stickerFor(day), size: 34, rotate: 12)
-                        .offset(x: 6, y: -10)
-                }
-
-                VStack(spacing: 1) {
-                    Text(day.title)
-                        .font(Theme.sans(16, weight: .bold))
-                        .foregroundStyle(Theme.ink)
-                    Text(enDate(info.displayDate))
-                        .font(Theme.hand(20))
-                        .foregroundStyle(Theme.ink2)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 6)
+    @ViewBuilder
+    private var note: some View {
+        if !day.note.isEmpty {
+            Text(day.note)
+                .font(Theme.sans(15))
+                .lineSpacing(5)
+                .foregroundStyle(Theme.ink2)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
