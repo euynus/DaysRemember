@@ -4,24 +4,24 @@ import UIKit
 /// Shared light appearance palette and scalable typography.
 enum Theme {
     // MARK: - Canvas and text
-    static let bg = Color(hex: 0xF6F8F8)
-    static let bg2 = Color(hex: 0xE8EEEE)
+    static let bg = Color(hex: 0xFCFCFA)
+    static let bg2 = Color(hex: 0xF0F0EE)
     static let card = Color(hex: 0xFFFFFF)
-    static let ink = Color(hex: 0x15171C)           // near-black headings
-    static let ink2 = Color(hex: 0x5B6068)
-    static let muted = Color(hex: 0x69787C)
-    static let accent = Color(hex: 0x16756D)
+    static let ink = Color(hex: 0x242424)
+    static let ink2 = Color(hex: 0x646460)
+    static let muted = Color(hex: 0x757570)
+    static let accent = Color(hex: 0xBB4235)
     static let accentForeground = Color.white
 
     static let hairline = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.08)
     static let hairlineStrong = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.14)
 
     // MARK: - Category backgrounds
-    static let noteBlue = Color(hex: 0xBCDDF0)
-    static let noteYellow = Color(hex: 0xFBE7A2)
-    static let notePink = Color(hex: 0xF8C9D6)
-    static let noteGreen = Color(hex: 0xC5E5C9)
-    static let notePeach = Color(hex: 0xFAD4BC)
+    static let noteBlue = Color(hex: 0xE7EFF4)
+    static let noteYellow = Color(hex: 0xF4EEDC)
+    static let notePink = Color(hex: 0xF7E8E5)
+    static let noteGreen = Color(hex: 0xE7EEE6)
+    static let notePeach = Color(hex: 0xF4EBE0)
 
     // MARK: - Category accents
     static let catLove = Color(hex: 0xB83F65)
@@ -44,6 +44,10 @@ enum Theme {
     static let terracottaSoft = noteYellow
 
     // MARK: - Fonts
+
+    static func number(_ size: CGFloat) -> Font {
+        .custom("Baskerville", size: size, relativeTo: .title)
+    }
 
     /// Bold sans stack: Inter → PingFang SC → system. Carries the headings, titles,
     /// meta rows, and the big tabular countdown numbers (use `.monospacedDigit()`).

@@ -4,7 +4,7 @@ import SwiftUI
 
 // MARK: - Press feedback
 
-/// Scales down briefly on press (the `.sg-tap` / `:active` transform in the design).
+/// Subtle feedback that respects Reduce Motion.
 struct PressScale: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var scale: CGFloat = 0.96
@@ -13,17 +13,6 @@ struct PressScale: ButtonStyle {
             .scaleEffect(configuration.isPressed && !reduceMotion ? scale : 1)
             .opacity(configuration.isPressed ? 0.8 : 1)
             .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: configuration.isPressed)
-    }
-}
-
-private let shadowInk = Color(hex: 0x15171C)
-
-extension View {
-    /// White-card floating shadow (`.fab` / `.pill-white`): soft near + far drop.
-    func floatShadow() -> some View {
-        self
-            .shadow(color: shadowInk.opacity(0.06), radius: 2, x: 0, y: 2)
-            .shadow(color: shadowInk.opacity(0.10), radius: 10, x: 0, y: 8)
     }
 }
 
@@ -39,10 +28,11 @@ struct FAB: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: iconSize, weight: .semibold))
+                .font(.system(size: iconSize, weight: .regular))
                 .foregroundStyle(dark ? Color.white : Theme.ink)
                 .frame(width: size, height: size)
                 .background(Circle().fill(dark ? Theme.accent : Color.white))
+                .overlay { Circle().strokeBorder(dark ? .clear : Theme.hairline, lineWidth: 1) }
                 // Keep the tappable area at the 44pt HIG minimum even when the visible
                 // circle is smaller (e.g. the 38/42pt calendar & header FABs).
                 .frame(minWidth: 44, minHeight: 44)
@@ -66,7 +56,7 @@ struct PillButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
-                Text(title).font(Theme.sans(16, weight: .bold))
+                Text(title).font(Theme.sans(15, weight: .medium))
                 if let t = trailingSystemName {
                     Image(systemName: t).font(.system(size: 16, weight: .bold))
                 }
@@ -75,8 +65,7 @@ struct PillButton: View {
             .frame(maxWidth: fill ? .infinity : nil)
             .frame(minHeight: height)
             .padding(.horizontal, 22)
-            .background(Capsule().fill(background))
-            .modifier(PillShadow(style: style))
+            .background(RoundedRectangle(cornerRadius: 6).fill(background))
         }
         .buttonStyle(PressScale())
     }
@@ -86,17 +75,6 @@ struct PillButton: View {
     }
     private var background: Color {
         switch style { case .dark: return Theme.accent; case .white: return .white; case .ghost: return Theme.bg2 }
-    }
-}
-
-private struct PillShadow: ViewModifier {
-    let style: PillButton.Style
-    func body(content: Content) -> some View {
-        switch style {
-        case .dark: content.shadow(color: shadowInk.opacity(0.26), radius: 9, x: 0, y: 6)
-        case .white: content.floatShadow()
-        case .ghost: content
-        }
     }
 }
 
@@ -119,16 +97,20 @@ struct Chip: View {
         Button(action: action) {
             HStack(spacing: 6) {
                 if let leading { leading }
-                Text(title).font(Theme.sans(14, weight: .semibold))
+                Text(title).font(Theme.sans(14, weight: .medium))
             }
-            .foregroundStyle(selected ? Color.white : Theme.ink2)
+            .foregroundStyle(selected ? Theme.accent : Theme.ink2)
             .padding(.vertical, 8)
             .frame(minHeight: 44)
             .padding(.horizontal, 15)
-            .background(Capsule().fill(selected ? Theme.accent : Color.white))
-            .shadow(color: selected ? .clear : shadowInk.opacity(0.05), radius: 1, x: 0, y: 1)
+            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Theme.notePink : Theme.bg2))
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(selected ? Theme.accent.opacity(0.4) : .clear, lineWidth: 1)
+            }
         }
         .buttonStyle(PressScale(scale: 0.95))
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
@@ -142,13 +124,11 @@ struct InfoChip: View {
             Image(systemName: systemName)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Theme.ink2)
-            Text(text).font(Theme.sans(14, weight: .semibold)).foregroundStyle(Theme.ink)
+            Text(text).font(Theme.sans(13)).foregroundStyle(Theme.ink2)
         }
         .padding(.vertical, 8)
         .frame(minHeight: 36)
-        .padding(.horizontal, 15)
-        .background(Capsule().fill(Color.white))
-        .shadow(color: shadowInk.opacity(0.05), radius: 1, x: 0, y: 1)
+        .padding(.trailing, 12)
     }
 }
 
@@ -170,7 +150,7 @@ struct MetaRow: View {
         FlowLayout(spacing: 9) {
             ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
                 Text((idx > 0 ? "· " : "") + item.text)
-                    .font(Theme.sans(14, weight: item.bold ? .bold : .medium))
+                    .font(Theme.sans(12, weight: item.bold ? .semibold : .regular))
                     .foregroundStyle(item.color)
             }
         }
@@ -184,9 +164,8 @@ struct SectionHeader: View {
     init(_ title: String) { self.title = title }
     var body: some View {
         Text(title)
-            .font(Theme.sans(13, weight: .bold))
-            .foregroundStyle(Theme.muted)
-            .padding(.leading, 4)
+            .font(Theme.sans(14, weight: .medium))
+            .foregroundStyle(Theme.ink2)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -205,16 +184,16 @@ struct NavHeader<Trailing: View>: View {
                     .accessibilityLabel("返回")
             }
             Text(title)
-                .font(Theme.sans(onBack == nil ? 28 : 20, weight: .bold))
+                .font(Theme.sans(onBack == nil ? 28 : 19, weight: .medium))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
             Spacer(minLength: 8)
             trailing()
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 24)
+        .padding(.top, 16)
+        .padding(.bottom, 16)
     }
 }
 
@@ -226,14 +205,14 @@ extension NavHeader where Trailing == EmptyView {
 
 // MARK: - Grouped list (sg-list / sg-cell)
 
-/// White rounded container for grouped rows. Compose rows with `RowDivider()` between.
+/// Unframed form sections with shared separators.
 struct CardList<Content: View>: View {
     @ViewBuilder var content: () -> Content
     var body: some View {
         VStack(spacing: 0) { content() }
-            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .shadow(color: shadowInk.opacity(0.05), radius: 1, x: 0, y: 1)
+            .background(Theme.card)
+            .overlay(alignment: .top) { RowDivider() }
+            .overlay(alignment: .bottom) { RowDivider() }
     }
 }
 
@@ -276,7 +255,7 @@ struct ToggleCell: View {
     var body: some View {
         Toggle(isOn: $isOn) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(label).font(Theme.sans(15, weight: .semibold)).foregroundStyle(Theme.ink)
+                Text(label).font(Theme.sans(15)).foregroundStyle(Theme.ink)
                 if let sub {
                     Text(sub).font(Theme.sans(12)).foregroundStyle(Theme.ink2)
                 }
