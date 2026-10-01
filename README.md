@@ -1,6 +1,6 @@
 # 时光 · Days Remember
 
-A warm, emotional Chinese-language anniversary & countdown iOS app — SwiftUI, iOS 17+. Implementation of the Anthropic Design handoff bundle in `_design/days-remember/`.
+A Chinese-language anniversary and countdown app built with SwiftUI, iOS 17+. Native tabs, a photo-led day feed, monthly agenda, custom categories, reminders, share cards, and WidgetKit layouts share one visual system. The original prototype remains in `_design/days-remember/` as a historical reference.
 
 ## OS integrations
 
@@ -8,8 +8,8 @@ A warm, emotional Chinese-language anniversary & countdown iOS app — SwiftUI, 
 |---|---|
 | **Local notifications** | `Store/NotificationManager.swift` schedules `dr.day.<id>.pre.<offset>` requests via `UNUserNotificationCenter`. Authorization is requested on first launch, schedule re-syncs on day add/edit/delete and on every reminder-toggle change in 提醒. Quiet-hours toggle pushes any 22:00–08:00 trigger past 08:00. |
 | **WidgetKit** | `DaysRememberWidget/` extension target with Small / Medium / Large families. Reads days through the `group.com.shiguang.daysremember` App Group (`Store/SharedStorage.swift`); the app calls `WidgetCenter.shared.reloadAllTimelines()` on every day change. Refreshes at the next midnight. |
-| **PhotosPicker** | `AddDayView` exposes a `PhotosPicker` tile alongside the gradient palette. Picked images are JPEG-compressed (max 1600px) and stored on `Day.photoData`. `PhotoTile(day:)` renders the image when present, falls back to the gradient otherwise — the change cascades through Home, Detail, Calendar, Share. |
-| **Share sheet** | `ShareCardView` renders the chosen template via `ImageRenderer`, then routes 微信 / 朋友圈 / 小红书 / 更多 buttons through `UIActivityViewController`. The 保存 button writes the rendered card to Photos via `PHPhotoLibrary` (requires `NSPhotoLibraryAddUsageDescription`). |
+| **PhotosPicker** | `DayEditorView` offers artwork presets and a photo picker. Photos are JPEG-compressed (max 1600px), stored on `Day.photoData`, and framed using `coverFocusX/Y`. `PhotoTile(day:)` shares that crop across the app and widget. |
+| **Share sheet** | `ShareCardView` renders one of four templates via `ImageRenderer`. 分享图片 opens `UIActivityViewController`; 保存 writes to Photos via `PHPhotoLibrary` (requires `NSPhotoLibraryAddUsageDescription`). |
 
 Out of scope: WeChat-/小红书-specific SDK integrations are intentionally not wired — the system share sheet routes to whatever messaging apps the user has installed.
 
@@ -23,24 +23,13 @@ xcodegen generate
 open DaysRemember.xcodeproj
 ```
 
-Then run on the iPhone 15 simulator (iOS 17.5+).
+Then choose an available iPhone simulator (iOS 17+).
 
-## Fonts (optional)
+## UI and tests
 
-The app falls back to **Songti SC** (serif) and **PingFang SC** (sans), both bundled with iOS, so it will render correctly without any extra setup. For pixel-faithful match with the design, drop the following TTFs into `DaysRemember/Resources/Fonts/` and add them to `UIAppFonts` in `Info.plist`:
+`Theme/Tokens.swift` defines the light palette and scalable Inter/system typography. Shared controls live in `Views/Components/Controls.swift`; `Theme/DayWidgetCard.swift` is used by both WidgetKit and the in-app gallery. Persisted category and cover identifiers remain compatible with existing data.
 
-- `NotoSerifSC-Regular.ttf`, `NotoSerifSC-Medium.ttf`, `NotoSerifSC-SemiBold.ttf`
-- `NotoSansSC-Regular.ttf`, `NotoSansSC-Medium.ttf`, `NotoSansSC-SemiBold.ttf`
-
-`Theme.serif()` / `Theme.sans()` already prefer Noto when present and degrade silently when not.
-
-## Layout
-
-See `/Users/suny/.claude/plans/fetch-this-design-file-optimized-lagoon.md` (the approved plan) for the full file map and design-token correspondence to the prototype CSS.
-
-## Comparing against the design
-
-Open the prototype at `_design/days-remember/project/Days Remember.html` in any browser to see the source artboards side-by-side with the running app.
+`DaysRememberTests` covers dates, lunar recurrence, persistence, settings, image crops, share rendering, and widget rendering. `DaysRememberUITests` exercises navigation, search, day CRUD across relaunch, category editing, system sharing, widget previews, and large accessibility text. Run `xcodebuild test -project DaysRemember.xcodeproj -scheme DaysRemember -destination 'platform=iOS Simulator,id=<UDID>' CODE_SIGNING_ALLOWED=NO`.
 
 ## Debug launch arguments
 
@@ -59,7 +48,7 @@ xcrun simctl launch <device> com.shiguang.daysremember --screen detail --day wed
 xcrun simctl launch <device> com.shiguang.daysremember --screen add
 xcrun simctl launch <device> com.shiguang.daysremember --screen share --day japan
 xcrun simctl launch <device> com.shiguang.daysremember --screen widgets
-xcrun simctl launch <device> com.shiguang.daysremember --screen onboarding --page 2
+xcrun simctl launch <device> com.shiguang.daysremember --screen onboarding
 ```
 
 `--day` accepts any sample id from `Models/SampleData.swift` (`wedding`, `baby`, `birthday`, `midautumn`, `japan`, `kaoyan`, `firstmet`, `work`, `dog`, `moved`).

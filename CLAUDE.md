@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project shape
 
-Native SwiftUI iOS 17+ app — Chinese-language anniversary / countdown ("时光 · Days Remember"), built from the Anthropic Design handoff bundle in `_design/days-remember/`. The HTML/React prototype there is the source of truth for visual design; the Swift code recreates it pixel-faithfully. Two targets: the main app (`DaysRemember`) and a WidgetKit extension (`DaysRememberWidget`).
+Native SwiftUI iOS 17+ app — Chinese-language anniversary / countdown ("时光 · Days Remember"). The current UI uses native tabs, a photo-led feed, a monthly agenda, and shared app/widget layouts. `_design/days-remember/` preserves the historical prototype, not the current visual specification. Two targets: the main app (`DaysRemember`) and a WidgetKit extension (`DaysRememberWidget`).
 
 ## Build & run
 
@@ -42,7 +42,7 @@ xcrun simctl launch <UDID> com.shiguang.daysremember --tab calendar          # h
 
 # Bypass the tab shell entirely and open one screen
 xcrun simctl launch <UDID> com.shiguang.daysremember --screen detail --day wedding
-xcrun simctl launch <UDID> com.shiguang.daysremember --screen onboarding --page 2
+xcrun simctl launch <UDID> com.shiguang.daysremember --screen onboarding
 # also: --screen add | share | widgets
 ```
 
@@ -70,7 +70,7 @@ When applying a remote change, `applyCloudChange(key:updatedAt:)` flips `isApply
 
 ### Navigation shell
 
-`RootTabView` is a **custom** tab bar, not SwiftUI's `TabView`. The bar is a **floating pill** (`.regularMaterial` Capsule) laid over the content via `.overlay(alignment: .bottom) { TabBar(...).padding(.bottom, 30) }` — the active tab is an ink `Capsule` with icon + label, inactive tabs are icon-only and muted. Because the bar floats *over* content (it doesn't inset it), every tab screen's scroll content pads ~120pt at the bottom so the last row clears the bar. The four tabs are layered in a `ZStack` and switched via `.opacity` + `.allowsHitTesting` + `.accessibilityHidden` so each tab keeps its own navigation state when the user switches away and back. Home, Calendar, and Categories each own a `NavigationStack` + `NavigationPath` (`homePath`, `calendarPath`, `categoryPath`); Detail is pushed via `.navigationDestination(for: Day.self)`. Notifications renders flat. Every NavigationStack hides the system bar (`.toolbar(.hidden, for: .navigationBar)`) and the screens render their own header — this avoids the iOS 26 nav-bar height reservation that would push content down.
+`RootTabView` uses SwiftUI `TabView` with four labelled tabs. Home, Calendar, and Categories each retain a `NavigationStack` and `NavigationPath`; detail destinations are typed as `Day`, category destinations as `CategoryRoute`. Notifications renders flat. Screens supply their own headers and hide the system navigation bar. Native tab safe areas replace the old floating-bar padding. Category lists derive their contents from the live store rather than keeping a stale array.
 
 Two layout invariants every screen must follow:
 
@@ -79,13 +79,13 @@ Two layout invariants every screen must follow:
 
 ### Theme
 
-The app is a **travel-scrapbook** aesthetic (the design's final landed direction — see `_design/days-remember/chats/chat1.md`): cool light-gray paper canvas, near-black bold headings, polaroid photo cards, pastel sticky notes clipped with paperclips, flat stickers, handwriting accents. It is **light-mode only** — locked via `Info.plist` `UIUserInterfaceStyle = Light` and `.preferredColorScheme(.light)` in `DaysRememberApp`.
+The app uses a cool neutral canvas, near-black headings, teal actions, distinct category accents, and artwork or user photos. It remains **light-mode only** via `Info.plist` and `.preferredColorScheme(.light)`. Dynamic Type is supported; fixed seven-column date cells and the editor action bar cap scaling at XXXL to preserve usable geometry.
 
-`Theme/OKLCH.swift` does runtime OKLCH → sRGB conversion via the OKLab pipeline (Björn Ottosson). `Color(oklch: L, C, h)` and `Color(hex:)` are the standard constructors — they match the prototype's CSS values directly. `Theme/Tokens.swift` exposes the scrapbook tokens: canvas/ink (`Theme.bg`, `.ink`, `.ink2`, `.muted`), the sticky-note palette (`noteBlue`/`noteBlueInk`, `noteYellow`, `notePink`, `noteGreen`, `notePeach`), and the category sticker tints (`catLove`, `catFamily`, `catTravel`, `catWork`, `catLife`). The five `CategoryColorToken`/`DayCategory` color names (`rose`/`amber`/`dusty`/`sage`/`terracotta`) are kept (persisted in `categories.v1`) but **remapped** to those tints. Fonts are bundled (`Resources/Fonts/`, registered via `UIAppFonts`): `Theme.sans(_:weight:)` = Inter (headings/titles/meta/numbers — add `.monospacedDigit()` on countdowns), `Theme.hand(_:)` = Caveat (English date accents/eyebrows), `Theme.handCN(_:)` = Ma Shan Zheng (Chinese mood notes & sticky-note text). **Gotcha:** XcodeGen flattens bundled resources to the bundle root, so `UIAppFonts` must list bare filenames (`Caveat.ttf`), not `Fonts/Caveat.ttf`.
+`Theme/Tokens.swift` defines colors and scalable Inter/system typography. The five persisted `CategoryColorToken` names (`rose`/`amber`/`dusty`/`sage`/`terracotta`) remain stable. Use `.monospacedDigit()` for countdowns. XcodeGen flattens bundled resources, so `UIAppFonts` must use bare filenames rather than `Fonts/` paths.
 
-The reusable scrapbook kit lives in two files: `Views/Components/ScrapbookKit.swift` (`Sticker` — 13 flat icons drawn in a `Canvas` with a white outline + drop shadow; `StickyNote`, `Paperclip`, `Tape`, the `.polaroidCard()` frame modifier, and the `noteColorFor`/`stickerFor`/`enDate` helpers) and `Views/Components/ScrapbookControls.swift` (`FAB`, `PillButton`, `Chip`, `InfoChip`, `MetaRow`, `SectionHeader`, `NavHeader`, `CardList`/`RowDivider`, `SegPicker`, `ScrapToggle`/`ToggleCell`). `ScrapbookKit.swift` is also compiled into the widget target.
+Reusable navigation, filters, metadata, grouped rows, native pickers, and toggles live in `Views/Components/Controls.swift`. Category icons use SF Symbols; `CategoryDefinition.symbolName` maps legacy stored sticker names to their equivalent symbols.
 
-`PhotoStyle` (`Theme/PhotoStyle.swift`) is an enum of two flavors: 10 luminous "travel photo" gradients (`.wedding`, `.baby`, …) — a diagonal base + radial "sun bloom" + film grain, rendered by `GradientPhotoView`/`PhotoGrain` in `Theme/ScrapbookPhoto.swift` from the verbatim oklch values in `styles.css` `.photo-*` — and 9 hand-drawn Canvas scenes (`.sketchLove`, …) drawn by `HandDrawnPhotoBackground`. The first five sketch variants are exposed as `PhotoStyle.categorySketchPresets`. `PhotoTile` renders either a real `UIImage` from `Day.photoData` (framed by `coverFocusX/Y`) or the `PhotoStyle` background — call `PhotoTile(day:)` whenever you have a `Day` so user-picked photos take precedence over the preset palette.
+`PhotoStyle` keeps existing raw identifiers but renders the bundled system cover or cached hand-drawn artwork. `PhotoTile` renders `Day.photoData` first, using `coverFocusX/Y`, then falls back to the preset. Both drawing and hit-testing are constrained to its frame. Always use `PhotoTile(day:)` when a `Day` is available.
 
 ### Categories
 
@@ -107,7 +107,7 @@ The reusable scrapbook kit lives in two files: `Views/Components/ScrapbookKit.sw
 
 ### Widget extension & shared sources
 
-`DaysRememberWidget/` is an `app-extension` target. `project.yml` adds **shared source paths** for `DaysRemember/Models`, `DaysRemember/Lunar`, `DaysRemember/Theme`, `DaysRemember/Store/SharedStorage.swift`, and `DaysRemember/Views/Components/ScrapbookKit.swift` (self-contained SwiftUI — gives the widget the same stickers/sticky-notes/polaroid frame) to both targets — no duplicate business logic. The bundled fonts (`Resources/Fonts/`) are also copied into the widget and registered in its `Info.plist` so the handwriting renders there too. The widget's `TimelineProvider` reads `[Day]` JSON from `SharedStorage.defaults` and refreshes at the next midnight (so countdowns tick down even between manual reloads).
+`DaysRememberWidget/` is an `app-extension` target. `project.yml` shares Models, Lunar, Theme, SharedStorage, PhotoTile, fonts, and image assets with the app. `DayWidgetCard` supplies all three widget sizes and the exact in-app preview layouts. The provider reads `[Day]` JSON from shared defaults and refreshes at the next midnight; the entry date is passed into the card for its countdown.
 
 Both targets carry the App Group entitlement (`DaysRemember/Resources/DaysRemember.entitlements`, `DaysRememberWidget/DaysRememberWidget.entitlements`). On the simulator the group works without provisioning.
 
@@ -120,7 +120,7 @@ When changing the data model in `Day.swift` or its persistence format, be aware:
 | `UNUserNotificationCenter` | `Store/NotificationManager.swift`. Identifier scheme `dr.day.<id>.pre.<offset>` lets a single day's pending requests be cancelled or replaced in isolation. Authorization requested in `DaysRememberApp.body`'s `.task` (skipped when `DebugLaunch.isAutomated` so `simctl` screenshots don't stall on the system prompt). Trigger time honors `AppSettings.notificationHour` / `notificationMinute`; quiet hours push any 22:00–08:00 trigger past 08:00 — see `NotificationManager.triggerDate(...)` (also covered by `UIUXModelTests`). |
 | `NSUbiquitousKeyValueStore` | `Store/ICloudSyncStore.swift` — see *iCloud sync* above. Entitlement `com.apple.developer.ubiquity-kvstore-identifier` lives on `DaysRemember.entitlements` only; the widget reads through shared `UserDefaults`. |
 | `PhotosUI.PhotosPicker` | `AddDayView.photosPickerTile`. Picked images are JPEG-recompressed to ≤ 1600px before being stored on `Day.photoData`. `coverFocusX/Y` (normalized 0–1) drives the framing in `PhotoTile`. |
-| `ImageRenderer` + `UIActivityViewController` | `ShareCardView.renderCardImage()` + `Components/ShareSheet.swift`. The labelled buttons (微信 / 朋友圈 / 小红书 / 更多) all route to the same system share sheet; no per-app SDK integration. |
+| `ImageRenderer` + `UIActivityViewController` | `ShareCardView.renderCardImage()` + `Components/ShareSheet.swift`. 分享图片 presents the rendered image using an item-driven sheet; no per-app SDK integration. |
 | `PHPhotoLibrary` | `Components/ShareSheet.swift::PhotoSaver`. Requires `NSPhotoLibraryAddUsageDescription` in `Info.plist`. |
 
 ## Conventions
@@ -128,4 +128,4 @@ When changing the data model in `Day.swift` or its persistence format, be aware:
 - Commits use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `feat(scope):`, …). Each integration / discrete change is its own commit.
 - Tests in `DaysRememberTests/` use `@testable import DaysRemember`. The target requires the main module to be built with `-enable-testing` (XcodeGen does this automatically for the test bundle).
 - Sample data in `Models/SampleData.swift` is verbatim from `_design/days-remember/project/data.jsx` — keep them in sync if regenerating.
-- Open `_design/days-remember/project/Days Remember.html` in a browser to compare any artboard against the running app.
+- Validate UI changes with simulator screenshots and the rendering/UI tests, including compact screens and large accessibility text.
