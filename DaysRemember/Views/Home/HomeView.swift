@@ -14,7 +14,7 @@ struct HomeView: View {
     }
 
     private var filters: [Filter] {
-        [.all, .pinned] + store.categories.filter(\.isSystem).map { .category($0.id) }
+        [.all, .pinned] + store.categories.map { .category($0.id) }
     }
 
     private var filteredDays: [Day] {
@@ -80,7 +80,7 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, 22)
                     .padding(.top, 4)
-                    .padding(.bottom, 130) // floating tab-bar clearance
+                    .padding(.bottom, 24)
                 }
             }
         }
@@ -92,9 +92,8 @@ struct HomeView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("你好，今天")
+                Text("时光")
                     .font(Theme.sans(34, weight: .heavy))
-                    .tracking(-1)
                     .foregroundStyle(Theme.ink)
                 MetaRow(metaItems)
             }
@@ -106,12 +105,14 @@ struct HomeView: View {
                         if !isSearching { searchText = "" }
                     }
                 }
+                .accessibilityLabel("搜索日子")
                 FAB(systemName: "plus", size: 42, dark: true, action: onAdd)
+                    .accessibilityLabel("添加日子")
             }
             .padding(.top, 2)
         }
         .padding(.horizontal, 22)
-        .padding(.top, 60)
+        .padding(.top, 16)
         .padding(.bottom, 6)
     }
 
@@ -136,6 +137,7 @@ struct HomeView: View {
                 .textInputAutocapitalization(.never)
                 .submitLabel(.search)
                 .focused($searchFocused)
+                .accessibilityLabel("搜索日子")
             if !searchText.isEmpty {
                 Button("清除") { searchText = "" }
                     .font(Theme.sans(13, weight: .semibold))
@@ -153,7 +155,6 @@ struct HomeView: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 8)
-        .accessibilityLabel("搜索日子")
         // Focus + raise the keyboard as soon as the field is inserted, so opening
         // search is a single tap instead of tap-to-reveal then tap-to-type. Defer
         // one runloop: setting @FocusState synchronously in the .onAppear of a

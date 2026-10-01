@@ -55,4 +55,32 @@ final class EditFlowUITests: XCTestCase {
         let cancel = app.buttons["取消"]
         if cancel.exists { cancel.tap() }
     }
+
+    func testTabsSearchAndCategoryEditor() {
+        let app = launchApp()
+        app.tabBars.buttons["分类"].tap()
+        let addCategory = app.buttons["新建分类"]
+        XCTAssertTrue(addCategory.waitForExistence(timeout: 5))
+        addCategory.tap()
+        XCTAssertTrue(app.textFields["例如：朋友"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["保存"].isEnabled)
+        app.buttons["返回"].tap()
+
+        app.tabBars.buttons["提醒"].tap()
+        XCTAssertTrue(app.switches.firstMatch.waitForExistence(timeout: 5))
+        app.tabBars.buttons["日历"].tap()
+        XCTAssertTrue(app.buttons["下个月"].waitForExistence(timeout: 5))
+        app.buttons["下个月"].tap()
+        app.buttons["上个月"].tap()
+
+        app.tabBars.buttons["日子"].tap()
+        app.buttons["搜索日子"].tap()
+        let search = app.textFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("no-matching-day-384")
+        XCTAssertTrue(app.staticTexts["没有找到日子"].waitForExistence(timeout: 5))
+        app.buttons["清除"].tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "即将到来")).firstMatch.exists)
+    }
 }
