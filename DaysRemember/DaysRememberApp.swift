@@ -13,14 +13,9 @@ struct DaysRememberApp: App {
                 .environment(settings)
                 .environment(router)
                 .environment(\.locale, Locale(identifier: "zh_CN"))
-                // Travel-scrapbook palette is a light "paper" aesthetic — lock the app
-                // to light (also enforced via Info.plist UIUserInterfaceStyle).
+                // Artwork and exported cards use the same light appearance.
                 .preferredColorScheme(.light)
-                .tint(Theme.ink)
-                // The scrapbook chrome (sticky notes, tab bar, calendar cells) is
-                // art-directed at fixed sizes; clamp the upper Dynamic Type bound so
-                // very large accessibility sizes don't break those layouts.
-                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+                .tint(Theme.accent)
                 .task {
                     store.settings = settings
                     store.enableCloudSync()
@@ -92,7 +87,7 @@ enum DebugLaunch {
         func makeView(store: DayStore) -> some View {
             switch self {
             case .onboarding:
-                OnboardingView(initialPage: DebugLaunch.intArg("--page") ?? 0)
+                OnboardingView()
             case .detail:
                 DetailView(day: DebugLaunch.day(store: store))
             case .add:
@@ -129,10 +124,5 @@ enum DebugLaunch {
         return store.days[0]
     }
 
-    static func intArg(_ name: String) -> Int? {
-        let args = ProcessInfo.processInfo.arguments
-        guard let i = args.firstIndex(of: name), i + 1 < args.count else { return nil }
-        return Int(args[i + 1])
-    }
 }
 #endif
