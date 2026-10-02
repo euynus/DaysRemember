@@ -132,6 +132,21 @@ final class RenderingTests: XCTestCase {
         }
     }
 
+    func testDefaultIllustrationsFitWithoutCropping() throws {
+        for size in [CGSize(width: 300, height: 120), CGSize(width: 62, height: 72)] {
+            for style in [PhotoStyle.systemDefault, .birthday, .japan, .study, .home] {
+                let image = try XCTUnwrap(UIImage(named: style.assetName))
+                let expected = try render(Image(uiImage: image).resizable().scaledToFit()
+                    .frame(width: size.width, height: size.height)
+                    .background(Color(hex: 0xF7F8F5)))
+                let actual = try render(PhotoTile(style: style, flat: true, cornerRadius: 0)
+                    .frame(width: size.width, height: size.height))
+                XCTAssertEqual(UIImage(cgImage: actual).pngData(), UIImage(cgImage: expected).pngData(),
+                               "\(style.rawValue) at \(size)")
+            }
+        }
+    }
+
     func testUserPhotoFocusSelectsTheCorrectCrop() throws {
         let source = UIGraphicsImageRenderer(size: CGSize(width: 200, height: 100)).image { context in
             UIColor.red.setFill()

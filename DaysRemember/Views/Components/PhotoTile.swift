@@ -93,9 +93,15 @@ struct PhotoTile: View {
 
         GeometryReader { geometry in
             ZStack {
-                if let image {
-                    focusedImage(image, in: geometry.size)
+                if let pickedImage {
+                    focusedImage(pickedImage, in: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+                } else if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .background(Color(hex: 0xF7F8F5))
                 } else {
                     style.background()
                         .frame(width: geometry.size.width, height: geometry.size.height)
