@@ -29,6 +29,45 @@ final class LunarTests: XCTestCase {
         XCTAssertEqual(l.day, 17)
     }
 
+    func testFullTableRoundTrip() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 8 * 60 * 60)!
+        let base = calendar.date(from: DateComponents(year: 1900, month: 1, day: 31))!
+        let end = base.addingTimeInterval(73412 * 86400)
+        XCTAssertEqual(Lunar.lunarToSolar(year: 2101, month: 1, day: 1), end)
+        var solar = base
+        while solar < end {
+            let lunar = Lunar.solarToLunar(solar)
+            XCTAssertTrue((1900...2100).contains(lunar.year))
+            XCTAssertTrue((1...12).contains(lunar.month))
+            XCTAssertTrue((1...30).contains(lunar.day))
+            XCTAssertEqual(Lunar.lunarToSolar(year: lunar.year, month: lunar.month,
+                                             day: lunar.day, isLeap: lunar.isLeap), solar)
+            solar = solar.addingTimeInterval(86400)
+        }
+    }
+
+    func testConversionBenchmark() {
+        let base = date(2026, 1, 1)
+        let dates = (0..<2000).map { base.addingTimeInterval(Double($0) * 86400) }
+        var timings: [Double] = []
+        for _ in 0..<5 {
+            let start = CFAbsoluteTimeGetCurrent()
+            for solar in dates {
+                let lunar = Lunar.solarToLunar(solar)
+                let back = Lunar.lunarToSolar(year: lunar.year, month: lunar.month,
+                                             day: lunar.day, isLeap: lunar.isLeap)
+                XCTAssertEqual(back, solar)
+            }
+            timings.append((CFAbsoluteTimeGetCurrent() - start) * 1000)
+        }
+        let summary = "LUNAR_BENCH round_trips=2000 median_ms=\(timings.sorted()[2])"
+        print(summary)
+        let attachment = XCTAttachment(string: summary)
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     func testFormatting() {
         let s = Lunar.fmt(date(2026, 4, 23))
         XCTAssertFalse(s.isEmpty)

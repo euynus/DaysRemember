@@ -39,6 +39,12 @@ enum Lunar {
         return sum + leapDays(y)
     }
 
+    // Immutable year boundaries are shared by calendar cells and anniversary lookups.
+    private static let yearOffsets: [Int] = (1900..<(1900 + LunarTable.info.count))
+        .reduce(into: [0]) { offsets, year in
+            offsets.append(offsets.last! + yearDays(year))
+        }
+
     private static let calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = TimeZone(secondsFromGMT: 8 * 60 * 60) ?? .current
@@ -62,13 +68,10 @@ enum Lunar {
         // lunar day so callers never get an out-of-range month/day — which would trap
         // the array-indexing formatters (CN_MONTH / CN_DAY_PREFIX / CN_NUM).
         if offset < 0 { return LunarDate(year: 1900, month: 1, day: 1, isLeap: false) }
-        var y = 1900, temp = 0
-        while y < 2101 && offset > 0 {
-            temp = yearDays(y)
-            offset -= temp
-            y += 1
-        }
-        if offset < 0 { offset += temp; y -= 1 }
+        let yearIndex = yearOffsets.lastIndex(where: { $0 <= offset })!
+        let y = 1900 + yearIndex
+        offset -= yearOffsets[yearIndex]
+        var temp = 0
 
         let leap = leapMonth(y)
         var isLeap = false
@@ -95,7 +98,11 @@ enum Lunar {
     /// Convert lunar date → Gregorian.
     static func lunarToSolar(year: Int, month: Int, day: Int, isLeap: Bool = false) -> Date {
         var offset = 0
-        for y in 1900..<year { offset += yearDays(y) }
+        if yearOffsets.indices.contains(year - 1900) {
+            offset = yearOffsets[year - 1900]
+        } else {
+            for y in 1900..<year { offset += yearDays(y) }
+        }
         let leap = leapMonth(year)
         for m in 1..<month { offset += monthDays(year, m) }
         if leap > 0 && month > leap { offset += leapDays(year) }
