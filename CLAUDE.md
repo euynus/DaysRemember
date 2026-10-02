@@ -107,9 +107,11 @@ Reusable navigation, filters, metadata, grouped rows, native pickers, and toggle
 
 ### Widget extension & shared sources
 
-`DaysRememberWidget/` is an `app-extension` target. `project.yml` shares Models, Lunar, Theme, SharedStorage, PhotoTile, fonts, and image assets with the app. `DayWidgetCard` supplies all three widget sizes and the exact in-app preview layouts. The provider reads `[Day]` JSON from shared defaults and refreshes at the next midnight; the entry date is passed into the card for its countdown.
+`DaysRememberWidget/` is an `app-extension` target. `project.yml` shares Models, Lunar, Theme, SharedStorage, PhotoTile, fonts, and image assets with the app. `DayWidgetCard` supplies all three widget sizes and the exact in-app preview layouts. `SelectWidgetDay` uses App Intents for per-widget day selection; leaving it empty selects the nearest upcoming day without a one-year cutoff. `WidgetDay.resolve` is shared with the in-app preview. A deleted selected day renders an empty state, never an unrelated replacement. The provider reads `[Day]` JSON from shared defaults and requests a refresh at the next midnight; the entry date is passed into the card for its countdown. The in-app picker is only a preview; actual instances are configured through the system Edit Widget menu.
 
 Both targets carry the App Group entitlement (`DaysRemember/Resources/DaysRemember.entitlements`, `DaysRememberWidget/DaysRememberWidget.entitlements`). On the simulator the group works without provisioning.
+
+Widget photos use `PhotoTile.maximumPixelSize` (512 for small, 720 otherwise). WidgetKit archives the bitmap itself; resizing its SwiftUI frame does not avoid the image-area limit. Keep the pixel-bound regression test, including Retina image scales, and verify a real Home Screen widget rather than only the in-app gallery.
 
 When changing the data model in `Day.swift` or its persistence format, be aware: the widget reads the same JSON, and so does iCloud KVS. `Day.init(from:)` already supplies defaults for every field added after the initial schema (`recurring`, `lunar`, `categoryID`, `categoryLabel`, `coverFocusX/Y`, `reminderOffsets`, `note`, `location`, `pinned`); add new fields via `decodeIfPresent` with a sensible default, or bump `storageKey` / `icloud.*.v1`.
 

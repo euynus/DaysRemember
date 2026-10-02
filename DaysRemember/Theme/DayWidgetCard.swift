@@ -14,7 +14,7 @@ struct DayWidgetCard: View {
             switch size {
             case .small:
                 VStack(alignment: .leading, spacing: 8) {
-                    PhotoTile(day: day, flat: true, cornerRadius: 2)
+                    photo
                         .frame(height: 46)
                     title
                     countdown
@@ -29,13 +29,13 @@ struct DayWidgetCard: View {
                         date
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    PhotoTile(day: day, flat: true, cornerRadius: 2)
+                    photo
                         .frame(width: 106)
                 }
             case .large:
                 VStack(alignment: .leading, spacing: 14) {
                     HStack { eyebrow; Spacer(); date }
-                    PhotoTile(day: day, flat: true, cornerRadius: 2)
+                    photo
                     title
                     countdown
                 }
@@ -48,8 +48,15 @@ struct DayWidgetCard: View {
         .dynamicTypeSize(...DynamicTypeSize.large)
     }
 
+    private var photo: some View {
+        // WidgetKit archives the source bitmap, not just the displayed frame.
+        var tile = PhotoTile(day: day, flat: true, cornerRadius: 2)
+        tile.maximumPixelSize = size == .small ? 512 : 720
+        return tile
+    }
+
     private var eyebrow: some View {
-        Text("即将到来")
+        Text(info.isToday ? "就是今天" : info.isPast ? "时光记忆" : "即将到来")
             .font(Theme.sans(11, weight: .semibold))
             .foregroundStyle(Theme.accent)
     }

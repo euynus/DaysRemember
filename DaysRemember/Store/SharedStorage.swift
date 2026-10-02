@@ -11,4 +11,9 @@ enum SharedStorage {
     static let defaults: UserDefaults = {
         UserDefaults(suiteName: appGroupID) ?? .standard
     }()
+
+    static func loadDays() -> [Day] {
+        guard let data = defaults.data(forKey: "days.v1") else { return SampleData.days }
+        return (try? JSONDecoder().decode([Day].self, from: data)) ?? []
+    }
 }

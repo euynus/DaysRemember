@@ -7,7 +7,7 @@ A Chinese-language anniversary and countdown app built with SwiftUI, iOS 17+. Na
 | Capability | Wiring |
 |---|---|
 | **Local notifications** | `Store/NotificationManager.swift` schedules `dr.day.<id>.pre.<offset>` requests via `UNUserNotificationCenter`. Authorization is requested on first launch, schedule re-syncs on day add/edit/delete and on every reminder-toggle change in 提醒. Quiet-hours toggle pushes any 22:00–08:00 trigger past 08:00. |
-| **WidgetKit** | `DaysRememberWidget/` extension target with Small / Medium / Large families. Reads days through the `group.com.shiguang.daysremember` App Group (`Store/SharedStorage.swift`); the app calls `WidgetCenter.shared.reloadAllTimelines()` on every day change. Refreshes at the next midnight. |
+| **WidgetKit** | `DaysRememberWidget/` extension target with Small / Medium / Large families. Native Edit Widget configuration selects a specific day (including past days), or defaults to the nearest upcoming day. Reads days through the `group.com.shiguang.daysremember` App Group; the app reloads timelines on every day change, with a midnight refresh request. |
 | **PhotosPicker** | `DayEditorView` offers artwork presets and a photo picker. Photos are JPEG-compressed (max 1600px), stored on `Day.photoData`, and framed using `coverFocusX/Y`. `PhotoTile(day:)` shares that crop across the app and widget. |
 | **Share sheet** | `ShareCardView` renders one of four templates via `ImageRenderer`. 分享图片 opens `UIActivityViewController`; 保存 writes to Photos via `PHPhotoLibrary` (requires `NSPhotoLibraryAddUsageDescription`). |
 

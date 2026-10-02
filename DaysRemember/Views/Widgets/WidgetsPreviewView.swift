@@ -4,10 +4,19 @@ struct WidgetsPreviewView: View {
     @Environment(DayStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var size: DayWidgetCard.Size = .medium
+    @State private var selectedID: String?
 
     var body: some View {
         VStack(spacing: 0) {
-            NavHeader(title: "小组件", onBack: { dismiss() })
+            NavHeader(title: "小组件预览", onBack: { dismiss() })
+            Picker("日子", selection: $selectedID) {
+                Text("最近的日子").tag(String?.none)
+                ForEach(store.days) { day in
+                    Text(day.title).tag(Optional(day.id))
+                }
+            }
+            .pickerStyle(.menu)
+            .padding(.horizontal, 22)
             Picker("尺寸", selection: $size) {
                 Text("小").tag(DayWidgetCard.Size.small)
                 Text("中").tag(DayWidgetCard.Size.medium)
@@ -16,7 +25,7 @@ struct WidgetsPreviewView: View {
             .pickerStyle(.segmented)
             .padding(22)
             ScrollView {
-                if let day = store.nearestUpcoming(within: 365) {
+                if let day = WidgetDay.resolve(in: store.days, selectedID: selectedID, today: Today.date) {
                     DayWidgetCard(day: day, size: size)
                         .frame(width: size == .small ? 160 : 320,
                                height: size == .large ? 340 : 160)

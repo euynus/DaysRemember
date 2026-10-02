@@ -46,6 +46,7 @@ struct PhotoTile: View {
     var focusY: Double = 0.5
     var flat: Bool = false
     var cornerRadius: CGFloat = 20
+    var maximumPixelSize: CGFloat? = nil
 
     init(style: PhotoStyle, imageData: Data? = nil, focusX: Double = 0.5, focusY: Double = 0.5,
          flat: Bool = false, cornerRadius: CGFloat = 20) {
@@ -66,14 +67,19 @@ struct PhotoTile: View {
 
     var body: some View {
         let pickedImage = imageData.flatMap(PhotoDecodeCache.decoded)
+        let thumbnail = maximumPixelSize.flatMap { limit in
+            (pickedImage ?? UIImage(named: style.assetName)).flatMap {
+                Self.thumbnail($0, maximumPixelSize: limit)
+            }
+        }
         // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
         let scrimStartY = pickedImage != nil ? 0.25 : 0.35
 
         GeometryReader { geometry in
             ZStack {
-                if let pickedImage {
-                    focusedImage(pickedImage, in: geometry.size)
+                if let image = thumbnail ?? pickedImage {
+                    focusedImage(image, in: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                 } else {
                     style.background()
@@ -95,6 +101,13 @@ struct PhotoTile: View {
         // Clipping pixels does not clip hit testing for a scaled-to-fill image.
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .accessibilityHidden(true)
+    }
+
+    static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {
+        guard image.size.width > 0, image.size.height > 0 else { return nil }
+        let scale = min(1, maximumPixelSize / (max(image.size.width, image.size.height) * image.scale))
+        return image.preparingThumbnail(of: CGSize(width: image.size.width * scale,
+                                                   height: image.size.height * scale))
     }
 
     private func focusedImage(_ image: UIImage, in container: CGSize) -> some View {
