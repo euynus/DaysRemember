@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(DayStore.self) var store
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var filter: Filter = .all
     @State private var isSearching = false
     @State private var searchText = ""
@@ -39,28 +40,17 @@ struct HomeView: View {
         return store.sortedDays(matched)
     }
 
-    /// Nearest upcoming (future or today), uncapped — mirrors the JSX hero pick.
-    private var hero: Day? {
-        store.days
-            .map { ($0, DayInfo.compute($0)) }
-            .filter { !$0.1.isPast }
-            .min { $0.1.days < $1.1.days }?
-            .0
-    }
-
-    /// Feed days for the current filter, with the hero removed when it's on screen.
-    private var feedDays: [Day] {
-        guard filter == .all, let hero, searchText.isEmpty else { return filteredDays }
-        return filteredDays.filter { $0.id != hero.id }
-    }
-
     var body: some View {
+        let days = filteredDays
+        let hero = filter == .all && searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? store.nearestUpcoming(within: .max) : nil
+        let feedDays = days.filter { $0.id != hero?.id }
         VStack(spacing: 0) {
             header
             if isSearching { searchField }
             chips
             ScrollView(.vertical, showsIndicators: false) {
-                if filteredDays.isEmpty {
+                if days.isEmpty {
                     let empty = emptyStateCopy()
                     ContentUnavailableView(empty.title,
                                            systemImage: empty.symbol,
@@ -70,7 +60,7 @@ struct HomeView: View {
                         .padding(.horizontal, 24)
                 } else {
                     VStack(spacing: 0) {
-                        if filter == .all, searchText.isEmpty, let hero {
+                        if let hero {
                             UpcomingDayView(day: hero, onOpen: onOpen)
                                 .dayContextMenu(day: hero)
                                 .padding(.bottom, feedDays.isEmpty ? 0 : 26)
@@ -92,6 +82,7 @@ struct HomeView: View {
                     .padding(.bottom, 24)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
@@ -117,13 +108,13 @@ struct HomeView: View {
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("日子选项")
-                FAB(systemName: "magnifyingglass", size: 42) {
-                    withAnimation(.easeInOut(duration: 0.18)) {
+                FAB(systemName: isSearching ? "xmark" : "magnifyingglass", size: 42) {
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
                         isSearching.toggle()
-                        if !isSearching { searchText = "" }
+                        if !isSearching { searchText = ""; searchFocused = false }
                     }
                 }
-                .accessibilityLabel("搜索日子")
+                .accessibilityLabel(isSearching ? "关闭搜索" : "搜索日子")
                 FAB(systemName: "plus", size: 42, dark: true, action: onAdd)
                     .accessibilityLabel("添加日子")
             }
@@ -155,20 +146,22 @@ struct HomeView: View {
                 .textInputAutocapitalization(.never)
                 .submitLabel(.search)
                 .focused($searchFocused)
+                .onSubmit { searchFocused = false }
                 .accessibilityLabel("搜索日子")
             if !searchText.isEmpty {
-                Button("清除") { searchText = "" }
-                    .font(Theme.sans(13, weight: .semibold))
-                    .foregroundStyle(Theme.catLove)
+                Button("清除", systemImage: "xmark.circle.fill") { searchText = "" }
+                    .labelStyle(.iconOnly)
+                    .frame(width: 44, height: 44)
+                    .foregroundStyle(Theme.muted)
                     .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .frame(minHeight: 44)
         .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
         }
         .padding(.horizontal, 22)
@@ -217,7 +210,7 @@ struct HomeView: View {
     /// Copy for the empty-state placeholder, tailored to whichever filter or search
     /// is currently active so the message matches what the user is seeing.
     private func emptyStateCopy() -> (title: String, symbol: String, detail: String) {
-        if isSearching {
+        if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return ("没有找到日子", "magnifyingglass", "换个关键词试试。")
         }
         switch filter {
@@ -225,7 +218,7 @@ struct HomeView: View {
             return ("还没有置顶的日子", "star", "在日子上长按可以置顶它。")
         case .category(let id):
             return ("这个分类里还没有日子",
-                    store.category(for: id).icon,
+                    store.category(for: id).symbolName,
                     "切换分类，或在加号里给它添个新日子。")
         case .all:
             return ("这里还没有日子",

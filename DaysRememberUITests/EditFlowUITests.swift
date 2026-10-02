@@ -128,6 +128,63 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["没有找到日子"].waitForExistence(timeout: 5))
     }
 
+    func testWhitespaceSearchKeepsSpotlightAndCanClose() {
+        let app = launchApp()
+        app.buttons["搜索日子"].tap()
+        let search = app.textFields["搜索日子"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.typeText("   ")
+        let spotlight = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "即将到来")).firstMatch
+        XCTAssertTrue(spotlight.exists)
+        app.buttons["关闭搜索"].tap()
+        XCTAssertFalse(search.exists)
+        XCTAssertTrue(app.buttons["搜索日子"].exists)
+        XCTAssertTrue(spotlight.exists)
+    }
+
+    func testCalendarMultiEventPickerAtLargestTextSize() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchArguments = ["--tab", "home", "-UIPreferredContentSizeCategoryName",
+                               "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        let suffix = UUID().uuidString.prefix(6)
+        let titles = ["UITest-A-\(suffix)", "UITest-B-\(suffix)"]
+        for title in titles {
+            app.buttons["添加日子"].tap()
+            let field = app.textFields["日子名称"]
+            XCTAssertTrue(field.waitForExistence(timeout: 5))
+            field.tap()
+            field.typeText(title)
+            app.buttons["保存"].tap()
+        }
+        app.tabBars.buttons["日历"].tap()
+        let cell = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "23日，2 个日子")).firstMatch
+        for _ in 0..<3 where !cell.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(cell.waitForExistence(timeout: 5))
+        cell.tap()
+        let first = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", titles[0])).firstMatch
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        XCTAssertTrue(first.isHittable)
+        XCTAssertGreaterThan(first.frame.width, 250)
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Accessible calendar event picker"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        first.tap()
+        XCTAssertTrue(app.buttons["更多操作"].waitForExistence(timeout: 5))
+        app.buttons["更多操作"].tap()
+        app.buttons["trash"].firstMatch.tap()
+        app.buttons["删除"].firstMatch.tap()
+        let remaining = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "23日，1 个日子")).firstMatch
+        XCTAssertTrue(remaining.waitForExistence(timeout: 5))
+        remaining.tap()
+        XCTAssertTrue(app.buttons["更多操作"].waitForExistence(timeout: 5))
+        app.buttons["更多操作"].tap()
+        app.buttons["trash"].firstMatch.tap()
+        app.buttons["删除"].firstMatch.tap()
+    }
+
     func testShareTemplatesOpenSystemShareSheet() {
         let app = XCUIApplication()
         app.launchArguments = ["--screen", "share", "--day", "wedding"]

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CalendarMonthView: View {
     @Environment(DayStore.self) var store
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var month: Int
     @State private var year: Int
     @State private var selectedEvents: [Day] = []
@@ -152,6 +153,8 @@ struct CalendarMonthView: View {
         let isCurrentMonth = (cal.component(.year, from: today) == year)
             && (cal.component(.month, from: today) - 1 == month)
         let todayDay = cal.component(.day, from: today)
+        let firstWeekday = firstDow
+        let dayCount = daysInMonth
         let cols = Array(repeating: GridItem(.flexible(), spacing: 1), count: 7)
 
         return VStack(spacing: 0) {
@@ -166,8 +169,8 @@ struct CalendarMonthView: View {
             }
             LazyVGrid(columns: cols, spacing: 1) {
                 ForEach(0..<42, id: \.self) { i in
-                    let inMonth = i >= firstDow && i < firstDow + daysInMonth
-                    let d = i - firstDow + 1
+                    let inMonth = i >= firstWeekday && i < firstWeekday + dayCount
+                    let d = i - firstWeekday + 1
                     if inMonth {
                         let events = eventsByDay[d] ?? []
                         cellView(d: d, events: events, isToday: isCurrentMonth && d == todayDay)
@@ -235,37 +238,36 @@ struct CalendarMonthView: View {
     // MARK: - This-month list
 
     private func monthRow(_ day: Day, dayNumber: Int) -> some View {
-        Button { onOpen(day) } label: {
-            HStack(spacing: 14) {
-                VStack(spacing: 4) {
-                    Text("\(dayNumber)")
-                        .font(Theme.number(32))
-                        .monospacedDigit()
-                    Text("\(month + 1)月")
-                        .font(Theme.sans(11))
-                }
-                .foregroundStyle(Theme.accent)
-                .frame(width: 44)
-                PhotoTile(day: day, flat: true, cornerRadius: 8)
-                    .frame(width: 56, height: 62)
+        let metadata = subtitle(for: day, label: store.category(for: day).name)
+        return Button { onOpen(day) } label: {
+            HStack(alignment: .top, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
+                    Text("\(month + 1)月\(dayNumber)日")
+                        .font(Theme.sans(12, weight: .medium))
+                        .foregroundStyle(Theme.accent)
                     Text(day.title)
                         .font(Theme.sans(16, weight: .medium))
                         .foregroundStyle(Theme.ink)
-                        .lineLimit(2)
-                    Text(subtitle(for: day, label: store.category(for: day).name))
+                    Text(metadata)
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.ink2)
                 }
-                Spacer(minLength: 4)
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                if !dynamicTypeSize.isAccessibilitySize {
+                    PhotoTile(day: day, flat: true, cornerRadius: 8, maximumPixelSize: 256)
+                        .frame(width: 56, height: 62)
+                        .accessibilityHidden(true)
+                }
             }
             .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableTileStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(month + 1)月\(dayNumber)日，\(day.title)，\(metadata)")
+        .accessibilityHint("查看日子详情")
+        .accessibilityInputLabels([day.title])
     }
 
     private func subtitle(for day: Day, label: String) -> String {
@@ -279,40 +281,44 @@ struct CalendarMonthView: View {
 // Multi-event day picker (a single calendar cell can carry several days).
 private struct CalendarEventPicker: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let title: String
     let events: [Day]
     var onOpen: (Day) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Button("取消") { dismiss() }
-                    .font(Theme.sans(15, weight: .semibold))
-                    .foregroundStyle(Theme.ink2)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Text("取消")
+                            .font(Theme.sans(15, weight: .semibold))
+                            .foregroundStyle(Theme.ink2)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
                     .buttonStyle(.plain)
-                Spacer()
-                Text(title).font(Theme.sans(16, weight: .bold))
-                Spacer()
-                Color.clear.frame(width: 36, height: 32)
+                }
+                Text(title)
+                    .font(Theme.sans(20, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
             }
             .padding(.horizontal, 22)
-            .padding(.top, 22)
+            .padding(.top, 12)
             .padding(.bottom, 12)
 
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 10) {
+                LazyVStack(spacing: 0) {
                     ForEach(events) { event in
                         Button {
                             onOpen(event)
                             dismiss()
                         } label: {
-                            HStack(spacing: 14) {
-                                VStack(spacing: 0) {
-                                    PhotoTile(day: event, flat: true, cornerRadius: 6)
-                                        .frame(width: 38, height: 38)
-                                }
-                                .frame(width: 46)
-                                VStack(alignment: .leading, spacing: 2) {
+                            HStack(alignment: .top, spacing: 14) {
+                                VStack(alignment: .leading, spacing: 6) {
                                     Text(event.title)
                                         .font(Theme.sans(15, weight: .bold))
                                         .foregroundStyle(Theme.ink)
@@ -320,20 +326,32 @@ private struct CalendarEventPicker: View {
                                         .font(Theme.sans(12, weight: .medium))
                                         .foregroundStyle(Theme.muted)
                                 }
-                                Spacer()
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                if !dynamicTypeSize.isAccessibilitySize {
+                                    PhotoTile(day: event, flat: true, cornerRadius: 6, maximumPixelSize: 192)
+                                        .frame(width: 44, height: 44)
+                                        .accessibilityHidden(true)
+                                }
                             }
-                            .padding(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 14))
-                            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
-                            .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 2, x: 0, y: 1)
+                            .frame(minHeight: 44, alignment: .leading)
+                            .padding(.vertical, 14)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(PressScale())
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(event.title)，\(event.categoryLabel)")
+                        .accessibilityHint("查看日子详情")
+                        .accessibilityInputLabels([event.title])
+                        RowDivider().accessibilityHidden(true)
                     }
                 }
                 .padding(.horizontal, 22)
                 .padding(.bottom, 24)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
-        .presentationDetents([.medium, .large])
+        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
     }
 }
