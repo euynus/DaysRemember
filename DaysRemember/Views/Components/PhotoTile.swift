@@ -1,40 +1,56 @@
 import SwiftUI
 import UIKit
+import ImageIO
+import CryptoKit
 
-/// Process-wide LRU for decoded user photos. Each `UIImage(data:)` produces a fresh
-/// instance with its own lazy-decoded bitmap; without sharing, every grid re-render
-/// re-decodes the same JPEG. Keyed by a fingerprint (count + first 8 bytes) so the
-/// lookup is O(1) and content-stable across `Day` value-type copies.
-private enum PhotoDecodeCache {
-    static let storage: NSCache<NSString, UIImage> = {
+/// Share pixel-bounded bitmaps across list rows, previews and widget snapshots.
+enum PhotoDecodeCache {
+    private static let storage: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
         cache.countLimit = 64
+        cache.totalCostLimit = 32 * 1024 * 1024
         return cache
     }()
 
-    static func decoded(_ data: Data) -> UIImage? {
-        let key = fingerprint(data)
+    static func decoded(_ data: Data, maximumPixelSize: CGFloat) -> UIImage? {
+        guard maximumPixelSize.isFinite, maximumPixelSize >= 1 else { return nil }
+        let digest = Data(SHA256.hash(data: data)).base64EncodedString()
+        let key = "photo:\(digest):\(maximumPixelSize)" as NSString
         if let cached = storage.object(forKey: key) { return cached }
-        guard let image = UIImage(data: data) else { return nil }
-        storage.setObject(image, forKey: key)
+        guard let image = downsample(data, maximumPixelSize: maximumPixelSize) else { return nil }
+        store(image, forKey: key)
         return image
     }
 
-    private static func fingerprint(_ data: Data) -> NSString {
-        // Sample count + head/middle/tail bytes. Header-only keys collide for images
-        // that share a JFIF/EXIF prefix and length (e.g. same-camera shots); sampling
-        // three regions makes a collision astronomically unlikely.
-        var key = "\(data.count):"
-        data.withUnsafeBytes { raw in
-            let buf = raw.bindMemory(to: UInt8.self)
-            guard buf.count > 0 else { return }
-            for start in [0, max(0, buf.count / 2 - 4), max(0, buf.count - 8)] {
-                for i in start..<min(start + 8, buf.count) {
-                    key.append(String(buf[i], radix: 16))
-                }
-            }
-        }
-        return key as NSString
+    static func bundled(_ name: String, maximumPixelSize: CGFloat) -> UIImage? {
+        let key = "asset:\(name):\(maximumPixelSize)" as NSString
+        if let cached = storage.object(forKey: key) { return cached }
+        guard let original = UIImage(named: name),
+              let image = PhotoTile.thumbnail(original, maximumPixelSize: maximumPixelSize) else { return nil }
+        store(image, forKey: key)
+        return image
+    }
+
+    private static func store(_ image: UIImage, forKey key: NSString) {
+        guard let bitmap = image.cgImage else { return }
+        storage.setObject(image, forKey: key, cost: bitmap.bytesPerRow * bitmap.height)
+    }
+
+    static func downsample(_ data: Data, maximumPixelSize: CGFloat) -> UIImage? {
+        guard maximumPixelSize.isFinite, maximumPixelSize >= 1,
+              let source = CGImageSourceCreateWithData(data as CFData,
+                  [kCGImageSourceShouldCache: false] as CFDictionary),
+              let bitmap = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                  kCGImageSourceCreateThumbnailFromImageAlways: true,
+                  kCGImageSourceCreateThumbnailWithTransform: true,
+                  kCGImageSourceThumbnailMaxPixelSize: maximumPixelSize,
+                  kCGImageSourceShouldCacheImmediately: true
+              ] as CFDictionary) else { return nil }
+        return UIImage(cgImage: bitmap)
+    }
+
+    static func compressedJPEG(from data: Data) -> Data? {
+        downsample(data, maximumPixelSize: 1600)?.jpegData(compressionQuality: 0.82)
     }
 }
 
@@ -46,39 +62,38 @@ struct PhotoTile: View {
     var focusY: Double = 0.5
     var flat: Bool = false
     var cornerRadius: CGFloat = 20
-    var maximumPixelSize: CGFloat? = nil
+    var maximumPixelSize: CGFloat = 1600
 
     init(style: PhotoStyle, imageData: Data? = nil, focusX: Double = 0.5, focusY: Double = 0.5,
-         flat: Bool = false, cornerRadius: CGFloat = 20) {
+         flat: Bool = false, cornerRadius: CGFloat = 20, maximumPixelSize: CGFloat = 1600) {
         self.style = style
         self.imageData = imageData
         self.focusX = focusX
         self.focusY = focusY
         self.flat = flat
         self.cornerRadius = cornerRadius
+        self.maximumPixelSize = maximumPixelSize
     }
 
     /// Convenience for callers that have a `Day`.
-    init(day: Day, flat: Bool = false, cornerRadius: CGFloat = 20) {
+    init(day: Day, flat: Bool = false, cornerRadius: CGFloat = 20, maximumPixelSize: CGFloat = 1600) {
         self.init(style: day.photo, imageData: day.photoData,
                   focusX: day.coverFocusX, focusY: day.coverFocusY,
-                  flat: flat, cornerRadius: cornerRadius)
+                  flat: flat, cornerRadius: cornerRadius, maximumPixelSize: maximumPixelSize)
     }
 
     var body: some View {
-        let pickedImage = imageData.flatMap(PhotoDecodeCache.decoded)
-        let thumbnail = maximumPixelSize.flatMap { limit in
-            (pickedImage ?? UIImage(named: style.assetName)).flatMap {
-                Self.thumbnail($0, maximumPixelSize: limit)
-            }
+        let pickedImage = imageData.flatMap {
+            PhotoDecodeCache.decoded($0, maximumPixelSize: maximumPixelSize)
         }
+        let image = pickedImage ?? PhotoDecodeCache.bundled(style.assetName, maximumPixelSize: maximumPixelSize)
         // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
         let scrimStartY = pickedImage != nil ? 0.25 : 0.35
 
         GeometryReader { geometry in
             ZStack {
-                if let image = thumbnail ?? pickedImage {
+                if let image {
                     focusedImage(image, in: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                 } else {
@@ -104,7 +119,12 @@ struct PhotoTile: View {
     }
 
     static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {
-        guard image.size.width > 0, image.size.height > 0 else { return nil }
+        guard maximumPixelSize.isFinite, maximumPixelSize >= 1,
+              image.size.width > 0, image.size.height > 0 else { return nil }
+        if let bitmap = image.cgImage,
+           CGFloat(max(bitmap.width, bitmap.height)) <= maximumPixelSize, image.imageOrientation == .up {
+            return image
+        }
         let scale = min(1, maximumPixelSize / (max(image.size.width, image.size.height) * image.scale))
         return image.preparingThumbnail(of: CGSize(width: image.size.width * scale,
                                                    height: image.size.height * scale))

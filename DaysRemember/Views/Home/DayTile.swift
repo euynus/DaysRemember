@@ -11,7 +11,7 @@ struct DayRow: View {
         Button { onOpen(day) } label: {
             HStack(spacing: 14) {
                 if !dynamicTypeSize.isAccessibilitySize {
-                    PhotoTile(day: day, flat: true, cornerRadius: 3)
+                    PhotoTile(day: day, flat: true, cornerRadius: 3, maximumPixelSize: 256)
                         .frame(width: 62, height: 72)
                 }
                 VStack(alignment: .leading, spacing: 7) {

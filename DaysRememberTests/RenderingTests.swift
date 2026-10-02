@@ -1,9 +1,109 @@
 import XCTest
 import SwiftUI
+import ImageIO
+import UniformTypeIdentifiers
 @testable import DaysRemember
 
 @MainActor
 final class RenderingTests: XCTestCase {
+    func testPhotoDecodeCacheSeparatesContentAndPixelLimits() throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 900, height: 600), format: format)
+        func data(_ color: UIColor) throws -> Data {
+            try XCTUnwrap(renderer.image { context in
+                color.setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 900, height: 600))
+            }.jpegData(compressionQuality: 0.9))
+        }
+        let red = try data(.red)
+        let blue = try data(.blue)
+        let small = try XCTUnwrap(PhotoDecodeCache.decoded(red, maximumPixelSize: 192))
+        let repeated = try XCTUnwrap(PhotoDecodeCache.decoded(red, maximumPixelSize: 192))
+        let large = try XCTUnwrap(PhotoDecodeCache.decoded(red, maximumPixelSize: 720))
+        XCTAssertTrue(small === repeated)
+        XCTAssertFalse(small === large)
+        XCTAssertEqual(small.cgImage?.width, 192)
+        XCTAssertEqual(large.cgImage?.width, 720)
+        let other = try XCTUnwrap(PhotoDecodeCache.decoded(blue, maximumPixelSize: 192)?.cgImage)
+        XCTAssertGreaterThan(pixel(other, x: 50, y: 50)[2], 240)
+        XCTAssertLessThan(pixel(other, x: 50, y: 50)[0], 15)
+        XCTAssertNil(PhotoDecodeCache.decoded(Data("corrupt".utf8), maximumPixelSize: 192))
+        XCTAssertNil(PhotoDecodeCache.downsample(red, maximumPixelSize: 0))
+        XCTAssertNil(PhotoDecodeCache.downsample(red, maximumPixelSize: .nan))
+        let cover = try XCTUnwrap(PhotoDecodeCache.bundled("CoverFlowers", maximumPixelSize: 192))
+        XCTAssertTrue(cover === PhotoDecodeCache.bundled("CoverFlowers", maximumPixelSize: 192))
+    }
+
+    func testDownsamplingAppliesPhotoOrientation() throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let source = try XCTUnwrap(UIGraphicsImageRenderer(size: CGSize(width: 600, height: 300), format: format)
+            .image { context in
+                UIColor.red.setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 300, height: 300))
+                UIColor.blue.setFill()
+                context.fill(CGRect(x: 300, y: 0, width: 300, height: 300))
+            }.cgImage)
+        let data = NSMutableData()
+        let destination = try XCTUnwrap(CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil))
+        CGImageDestinationAddImage(destination, source, [kCGImagePropertyOrientation: 6] as CFDictionary)
+        XCTAssertTrue(CGImageDestinationFinalize(destination))
+        let image = try XCTUnwrap(PhotoDecodeCache.downsample(data as Data, maximumPixelSize: 300))
+        XCTAssertEqual(image.imageOrientation, .up)
+        XCTAssertLessThanOrEqual(max(image.size.width, image.size.height), 300)
+        XCTAssertEqual(image.size.width / image.size.height,
+                       CGFloat(source.height) / CGFloat(source.width), accuracy: 0.02)
+        let bitmap = try XCTUnwrap(image.cgImage)
+        XCTAssertGreaterThan(pixel(bitmap, x: 75, y: 225)[0], 240)
+        XCTAssertGreaterThan(pixel(bitmap, x: 75, y: 75)[2], 240)
+    }
+
+    func testPhotoImportPixelBudgetAndBenchmark() throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let original = UIGraphicsImageRenderer(size: CGSize(width: 4032, height: 3024), format: format)
+            .image { context in
+                for x in stride(from: 0, to: 4032, by: 48) {
+                    UIColor(hue: CGFloat(x) / 4032, saturation: 0.6, brightness: 0.8, alpha: 1).setFill()
+                    context.fill(CGRect(x: x, y: 0, width: 48, height: 3024))
+                }
+            }
+        let input = try XCTUnwrap(original.jpegData(compressionQuality: 0.95))
+        // Reference the old import algorithm on the same fixture and simulator scale.
+        func legacyImport() -> Data? {
+            guard let image = UIImage(data: input) else { return nil }
+            let scale = min(1, 1600 / max(image.size.width, image.size.height))
+            let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+            return UIGraphicsImageRenderer(size: target).image { _ in
+                image.draw(in: CGRect(origin: .zero, size: target))
+            }.jpegData(compressionQuality: 0.82)
+        }
+        var timings: [[Double]] = [[], []]
+        var outputs = [Data(), Data()]
+        for _ in 0..<3 {
+            for variant in 0..<2 {
+                let start = CFAbsoluteTimeGetCurrent()
+                outputs[variant] = try autoreleasepool {
+                    try XCTUnwrap(variant == 0 ? legacyImport() : PhotoDecodeCache.compressedJPEG(from: input))
+                }
+                timings[variant].append((CFAbsoluteTimeGetCurrent() - start) * 1000)
+            }
+        }
+        let legacy = try XCTUnwrap(UIImage(data: outputs[0])?.cgImage)
+        let optimized = try XCTUnwrap(UIImage(data: outputs[1])?.cgImage)
+        XCTAssertEqual(optimized.width, 1600)
+        XCTAssertEqual(optimized.height, 1200)
+        XCTAssertNil(PhotoDecodeCache.compressedJPEG(from: Data()))
+        let summary = "PHOTO_BENCH legacy_ms=\(timings[0].sorted()[1]) optimized_ms=\(timings[1].sorted()[1]) "
+            + "legacy_pixels=\(legacy.width)x\(legacy.height) optimized_pixels=\(optimized.width)x\(optimized.height) "
+            + "legacy_bytes=\(outputs[0].count) optimized_bytes=\(outputs[1].count)"
+        print(summary)
+        let attachment = XCTAttachment(string: summary)
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     func testTypographyRespectsDynamicTypeAndLocalLimits() throws {
         let label = Text("31").font(Theme.sans(14, weight: .semibold))
         let normal = try render(label.environment(\.dynamicTypeSize, .large))

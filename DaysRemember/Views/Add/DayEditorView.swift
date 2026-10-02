@@ -79,6 +79,7 @@ struct DayEditorView: View {
                 .padding(.horizontal, 22)
                 .padding(.bottom, 40)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
@@ -191,7 +192,7 @@ struct DayEditorView: View {
                         resetFocus()
                     } label: {
                         miniPolaroid(selected: selected) {
-                            PhotoTile(style: preset, flat: true, cornerRadius: 8)
+                            PhotoTile(style: preset, flat: true, cornerRadius: 8, maximumPixelSize: 192)
                                 .frame(width: 50, height: 50)
                         }
                     }
@@ -221,13 +222,11 @@ struct DayEditorView: View {
     private var photosPickerTile: some View {
         PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
             Group {
-                if let data = photoData, let ui = UIImage(data: data) {
+                if let data = photoData {
                     miniPolaroid(selected: true) {
-                        Image(uiImage: ui)
-                            .resizable()
-                            .scaledToFill()
+                        PhotoTile(style: photo, imageData: data, focusX: coverFocusX, focusY: coverFocusY,
+                                  flat: true, cornerRadius: 8, maximumPixelSize: 192)
                             .frame(width: 50, height: 50)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                 } else {
                     Image(systemName: "plus")
@@ -246,11 +245,17 @@ struct DayEditorView: View {
             isLoadingPhoto = true
             defer { if !Task.isCancelled { isLoadingPhoto = false } }
             do {
-                guard let data = try await item.loadTransferable(type: Data.self),
-                      let compressed = compressedJPEGData(from: data) else {
+                guard let data = try await item.loadTransferable(type: Data.self) else {
                     throw CocoaError(.fileReadCorruptFile)
                 }
                 try Task.checkCancellation()
+                let compressed = await Task.detached(priority: .userInitiated) {
+                    autoreleasepool { PhotoDecodeCache.compressedJPEG(from: data) }
+                }.value
+                try Task.checkCancellation()
+                guard let compressed else {
+                    throw CocoaError(.fileReadCorruptFile)
+                }
                 photoData = compressed
                 resetFocus()
             } catch {
@@ -477,19 +482,4 @@ struct DayEditorView: View {
         min(1, max(0, value))
     }
 
-    /// Re-encode HEIC/PNG to a reasonably sized JPEG so the Day record stays small.
-    private func compressedJPEGData(from data: Data, maxDimension: CGFloat = 1600,
-                                    quality: CGFloat = 0.82) -> Data? {
-        guard let image = UIImage(data: data) else { return nil }
-        let scale = min(1, maxDimension / max(image.size.width, image.size.height))
-        if scale >= 1 {
-            return image.jpegData(compressionQuality: quality)
-        }
-        let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-        let renderer = UIGraphicsImageRenderer(size: target)
-        let resized = renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: target))
-        }
-        return resized.jpegData(compressionQuality: quality)
-    }
 }

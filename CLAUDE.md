@@ -87,6 +87,8 @@ Reusable navigation, filters, metadata, grouped rows, native pickers, and toggle
 
 `PhotoStyle` keeps existing raw identifiers but maps them to five bundled AI-generated photographic assets through `assetName`. The editor compares asset names when highlighting a preset so legacy aliases remain selected. `PhotoTile` renders `Day.photoData` first, using `coverFocusX/Y`, then falls back to the preset. Both drawing and hit-testing are constrained to its frame. Always use `PhotoTile(day:)` when a `Day` is available.
 
+Photo decoding uses ImageIO downsampling before allocating the display bitmap. `PhotoDecodeCache` shares size-specific results using full-content SHA-256 keys, with a 32 MiB `NSCache` cost limit (an eviction hint, not a hard process-memory ceiling). Compact rows use 192/256px thumbnails; full covers default to 1600px. Import downsampling and JPEG encoding run off the main actor. Pixel limits must not be multiplied by the device screen scale. `RenderingTests.testPhotoImportPixelBudgetAndBenchmark` compares the old renderer path with the new import on the same 12MP fixture.
+
 ### Categories
 
 `DayCategory` (`Models/Category.swift`) is the original five-value enum (`.love`, `.family`, `.travel`, `.work`, `.life`) and remains on every `Day` for backwards compat — the widget and older snapshots still decode it. Custom categories layer on top via `CategoryDefinition` (id / name / icon / `colorToken: CategoryColorToken` / `isSystem`), persisted under `categories.v1`. Each `Day` carries `categoryID` (a free-form string for custom categories, or the system enum's raw value) and a `categoryLabel` snapshot of the name at write time.
@@ -121,7 +123,7 @@ When changing the data model in `Day.swift` or its persistence format, be aware:
 |---|---|
 | `UNUserNotificationCenter` | `Store/NotificationManager.swift`. Identifier scheme `dr.day.<id>.pre.<offset>` lets a single day's pending requests be cancelled or replaced in isolation. Authorization requested in `DaysRememberApp.body`'s `.task` (skipped when `DebugLaunch.isAutomated` so `simctl` screenshots don't stall on the system prompt). Trigger time honors `AppSettings.notificationHour` / `notificationMinute`; quiet hours push any 22:00–08:00 trigger past 08:00 — see `NotificationManager.triggerDate(...)` (also covered by `UIUXModelTests`). |
 | `NSUbiquitousKeyValueStore` | `Store/ICloudSyncStore.swift` — see *iCloud sync* above. Entitlement `com.apple.developer.ubiquity-kvstore-identifier` lives on `DaysRemember.entitlements` only; the widget reads through shared `UserDefaults`. |
-| `PhotosUI.PhotosPicker` | `AddDayView.photosPickerTile`. Picked images are JPEG-recompressed to ≤ 1600px before being stored on `Day.photoData`. `coverFocusX/Y` (normalized 0–1) drives the framing in `PhotoTile`. |
+| `PhotosUI.PhotosPicker` | `DayEditorView.photosPickerTile`. Picked images are downsampled and JPEG-recompressed off the main actor to ≤ 1600px before being stored on `Day.photoData`. Cancelled selections never overwrite the current cover. `coverFocusX/Y` (normalized 0–1) drives the framing in `PhotoTile`. |
 | `ImageRenderer` + `UIActivityViewController` | `ShareCardView.renderCardImage()` + `Components/ShareSheet.swift`. 分享图片 presents the rendered image using an item-driven sheet; no per-app SDK integration. |
 | `PHPhotoLibrary` | `Components/ShareSheet.swift::PhotoSaver`. Requires `NSPhotoLibraryAddUsageDescription` in `Info.plist`. |
 
