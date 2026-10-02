@@ -91,6 +91,47 @@ final class DayInfoTests: XCTestCase {
 
     // MARK: - Recurring lunar
 
+    func testLateLunarAnniversaryInJanuaryUsesPreviousLunarYear() {
+        let day = makeDay(date: date(2025, 1, 7), recurring: true, lunar: true)
+        let info = DayInfo.compute(day, today: date(2026, 1, 1))
+
+        XCTAssertEqual(info.displayDate, date(2026, 1, 26))
+        XCTAssertEqual(info.days, 25)
+        XCTAssertEqual(info.anniversaryNumber, 1)
+        XCTAssertFalse(info.isPast)
+        XCTAssertTrue(DayInfo.compute(day, today: date(2026, 1, 26)).isToday)
+    }
+
+    func testLunarCalendarOccurrencesStayInVisibleGregorianYear() {
+        let day = makeDay(date: date(2025, 1, 7), recurring: true, lunar: true)
+        XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2025), [date(2025, 1, 7)])
+        XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2026), [date(2026, 1, 26)])
+        XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2027), [date(2027, 1, 15)])
+        XCTAssertEqual(DayInfo.compute(day, today: date(2026, 1, 27)).displayDate, date(2027, 1, 15))
+    }
+
+    func testGregorianYearCanContainTwoLunarAnniversaries() {
+        let day = makeDay(date: date(2025, 1, 7), recurring: true, lunar: true)
+        XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2022),
+                       [date(2022, 1, 10), date(2022, 12, 30)])
+        XCTAssertEqual(DayInfo.compute(day, today: date(2022, 1, 11)).displayDate, date(2022, 12, 30))
+    }
+
+    func testGregorianLeapDayUsesSameNormalizedDateInCountdownAndCalendar() {
+        let day = makeDay(date: date(2024, 2, 29), recurring: true)
+        XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2024), [date(2024, 2, 29)])
+        XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2025), [date(2025, 3, 1)])
+        XCTAssertEqual(DayInfo.compute(day, today: date(2025, 2, 28)).displayDate, date(2025, 3, 1))
+        XCTAssertTrue(DayInfo.compute(day, today: date(2025, 3, 1)).isToday)
+        XCTAssertEqual(DayInfo.compute(day, today: date(2025, 3, 2)).displayDate, date(2026, 3, 1))
+    }
+
+    func testNonRecurringCalendarOccurrenceRemainsInOriginalYear() {
+        let day = makeDay(date: date(2025, 1, 7), lunar: true)
+        XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2025), [date(2025, 1, 7)])
+        XCTAssertTrue(DayInfo.occurrences(of: day, inGregorianYear: 2026).isEmpty)
+    }
+
     func testRecurringLunarUsesNextOccurrenceInCurrentYear() {
         // 中秋: lunar 八月十五. Sample 2025-10-06 = lunar 2025-08-15.
         let day = makeDay(date: date(2025, 10, 6), recurring: true, lunar: true)

@@ -11,6 +11,28 @@ struct DayInfo {
     /// `nil` for non-recurring days.
     var anniversaryNumber: Int?
 
+    /// Dates in a visible Gregorian year, shared by the countdown and calendar.
+    static func occurrences(of day: Day, inGregorianYear year: Int) -> [Date] {
+        let cal = CNDate.calendar
+        if !day.recurring {
+            return cal.component(.year, from: day.date) == year
+                ? [cal.startOfDay(for: day.date)] : []
+        }
+        if day.lunar {
+            let source = Lunar.solarToLunar(day.date)
+            // Late lunar months cross into the next Gregorian year; a Gregorian
+            // year can contain occurrences from both adjacent lunar years.
+            return ((year - 1)...year).filter { $0 >= 1900 }.map { lunarYear in
+                cal.startOfDay(for: Lunar.lunarToSolar(year: lunarYear, month: source.month,
+                                                     day: source.day, isLeap: source.isLeap))
+            }.filter { cal.component(.year, from: $0) == year }
+        }
+        let source = cal.dateComponents([.month, .day], from: day.date)
+        guard let occurrence = cal.date(from: DateComponents(year: year, month: source.month,
+                                                             day: source.day)) else { return [] }
+        return [cal.startOfDay(for: occurrence)]
+    }
+
     static func compute(_ d: Day, today: Date = Today.date) -> DayInfo {
         let cal = CNDate.calendar
         let todayStart = cal.startOfDay(for: today)
@@ -31,27 +53,11 @@ struct DayInfo {
         var displayDate = cal.startOfDay(for: d.date)
 
         if d.recurring {
-            if d.lunar {
-                let src = Lunar.solarToLunar(d.date)
-                let baseYear = cal.component(.year, from: todayStart)
-                for y in baseYear...(baseYear + 2) {
-                    let candidate = cal.startOfDay(for:
-                        Lunar.lunarToSolar(year: y, month: src.month, day: src.day, isLeap: src.isLeap))
-                    if candidate >= todayStart { displayDate = candidate; break }
-                }
-            } else {
-                let comps = cal.dateComponents([.year, .month, .day], from: todayStart)
-                let dComps = cal.dateComponents([.month, .day], from: d.date)
-                var thisYear = DateComponents()
-                thisYear.year = comps.year
-                thisYear.month = dComps.month
-                thisYear.day = dComps.day
-                let candidate = cal.date(from: thisYear) ?? d.date
-                if cal.startOfDay(for: candidate) < todayStart {
-                    thisYear.year = (comps.year ?? 0) + 1
-                    displayDate = cal.startOfDay(for: cal.date(from: thisYear) ?? d.date)
-                } else {
-                    displayDate = cal.startOfDay(for: candidate)
+            let baseYear = cal.component(.year, from: todayStart)
+            for year in baseYear...(baseYear + 2) {
+                if let candidate = occurrences(of: d, inGregorianYear: year).first(where: { $0 >= todayStart }) {
+                    displayDate = candidate
+                    break
                 }
             }
         }

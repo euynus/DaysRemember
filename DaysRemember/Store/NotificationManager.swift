@@ -82,7 +82,7 @@ final class NotificationManager {
     }
 
     /// Replace pending day reminders with a fresh schedule built from `days` and `settings`.
-    /// Safe to call from the main actor; performs the actual scheduling on a detached task.
+    /// Scheduling calls suspend without blocking the main actor.
     func sync(days: [Day], settings: AppSettings) async {
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests()
@@ -156,8 +156,9 @@ final class NotificationManager {
         // days already get their own anniversary reminders above, so `isPast` (true only
         // for non-recurring days whose date has passed) is the right filter.
         if settings.memoryEnabled {
-            let hour = min(23, max(0, settings.notificationHour))
-            let minute = min(59, max(0, settings.notificationMinute))
+            let time = Self.notificationTime(hour: settings.notificationHour,
+                                             minute: settings.notificationMinute,
+                                             quietHours: settings.quietHours)
             for day in days where DayInfo.compute(day).isPast {
                 let content = UNMutableNotificationContent()
                 content.title = "时光回忆"
@@ -166,8 +167,8 @@ final class NotificationManager {
                 content.threadIdentifier = "dr.memory"
                 content.userInfo = ["dayID": day.id]
                 var comps = cal.dateComponents([.month, .day], from: day.date)
-                comps.hour = hour
-                comps.minute = minute
+                comps.hour = time.hour
+                comps.minute = time.minute
                 let request = UNNotificationRequest(
                     identifier: "dr.memory.\(day.id)",
                     content: content,
@@ -178,12 +179,9 @@ final class NotificationManager {
         }
     }
 
-    private func offsets(for day: Day, settings: AppSettings) -> [Int] {
+    func offsets(for day: Day, settings: AppSettings) -> [Int] {
         if let dayOffsets = day.reminderOffsets {
-            let normalized = Set(dayOffsets.filter { $0 >= 0 })
-            if !normalized.isEmpty {
-                return normalized.sorted(by: >)
-            }
+            return Set(dayOffsets.filter { $0 >= 0 }).sorted(by: >)
         }
 
         return [
@@ -228,15 +226,17 @@ final class NotificationManager {
         guard let baseDay = calendar.date(byAdding: .day, value: -offset, to: displayDate) else {
             return nil
         }
-        let safeHour = min(23, max(0, hour))
-        let safeMinute = min(59, max(0, minute))
-        let resolvedHour = quietHours && (safeHour >= quietStart || safeHour < quietEnd)
-            ? quietEnd
-            : safeHour
-        guard let trigger = calendar.date(bySettingHour: resolvedHour, minute: safeMinute, second: 0,
+        let time = notificationTime(hour: hour, minute: minute, quietHours: quietHours)
+        guard let trigger = calendar.date(bySettingHour: time.hour, minute: time.minute, second: 0,
                                           of: baseDay) else {
             return nil
         }
         return trigger > now ? trigger : nil
+    }
+
+    nonisolated static func notificationTime(hour: Int, minute: Int, quietHours: Bool) -> (hour: Int, minute: Int) {
+        let hour = min(23, max(0, hour))
+        return (quietHours && (hour >= quietStart || hour < quietEnd) ? quietEnd : hour,
+                min(59, max(0, minute)))
     }
 }

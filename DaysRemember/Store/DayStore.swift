@@ -194,10 +194,12 @@ final class DayStore {
             colorToken: category.colorToken,
             isSystem: false
         )
+        let label = categories[index].name
+        guard days.contains(where: { $0.categoryID == category.id && $0.categoryLabel != label }) else { return }
         days = days.map { day in
             guard day.categoryID == category.id else { return day }
             var updated = day
-            updated.categoryLabel = categories[index].name
+            updated.categoryLabel = label
             return updated
         }
     }
@@ -220,11 +222,13 @@ final class DayStore {
     }
 
     private func normalized(_ day: Day) -> Day {
-        let definition = category(for: day.categoryID)
         var updated = day
-        updated.categoryID = definition.id
-        updated.categoryLabel = definition.name
-        updated.category = DayCategory(rawValue: definition.id) ?? .life
+        // Cloud days can arrive before their category definition. Keep the reference
+        // and label snapshot until the definition arrives; display lookup can fall back.
+        if let definition = categories.first(where: { $0.id == day.categoryID }) {
+            updated.categoryLabel = definition.name
+            updated.category = DayCategory(rawValue: definition.id) ?? .life
+        }
         updated.coverFocusX = min(1, max(0, updated.coverFocusX))
         updated.coverFocusY = min(1, max(0, updated.coverFocusY))
         return updated
@@ -357,12 +361,15 @@ final class AppSettings {
     /// Debounced iCloud push, triggered from each setting's didSet (replaces the old
     /// Combine objectWillChange.debounce). Coalesces rapid toggles into one KVS write.
     private func scheduleCloudPush() {
-        guard cloudSyncEnabled, !isApplyingCloudChange else { return }
+        guard !isApplyingCloudChange else { return }
+        let updatedAt = Date.now.timeIntervalSinceReferenceDate
+        cloud.noteLocalWrite(for: ICloudSyncStore.Key.settings, updatedAt: updatedAt)
+        guard cloudSyncEnabled else { return }
         pushTask?.cancel()
         pushTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard let self, !Task.isCancelled else { return }
-            self.pushSettingsToCloud()
+            self.pushSettingsToCloud(updatedAt: updatedAt)
         }
     }
 
@@ -376,11 +383,20 @@ final class AppSettings {
 
     @discardableResult
     private func pullSettingsIfNewer() -> Bool {
-        guard let remote: ICloudSyncStore.RemoteValue<AppSettingsSnapshot> = cloud.remoteValue(for: ICloudSyncStore.Key.settings),
-              remote.updatedAt > cloud.localTimestamp(for: ICloudSyncStore.Key.settings) + 0.001 else {
+        guard let remote: ICloudSyncStore.RemoteValue<AppSettingsSnapshot> = cloud.remoteValue(for: ICloudSyncStore.Key.settings) else {
+            return false
+        }
+        return applyRemoteSettingsIfNewer(remote)
+    }
+
+    @discardableResult
+    func applyRemoteSettingsIfNewer(_ remote: ICloudSyncStore.RemoteValue<AppSettingsSnapshot>) -> Bool {
+        guard remote.updatedAt > cloud.localTimestamp(for: ICloudSyncStore.Key.settings) + 0.001 else {
             return false
         }
 
+        pushTask?.cancel()
+        pushTask = nil
         isApplyingCloudChange = true
         apply(remote.value)
         cloud.noteLocalWrite(for: ICloudSyncStore.Key.settings, updatedAt: remote.updatedAt)
@@ -389,7 +405,7 @@ final class AppSettings {
         return true
     }
 
-    private func pushSettingsToCloud(updatedAt: TimeInterval = Date.now.timeIntervalSinceReferenceDate) {
+    private func pushSettingsToCloud(updatedAt: TimeInterval) {
         cloud.push(snapshot, for: ICloudSyncStore.Key.settings, updatedAt: updatedAt)
     }
 

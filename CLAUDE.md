@@ -95,15 +95,17 @@ Photo decoding uses ImageIO downsampling before allocating the display bitmap. `
 
 `DayStore.updateCategory` rewrites the `categoryLabel` on every day that referenced a renamed custom category. `deleteCategory(id:migrateTo:)` requires a migration target and rewrites `categoryID` / `categoryLabel` / `category` on each affected day in one pass. System categories (`isSystem == true`) cannot be renamed or deleted; they're merged back into the persisted list on every load via `normalizedCategories(_:)`, so a missing system category in stored JSON is self-healing.
 
+Unknown category IDs and label snapshots survive normalization because cloud days may arrive before their category definitions. Appearance-only category edits do not rewrite days. Settings record their local timestamp immediately, before the debounced cloud push, and a newer accepted remote snapshot cancels that pending push.
+
 ### Lunar calendar
 
-`Lunar/` is a verbatim port of `_design/days-remember/project/lunar.jsx`. `LunarTable.info` is the 1900-2100 packed bitfield. All formatters live in `Lunar.swift`: `solarToLunar`, `lunarToSolar`, `fmt`, `fmtFull`. The calendar always uses `Asia/Shanghai`. `SolarTerms.swift` adds 24节气 + traditional holiday lookup.
+`Lunar/` retains the table and conversion semantics from `_design/days-remember/project/lunar.jsx`. `LunarTable.info` is the 1900-2100 packed bitfield; immutable cumulative year offsets avoid repeatedly summing it during conversion. `LunarTests` checks all 73,412 supported days and records a 2,000-round-trip benchmark. All formatters live in `Lunar.swift`: `solarToLunar`, `lunarToSolar`, `fmt`, `fmtFull`. The app calendar uses `Asia/Shanghai`; lunar table arithmetic uses fixed UTC+8. `SolarTerms.swift` adds 24节气 + traditional holiday lookup.
 
 `DayInfo.compute(_:today:)` (in `Models/DayInfo.swift`) is the recurrence logic:
 
 - Non-recurring days → countdown to original date.
 - Recurring (Gregorian) → next anniversary in current/next year.
-- Recurring **lunar** → walk `today.year ... today.year + 2`, find the first lunar-anniversary `≥ today` via `lunarToSolar(year:, month:, day:, isLeap:)` using the original date's lunar components.
+- Recurring **lunar** → search Gregorian years for the first occurrence `≥ today`. `DayInfo.occurrences(of:inGregorianYear:)` is shared with the calendar and checks both adjacent lunar years, preserving January anniversaries and years containing two occurrences. Gregorian February 29 normalizes to March 1 in non-leap years in both views.
 
 `Today.date` is `Date()` in production. In DEBUG, it reads the `DR_PIN_TODAY` env var: `"1"` pins to `2026-04-23` (the prototype's reference today), or any `yyyy-MM-dd` string pins to that date — useful for date-sensitive test runs. All countdown computations go through `Today.date`, never `Date()` directly.
 
@@ -126,6 +128,8 @@ When changing the data model in `Day.swift` or its persistence format, be aware:
 | `PhotosUI.PhotosPicker` | `DayEditorView.photosPickerTile`. Picked images are downsampled and JPEG-recompressed off the main actor to ≤ 1600px before being stored on `Day.photoData`. Cancelled selections never overwrite the current cover. `coverFocusX/Y` (normalized 0–1) drives the framing in `PhotoTile`. |
 | `ImageRenderer` + `UIActivityViewController` | `ShareCardView.renderCardImage()` + `Components/ShareSheet.swift`. 分享图片 presents the rendered image using an item-driven sheet; no per-app SDK integration. |
 | `PHPhotoLibrary` | `Components/ShareSheet.swift::PhotoSaver`. Requires `NSPhotoLibraryAddUsageDescription` in `Info.plist`. |
+
+Per-day reminder offsets use `nil` for global settings and `[]` for no day reminders. Ordinary reminders and yearly memories share the same quiet-hours time normalization.
 
 ## Conventions
 

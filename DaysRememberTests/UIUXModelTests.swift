@@ -105,6 +105,50 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertEqual(cal.component(.minute, from: trigger!), 30)
     }
 
+    @MainActor
+    func testEmptyReminderOverrideDoesNotFallBackToGlobalSettings() {
+        let keys = ["notif.pre7", "notif.pre3", "notif.pre1", "notif.day0"]
+        let defaults = UserDefaults.standard
+        let saved = keys.map { defaults.object(forKey: $0) }
+        let timestampKey = "icloud.localTimestamp.icloud.settings.v1"
+        let timestamp = SharedStorage.defaults.object(forKey: timestampKey)
+        defer {
+            for (key, value) in zip(keys, saved) { defaults.set(value, forKey: key) }
+            SharedStorage.defaults.set(timestamp, forKey: timestampKey)
+        }
+        let settings = AppSettings()
+        settings.notifPre7 = true
+        settings.notifPre3 = true
+        settings.notifPre1 = false
+        settings.notifDay0 = true
+        var day = Day(id: "reminders", title: "Reminder", date: Date(), category: .life, photo: .home)
+        let manager = NotificationManager.shared
+        XCTAssertEqual(manager.offsets(for: day, settings: settings), [7, 3, 0])
+        day.reminderOffsets = []
+        XCTAssertEqual(manager.offsets(for: day, settings: settings), [])
+        day.reminderOffsets = [-1]
+        XCTAssertEqual(manager.offsets(for: day, settings: settings), [])
+        day.reminderOffsets = [3, 0, 3, -1]
+        XCTAssertEqual(manager.offsets(for: day, settings: settings), [3, 0])
+    }
+
+    func testReminderAndMemoryTimeShareQuietHoursAndClamping() {
+        for hour in [0, 7, 22, 23] {
+            let time = NotificationManager.notificationTime(hour: hour, minute: 15, quietHours: true)
+            XCTAssertEqual(time.hour, 8)
+            XCTAssertEqual(time.minute, 15)
+        }
+        for hour in [8, 21] {
+            XCTAssertEqual(NotificationManager.notificationTime(hour: hour, minute: 15, quietHours: true).hour, hour)
+        }
+        let late = NotificationManager.notificationTime(hour: 99, minute: 99, quietHours: false)
+        XCTAssertEqual(late.hour, 23)
+        XCTAssertEqual(late.minute, 59)
+        let early = NotificationManager.notificationTime(hour: -1, minute: -1, quietHours: false)
+        XCTAssertEqual(early.hour, 0)
+        XCTAssertEqual(early.minute, 0)
+    }
+
     func testNotificationTriggerRespectsQuietHours() {
         let cal = CNDate.calendar
         let display = date(2026, 7, 20)

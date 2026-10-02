@@ -39,29 +39,13 @@ struct CalendarMonthView: View {
         var map: [Int: [Day]] = [:]
         let cal = CNDate.calendar
         for d in store.days {
-            // Resolve the anniversary in the visible year. Lunar-recurring days drift
-            // through the solar calendar — the original solar date is in 1962 etc.,
-            // so we have to walk lunar→solar in `year` to know where it actually lands.
-            let anniversary = anniversaryDate(for: d)
-            let dm = cal.component(.month, from: anniversary) - 1
-            let dy = cal.component(.year, from: anniversary)
-            let dd = cal.component(.day, from: anniversary)
-            if d.recurring {
-                if dm == month {
-                    map[dd, default: []].append(d)
-                }
-            } else if dm == month && dy == year {
-                map[dd, default: []].append(d)
+            for occurrence in DayInfo.occurrences(of: d, inGregorianYear: year) {
+                guard cal.component(.month, from: occurrence) - 1 == month else { continue }
+                let dayNumber = cal.component(.day, from: occurrence)
+                map[dayNumber, default: []].append(d)
             }
         }
         return map
-    }
-
-    private func anniversaryDate(for day: Day) -> Date {
-        guard day.recurring && day.lunar else { return day.date }
-        let lunar = Lunar.solarToLunar(day.date)
-        return Lunar.lunarToSolar(year: year, month: lunar.month,
-                                  day: lunar.day, isLeap: lunar.isLeap)
     }
 
     var body: some View {
