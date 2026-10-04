@@ -32,6 +32,22 @@ struct DaysRememberApp: App {
                         try? store.restoreBackup(DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: []))
                         settings.hasOnboarded = false
                     }
+                    if ProcessInfo.processInfo.arguments.contains("--seed-widget-photo") {
+                        let format = UIGraphicsImageRendererFormat()
+                        format.scale = 1
+                        let photoData = UIGraphicsImageRenderer(size: CGSize(width: 600, height: 400), format: format)
+                            .image { context in
+                                UIColor.systemYellow.setFill()
+                                context.fill(CGRect(x: 0, y: 0, width: 600, height: 400))
+                                UIColor.systemBlue.setFill()
+                                context.fill(CGRect(x: 300, y: 0, width: 300, height: 400))
+                            }.jpegData(compressionQuality: 0.8)
+                        store.days = store.days.map { day in
+                            var day = day
+                            day.photoData = photoData
+                            return day
+                        }
+                    }
                     if ProcessInfo.processInfo.arguments.contains("--seed-sync-conflicts"),
                        var local = store.days.first {
                         local.note = "Local note retained before sync"

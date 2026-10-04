@@ -6,7 +6,7 @@ final class StoreRegressionTests: XCTestCase {
     private func withRestoredDefaults(_ body: () throws -> Void) rethrows {
         let shared = SharedStorage.defaults
         let standard = UserDefaults.standard
-        let sharedKeys = ["days.v1", "categories.v1", "icloud.localTimestamp.icloud.days.v1",
+        let sharedKeys = ["days.v1", "days.v2", "categories.v1", "icloud.localTimestamp.icloud.days.v1",
                           "icloud.localTimestamp.icloud.categories.v1", "icloud.localTimestamp.icloud.settings.v1"]
         let settingsKeys = ["hasOnboarded", "notif.pre7", "notif.pre3", "notif.pre1", "notif.day0",
                             "notif.memory", "notif.moments", "notif.quiet", "notif.hour", "notif.minute"]
@@ -38,7 +38,7 @@ final class StoreRegressionTests: XCTestCase {
             XCTAssertEqual(saved.coverFocusY, 1)
             saved.title = "edited"
             store.update(saved)
-            let persisted = try JSONDecoder().decode([Day].self, from: XCTUnwrap(SharedStorage.defaults.data(forKey: "days.v1")))
+            let persisted = SharedStorage.loadDays()
             XCTAssertEqual(persisted.first?.categoryID, day.categoryID)
             XCTAssertEqual(persisted.first?.categoryLabel, "Remote label")
 
@@ -58,19 +58,19 @@ final class StoreRegressionTests: XCTestCase {
             var category = store.addCategory(name: "Original", icon: "tag", colorToken: .dusty)
             store.add(Day(id: "member", title: "test", date: Date(), category: .life,
                           photo: .home, categoryID: category.id))
-            let persisted = SharedStorage.defaults.data(forKey: "days.v1")
+            let persisted = SharedStorage.defaults.data(forKey: "days.v2")
 
             category.icon = "star"
             category.colorToken = .sage
             store.updateCategory(category)
             XCTAssertEqual(store.category(for: category.id).icon, "star")
             XCTAssertEqual(store.category(for: category.id).colorToken, .sage)
-            XCTAssertEqual(SharedStorage.defaults.data(forKey: "days.v1"), persisted)
+            XCTAssertEqual(SharedStorage.defaults.data(forKey: "days.v2"), persisted)
 
             category.name = "Renamed"
             store.updateCategory(category)
             XCTAssertEqual(store.days.first?.categoryLabel, "Renamed")
-            XCTAssertNotEqual(SharedStorage.defaults.data(forKey: "days.v1"), persisted)
+            XCTAssertNotEqual(SharedStorage.defaults.data(forKey: "days.v2"), persisted)
         }
     }
 
@@ -79,11 +79,11 @@ final class StoreRegressionTests: XCTestCase {
             let store = DayStore()
             store.days = []
             var category = store.addCategory(name: "Unused", icon: "tag", colorToken: .dusty)
-            let persisted = SharedStorage.defaults.data(forKey: "days.v1")
+            let persisted = SharedStorage.defaults.data(forKey: "days.v2")
             category.name = "Renamed"
             store.updateCategory(category)
             XCTAssertEqual(store.category(for: category.id).name, "Renamed")
-            XCTAssertEqual(SharedStorage.defaults.data(forKey: "days.v1"), persisted)
+            XCTAssertEqual(SharedStorage.defaults.data(forKey: "days.v2"), persisted)
         }
     }
 

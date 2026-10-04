@@ -14,11 +14,13 @@ final class BDDTests: XCTestCase {
     override func setUp() {
         super.setUp()
         SharedStorage.defaults.removeObject(forKey: "days.v1")
+        SharedStorage.defaults.removeObject(forKey: "days.v2")
         SharedStorage.defaults.removeObject(forKey: "categories.v1")
     }
 
     override func tearDown() {
         SharedStorage.defaults.removeObject(forKey: "days.v1")
+        SharedStorage.defaults.removeObject(forKey: "days.v2")
         SharedStorage.defaults.removeObject(forKey: "categories.v1")
         super.tearDown()
     }

@@ -47,6 +47,30 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    func testLegacyCheckpointMigratesToPhotoFilesWithoutReplacingOriginal() throws {
+        let identifier = "iCloud.tests.\(UUID().uuidString)"
+        let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("CloudLibrarySync").appendingPathComponent(identifier)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let original = day(photo: Data([3, 2, 1]))
+        var legacy = CloudLibraryState()
+        try legacy.updateLocal(days: [original], categories: [], inferDeletions: false)
+        let oldData = try JSONEncoder().encode(legacy)
+        let oldURL = directory.appendingPathComponent("state-v1.json")
+        try oldData.write(to: oldURL)
+
+        let sync = CloudLibrarySync(containerIdentifier: identifier)
+        sync.start(days: [original], categories: []) { _ in }
+        let newURL = directory.appendingPathComponent("state-v2.json")
+        let migrated = try CloudLibraryState.read(from: newURL)
+        XCTAssertEqual(migrated.version, 2)
+        XCTAssertEqual(migrated.records[CloudLibraryRecord.day(original).recordName]?.value, .day(original))
+        XCTAssertEqual(try Data(contentsOf: oldURL), oldData)
+        XCTAssertLessThan(try Data(contentsOf: newURL).count, 2000)
+        XCTAssertFalse(try FileManager.default.contentsOfDirectory(atPath: directory.appendingPathComponent("Photos").path).isEmpty)
+    }
+
     func testMissingPhotoInvalidIdentityAndFutureSchemaAreRejected() throws {
         try withDirectory { directory in
             let encoded = try record(day(photo: Data([1, 2, 3])), directory: directory)

@@ -89,7 +89,11 @@ final class WidgetTests: XCTestCase {
     @MainActor
     func testQueryReadsAppWritesAndRemovesDeletedDays() async throws {
         let original = SharedStorage.defaults.data(forKey: "days.v1")
-        defer { SharedStorage.defaults.set(original, forKey: "days.v1") }
+        let current = SharedStorage.defaults.data(forKey: "days.v2")
+        defer {
+            SharedStorage.defaults.set(original, forKey: "days.v1")
+            SharedStorage.defaults.set(current, forKey: "days.v2")
+        }
         let store = DayStore()
         store.days = []
         let day = Day(id: "widget-test", title: "桌面日子", date: Date(), category: .life, photo: .home)
@@ -109,7 +113,7 @@ final class WidgetTests: XCTestCase {
         XCTAssertTrue(suggestions.isEmpty)
         XCTAssertNil(WidgetDay.resolve(in: SharedStorage.loadDays(), selectedID: entities.first?.id, today: Date()))
         XCTAssertTrue(SharedStorage.loadDays().isEmpty)
-        SharedStorage.defaults.set(Data("invalid".utf8), forKey: "days.v1")
+        SharedStorage.defaults.set(Data("invalid".utf8), forKey: "days.v2")
         XCTAssertTrue(SharedStorage.loadDays().isEmpty)
     }
 }

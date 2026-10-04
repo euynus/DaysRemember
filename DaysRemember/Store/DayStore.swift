@@ -10,7 +10,12 @@ final class DayStore {
     var days: [Day] {
         didSet {
             guard !isRestoring else { return }
-            save()
+            guard save() else {
+                isRestoring = true
+                days = oldValue
+                isRestoring = false
+                return
+            }
             rescheduleNotifications()
             reloadWidgetTimelines()
         }
@@ -18,7 +23,12 @@ final class DayStore {
     var categories: [CategoryDefinition] {
         didSet {
             guard !isRestoring else { return }
-            saveCategories()
+            guard saveCategories() else {
+                isRestoring = true
+                categories = oldValue
+                isRestoring = false
+                return
+            }
         }
     }
     private(set) var deletedDays: [DeletedDay] = []
@@ -26,7 +36,8 @@ final class DayStore {
     private(set) var loadError: String?
     private(set) var syncPreparationError: String?
 
-    private let storageKey = "days.v1"
+    private let storageKey: String
+    private let photoFiles: PhotoFileStore?
     private let categoriesKey = "categories.v1"
     private let deletedKey = "deletedDays.v1"
     private let conflictsKey = "syncConflicts.v1"
@@ -46,8 +57,15 @@ final class DayStore {
         didSet { rescheduleNotifications() }
     }
 
-    init(defaults: UserDefaults = SharedStorage.defaults) {
+    convenience init() {
+        self.init(defaults: SharedStorage.defaults, photoDirectory: SharedStorage.photoDirectory)
+    }
+
+    /// Custom stores can omit file storage; the app and widget always share the App Group directory.
+    init(defaults: UserDefaults, photoDirectory: URL? = nil) {
         self.defaults = defaults
+        self.photoFiles = photoDirectory.map(PhotoFileStore.init(directory:))
+        self.storageKey = photoDirectory == nil ? SharedStorage.legacyDaysKey : SharedStorage.daysKey
         self.days = []
         self.categories = CategoryDefinition.system
         isRestoring = true
@@ -55,12 +73,13 @@ final class DayStore {
         do {
             // Replay an interrupted restore before exposing any partially restored data.
             if let pending = defaults.data(forKey: pendingRestoreKey) {
-                let backup = try DayBackup.decode(pending)
+                let backup = try (photoFiles?.decoder() ?? JSONDecoder()).decode(DayBackup.self, from: pending)
+                try backup.validate()
                 try writeBackup(backup)
                 defaults.removeObject(forKey: pendingRestoreKey)
             }
-            if let data = defaults.data(forKey: storageKey) {
-                let decoded = try JSONDecoder().decode([Day].self, from: data)
+            if let data = defaults.data(forKey: storageKey) ?? defaults.data(forKey: SharedStorage.legacyDaysKey) {
+                let decoded = try (photoFiles?.decoder() ?? JSONDecoder()).decode([Day].self, from: data)
                 try DayBackup.validateDays(decoded)
                 self.days = decoded
             }
@@ -85,21 +104,28 @@ final class DayStore {
         }
     }
 
-    func save() {
+    @discardableResult
+    func save() -> Bool {
         persist(days, storageKey: storageKey)
     }
 
-    func saveCategories() {
+    @discardableResult
+    func saveCategories() -> Bool {
         persist(categories, storageKey: categoriesKey)
     }
 
-    private func persist<Value: Encodable>(_ value: Value, storageKey: String) {
-        guard loadError == nil else { return }
-        guard let data = try? JSONEncoder().encode(value) else { return }
-        defaults.set(data, forKey: storageKey)
-
-        if cloudSyncEnabled {
-            CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
+    private func persist<Value: Encodable>(_ value: Value, storageKey: String) -> Bool {
+        guard loadError == nil else { return false }
+        do {
+            let data = try (photoFiles?.encoder() ?? JSONEncoder()).encode(value)
+            defaults.set(data, forKey: storageKey)
+            if cloudSyncEnabled {
+                CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
+            }
+            return true
+        } catch {
+            loadError = "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。"
+            return false
         }
     }
 
@@ -113,6 +139,7 @@ final class DayStore {
         guard loadError == nil, !days.contains(where: { $0.id == day.id }) else { return }
         // Restore the active copy before removing its recoverable deleted copy.
         days.insert(normalized(day), at: 0)
+        guard loadError == nil else { return }
         deletedDays.removeAll { $0.id == day.id }
         persistDeletedDays()
     }
@@ -162,11 +189,12 @@ final class DayStore {
     }
 
     func exportOriginalData() throws -> Data {
-        let keys = [storageKey, categoriesKey, deletedKey, conflictsKey, pendingRestoreKey,
-                    recoveryKey, migrationKey, "unreadableData.v1"]
-        let original = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
+        let keys = Set([storageKey, SharedStorage.legacyDaysKey, categoriesKey, deletedKey, conflictsKey, pendingRestoreKey,
+                    recoveryKey, migrationKey, "unreadableData.v1"])
+        var original = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
             defaults.data(forKey: key).map { (key, $0) }
         })
+        if let photoFiles { original.merge(try photoFiles.originalFiles()) { _, current in current } }
         return try JSONEncoder().encode(original)
     }
 
@@ -177,7 +205,7 @@ final class DayStore {
         } else {
             defaults.set(try exportOriginalData(), forKey: "unreadableData.v1")
         }
-        try applyBackup(backup, encoded: data)
+        try applyBackup(backup, encoded: data, repairCorruptFiles: true)
         loadError = nil
         if cloudSyncEnabled {
             CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
@@ -199,9 +227,11 @@ final class DayStore {
         if !hasMigrationBackup { defaults.set(try exportBackup(), forKey: migrationKey) }
     }
 
-    private func applyBackup(_ backup: DayBackup, encoded: Data) throws {
+    private func applyBackup(_ backup: DayBackup, encoded: Data, repairCorruptFiles: Bool = false) throws {
+        // All fallible photo writes finish before a replayable journal is published.
+        let values = try encodedBackupValues(backup, repairCorruptFiles: repairCorruptFiles)
         defaults.set(encoded, forKey: pendingRestoreKey)
-        try writeBackup(backup)
+        for (key, data) in values { defaults.set(data, forKey: key) }
         isRestoring = true
         categories = Self.normalizedCategories(backup.categories)
         days = backup.days
@@ -214,15 +244,17 @@ final class DayStore {
     }
 
     private func writeBackup(_ backup: DayBackup) throws {
+        for (key, data) in try encodedBackupValues(backup) { defaults.set(data, forKey: key) }
+    }
+
+    private func encodedBackupValues(_ backup: DayBackup, repairCorruptFiles: Bool = false) throws -> [(String, Data)] {
         let encoder = JSONEncoder()
-        let daysData = try encoder.encode(backup.days)
+        let daysData = try (photoFiles?.encoder(repairCorruptFiles: repairCorruptFiles) ?? encoder).encode(backup.days)
         let categoriesData = try encoder.encode(backup.categories)
         let deletedData = try encoder.encode(backup.deletedDays)
         let conflictsData = try encoder.encode(backup.syncConflicts)
-        defaults.set(daysData, forKey: storageKey)
-        defaults.set(categoriesData, forKey: categoriesKey)
-        defaults.set(deletedData, forKey: deletedKey)
-        defaults.set(conflictsData, forKey: conflictsKey)
+        return [(storageKey, daysData), (categoriesKey, categoriesData),
+                (deletedKey, deletedData), (conflictsKey, conflictsData)]
     }
 
     func restoreSyncConflict(id: String) throws {
@@ -359,21 +391,26 @@ final class DayStore {
               !categories[index].isSystem else { return }
         let cleanName = category.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanIcon = category.icon.trimmingCharacters(in: .whitespacesAndNewlines)
-        categories[index] = CategoryDefinition(
+        var updatedCategories = categories
+        updatedCategories[index] = CategoryDefinition(
             id: category.id,
             name: cleanName.isEmpty ? categories[index].name : cleanName,
             icon: cleanIcon.isEmpty ? categories[index].icon : cleanIcon,
             colorToken: category.colorToken,
             isSystem: false
         )
-        let label = categories[index].name
-        guard days.contains(where: { $0.categoryID == category.id && $0.categoryLabel != label }) else { return }
-        days = days.map { day in
+        let label = updatedCategories[index].name
+        guard days.contains(where: { $0.categoryID == category.id && $0.categoryLabel != label }) else {
+            categories = updatedCategories
+            return
+        }
+        let updatedDays = days.map { day in
             guard day.categoryID == category.id else { return day }
             var updated = day
             updated.categoryLabel = label
             return updated
         }
+        commitCategoryChange(days: updatedDays, categories: updatedCategories)
     }
 
     func deleteCategory(id: String, migrateTo targetID: String) {
@@ -383,14 +420,29 @@ final class DayStore {
               categories.contains(where: { $0.id == targetID && $0.id != id }) else { return }
 
         let target = self.category(for: targetID)
-        categories.removeAll { $0.id == id }
-        days = days.map { day in
+        let updatedCategories = categories.filter { $0.id != id }
+        let updatedDays = days.map { day in
             guard day.categoryID == id else { return day }
             var updated = day
             updated.categoryID = target.id
             updated.categoryLabel = target.name
             updated.category = DayCategory(rawValue: target.id) ?? .life
             return updated
+        }
+        commitCategoryChange(days: updatedDays, categories: updatedCategories)
+    }
+
+    private func commitCategoryChange(days: [Day], categories: [CategoryDefinition]) {
+        do {
+            let backup = DayBackup(days: days, categories: categories, deletedDays: deletedDays,
+                                   syncConflicts: syncConflicts)
+            try backup.validate()
+            // This local journal references staged photos, so edits do not inherit the export size limit.
+            let encoded = try (photoFiles?.encoder() ?? JSONEncoder()).encode(backup)
+            try applyBackup(backup, encoded: encoded)
+            if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
+        } catch {
+            loadError = "分类更改未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。"
         }
     }
 

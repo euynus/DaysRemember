@@ -29,6 +29,7 @@ struct DayEditorView: View {
     @State private var dragStartY: Double?
     @State private var showDatePicker = false
     @State private var confirmDiscard = false
+    @State private var saveError: String?
 
     private static let pickerOptions: [PhotoStyle] = [
         .systemDefault, .birthday, .japan, .study, .home,
@@ -102,6 +103,14 @@ struct DayEditorView: View {
         .alert("放弃未保存的修改？", isPresented: $confirmDiscard) {
             Button("放弃修改", role: .destructive) { dismiss() }
             Button("继续编辑", role: .cancel) {}
+        }
+        .alert("未能保存", isPresented: Binding(
+            get: { saveError != nil },
+            set: { if !$0 { saveError = nil } }
+        )) {
+            Button("好", role: .cancel) { saveError = nil }
+        } message: {
+            Text(saveError ?? "")
         }
         .alert("无法读取照片", isPresented: Binding(
             get: { photoError != nil },
@@ -490,6 +499,10 @@ struct DayEditorView: View {
             store.add(new)
         } else {
             store.update(new)
+        }
+        guard store.loadError == nil else {
+            saveError = store.loadError
+            return
         }
         Haptics.success()
         dismiss()

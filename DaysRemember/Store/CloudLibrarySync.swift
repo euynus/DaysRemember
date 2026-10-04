@@ -44,6 +44,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     @ObservationIgnored private let containerIdentifier: String
     @ObservationIgnored private let stateURL: URL
+    @ObservationIgnored private let photoFiles: PhotoFileStore
     @ObservationIgnored private var state = CloudLibraryState()
     @ObservationIgnored private var container: CKContainer?
     @ObservationIgnored private var engine: CKSyncEngine?
@@ -65,9 +66,13 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         self.stateURL = stateURL ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("CloudLibrarySync", isDirectory: true)
             .appendingPathComponent(containerIdentifier, isDirectory: true)
-            .appendingPathComponent("state-v1.json")
+            .appendingPathComponent("state-v2.json")
+        self.photoFiles = PhotoFileStore(directory: self.stateURL.deletingLastPathComponent().appendingPathComponent("Photos"))
         do {
-            state = try CloudLibraryState.read(from: self.stateURL)
+            let legacyURL = self.stateURL.deletingLastPathComponent().appendingPathComponent("state-v1.json")
+            let readURL = stateURL == nil && !FileManager.default.fileExists(atPath: self.stateURL.path)
+                ? legacyURL : self.stateURL
+            state = try CloudLibraryState.read(from: readURL, photoFiles: photoFiles)
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             if state.accountChangePending { showAccountChange() }
@@ -236,7 +241,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     private func persist() -> Bool {
         guard !storageFailed else { return false }
         do {
-            try state.write(to: stateURL)
+            try state.write(to: stateURL, photoFiles: photoFiles)
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             return true

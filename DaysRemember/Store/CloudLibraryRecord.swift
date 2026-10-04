@@ -381,16 +381,19 @@ struct CloudLibraryState: Codable {
         return true
     }
 
-    func write(to url: URL) throws {
+    func write(to url: URL, photoFiles: PhotoFileStore? = nil) throws {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        // ponytail: full photo snapshots favor crash consistency; split payload files if library size demands it.
-        try JSONEncoder().encode(self).write(to: url, options: .atomic)
+        let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appendingPathComponent("Photos"))
+        var checkpoint = self
+        checkpoint.version = 2
+        try files.encoder().encode(checkpoint).write(to: url, options: .atomic)
     }
 
-    static func read(from url: URL) throws -> CloudLibraryState {
+    static func read(from url: URL, photoFiles: PhotoFileStore? = nil) throws -> CloudLibraryState {
         guard FileManager.default.fileExists(atPath: url.path) else { return CloudLibraryState() }
-        let state = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
-        guard state.version == 1 else { throw CloudLibraryRecord.RecordError.corruptState }
+        let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appendingPathComponent("Photos"))
+        let state = try files.decoder().decode(Self.self, from: Data(contentsOf: url))
+        guard (1...2).contains(state.version) else { throw CloudLibraryRecord.RecordError.corruptState }
         for (name, entry) in state.records {
             guard name == entry.recordType + "." + CloudLibraryRecord.digest(Data(entry.id.utf8)),
                   ["LibraryDay", "LibraryCategory"].contains(entry.recordType) else {

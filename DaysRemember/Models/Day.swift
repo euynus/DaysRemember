@@ -47,7 +47,7 @@ struct Day: Identifiable, Codable, Hashable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, date, recurring, lunar, category, categoryLabel, categoryID, photo, photoData
+        case id, title, date, recurring, lunar, category, categoryLabel, categoryID, photo, photoData, photoFile
         case coverFocusX, coverFocusY, reminderOffsets, note, location, pinned
     }
 
@@ -62,7 +62,15 @@ struct Day: Identifiable, Codable, Hashable {
         categoryLabel = try container.decodeIfPresent(String.self, forKey: .categoryLabel) ?? category.label
         categoryID = try container.decodeIfPresent(String.self, forKey: .categoryID) ?? category.rawValue
         photo = try container.decodeIfPresent(PhotoStyle.self, forKey: .photo) ?? .home
-        photoData = try container.decodeIfPresent(Data.self, forKey: .photoData)
+        if let reference = try container.decodeIfPresent(String.self, forKey: .photoFile) {
+            guard let files = decoder.userInfo[PhotoFileStore.codingKey] as? PhotoFileStore else {
+                throw DecodingError.dataCorruptedError(forKey: .photoFile, in: container,
+                                                       debugDescription: "Local photo references are not portable.")
+            }
+            photoData = try files.data(for: reference, id: id)
+        } else {
+            photoData = try container.decodeIfPresent(Data.self, forKey: .photoData)
+        }
         coverFocusX = Self.clampFocus(try container.decodeIfPresent(Double.self, forKey: .coverFocusX) ?? 0.5)
         coverFocusY = Self.clampFocus(try container.decodeIfPresent(Double.self, forKey: .coverFocusY) ?? 0.5)
         reminderOffsets = try container.decodeIfPresent([Int].self, forKey: .reminderOffsets)
@@ -82,7 +90,12 @@ struct Day: Identifiable, Codable, Hashable {
         try container.encode(categoryLabel, forKey: .categoryLabel)
         try container.encode(categoryID, forKey: .categoryID)
         try container.encode(photo, forKey: .photo)
-        try container.encodeIfPresent(photoData, forKey: .photoData)
+        if let photoData, let files = encoder.userInfo[PhotoFileStore.codingKey] as? PhotoFileStore {
+            let repair = encoder.userInfo[PhotoFileStore.repairKey] as? Bool ?? false
+            try container.encode(files.reference(for: photoData, id: id, repairCorruptFiles: repair), forKey: .photoFile)
+        } else {
+            try container.encodeIfPresent(photoData, forKey: .photoData)
+        }
         try container.encode(coverFocusX, forKey: .coverFocusX)
         try container.encode(coverFocusY, forKey: .coverFocusY)
         try container.encodeIfPresent(reminderOffsets, forKey: .reminderOffsets)
