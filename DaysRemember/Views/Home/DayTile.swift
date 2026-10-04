@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct DayRow: View {
+    @Environment(\.currentDay) private var today
     @Environment(DayStore.self) private var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
     var onOpen: (Day) -> Void = { _ in }
 
     var body: some View {
-        let info = DayInfo.compute(day)
+        let info = DayInfo.compute(day, today: today)
         Button { onOpen(day) } label: {
             HStack(spacing: 14) {
                 if !dynamicTypeSize.isAccessibilitySize {
@@ -55,12 +56,13 @@ struct DayRow: View {
 }
 
 struct UpcomingDayView: View {
+    @Environment(\.currentDay) private var today
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
     var onOpen: (Day) -> Void = { _ in }
 
     var body: some View {
-        let info = DayInfo.compute(day)
+        let info = DayInfo.compute(day, today: today)
         Button { onOpen(day) } label: {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {

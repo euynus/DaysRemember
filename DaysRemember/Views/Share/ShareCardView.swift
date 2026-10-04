@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ShareCardView: View {
+    @Environment(\.currentDay) private var today
     @Environment(\.dismiss) private var dismiss
     @Environment(\.displayScale) private var displayScale
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -25,7 +26,7 @@ struct ShareCardView: View {
         let image: UIImage
     }
 
-    private var info: DayInfo { DayInfo.compute(day) }
+    private var info: DayInfo { DayInfo.compute(day, today: today) }
 
     private var card: some View {
         SharePostcard(day: day, info: info, template: template, includeNote: includeNote)

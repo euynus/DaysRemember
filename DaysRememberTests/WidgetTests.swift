@@ -35,6 +35,57 @@ final class WidgetTests: XCTestCase {
         XCTAssertNil(WidgetDay.resolve(in: [], selectedID: nil, today: today))
     }
 
+    func testDayStartsAcrossYearBoundary() {
+        let now = CNDate.calendar.date(from: DateComponents(year: 2026, month: 12, day: 31,
+                                                            hour: 23, minute: 59, second: 59))!
+        let expected = (1...7).map {
+            CNDate.calendar.date(from: DateComponents(year: 2027, month: 1, day: $0))!
+        }
+        XCTAssertEqual(CNDate.calendar.timeZone.identifier, "Asia/Shanghai")
+        XCTAssertEqual(CNDate.dayStarts(after: now, count: 7), expected)
+    }
+
+    func testDayStartsAcrossLeapDay() {
+        let now = CNDate.calendar.date(from: DateComponents(year: 2028, month: 2, day: 28,
+                                                            hour: 12, minute: 30))!
+        let leapDay = CNDate.calendar.date(from: DateComponents(year: 2028, month: 2, day: 29))!
+        let march = CNDate.calendar.date(from: DateComponents(year: 2028, month: 3, day: 1))!
+        XCTAssertEqual(CNDate.dayStarts(after: now, count: 2), [leapDay, march])
+        XCTAssertEqual(CNDate.dayStarts(after: leapDay, count: 1), [march])
+    }
+
+    func testDayStartsWithNonPositiveCount() {
+        let now = CNDate.calendar.date(from: DateComponents(year: 2026, month: 10, day: 2))!
+        XCTAssertTrue(CNDate.dayStarts(after: now, count: 0).isEmpty)
+        XCTAssertTrue(CNDate.dayStarts(after: now, count: -1).isEmpty)
+    }
+
+    func testAutomaticSelectionAdvancesAtMidnight() {
+        let before = CNDate.calendar.date(from: DateComponents(year: 2026, month: 12, day: 31,
+                                                               hour: 23, minute: 59, second: 59))!
+        let next = CNDate.calendar.date(from: DateComponents(year: 2027, month: 1, day: 1))!
+        let current = Day(id: "current", title: "今天", date: before, category: .life, photo: .home)
+        let upcoming = Day(id: "upcoming", title: "明天", date: next, category: .life, photo: .home)
+        let dates = [before] + CNDate.dayStarts(after: before, count: 2)
+        let selections = dates.map {
+            WidgetDay.resolve(in: [current, upcoming], selectedID: nil, today: $0)?.id
+        }
+        XCTAssertEqual(selections, ["current", "upcoming", nil])
+    }
+
+    func testExplicitSelectionsStayUnchangedAcrossMidnight() {
+        let before = CNDate.calendar.date(from: DateComponents(year: 2026, month: 12, day: 31,
+                                                               hour: 23, minute: 59, second: 59))!
+        let pastDate = CNDate.calendar.date(from: DateComponents(year: 2026, month: 12, day: 30))!
+        let next = CNDate.calendar.date(from: DateComponents(year: 2027, month: 1, day: 1))!
+        let past = Day(id: "past", title: "过去", date: pastDate, category: .life, photo: .home)
+        let upcoming = Day(id: "upcoming", title: "明天", date: next, category: .life, photo: .home)
+        for date in [before] + CNDate.dayStarts(after: before, count: 7) {
+            XCTAssertEqual(WidgetDay.resolve(in: [past, upcoming], selectedID: "past", today: date)?.id, "past")
+            XCTAssertNil(WidgetDay.resolve(in: [past, upcoming], selectedID: "deleted", today: date))
+        }
+    }
+
     @MainActor
     func testQueryReadsAppWritesAndRemovesDeletedDays() async throws {
         let original = SharedStorage.defaults.data(forKey: "days.v1")

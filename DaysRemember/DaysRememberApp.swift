@@ -7,6 +7,7 @@ struct DaysRememberApp: App {
     @State private var store = DayStore()
     @State private var settings = AppSettings()
     @State private var router = DeepLinkRouter()
+    @State private var currentDay = CNDate.calendar.startOfDay(for: Today.date)
 
     var body: some Scene {
         WindowGroup {
@@ -14,6 +15,7 @@ struct DaysRememberApp: App {
                 .environment(store)
                 .environment(settings)
                 .environment(router)
+                .environment(\.currentDay, currentDay)
                 .environment(\.locale, Locale(identifier: "zh_CN"))
                 // Artwork and exported cards use the same light appearance.
                 .preferredColorScheme(.light)
@@ -49,8 +51,40 @@ struct DaysRememberApp: App {
                     store.rescheduleNotifications()
                 }
                 .onChange(of: scenePhase) { _, phase in
-                    if phase == .active { store.rescheduleNotifications() }
+                    if phase == .active {
+                        refreshCurrentDay()
+                        store.rescheduleNotifications()
+                    }
                 }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+                    refreshCurrentDay()
+                    store.rescheduleNotifications()
+                }
+                .task { await refreshAtMidnight() }
+        }
+    }
+
+    private func refreshCurrentDay() {
+        currentDay = CNDate.calendar.startOfDay(for: Today.date)
+    }
+
+    private func refreshAtMidnight() async {
+        #if DEBUG
+        if DebugLaunch.isAutomated,
+           let delay = ProcessInfo.processInfo.environment["DR_ADVANCE_DAY_AFTER_SECONDS"].flatMap(Double.init),
+           delay > 0, delay <= 60 {
+            do { try await Task.sleep(for: .seconds(delay)) } catch { return }
+            currentDay = CNDate.dayStarts(after: currentDay, count: 1).first ?? currentDay
+            return
+        }
+        #endif
+        while !Task.isCancelled {
+            let now = Date()
+            let next = CNDate.dayStarts(after: now, count: 1).first ?? now.addingTimeInterval(21600)
+            do { try await Task.sleep(for: .seconds(max(1, next.timeIntervalSinceNow))) }
+            catch { return }
+            refreshCurrentDay()
+            store.rescheduleNotifications()
         }
     }
 }

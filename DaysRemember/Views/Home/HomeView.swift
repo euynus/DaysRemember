@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(DayStore.self) var store
+    @Environment(\.currentDay) private var today
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var filter: Filter = .all
     @State private var isSearching = false
@@ -38,13 +39,13 @@ struct HomeView: View {
             return [d.title, d.location, d.note, categoryName]
                 .contains { $0.localizedStandardContains(query) }
         }
-        return store.sortedDays(matched)
+        return store.sortedDays(matched, today: today)
     }
 
     var body: some View {
         let days = filteredDays
         let hero = filter == .all && searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? store.nearestUpcoming(within: .max) : nil
+            ? store.nearestUpcoming(within: .max, today: today) : nil
         let feedDays = days.filter { $0.id != hero?.id }
         VStack(spacing: 0) {
             header
@@ -137,10 +138,10 @@ struct HomeView: View {
     /// Today's date · lunar day · solar term (colored) — the JSX header `.meta` line.
     private var metaItems: [MetaItem] {
         var items: [MetaItem] = [
-            MetaItem(text: "\(CNDate.short(Today.date)) \(CNDate.weekday(Today.date))"),
-            MetaItem(text: Lunar.fmt(Today.date)),
+            MetaItem(text: "\(CNDate.short(today)) \(CNDate.weekday(today))"),
+            MetaItem(text: Lunar.fmt(today)),
         ]
-        if let term = SolarTerms.name(for: Today.date) {
+        if let term = SolarTerms.name(for: today) {
             items.append(MetaItem(text: term, color: Theme.catTravel, bold: true))
         }
         return items

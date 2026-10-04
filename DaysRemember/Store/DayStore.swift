@@ -255,10 +255,10 @@ final class DayStore {
     }
 
     /// Nearest upcoming (future or today) within `within` days.
-    func nearestUpcoming(within: Int = 100) -> Day? {
+    func nearestUpcoming(within: Int = 100, today: Date = Today.date) -> Day? {
         days
             .compactMap { day -> (Day, Int)? in
-                let info = DayInfo.compute(day)
+                let info = DayInfo.compute(day, today: today)
                 return (info.isPast || info.days > within) ? nil : (day, info.days)
             }
             .min { $0.1 < $1.1 }?
@@ -316,19 +316,19 @@ final class DayStore {
         category(for: day.categoryID)
     }
 
-    func days(in categoryID: String?) -> [Day] {
-        guard let categoryID else { return sortedDays(days) }
+    func days(in categoryID: String?, today: Date = Today.date) -> [Day] {
+        guard let categoryID else { return sortedDays(days, today: today) }
         // Filter before sort — sort cost grows N log N, so trimming first is cheaper.
-        return sortedDays(days.filter { $0.categoryID == categoryID })
+        return sortedDays(days.filter { $0.categoryID == categoryID }, today: today)
     }
 
-    func sortedDays(_ source: [Day]) -> [Day] {
+    func sortedDays(_ source: [Day], today: Date = Today.date) -> [Day] {
         // Decorate-sort-undecorate: compute DayInfo once per day instead of on every
         // comparator call. With N days the sort issues ~N log N comparisons; without
         // memoizing we'd hit DayInfo.compute (which can do a multi-year lunar walk for
         // recurring lunar days) ~2N log N times per sort.
         source
-            .map { ($0, DayInfo.compute($0)) }
+            .map { ($0, DayInfo.compute($0, today: today)) }
             .sorted { lhs, rhs in
                 if lhs.0.pinned != rhs.0.pinned { return lhs.0.pinned && !rhs.0.pinned }
                 if lhs.1.isPast != rhs.1.isPast { return !lhs.1.isPast }

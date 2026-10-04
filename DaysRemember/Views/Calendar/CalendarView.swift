@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CalendarMonthView: View {
+    @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var month: Int
@@ -80,6 +81,14 @@ struct CalendarMonthView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
         .sensoryFeedback(.selection, trigger: year * 12 + month)
+        .onChange(of: today) { old, new in
+            let calendar = CNDate.calendar
+            if year == calendar.component(.year, from: old),
+               month == calendar.component(.month, from: old) - 1 {
+                year = calendar.component(.year, from: new)
+                month = calendar.component(.month, from: new) - 1
+            }
+        }
         .sheet(isPresented: Binding(
             get: { !selectedEvents.isEmpty },
             set: { if !$0 { selectedEvents = [] } }
@@ -98,7 +107,7 @@ struct CalendarMonthView: View {
             // Tapping the title jumps back to the current month (preserves the old
             // "今天" jump without a separate control).
             Button {
-                let cal = CNDate.calendar; let today = Today.date
+                let cal = CNDate.calendar
                 year = cal.component(.year, from: today)
                 month = cal.component(.month, from: today) - 1
             } label: {
@@ -133,7 +142,6 @@ struct CalendarMonthView: View {
 
     private func calendarCard(eventsByDay: [Int: [Day]]) -> some View {
         let cal = CNDate.calendar
-        let today = Today.date
         let isCurrentMonth = (cal.component(.year, from: today) == year)
             && (cal.component(.month, from: today) - 1 == month)
         let todayDay = cal.component(.day, from: today)
@@ -174,7 +182,7 @@ struct CalendarMonthView: View {
         let hasEvents = !events.isEmpty
         let dotColor = events.first.map { store.category(for: $0).colorToken.color } ?? Theme.muted
         let cal = CNDate.calendar
-        let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? Today.date
+        let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? today
         let term = SolarTerms.name(for: cellDate) ?? SolarTerms.lunarHoliday(for: cellDate)
 
         let cell = VStack(spacing: 1) {

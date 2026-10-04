@@ -49,6 +49,42 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Remote note"].exists)
     }
 
+    func testDayChangeUpdatesCountdownWithoutLeavingDetail() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchEnvironment["DR_ADVANCE_DAY_AFTER_SECONDS"] = "6"
+        app.launchArguments = ["--tab", "home", "--seed-sample-data"]
+        app.launch()
+        let wedding = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "结婚纪念日")).firstMatch
+        XCTAssertTrue(wedding.waitForExistence(timeout: 5))
+        wedding.tap()
+        let tomorrowCount = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "171")).firstMatch
+        XCTAssertTrue(tomorrowCount.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["更多操作"].exists)
+        app.buttons["返回"].tap()
+        let tomorrowHeader = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "4月24日")).firstMatch
+        XCTAssertTrue(tomorrowHeader.waitForExistence(timeout: 5))
+    }
+
+    func testDayChangeDoesNotDiscardAnOpenEditorDraft() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchEnvironment["DR_ADVANCE_DAY_AFTER_SECONDS"] = "6"
+        app.launchArguments = ["--screen", "add"]
+        app.launch()
+        let title = app.textFields["日子名称"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        title.typeText("Midnight draft")
+        // A delayed predicate waits through the clock tick without changing system time.
+        let deadline = Date().addingTimeInterval(7)
+        let afterTick = NSPredicate { _, _ in Date() >= deadline }
+        expectation(for: afterTick, evaluatedWith: app)
+        waitForExpectations(timeout: 10)
+        XCTAssertEqual(title.value as? String, "Midnight draft")
+        XCTAssertTrue(app.buttons["保存"].exists)
+    }
+
     /// Tap the "即将到来" spotlight to push a real Detail screen, open its menu,
     /// tap 编辑, and assert the editor sheet actually presents (its 保存 button).
     func testEditFromPushedDetailOpensEditor() {

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DetailView: View {
+    @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
     let day: Day
@@ -14,7 +15,7 @@ struct DetailView: View {
 
     var body: some View {
         let day = currentDay
-        let info = DayInfo.compute(day)
+        let info = DayInfo.compute(day, today: today)
 
         VStack(spacing: 0) {
             topBar

@@ -43,23 +43,21 @@ struct DaysProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: SelectWidgetDay, in context: Context) async -> DaysEntry {
-        let entry = makeEntry(configuration: configuration, asOf: Date())
+        let entry = makeEntry(configuration: configuration, days: SharedStorage.loadDays(), asOf: Date())
         return context.isPreview && configuration.day == nil && entry.day == nil
             ? placeholder(in: context) : entry
     }
 
     func timeline(for configuration: SelectWidgetDay, in context: Context) async -> Timeline<DaysEntry> {
         let now = Date()
-        let entry = makeEntry(configuration: configuration, asOf: now)
-        // Refresh at the next midnight so the countdown ticks down.
-        let nextMidnight = CNDate.calendar.nextDate(after: now,
-                                                    matching: DateComponents(hour: 0, minute: 0),
-                                                    matchingPolicy: .strict) ?? now.addingTimeInterval(60 * 60 * 6)
-        return Timeline(entries: [entry], policy: .after(nextMidnight))
+        let days = SharedStorage.loadDays()
+        let entries = ([now] + CNDate.dayStarts(after: now, count: 7)).map {
+            makeEntry(configuration: configuration, days: days, asOf: $0)
+        }
+        return Timeline(entries: entries, policy: .atEnd)
     }
 
-    private func makeEntry(configuration: SelectWidgetDay, asOf today: Date) -> DaysEntry {
-        let days = SharedStorage.loadDays()
+    private func makeEntry(configuration: SelectWidgetDay, days: [Day], asOf today: Date) -> DaysEntry {
         let day = WidgetDay.resolve(in: days, selectedID: configuration.day?.id, today: today)
         return DaysEntry(date: today, day: day, hasAnyDays: !days.isEmpty,
                          selectionMissing: configuration.day != nil && day == nil)

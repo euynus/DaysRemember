@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WidgetsPreviewView: View {
+    @Environment(\.currentDay) private var today
     @Environment(DayStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var size: DayWidgetCard.Size = .medium
@@ -25,8 +26,8 @@ struct WidgetsPreviewView: View {
             .pickerStyle(.segmented)
             .padding(22)
             ScrollView {
-                if let day = WidgetDay.resolve(in: store.days, selectedID: selectedID, today: Today.date) {
-                    DayWidgetCard(day: day, size: size)
+                if let day = WidgetDay.resolve(in: store.days, selectedID: selectedID, today: today) {
+                    DayWidgetCard(day: day, size: size, today: today)
                         .frame(width: size == .small ? 160 : 320,
                                height: size == .large ? 340 : 160)
                         .clipShape(RoundedRectangle(cornerRadius: 24))

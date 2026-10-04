@@ -8,7 +8,7 @@ A Chinese-language anniversary and countdown app built with SwiftUI, iOS 17+. Na
 |---|---|
 | **Local notifications** | `Store/NotificationManager.swift` schedules date-specific requests via `UNUserNotificationCenter`. Permission is requested when saving a day with reminders or explicitly enabling reminders, not on launch. Gregorian/lunar occurrences are planned up to five years ahead, retaining the earliest 64 requests including the optional daily greeting. The reminder page reads actual pending requests and their latest date; opening the app replenishes this finite schedule. Quiet hours move 22:00+ to the following morning and pre-08:00 to the same morning. |
 | **iCloud / backup** | `CloudLibrarySync` uses native `CKSyncEngine`, a private custom zone, separate day/category records, and `CKAsset` photos. Pending edits, record change tags, and the engine cursor are checkpointed locally. Data management offers JSON export/import, a pre-replacement recovery copy, and local recently deleted records. |
-| **WidgetKit** | `DaysRememberWidget/` extension target with Small / Medium / Large families. Native Edit Widget configuration selects a specific day (including past days), or defaults to the nearest upcoming day. Reads days through the `group.com.shiguang.daysremember` App Group; the app reloads timelines on every day change, with a midnight refresh request. |
+| **WidgetKit** | `DaysRememberWidget/` extension target with Small / Medium / Large families. Native Edit Widget configuration selects a specific day (including past days), or defaults to the nearest upcoming day. Reads days through the `group.com.shiguang.daysremember` App Group; each timeline includes the next seven midnights and resolves automatic selection for each date. The app reloads timelines when records change. |
 | **PhotosPicker** | `DayEditorView` offers artwork presets and a photo picker. Photos are JPEG-compressed (max 1600px), stored on `Day.photoData`, and framed using `coverFocusX/Y`. `PhotoTile(day:)` shares that crop across the app and widget. |
 | **Share sheet** | `ShareCardView` renders one of four templates via `ImageRenderer`; private notes are excluded unless explicitly enabled. 分享图片 opens `UIActivityViewController`; 保存 writes to Photos via `PHPhotoLibrary` (requires `NSPhotoLibraryAddUsageDescription`). |
 
@@ -29,6 +29,8 @@ Then choose an available iPhone simulator (iOS 17+).
 ## Data and CloudKit
 
 New installations start empty; daily greetings and annual memories are opt-in. Existing local records, photos, categories, and saved preferences are retained. Recurring days show both elapsed days from the original date (starting at zero) and the next anniversary.
+
+The app refreshes its shared calendar day at midnight, on foreground entry, and after significant system time changes. Countdown, calendar, category, share, and widget-preview views observe that date without resetting navigation or in-progress editor state.
 
 Before enabling CloudKit, the app preserves a local migration backup. Legacy `NSUbiquitousKeyValueStore` day/category keys remain untouched and are no longer written. The data page can explicitly append unseen legacy records without overwriting matching IDs; upgrade all devices before further edits. This is a one-way migration, not ongoing interoperability with old clients. Small notification preferences continue using KVS.
 

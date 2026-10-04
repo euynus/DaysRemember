@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CategoryDaysListView: View {
+    @Environment(\.currentDay) private var today
     @Environment(\.dismiss) private var dismiss
     @Environment(DayStore.self) private var store
     let title: String
@@ -8,7 +9,7 @@ struct CategoryDaysListView: View {
     var onOpen: (Day) -> Void = { _ in }
 
     var body: some View {
-        let days = store.days(in: categoryID)
+        let days = store.days(in: categoryID, today: today)
         VStack(spacing: 0) {
             NavHeader(title: title) { dismiss() }
             ScrollView {

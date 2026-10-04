@@ -32,6 +32,12 @@ enum CNDate {
         let bStart = calendar.startOfDay(for: b)
         return calendar.dateComponents([.day], from: aStart, to: bStart).day ?? 0
     }
+
+    static func dayStarts(after date: Date, count: Int) -> [Date] {
+        guard count > 0 else { return [] }
+        let start = calendar.startOfDay(for: date)
+        return (1...count).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
+    }
 }
 
 /// Today reference — production uses `Date()`, but DEBUG can pin to the prototype's
