@@ -30,10 +30,13 @@ struct CategoryEditorView: View {
 
     /// Curated SF Symbols suited to anniversaries / life events — kept so custom
     /// categories that were created before stickers still round-trip their icon.
-    private static let iconChoices = [
-        "heart", "house", "airplane", "graduationcap", "sparkles", "star",
-        "gift", "birthday.cake", "camera", "pawprint", "sun.max", "moon.stars",
-        "leaf", "cup.and.saucer", "music.note", "flag", "bell", "tag",
+    private static let iconChoices: [(symbol: String, label: String)] = [
+        ("heart", "爱心"), ("house", "房屋"), ("airplane", "飞机"),
+        ("graduationcap", "毕业帽"), ("sparkles", "闪光"), ("star", "星星"),
+        ("gift", "礼物"), ("birthday.cake", "生日蛋糕"), ("camera", "相机"),
+        ("pawprint", "爪印"), ("sun.max", "太阳"), ("moon.stars", "月亮和星星"),
+        ("leaf", "叶子"), ("cup.and.saucer", "茶杯"), ("music.note", "音符"),
+        ("flag", "旗帜"), ("bell", "铃铛"), ("tag", "标签"),
     ]
 
     var body: some View {
@@ -77,13 +80,15 @@ struct CategoryEditorView: View {
         NavHeader(title: category == nil ? "新建分类" : "编辑分类") {
             dismiss()
         } trailing: {
-            Button("保存", action: save)
-                .font(Theme.sans(15, weight: .bold))
-                .foregroundStyle(canSave ? Theme.ink : Theme.muted)
-                .frame(minWidth: 42, minHeight: 42, alignment: .trailing)
-                .contentShape(Rectangle())
-                .buttonStyle(.plain)
-                .disabled(!canSave)
+            Button(action: save) {
+                Text("保存")
+                    .font(Theme.sans(15, weight: .bold))
+                    .foregroundStyle(canSave ? Theme.ink : Theme.muted)
+                    .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSave)
         }
     }
 
@@ -135,12 +140,12 @@ struct CategoryEditorView: View {
             SectionHeader("图标")
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
                       spacing: 10) {
-                ForEach(Self.iconChoices, id: \.self) { symbol in
-                    let selected = icon == symbol
+                ForEach(Self.iconChoices, id: \.symbol) { choice in
+                    let selected = icon == choice.symbol
                     Button {
-                        icon = symbol
+                        icon = choice.symbol
                     } label: {
-                        Image(systemName: symbol)
+                        Image(systemName: choice.symbol)
                             .font(.system(size: 24))
                             .foregroundStyle(selected ? Theme.accent : Theme.ink2)
                             .frame(maxWidth: .infinity)
@@ -156,7 +161,8 @@ struct CategoryEditorView: View {
                             }
                     }
                     .buttonStyle(PressScale(scale: 0.92))
-                    .accessibilityLabel("图标 \(symbol)")
+                    .accessibilityLabel("图标 \(choice.label)")
+                    .accessibilityIdentifier("category-icon-\(choice.symbol)")
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }

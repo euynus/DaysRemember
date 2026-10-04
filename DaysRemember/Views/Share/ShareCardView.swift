@@ -1,3 +1,4 @@
+import Accessibility
 import SwiftUI
 
 struct ShareCardView: View {
@@ -9,7 +10,7 @@ struct ShareCardView: View {
     @State private var template: Template = .polaroid
     @State private var includeNote = false
     @State private var sharedImage: SharedImage?
-    @State private var savedToast: String? = nil
+    @State private var savedToast: (id: UUID, text: String)?
 
     enum Template: String, CaseIterable {
         case polaroid, note, minimal, collage
@@ -67,7 +68,7 @@ struct ShareCardView: View {
         .sensoryFeedback(.selection, trigger: template)
         .overlay(alignment: .top) {
             if let savedToast {
-                Text(savedToast)
+                Text(savedToast.text)
                     .font(Theme.sans(13, weight: .semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16).padding(.vertical, 10)
@@ -76,6 +77,9 @@ struct ShareCardView: View {
                     .padding(.top, 60)
                     .transition(.opacity)
             }
+        }
+        .task(id: savedToast?.id) {
+            await hideToastAfterDelay()
         }
         .sheet(item: $sharedImage) { item in
             ShareSheet(activityItems: [item.image])
@@ -128,11 +132,17 @@ struct ShareCardView: View {
 
     @MainActor
     private func flashToast(_ text: String) {
-        withAnimation(.easeInOut(duration: 0.18)) { savedToast = text }
-        Task {
-            try? await Task.sleep(for: .milliseconds(1700))
-            withAnimation(.easeInOut(duration: 0.25)) { savedToast = nil }
-        }
+        withAnimation(.easeInOut(duration: 0.18)) { savedToast = (UUID(), text) }
+        AccessibilityNotification.Announcement(text).post()
+    }
+
+    @MainActor
+    private func hideToastAfterDelay() async {
+        guard let toastID = savedToast?.id else { return }
+        do { try await Task.sleep(for: .milliseconds(1700)) }
+        catch { return }
+        guard !Task.isCancelled, savedToast?.id == toastID else { return }
+        withAnimation(.easeInOut(duration: 0.25)) { savedToast = nil }
     }
 
     // MARK: - Template chips
