@@ -371,6 +371,10 @@ final class DayStore {
             .map(\.0)
     }
 
+    func daysByCategory(today: Date = Today.date) -> [String: [Day]] {
+        Dictionary(grouping: sortedDays(days, today: today), by: \.categoryID)
+    }
+
     @discardableResult
     func addCategory(name: String, icon: String, colorToken: CategoryColorToken) -> CategoryDefinition {
         guard loadError == nil else { return Self.fallbackCategory }
