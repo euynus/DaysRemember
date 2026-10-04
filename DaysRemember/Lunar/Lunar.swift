@@ -16,6 +16,13 @@ enum Lunar {
         var isLeap: Bool
     }
 
+    struct Month: Hashable {
+        let number: Int
+        let isLeap: Bool
+    }
+
+    static let supportedYears = 1900...(1900 + LunarTable.info.count - 1)
+
     private static func tableValue(_ y: Int) -> UInt32 {
         let idx = y - 1900
         guard idx >= 0 && idx < LunarTable.info.count else { return 0 }
@@ -111,6 +118,64 @@ enum Lunar {
         return base.addingTimeInterval(TimeInterval(offset) * 86400)
     }
 
+    // MARK: - Safe picker helpers
+
+    /// Half-open range including every day of the final supported lunar year.
+    static let supportedSolarDates: Range<Date> = base..<base.addingTimeInterval(
+        TimeInterval(yearOffsets[LunarTable.info.count]) * 86400
+    )
+
+    static func months(in year: Int) -> [Month] {
+        guard supportedYears.contains(year) else { return [] }
+        return (1...12).flatMap { month in
+            let regular = Month(number: month, isLeap: false)
+            return leapMonth(year) == month
+                ? [regular, Month(number: month, isLeap: true)] : [regular]
+        }
+    }
+
+    static func dayCount(year: Int, month: Int, isLeap: Bool = false) -> Int? {
+        guard supportedYears.contains(year), (1...12).contains(month) else { return nil }
+        if isLeap {
+            guard leapMonth(year) == month else { return nil }
+            return leapDays(year)
+        }
+        return monthDays(year, month)
+    }
+
+    /// A missing leap month falls back to the same numbered regular month.
+    static func clamped(_ lunar: LunarDate) -> LunarDate {
+        let year = min(max(lunar.year, supportedYears.lowerBound), supportedYears.upperBound)
+        let month = min(max(lunar.month, 1), 12)
+        let isLeap = lunar.isLeap && leapMonth(year) == month
+        let count = isLeap ? leapDays(year) : monthDays(year, month)
+        return LunarDate(year: year, month: month, day: min(max(lunar.day, 1), count),
+                         isLeap: isLeap)
+    }
+
+    /// Unlike the legacy conversion, rejects dates outside the table.
+    static func supportedLunarDate(for date: Date) -> LunarDate? {
+        guard supportedSolarDates.contains(date) else { return nil }
+        return solarToLunar(date)
+    }
+
+    /// A display-only fallback; opening a picker must not replace its source date.
+    static func pickerDate(for date: Date) -> LunarDate {
+        if let lunar = supportedLunarDate(for: date) { return lunar }
+        let boundary = date < supportedSolarDates.lowerBound
+            ? supportedSolarDates.lowerBound
+            : supportedSolarDates.upperBound.addingTimeInterval(-86400)
+        return solarToLunar(boundary)
+    }
+
+    /// Invalid components are rejected rather than normalized by the converter.
+    static func solarDate(for lunar: LunarDate) -> Date? {
+        guard let count = dayCount(year: lunar.year, month: lunar.month, isLeap: lunar.isLeap),
+              (1...count).contains(lunar.day) else { return nil }
+        return lunarToSolar(year: lunar.year, month: lunar.month, day: lunar.day,
+                            isLeap: lunar.isLeap)
+    }
+
     // MARK: - Formatting
 
     static func dayCN(_ d: Int) -> String {
@@ -136,13 +201,13 @@ enum Lunar {
 
     /// "九月十四"
     static func fmt(_ date: Date) -> String {
-        let l = solarToLunar(date)
+        guard let l = supportedLunarDate(for: date) else { return "日期超出范围" }
         return monthCN(l.month, isLeap: l.isLeap) + dayCN(l.day)
     }
 
     /// "农历己亥猪年 · 九月十四"
     static func fmtFull(_ date: Date) -> String {
-        let l = solarToLunar(date)
+        guard let l = supportedLunarDate(for: date) else { return "农历日期超出范围" }
         return "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))"
     }
 }

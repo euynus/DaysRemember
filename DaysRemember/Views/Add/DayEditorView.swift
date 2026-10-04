@@ -326,6 +326,7 @@ struct DayEditorView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(PressScale(scale: 0.99))
+            .accessibilityIdentifier("dayDatePickerButton")
 
             RowDivider()
             formRawRow(label: "日历") {
@@ -437,7 +438,8 @@ struct DayEditorView: View {
                     .font(Theme.sans(15, weight: .semibold))
                     .foregroundStyle(Theme.ink2)
                 Spacer()
-                Text("选择日期").font(Theme.sans(16, weight: .bold)).foregroundStyle(Theme.ink)
+                Text(solar ? "选择日期" : "选择农历日期")
+                    .font(Theme.sans(16, weight: .bold)).foregroundStyle(Theme.ink)
                 Spacer()
                 Button("完成") {
                     selectedDate = draftDate
@@ -450,17 +452,14 @@ struct DayEditorView: View {
             .padding(.top, 20)
             .padding(.bottom, 8)
 
-            DatePicker("选择日期", selection: $draftDate, displayedComponents: .date)
-                .datePickerStyle(.graphical)
-                .tint(Theme.ink)
-                .labelsHidden()
-                .padding(.horizontal, 16)
-
-            if !solar {
-                Text("农历 \(Lunar.fmtFull(draftDate))")
-                    .font(Theme.sans(13, weight: .medium))
-                    .foregroundStyle(Theme.muted)
-                    .padding(.top, 4)
+            if solar {
+                DatePicker("选择日期", selection: $draftDate, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .tint(Theme.ink)
+                    .labelsHidden()
+                    .padding(.horizontal, 16)
+            } else {
+                LunarDatePicker(selection: $draftDate)
             }
             Spacer(minLength: 0)
         }

@@ -130,6 +130,55 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["添加日子"].isHittable)
     }
 
+    func testLunarLeapDateCanBeSelectedAndPersistsAfterRelaunch() {
+        let app = launchApp()
+        app.buttons["添加日子"].tap()
+        app.segmentedControls.buttons["农历"].tap()
+        app.buttons["dayDatePickerButton"].tap()
+        XCTAssertTrue(app.staticTexts["选择农历日期"].waitForExistence(timeout: 5))
+        app.buttons["lunarYearPicker"].tap()
+        app.buttons["2023年"].tap()
+        app.buttons["lunarMonthPicker"].tap()
+        app.buttons["闰二月"].tap()
+        app.buttons["lunarDayPicker"].tap()
+        app.buttons["初一"].tap()
+        XCTAssertTrue(app.staticTexts["公历 2023年3月22日"].exists, app.debugDescription)
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Direct lunar leap-month entry"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        app.buttons["完成"].tap()
+        let title = "Lunar-" + UUID().uuidString.prefix(8)
+        app.textFields["日子名称"].tap()
+        app.textFields["日子名称"].typeText(title)
+        app.buttons["保存"].tap()
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "--seed-sample-data" }
+        app.launch()
+        app.buttons["搜索日子"].tap()
+        app.textFields["搜索日子"].tap()
+        app.textFields["搜索日子"].typeText(title)
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch.tap()
+        app.buttons["更多操作"].tap()
+        app.buttons["pencil"].firstMatch.tap()
+        app.buttons["dayDatePickerButton"].tap()
+        XCTAssertTrue(app.buttons["lunarMonthPicker"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["公历 2023年3月22日"].exists)
+    }
+
+    func testCancellingLunarDateSelectionKeepsOriginalDate() {
+        let app = launchApp()
+        app.buttons["添加日子"].tap()
+        app.segmentedControls.buttons["农历"].tap()
+        app.buttons["dayDatePickerButton"].tap()
+        let before = app.staticTexts["lunarSolarDate"].label
+        app.buttons["lunarDayPicker"].tap()
+        app.buttons["初一"].tap()
+        app.buttons["取消"].firstMatch.tap()
+        app.buttons["dayDatePickerButton"].tap()
+        XCTAssertEqual(app.staticTexts["lunarSolarDate"].label, before)
+    }
+
     /// Tap the "即将到来" spotlight to push a real Detail screen, open its menu,
     /// tap 编辑, and assert the editor sheet actually presents (its 保存 button).
     func testEditFromPushedDetailOpensEditor() {
