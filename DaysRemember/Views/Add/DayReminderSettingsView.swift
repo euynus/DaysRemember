@@ -20,9 +20,9 @@ struct DayReminderSettingsView: View {
 
         var label: String {
             switch self {
-            case .global: return String(localized: "跟随全局")
-            case .off: return String(localized: "不提醒")
-            case .custom: return String(localized: "自定义")
+            case .global: return String(localized: "跟随全局", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .off: return String(localized: "不提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .custom: return String(localized: "自定义", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             }
         }
     }
@@ -86,8 +86,8 @@ struct DayReminderSettingsView: View {
             if mode == .custom {
                 Section("提前提醒") {
                     ForEach(offsetOptions, id: \.self) { offset in
-                        Toggle(offset == 0 ? String(localized: "当天提醒")
-                               : String(localized: "提前 \(offset) 天"),
+                        Toggle(offset == 0 ? String(localized: "当天提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                               : String(localized: "提前 \(offset) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                isOn: offsetBinding(for: offset))
                             .accessibilityIdentifier("dayReminderOffset\(offset)")
                     }

@@ -4,7 +4,9 @@ A multilingual anniversary and countdown app built with SwiftUI, iOS 17+. Native
 
 ## Languages
 
-Simplified Chinese, Traditional Chinese, and English follow the system's preferred app language, including the per-app language setting in iOS Settings. Native String Catalogs under `Resources/Localization` are shared by the app and widget. Dates follow the selected language and the user's region; day boundaries and reminder times remain based on Beijing time. English countdowns and reminder counts use native plural rules. User titles, notes, locations, custom categories, and persisted system-category identifiers/names are never translated or rewritten.
+Choose **Language** from the home screen's options menu, then select System Default, Simplified Chinese, Traditional Chinese, or English and tap Done. The choice applies immediately and persists only on this device, shared with its widgets; scheduled reminder text is refreshed as well. System Default follows iOS's preferred app language, including the per-app language setting in iOS Settings. System-owned UI such as permission prompts and the Home Screen app name continues to follow iOS language settings.
+
+Native String Catalogs under `Resources/Localization` are shared by the app and widget. Dates follow the selected language and the user's region; day boundaries and reminder times remain based on Beijing time. English countdowns and reminder counts use native plural rules. User titles, notes, locations, custom categories, and persisted system-category identifiers/names are never translated or rewritten. Language preferences are not part of backups or iCloud sync.
 
 ## OS integrations
 
@@ -65,6 +67,8 @@ The visual system uses an off-white canvas, ink typography, restrained vermilion
 Use a dedicated test simulator: UI fixtures deliberately reset its library. Backup, migration, CloudKit record/state, and notification planning tests run without a live cloud account. Automated debug launches suppress cloud operations and notification permission prompts.
 
 The test scheme defaults to Simplified Chinese for existing regression assertions. Run `LocalizationTests` with `-testLanguage en -testRegion US` and `-testLanguage zh-Hant -testRegion TW` to check each language's runtime strings, plural rules, reminder payloads, and widget accessibility. `LocalizationUITests` covers English editors, large-text share/widget layouts, and persistent user content across a Traditional Chinese relaunch.
+
+`LanguagePreferencesTests` uses isolated defaults to cover the local language preference and bundle selection. `LanguagePreferencesUITests` covers in-app switching, cancellation, relaunch persistence, data preservation, and the language sheet at the largest Dynamic Type size; teardown restores System Default and normal text size.
 
 ## Debug launch arguments
 

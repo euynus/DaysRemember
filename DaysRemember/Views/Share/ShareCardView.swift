@@ -16,10 +16,10 @@ struct ShareCardView: View {
         case polaroid, note, minimal, collage
         var label: String {
             switch self {
-            case .polaroid: return String(localized: "照片")
-            case .note: return String(localized: "手记")
-            case .minimal: return String(localized: "极简")
-            case .collage: return String(localized: "双栏")
+            case .polaroid: return String(localized: "照片", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .note: return String(localized: "手记", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .minimal: return String(localized: "极简", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .collage: return String(localized: "双栏", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             }
         }
     }
@@ -37,14 +37,14 @@ struct ShareCardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            NavHeader(title: String(localized: "分享"), onBack: { dismiss() }) {
+            NavHeader(title: String(localized: "分享", bundle: AppLocalization.bundle, locale: AppLocalization.locale), onBack: { dismiss() }) {
                 FAB(systemName: "square.and.arrow.down", size: 42, action: saveToPhotos)
                     .accessibilityLabel("保存到相册")
             }
             templatePicker
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)
-            ToggleCell(label: String(localized: "包含笔记"), isOn: $includeNote)
+            ToggleCell(label: String(localized: "包含笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: $includeNote)
                 .accessibilityIdentifier("share.includeNote")
                 .padding(.horizontal, 6)
                 .padding(.bottom, 12)
@@ -95,6 +95,7 @@ struct ShareCardView: View {
         // Keep the printed card and its on-screen preview at the same text scale.
         let content = card.frame(width: 320).padding(24).background(Theme.bg)
             .environment(\.dynamicTypeSize, .large)
+            .environment(\.locale, AppLocalization.locale)
         let renderer = ImageRenderer(content: content)
         renderer.scale = displayScale
         renderer.proposedSize = .init(width: 320 + 48, height: nil)
@@ -105,7 +106,7 @@ struct ShareCardView: View {
     private func presentShareSheet() {
         guard let img = renderCardImage() else {
             Haptics.warning()
-            flashToast(String(localized: "生成失败，请重试"))
+            flashToast(String(localized: "生成失败，请重试", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             return
         }
         sharedImage = SharedImage(image: img)
@@ -114,20 +115,20 @@ struct ShareCardView: View {
     private func saveToPhotos() {
         guard let img = renderCardImage() else {
             Haptics.warning()
-            flashToast(String(localized: "生成失败，请重试"))
+            flashToast(String(localized: "生成失败，请重试", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             return
         }
         Task {
             do {
                 try await PhotoSaver.save(image: img)
                 Haptics.success()
-                flashToast(String(localized: "已保存到相册"))
+                flashToast(String(localized: "已保存到相册", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             } catch PhotoSaver.SaveError.denied {
                 Haptics.warning()
-                flashToast(String(localized: "无相册权限"))
+                flashToast(String(localized: "无相册权限", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             } catch {
                 Haptics.warning()
-                flashToast(String(localized: "保存失败"))
+                flashToast(String(localized: "保存失败", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             }
         }
     }
@@ -247,14 +248,14 @@ struct SharePostcard: View {
     }
 
     private var countdown: some View {
-        let countdownLabel = info.isToday ? String(localized: "就是今天")
-            : info.isPast ? String(localized: "\(info.days) 天前")
-            : String(localized: "\(info.days) 天后")
+        let countdownLabel = info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : info.isPast ? String(localized: "\(info.days) 天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : String(localized: "\(info.days) 天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         let layout = template == .collage
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
             : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 6))
         return layout {
-            Text(info.isToday ? String(localized: "今天") : info.days.formatted())
+            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
                 .font(info.isToday ? Theme.sans(34) : Theme.number(template == .minimal ? 112 : 66))
                 .foregroundStyle(Theme.accent)
                 .lineLimit(1)

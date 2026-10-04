@@ -83,14 +83,18 @@ struct DaysWidgetEntryView: View {
                     Image(systemName: "calendar")
                         .font(.title)
                         .foregroundStyle(Theme.accent)
-                    Text(entry.selectionMissing ? String(localized: "日子已删除")
-                         : entry.hasAnyDays ? String(localized: "暂无即将到来的日子") : String(localized: "还没有日子"))
+                    Text(entry.selectionMissing
+                         ? String(localized: "日子已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                         : entry.hasAnyDays
+                         ? String(localized: "暂无即将到来的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                         : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                         .font(Theme.sans(13))
                         .foregroundStyle(Theme.ink2)
                         .multilineTextAlignment(.center)
                 }
             }
         }
+        .environment(\.locale, AppLocalization.locale)
         .widgetURL(entry.day.flatMap { URL(string: "daysremember://day/\($0.id)") }
                    ?? URL(string: "daysremember://home"))
     }

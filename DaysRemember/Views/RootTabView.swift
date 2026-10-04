@@ -103,7 +103,7 @@ struct RootTabView: View {
                 .navigationDestination(for: CategoryRoute.self) { route in
                     switch route {
                     case .all:
-                        CategoryDaysListView(title: String(localized: "全部日子"), categoryID: nil,
+                        CategoryDaysListView(title: String(localized: "全部日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale), categoryID: nil,
                                              onOpen: { categoryPath.append($0) })
                     case .category(let id):
                         CategoryDaysListView(title: store.category(for: id).displayName, categoryID: id,

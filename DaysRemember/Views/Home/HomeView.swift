@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var searchText = ""
     @State private var showingWidgets = false
     @State private var showingData = false
+    @State private var showingLanguage = false
     @FocusState private var searchFocused: Bool
     var onOpen: (Day) -> Void = { _ in }
     var onAdd: () -> Void = {}
@@ -75,8 +76,10 @@ struct HomeView: View {
                         }
                         if !feedDays.isEmpty {
                             HStack {
-                                SectionHeader(hero != nil ? String(localized: "其他日子")
-                                              : filter == .all ? String(localized: "日子清单")
+                                SectionHeader(hero != nil
+                                              ? String(localized: "其他日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                                              : filter == .all
+                                              ? String(localized: "日子清单", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                                               : label(for: filter))
                                 Text("\(feedDays.count)")
                                     .font(Theme.sans(12))
@@ -99,6 +102,7 @@ struct HomeView: View {
         .sensoryFeedback(.selection, trigger: filter)
         .sheet(isPresented: $showingWidgets) { WidgetsPreviewView() }
         .sheet(isPresented: $showingData) { DataManagementView() }
+        .sheet(isPresented: $showingLanguage) { LanguageSettingsView() }
     }
 
     private var header: some View {
@@ -111,6 +115,8 @@ struct HomeView: View {
                     .minimumScaleFactor(0.5)
                 Spacer(minLength: 8)
                 Menu {
+                    Button("语言", systemImage: "globe") { showingLanguage = true }
+                        .accessibilityIdentifier("home.language")
                     Button("小组件", systemImage: "rectangle.3.group") { showingWidgets = true }
                     Button("数据与同步", systemImage: "externaldrive") { showingData = true }
                 } label: {
@@ -127,7 +133,9 @@ struct HomeView: View {
                         if !isSearching { searchText = ""; searchFocused = false }
                     }
                 }
-                .accessibilityLabel(isSearching ? String(localized: "关闭搜索") : String(localized: "搜索日子"))
+                .accessibilityLabel(isSearching
+                    ? String(localized: "关闭搜索", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                    : String(localized: "搜索日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                 .accessibilityIdentifier("home.search")
                 FAB(systemName: "plus", size: 42, dark: true, action: onAdd)
                     .accessibilityLabel("添加日子")
@@ -143,7 +151,8 @@ struct HomeView: View {
     /// Today's date · lunar day · solar term (colored) — the JSX header `.meta` line.
     private var metaItems: [MetaItem] {
         var items: [MetaItem] = [
-            MetaItem(text: String(localized: "\(CNDate.short(today)) \(CNDate.weekday(today))")),
+            MetaItem(text: String(localized: "\(CNDate.short(today)) \(CNDate.weekday(today))",
+                                  bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
             MetaItem(text: Lunar.fmt(today)),
         ]
         if let term = SolarTerms.name(for: today) {
@@ -216,8 +225,8 @@ struct HomeView: View {
 
     private func label(for filter: Filter) -> String {
         switch filter {
-        case .all: return String(localized: "全部")
-        case .pinned: return String(localized: "已置顶")
+        case .all: return String(localized: "全部", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .pinned: return String(localized: "已置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .category(let id): return store.category(for: id).displayName
         }
     }
@@ -226,19 +235,23 @@ struct HomeView: View {
     /// is currently active so the message matches what the user is seeing.
     private func emptyStateCopy() -> (title: String, symbol: String, detail: String) {
         if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return (String(localized: "没有找到日子"), "magnifyingglass", String(localized: "换个关键词试试。"))
+            return (String(localized: "没有找到日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                    "magnifyingglass",
+                    String(localized: "换个关键词试试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         }
         switch filter {
         case .pinned:
-            return (String(localized: "还没有置顶的日子"), "star", String(localized: "在日子上长按可以置顶它。"))
+            return (String(localized: "还没有置顶的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                    "star",
+                    String(localized: "在日子上长按可以置顶它。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         case .category(let id):
-            return (String(localized: "这个分类里还没有日子"),
+            return (String(localized: "这个分类里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                     store.category(for: id).symbolName,
-                    String(localized: "切换分类，或在加号里给它添个新日子。"))
+                    String(localized: "切换分类，或在加号里给它添个新日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         case .all:
-            return (String(localized: "这里还没有日子"),
+            return (String(localized: "这里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                     "calendar.badge.plus",
-                    String(localized: "值得记住的，从这一天开始。"))
+                    String(localized: "值得记住的，从这一天开始。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         }
     }
 }

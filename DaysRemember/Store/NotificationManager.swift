@@ -81,7 +81,7 @@ final class NotificationManager {
                 lastError = nil
                 return granted ? .granted : .denied
             } catch {
-                lastError = String(localized: "无法请求通知权限：\(error.localizedDescription)")
+                lastError = String(localized: "无法请求通知权限：\(error.localizedDescription)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                 Self.logger.error("Authorization failed: \(error.localizedDescription, privacy: .public)")
                 return .deferred
             }
@@ -140,7 +140,7 @@ final class NotificationManager {
         failed.formUnion(plan.filter { $0.date > Date() && !actual.contains($0.id) }.map(\.id))
         failed.formUnion(actual.subtracting(wanted))
         if !failed.isEmpty {
-            lastError = String(localized: "有 \(failed.count) 条提醒未能更新，请重试；页面仅显示系统已安排的提醒。")
+            lastError = String(localized: "有 \(failed.count) 条提醒未能更新，请重试；页面仅显示系统已安排的提醒。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }
 
@@ -205,7 +205,7 @@ final class NotificationManager {
             if !ids.isEmpty { center.removePendingNotificationRequests(withIdentifiers: ids) }
             await self.readPending()
             if self.pendingReminders.contains(where: { $0.dayID == dayId }) {
-                self.lastError = String(localized: "日子提醒未能取消，请重试。")
+                self.lastError = String(localized: "日子提醒未能取消，请重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             }
         }.value
     }
@@ -276,7 +276,7 @@ final class NotificationManager {
                                                     quietHours: settings.quietHours, now: now), trigger <= end else { continue }
                     candidates.append(PlannedReminder(
                         id: "dr.day.\(day.id).pre.\(offset).\(Int(date.timeIntervalSince1970))", date: trigger,
-                        title: String(localized: "时光"),
+                        title: String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                         body: body(for: day, offset: CNDate.daysBetween(trigger, date)), dayID: day.id))
                 }
             }
@@ -287,8 +287,8 @@ final class NotificationManager {
                                                     quietHours: settings.quietHours, now: now), trigger <= end else { continue }
                     candidates.append(PlannedReminder(
                         id: "dr.memory.\(day.id).\(Int(date.timeIntervalSince1970))", date: trigger,
-                        title: String(localized: "时光回忆"),
-                        body: String(localized: "想起这一天 · 「\(day.title)」 · \(CNDate.full(date))"), dayID: day.id))
+                        title: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                        body: String(localized: "想起这一天 · 「\(day.title)」 · \(CNDate.full(date))", bundle: AppLocalization.bundle, locale: AppLocalization.locale), dayID: day.id))
                 }
             }
         }
@@ -296,8 +296,8 @@ final class NotificationManager {
            let morning = calendar.nextDate(after: now, matching: DateComponents(hour: 8, minute: 0, second: 0),
                                            matchingPolicy: .nextTime) {
             candidates.append(PlannedReminder(id: "dr.daily.greeting", date: morning,
-                                               title: String(localized: "时光"),
-                                               body: String(localized: "早安 · 今天也要好好生活，珍惜每一个值得记住的日子。"),
+                                               title: String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                                               body: String(localized: "早安 · 今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                                dayID: nil, repeats: true))
         }
         // ponytail: finite five-year window; reopening the app replenishes it, not a background recurrence engine.
@@ -309,18 +309,18 @@ final class NotificationManager {
         let lead: String
         switch offset {
         case ..<0:
-            lead = String(localized: "昨天是「\(day.title)」")
+            lead = String(localized: "昨天是「\(day.title)」", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case 0:
-            lead = String(localized: "今天是「\(day.title)」")
+            lead = String(localized: "今天是「\(day.title)」", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case 1:
-            lead = String(localized: "「\(day.title)」就是明天")
+            lead = String(localized: "「\(day.title)」就是明天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         default:
-            lead = String(localized: "「\(day.title)」还有 \(offset) 天")
+            lead = String(localized: "「\(day.title)」还有 \(offset) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
         // Append the place when there is one, for a more contextual reminder
         // ("「蜜月旅行」还有 7 天 · 京都").
         let location = day.location.trimmingCharacters(in: .whitespacesAndNewlines)
-        return location.isEmpty ? lead : String(localized: "\(lead) · \(location)")
+        return location.isEmpty ? lead : String(localized: "\(lead) · \(location)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     nonisolated static func triggerDate(displayDate: Date, offset: Int, hour: Int, minute: Int,

@@ -9,9 +9,9 @@ struct DayRow: View {
 
     var body: some View {
         let info = DayInfo.compute(day, today: today)
-        let countdown = info.isToday ? String(localized: "就是今天")
-            : info.isPast ? String(localized: "\(info.days) 天前")
-            : String(localized: "\(info.days) 天后")
+        let countdown = info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : info.isPast ? String(localized: "\(info.days) 天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : String(localized: "\(info.days) 天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         Button { onOpen(day) } label: {
             HStack(spacing: 14) {
                 if !dynamicTypeSize.isAccessibilitySize {
@@ -34,7 +34,7 @@ struct DayRow: View {
                             .font(.caption2)
                             .foregroundStyle(Theme.catLove)
                     }
-                    Text(info.isToday ? String(localized: "今天") : info.days.formatted())
+                    Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
                         .font(info.isToday ? Theme.sans(22) : Theme.number(38))
                         .monospacedDigit()
                         .lineLimit(1)
@@ -54,8 +54,8 @@ struct DayRow: View {
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(day.pinned ? String(localized: "\(day.title)，\(countdown)，已置顶")
-                             : String(localized: "\(day.title)，\(countdown)"))
+        .accessibilityLabel(day.pinned ? String(localized: "\(day.title)，\(countdown)，已置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                             : String(localized: "\(day.title)，\(countdown)", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         .accessibilityHint("长按可置顶、编辑或分享")
     }
 }
@@ -68,7 +68,7 @@ struct UpcomingDayView: View {
 
     var body: some View {
         let info = DayInfo.compute(day, today: today)
-        let countdown = info.isToday ? String(localized: "就是今天") : String(localized: "\(info.days) 天后")
+        let countdown = info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "\(info.days) 天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         Button { onOpen(day) } label: {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
@@ -97,7 +97,7 @@ struct UpcomingDayView: View {
                     }
                     if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Text(info.isToday ? String(localized: "今天") : info.days.formatted())
+                        Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
                             .font(info.isToday ? Theme.sans(32) : Theme.number(76))
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
@@ -112,7 +112,7 @@ struct UpcomingDayView: View {
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "即将到来，\(day.title)，\(countdown)"))
+        .accessibilityLabel(String(localized: "即将到来，\(day.title)，\(countdown)", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         .accessibilityHint("长按可置顶、编辑或分享")
     }
 }
@@ -147,7 +147,7 @@ struct DayContextMenu: ViewModifier {
                     updated.pinned.toggle()
                     store.update(updated)
                 } label: {
-                    Label(current.pinned ? String(localized: "取消置顶") : String(localized: "置顶"),
+                    Label(current.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                           systemImage: current.pinned ? "star.slash" : "star")
                 }
                 Button { showEditor = true } label: {

@@ -52,13 +52,13 @@ struct CalendarMonthView: View {
     var body: some View {
         let eventsByDay = computeEventsByDay()
         return VStack(spacing: 0) {
-            NavHeader(title: String(localized: "日历"))
+            NavHeader(title: String(localized: "日历", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 18) {
                     monthHeader
                     calendarCard(eventsByDay: eventsByDay)
                         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    SectionHeader(String(localized: "本月日子"))
+                    SectionHeader(String(localized: "本月日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     if eventsByDay.isEmpty {
                         Text("本月没有记录的日子")
                             .font(Theme.sans(15))
@@ -119,7 +119,7 @@ struct CalendarMonthView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(String(localized: "\(CNDate.year(monthDate)) \(CNDate.month(monthDate))，回到本月"))
+            .accessibilityLabel(String(localized: "\(CNDate.year(monthDate)) \(CNDate.month(monthDate))，回到本月", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             Spacer(minLength: 8)
             HStack(spacing: 8) {
                 FAB(systemName: "chevron.left", size: 38, iconSize: 15) {
@@ -185,8 +185,8 @@ struct CalendarMonthView: View {
         let cal = CNDate.calendar
         let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? today
         let term = SolarTerms.name(for: cellDate) ?? SolarTerms.lunarHoliday(for: cellDate)
-        let dateLabel = isToday ? String(localized: "今天，\(CNDate.full(cellDate))") : CNDate.full(cellDate)
-        let cellLabel = term.map { String(localized: "\(dateLabel)，\($0)") } ?? dateLabel
+        let dateLabel = isToday ? String(localized: "今天，\(CNDate.full(cellDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : CNDate.full(cellDate)
+        let cellLabel = term.map { String(localized: "\(dateLabel)，\($0)", bundle: AppLocalization.bundle, locale: AppLocalization.locale) } ?? dateLabel
 
         let cell = VStack(spacing: 1) {
             Text(CNDate.day(cellDate))
@@ -228,7 +228,7 @@ struct CalendarMonthView: View {
             } label: { cell }
                 .buttonStyle(PressScale(scale: 0.92))
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(String(localized: "\(cellLabel)，\(events.count) 个日子"))
+                .accessibilityLabel(String(localized: "\(cellLabel)，\(events.count) 个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         } else {
             cell
                 .accessibilityElement(children: .ignore)
@@ -267,15 +267,15 @@ struct CalendarMonthView: View {
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "\(CNDate.short(date))，\(day.title)，\(metadata)"))
+        .accessibilityLabel(String(localized: "\(CNDate.short(date))，\(day.title)，\(metadata)", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         .accessibilityHint("查看日子详情")
         .accessibilityInputLabels([day.title])
     }
 
     private func subtitle(for day: Day, label: String) -> String {
         var parts = [label]
-        if day.recurring { parts.append(String(localized: "每年")) }
-        if day.lunar { parts.append(String(localized: "农历")) }
+        if day.recurring { parts.append(String(localized: "每年", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) }
+        if day.lunar { parts.append(String(localized: "农历", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) }
         return parts.joined(separator: " · ")
     }
 }

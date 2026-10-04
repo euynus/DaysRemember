@@ -57,8 +57,8 @@ struct DayAccessoryWidget: View {
                 VStack(spacing: 3) {
                     Image(systemName: "calendar")
                         .font(.title3)
-                    Text(selectionMissing ? String(localized: "日子\n已删除")
-                         : hasAnyDays ? String(localized: "暂无将至\n日子") : String(localized: "还没有\n日子"))
+                    Text(selectionMissing ? String(localized: "日子\n已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                         : hasAnyDays ? String(localized: "暂无将至\n日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还没有\n日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                         .font(.caption2)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -80,15 +80,15 @@ struct DayAccessoryWidget: View {
                     .truncationMode(.tail)
                     .padding(.horizontal, 3)
             }
-            Text(info.isToday ? String(localized: "今天") : "\(info.days)")
+            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : "\(info.days)")
                 .font(.title2.weight(.semibold))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
             if !info.isToday {
                 Text(info.isPast
-                     ? String(localized: "widget.daysAgoUnit", defaultValue: "天前")
-                     : String(localized: "widget.daysLeftUnit", defaultValue: "天后"))
+                     ? String(localized: "widget.daysAgoUnit", defaultValue: "天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                     : String(localized: "widget.daysLeftUnit", defaultValue: "天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     .font(.caption2)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -106,15 +106,15 @@ struct DayAccessoryWidget: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(info.isToday ? String(localized: "今天") : "\(info.days)")
+                    Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : "\(info.days)")
                         .font(.title2.weight(.semibold))
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                     if !info.isToday {
                         Text(info.isPast
-                             ? String(localized: "widget.daysAgoUnit", defaultValue: "天前")
-                             : String(localized: "widget.daysLeftUnit", defaultValue: "天后"))
+                             ? String(localized: "widget.daysAgoUnit", defaultValue: "天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                             : String(localized: "widget.daysLeftUnit", defaultValue: "天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                             .font(.caption)
                             .fixedSize()
                     }
@@ -136,22 +136,22 @@ struct DayAccessoryWidget: View {
     }
 
     private var emptyMessage: String {
-        selectionMissing ? String(localized: "日子已删除")
-            : hasAnyDays ? String(localized: "暂无即将到来的日子") : String(localized: "还没有日子")
+        selectionMissing ? String(localized: "日子已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : hasAnyDays ? String(localized: "暂无即将到来的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private func countdownText(_ info: DayInfo) -> String {
-        info.isToday ? String(localized: "就是今天")
-            : info.isPast ? String(localized: "\(info.days)天前") : String(localized: "\(info.days)天后")
+        info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : info.isPast ? String(localized: "\(info.days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "\(info.days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private func inlineText(_ info: DayInfo?) -> String {
         guard let day, let info else { return emptyMessage }
-        return String(localized: "\(countdownText(info)) · \(day.title)")
+        return String(localized: "\(countdownText(info)) · \(day.title)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     var accessibilitySummary: String {
         guard let day, let info else { return emptyMessage }
-        return String(localized: "\(day.title)，\(countdownText(info))，\(CNDate.full(info.displayDate))")
+        return String(localized: "\(day.title)，\(countdownText(info))，\(CNDate.full(info.displayDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 }

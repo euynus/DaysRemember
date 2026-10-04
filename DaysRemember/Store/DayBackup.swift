@@ -52,10 +52,10 @@ struct DayBackup: Codable {
 
         var errorDescription: String? {
             switch self {
-            case .tooLarge: return String(localized: "备份超过 100 MB，无法读取。")
-            case .unsupportedVersion: return String(localized: "此备份来自更新版本的时光，请先更新 App。")
-            case .invalidRecords: return String(localized: "备份包含无效或重复的记录，原有数据未更改。")
-            case .unreadable: return String(localized: "无法读取此备份，原有数据未更改。")
+            case .tooLarge: return String(localized: "备份超过 100 MB，无法读取。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .unsupportedVersion: return String(localized: "此备份来自更新版本的时光，请先更新 App。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .invalidRecords: return String(localized: "备份包含无效或重复的记录，原有数据未更改。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            case .unreadable: return String(localized: "无法读取此备份，原有数据未更改。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             }
         }
     }

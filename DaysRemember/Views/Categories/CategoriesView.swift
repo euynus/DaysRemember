@@ -14,7 +14,7 @@ struct CategoriesView: View {
     var body: some View {
         let daysByCategory = store.daysByCategory(today: today)
         VStack(spacing: 0) {
-            NavHeader(title: String(localized: "分类")) {
+            NavHeader(title: String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
                 FAB(systemName: "plus", dark: true) {
                     creatingCategory = true
                 }

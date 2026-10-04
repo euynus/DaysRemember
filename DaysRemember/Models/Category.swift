@@ -15,11 +15,11 @@ enum DayCategory: String, Codable, CaseIterable, Hashable {
 
     var displayName: String {
         switch self {
-        case .love: return String(localized: "爱情")
-        case .family: return String(localized: "家人")
-        case .travel: return String(localized: "旅行")
-        case .work: return String(localized: "工作")
-        case .life: return String(localized: "生活")
+        case .love: return String(localized: "爱情", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .family: return String(localized: "家人", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .travel: return String(localized: "旅行", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .work: return String(localized: "工作", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .life: return String(localized: "生活", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }
 
@@ -51,11 +51,11 @@ enum CategoryColorToken: String, Codable, CaseIterable, Hashable, Identifiable {
 
     var label: String {
         switch self {
-        case .terracotta: return String(localized: "赤陶")
-        case .rose: return String(localized: "玫瑰")
-        case .amber: return String(localized: "琥珀")
-        case .dusty: return String(localized: "雾蓝")
-        case .sage: return String(localized: "鼠尾草")
+        case .terracotta: return String(localized: "赤陶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .rose: return String(localized: "玫瑰", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .amber: return String(localized: "琥珀", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .dusty: return String(localized: "雾蓝", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .sage: return String(localized: "鼠尾草", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }
 

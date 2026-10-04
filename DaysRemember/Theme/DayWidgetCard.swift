@@ -58,8 +58,8 @@ struct DayWidgetCard: View {
     }
 
     private var eyebrow: some View {
-        Text(info.isToday ? String(localized: "就是今天")
-             : info.isPast ? String(localized: "时光记忆") : String(localized: "即将到来"))
+        Text(info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+             : info.isPast ? String(localized: "时光记忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "即将到来", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             .font(Theme.sans(11, weight: .semibold))
             .foregroundStyle(Theme.accent)
     }
@@ -74,7 +74,7 @@ struct DayWidgetCard: View {
 
     private var countdown: some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(info.isToday ? String(localized: "今天") : "\(info.days)")
+            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : "\(info.days)")
                 .font(info.isToday ? Theme.sans(24) : Theme.number(size == .small ? 34 : 52))
                 .monospacedDigit()
                 .foregroundStyle(Theme.accent)
@@ -82,8 +82,8 @@ struct DayWidgetCard: View {
                 .minimumScaleFactor(0.5)
             if !info.isToday {
                 Text(info.isPast
-                     ? String(localized: "widget.daysAgoUnit", defaultValue: "天前")
-                     : String(localized: "widget.daysLeftUnit", defaultValue: "天后"))
+                     ? String(localized: "widget.daysAgoUnit", defaultValue: "天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                     : String(localized: "widget.daysLeftUnit", defaultValue: "天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     .font(Theme.sans(11))
                     .foregroundStyle(Theme.ink2)
                     .lineLimit(1)
@@ -100,8 +100,8 @@ struct DayWidgetCard: View {
 
     private var accessibilitySummary: String {
         let info = self.info
-        let countdown = info.isToday ? String(localized: "就是今天")
-            : info.isPast ? String(localized: "\(info.days)天前") : String(localized: "\(info.days)天后")
-        return String(localized: "\(day.title)，\(countdown)，\(CNDate.full(info.displayDate))")
+        let countdown = info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : info.isPast ? String(localized: "\(info.days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "\(info.days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return String(localized: "\(day.title)，\(countdown)，\(CNDate.full(info.displayDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 }

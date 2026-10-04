@@ -52,7 +52,7 @@ private struct SyncConflictSection: View {
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text("笔记").foregroundStyle(.secondary)
-                    Text(day.note.isEmpty ? String(localized: "无") : day.note)
+                    Text(day.note.isEmpty ? String(localized: "无", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : day.note)
                         .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
                         .textSelection(.enabled)
@@ -132,8 +132,8 @@ private struct SyncConflictSection: View {
 
     private var recordKind: String {
         switch conflict.record {
-        case .day: return String(localized: "日子")
-        case .category: return String(localized: "分类")
+        case .day: return String(localized: "日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .category: return String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }
 

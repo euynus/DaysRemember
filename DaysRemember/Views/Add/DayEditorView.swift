@@ -87,10 +87,10 @@ struct DayEditorView: View {
                         .padding(.bottom, 12)
                     coverPicker.padding(.bottom, 28)
 
-                    SectionHeader(String(localized: "分类")).padding(.bottom, 10)
+                    SectionHeader(String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     categoryPills.padding(.bottom, 22)
 
-                    SectionHeader(String(localized: "心情笔记")).padding(.bottom, 10)
+                    SectionHeader(String(localized: "心情笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     notesCard
                 }
                 .padding(.horizontal, 22)
@@ -156,12 +156,12 @@ struct DayEditorView: View {
                 .accessibilityIdentifier("cancelDayButton")
 
             Spacer()
-            Text(editingDay == nil ? String(localized: "新的日子") : String(localized: "编辑日子"))
+            Text(editingDay == nil ? String(localized: "新的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "编辑日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                 .font(Theme.sans(16, weight: .bold))
                 .foregroundStyle(Theme.ink)
             Spacer()
 
-            PillButton(title: String(localized: "保存"), style: .dark, height: 44, action: saveDay)
+            PillButton(title: String(localized: "保存", bundle: AppLocalization.bundle, locale: AppLocalization.locale), style: .dark, height: 44, action: saveDay)
                 .disabled(!canSave)
                 .opacity(canSave ? 1 : 0.45)
                 .accessibilityIdentifier("saveDayButton")
@@ -183,8 +183,8 @@ struct DayEditorView: View {
             .accessibilityElement()
             .accessibilityLabel("封面取景")
             .accessibilityHint(photoData != nil
-                ? String(localized: "上下轻扫调整照片裁剪位置")
-                : String(localized: "封面预览"))
+                ? String(localized: "上下轻扫调整照片裁剪位置", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                : String(localized: "封面预览", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             .accessibilityAdjustableAction { direction in
                 guard photoData != nil else { return }
                 switch direction {
@@ -312,7 +312,7 @@ struct DayEditorView: View {
                 resetFocus()
             } catch {
                 guard !Task.isCancelled else { return }
-                photoError = String(localized: "照片未能加载，原封面已保留。请重新选择。")
+                photoError = String(localized: "照片未能加载，原封面已保留。请重新选择。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             }
         }
     }
@@ -350,22 +350,22 @@ struct DayEditorView: View {
             .accessibilityIdentifier("dayDatePickerButton")
 
             RowDivider()
-            formRawRow(label: String(localized: "日历")) {
-                SegPicker(options: [(true, String(localized: "公历")),
-                                    (false, String(localized: "农历"))], selection: $solar)
+            formRawRow(label: String(localized: "日历", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
+                SegPicker(options: [(true, String(localized: "公历", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
+                                    (false, String(localized: "农历", bundle: AppLocalization.bundle, locale: AppLocalization.locale))], selection: $solar)
             }
 
             RowDivider()
-            formRawRow(label: String(localized: "类型")) {
-                SegPicker(options: [(false, String(localized: "一次")),
-                                    (true, String(localized: "每年"))], selection: $recurring)
+            formRawRow(label: String(localized: "类型", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
+                SegPicker(options: [(false, String(localized: "一次", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
+                                    (true, String(localized: "每年", bundle: AppLocalization.bundle, locale: AppLocalization.locale))], selection: $recurring)
             }
 
             RowDivider()
             Button {
                 showReminderSettings = true
             } label: {
-                formRawRow(label: String(localized: "提醒")) {
+                formRawRow(label: String(localized: "提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
                     HStack(spacing: 8) {
                         VStack(alignment: .trailing, spacing: 2) {
                             Text(reminderSummary)
@@ -423,10 +423,10 @@ struct DayEditorView: View {
         FlowLayout(spacing: 8) {
             if !store.categories.contains(where: { $0.id == categoryID }) {
                 let name = selectedCategory?.displayName ?? initialDay.categoryDisplayName
-                let label = name.isEmpty ? String(localized: "未知分类") : name
+                let label = name.isEmpty ? String(localized: "未知分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : name
                 let status = selectedCategory == nil
-                    ? String(localized: "未同步") : String(localized: "不可用")
-                Chip(String(localized: "\(label)（\(status)）"), selected: true, leading: {
+                    ? String(localized: "未同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "不可用", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                Chip(String(localized: "\(label)（\(status)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale), selected: true, leading: {
                     Image(systemName: "questionmark.folder")
                         .font(.system(size: 14))
                 })
@@ -486,7 +486,7 @@ struct DayEditorView: View {
                     .foregroundStyle(Theme.ink2)
                     .accessibilityIdentifier("cancelDayDatePicker")
                 Spacer()
-                Text(solar ? String(localized: "选择日期") : String(localized: "选择农历日期"))
+                Text(solar ? String(localized: "选择日期", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "选择农历日期", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     .font(Theme.sans(16, weight: .bold)).foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -528,13 +528,13 @@ struct DayEditorView: View {
     // MARK: - Save
 
     private var reminderSummary: String {
-        guard let offsets = reminderOffsets else { return String(localized: "跟随全局设置") }
+        guard let offsets = reminderOffsets else { return String(localized: "跟随全局设置", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
         let selected = Set(offsets)
-        if selected.isEmpty { return String(localized: "不提醒") }
+        if selected.isEmpty { return String(localized: "不提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
         if selected.count == 1, let offset = selected.first {
-            return offset == 0 ? String(localized: "当天") : String(localized: "提前 \(offset) 天")
+            return offset == 0 ? String(localized: "当天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "提前 \(offset) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
-        return String(localized: "自定义（\(selected.count)次）")
+        return String(localized: "自定义（\(selected.count)次）", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private var globalReminderTime: DayReminderTime {
@@ -588,14 +588,14 @@ struct DayEditorView: View {
         )
         guard let new = Self.applyingCategory(to: draft, selectedCategory: selectedCategory,
                                              categories: store.categories) else {
-            saveError = String(localized: "所选分类已不可用，修改尚未保存。请选择其他分类后重试。")
+            saveError = String(localized: "所选分类已不可用，修改尚未保存。请选择其他分类后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             return
         }
 
         if editingDay == nil {
             store.add(new)
         } else if !store.update(new) {
-            saveError = store.loadError ?? String(localized: "这个日子已被删除，修改尚未保存。草稿已保留。")
+            saveError = store.loadError ?? String(localized: "这个日子已被删除，修改尚未保存。草稿已保留。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             return
         }
         guard store.loadError == nil else {

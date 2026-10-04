@@ -9,7 +9,7 @@ struct DataManagementView: View {
     @State private var importing = false
     @State private var isReading = false
     @State private var document = BackupDocument(data: Data())
-    @State private var filename = String(localized: "时光备份")
+    @State private var filename = String(localized: "时光备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     @State private var pendingImport: DayBackup?
     @State private var confirmRecovery = false
     @State private var confirmLegacyImport = false
@@ -24,7 +24,7 @@ struct DataManagementView: View {
                         Label(error, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(Theme.accent)
                         Button("导出原始数据", systemImage: "square.and.arrow.up") {
-                            prepareExport(name: String(localized: "时光原始数据"), data: store.exportOriginalData)
+                            prepareExport(name: String(localized: "时光原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportOriginalData)
                         }
                     }
                 }
@@ -67,7 +67,7 @@ struct DataManagementView: View {
                 }
                 Section {
                     Button("导出备份", systemImage: "square.and.arrow.up") {
-                        prepareExport(name: String(localized: "时光备份"), data: store.exportBackup)
+                        prepareExport(name: String(localized: "时光备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportBackup)
                     }
                     .disabled(store.loadError != nil)
                     Button("从文件恢复", systemImage: "square.and.arrow.down") { importing = true }
@@ -80,7 +80,7 @@ struct DataManagementView: View {
                     }
                     if store.hasMigrationBackup {
                         Button("导出迁移前备份", systemImage: "externaldrive") {
-                            prepareExport(name: String(localized: "时光迁移前备份"), data: store.exportMigrationBackup)
+                            prepareExport(name: String(localized: "时光迁移前备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportMigrationBackup)
                         }
                     }
                 } header: {
@@ -114,7 +114,7 @@ struct DataManagementView: View {
             .fileExporter(isPresented: $exporting, document: document, contentType: .json,
                           defaultFilename: filename) { result in
                 switch result {
-                case .success: message = String(localized: "备份已导出。")
+                case .success: message = String(localized: "备份已导出。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                 case .failure(let error): message = error.localizedDescription
                 }
             }
@@ -143,8 +143,8 @@ struct DataManagementView: View {
                 Button("追加导入") {
                     do {
                         let count = try store.importLegacyCloudData()
-                        message = count > 0 ? String(localized: "已导入 \(count) 个日子。")
-                            : String(localized: "未发现可导入的新日子。旧数据可能仍在下载，请稍后重试。")
+                        message = count > 0 ? String(localized: "已导入 \(count) 个日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                            : String(localized: "未发现可导入的新日子。旧数据可能仍在下载，请稍后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                     } catch { message = error.localizedDescription }
                 }
                 Button("取消", role: .cancel) {}
@@ -197,7 +197,7 @@ struct DataManagementView: View {
     private func perform(_ action: () throws -> Void) {
         do {
             try action()
-            message = String(localized: "数据已恢复。")
+            message = String(localized: "数据已恢复。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         } catch { message = error.localizedDescription }
     }
 }

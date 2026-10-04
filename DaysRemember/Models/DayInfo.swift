@@ -14,8 +14,8 @@ struct DayInfo {
     var elapsedDays: Int? = nil
 
     var countdownUnit: String {
-        isPast ? String(localized: "countdown.daysAgoUnit", defaultValue: "\(days)天前")
-            : String(localized: "countdown.daysLeftUnit", defaultValue: "\(days)天后")
+        isPast ? String(localized: "countdown.daysAgoUnit", defaultValue: "\(days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : String(localized: "countdown.daysLeftUnit", defaultValue: "\(days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     /// Dates in a visible Gregorian year, shared by the countdown and calendar.
@@ -132,13 +132,13 @@ struct DayInfo {
 
     /// "还有" / "已过去" / "就是今天"
     var label: String {
-        if isToday { return String(localized: "就是今天") }
-        return isPast ? String(localized: "已过去") : String(localized: "还有")
+        if isToday { return String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
+        return isPast ? String(localized: "已过去", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还有", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     /// Short "已过" / "还有"
     var labelShort: String {
-        if isToday { return String(localized: "就是今天") }
-        return isPast ? String(localized: "已过") : String(localized: "还有")
+        if isToday { return String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
+        return isPast ? String(localized: "已过", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还有", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 }

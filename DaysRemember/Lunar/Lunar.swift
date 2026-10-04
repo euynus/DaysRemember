@@ -179,7 +179,7 @@ enum Lunar {
     // MARK: - Formatting
 
     static func dayCN(_ d: Int) -> String {
-        if AppLocalization.isEnglish { return String(localized: "第\(d)日") }
+        if AppLocalization.isEnglish { return String(localized: "第\(d)日", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
         if d == 10 { return "初十" }
         if d == 20 { return "二十" }
         if d == 30 { return "三十" }
@@ -190,10 +190,10 @@ enum Lunar {
 
     static func monthCN(_ m: Int, isLeap: Bool) -> String {
         if AppLocalization.isEnglish {
-            return isLeap ? String(localized: "闰\(m)月") : String(localized: "\(m)月")
+            return isLeap ? String(localized: "闰\(m)月", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "\(m)月", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
-        let month = String(localized: String.LocalizationValue(CN_MONTH[m - 1]))
-        return (isLeap ? String(localized: "闰") : "") + month + String(localized: "月")
+        let month = String(localized: String.LocalizationValue(CN_MONTH[m - 1]), bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return (isLeap ? String(localized: "闰", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : "") + month + String(localized: "月", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     static func ganZhi(_ y: Int) -> String {
@@ -201,21 +201,21 @@ enum Lunar {
     }
 
     static func zodiac(_ y: Int) -> String {
-        String(localized: String.LocalizationValue(ZODIAC[(y - 4 + 60) % 12]))
+        String(localized: String.LocalizationValue(ZODIAC[(y - 4 + 60) % 12]), bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     /// "九月十四"
     static func fmt(_ date: Date) -> String {
-        guard let l = supportedLunarDate(for: date) else { return String(localized: "日期超出范围") }
+        guard let l = supportedLunarDate(for: date) else { return String(localized: "日期超出范围", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
         return monthCN(l.month, isLeap: l.isLeap) + (AppLocalization.isEnglish ? ", " : "") + dayCN(l.day)
     }
 
     /// "农历己亥猪年 · 九月十四"
     static func fmtFull(_ date: Date) -> String {
-        guard let l = supportedLunarDate(for: date) else { return String(localized: "农历日期超出范围") }
+        guard let l = supportedLunarDate(for: date) else { return String(localized: "农历日期超出范围", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
         if AppLocalization.isEnglish {
-            return String(localized: "农历\(String(l.year))年 · \(fmt(date))")
+            return String(localized: "农历\(String(l.year))年 · \(fmt(date))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
-        return String(localized: "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))")
+        return String(localized: "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 }

@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import WidgetKit
 
 @main
 struct DaysRememberApp: App {
@@ -8,15 +9,16 @@ struct DaysRememberApp: App {
     @State private var settings = AppSettings()
     @State private var router = DeepLinkRouter()
     @State private var currentDay = CNDate.calendar.startOfDay(for: Today.date)
+    @AppStorage(AppLocalization.languageKey, store: SharedStorage.defaults)
+    private var language = AppLanguage.system
 
     var body: some Scene {
         WindowGroup {
-            RootGate()
+            LocalizedRootView(language: language)
                 .environment(store)
                 .environment(settings)
                 .environment(router)
                 .environment(\.currentDay, currentDay)
-                .environment(\.locale, AppLocalization.locale)
                 // Artwork and exported cards use the same light appearance.
                 .preferredColorScheme(.light)
                 .tint(Theme.accent)
@@ -72,6 +74,10 @@ struct DaysRememberApp: App {
                         store.rescheduleNotifications()
                     }
                 }
+                .onChange(of: language) {
+                    store.rescheduleNotifications()
+                    WidgetCenter.shared.reloadTimelines(ofKind: "DaysRememberWidget")
+                }
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
                     refreshCurrentDay()
                     store.rescheduleNotifications()
@@ -102,6 +108,17 @@ struct DaysRememberApp: App {
             refreshCurrentDay()
             store.rescheduleNotifications()
         }
+    }
+}
+
+private struct LocalizedRootView: View {
+    let language: AppLanguage
+
+    var body: some View {
+        // Recreate localized view state without restarting storage/cloud setup.
+        RootGate()
+            .id(language)
+            .environment(\.locale, AppLocalization.locale(for: language))
     }
 }
 

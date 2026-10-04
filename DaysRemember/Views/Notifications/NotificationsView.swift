@@ -51,7 +51,7 @@ struct NotificationsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            NavHeader(title: String(localized: "提醒"))
+            NavHeader(title: String(localized: "提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     if manager.authorizationStatus == .denied { permissionBanner.padding(.bottom, 18) }
@@ -67,34 +67,34 @@ struct NotificationsView: View {
                         .padding(.bottom, 18)
                     }
 
-                    SectionHeader(String(localized: "提前提醒")).padding(.bottom, 10)
+                    SectionHeader(String(localized: "提前提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     CardList {
-                        ToggleCell(label: String(localized: "提前 7 天"), isOn: reactiveBinding(\.notifPre7))
+                        ToggleCell(label: String(localized: "提前 7 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: reactiveBinding(\.notifPre7))
                         RowDivider()
-                        ToggleCell(label: String(localized: "提前 3 天"), isOn: reactiveBinding(\.notifPre3))
+                        ToggleCell(label: String(localized: "提前 3 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: reactiveBinding(\.notifPre3))
                         RowDivider()
-                        ToggleCell(label: String(localized: "提前 1 天"), isOn: reactiveBinding(\.notifPre1))
+                        ToggleCell(label: String(localized: "提前 1 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: reactiveBinding(\.notifPre1))
                         RowDivider()
-                        ToggleCell(label: String(localized: "当天提醒"), isOn: reactiveBinding(\.notifDay0))
+                        ToggleCell(label: String(localized: "当天提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: reactiveBinding(\.notifDay0))
                     }
                     .padding(.bottom, 22)
 
-                    SectionHeader(String(localized: "问候与回忆")).padding(.bottom, 10)
+                    SectionHeader(String(localized: "问候与回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     CardList {
-                        ToggleCell(label: String(localized: "每日晨间问候"), sub: String(localized: "每天 08:00"),
+                        ToggleCell(label: String(localized: "每日晨间问候", bundle: AppLocalization.bundle, locale: AppLocalization.locale), sub: String(localized: "每天 08:00", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                    isOn: reactiveBinding(\.momentsEnabled))
                         RowDivider()
-                        ToggleCell(label: String(localized: "时光回忆"),
-                                   sub: String(localized: "过往日子的年度回忆，遵循公历或农历"),
+                        ToggleCell(label: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                                   sub: String(localized: "过往日子的年度回忆，遵循公历或农历", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                    isOn: reactiveBinding(\.memoryEnabled))
                         RowDivider()
                         timeRow
                     }
                     .padding(.bottom, 22)
 
-                    SectionHeader(String(localized: "勿扰")).padding(.bottom, 10)
+                    SectionHeader(String(localized: "勿扰", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     CardList {
-                        ToggleCell(label: String(localized: "夜间勿扰"), sub: quietHoursDescription,
+                        ToggleCell(label: String(localized: "夜间勿扰", bundle: AppLocalization.bundle, locale: AppLocalization.locale), sub: quietHoursDescription,
                                    isOn: reactiveBinding(\.quietHours, requestsPermission: false))
                     }
                     coverageSummary.padding(.top, 18)
@@ -151,11 +151,11 @@ struct NotificationsView: View {
     }
 
     private var emptyScheduleTitle: String {
-        guard let status = manager.authorizationStatus else { return String(localized: "正在读取系统提醒…") }
-        if status == .notDetermined { return String(localized: "尚未授权通知") }
-        if status == .denied { return String(localized: "通知权限已关闭") }
+        guard let status = manager.authorizationStatus else { return String(localized: "正在读取系统提醒…", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
+        if status == .notDetermined { return String(localized: "尚未授权通知", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
+        if status == .denied { return String(localized: "通知权限已关闭", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
         return NotificationManager.canDeliver(status)
-            ? String(localized: "暂未安排提醒") : String(localized: "暂时无法确认通知权限")
+            ? String(localized: "暂未安排提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "暂时无法确认通知权限", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private var reminderDateFormat: Date.FormatStyle {
@@ -166,7 +166,7 @@ struct NotificationsView: View {
     private var quietHoursDescription: String {
         let minute = min(59, max(0, settings.notificationMinute))
         let morning = minute == 0 ? "08:00" : "08:\(minute < 10 ? "0" : "")\(minute)"
-        return String(localized: "22:00 起顺延次日 \(morning)；08:00 前顺延当日 \(morning)")
+        return String(localized: "22:00 起顺延次日 \(morning)；08:00 前顺延当日 \(morning)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private var coverageSummary: some View {
