@@ -10,7 +10,7 @@ struct DayEditorView: View {
     private let editingDay: Day?
     @State private var initialDay: Day
     @State private var title: String
-    @State private var categoryID: String
+    @State private var selectedCategory: CategoryDefinition?
     @State private var photo: PhotoStyle
     @State private var photoData: Data?
     @State private var pickerItem: PhotosPickerItem?
@@ -43,7 +43,6 @@ struct DayEditorView: View {
                                  category: .life, photo: .systemDefault)
         _initialDay = State(initialValue: initial)
         _title = State(initialValue: initial.title)
-        _categoryID = State(initialValue: initial.categoryID)
         _photo = State(initialValue: initial.photo)
         _photoData = State(initialValue: initial.photoData)
         _recurring = State(initialValue: initial.recurring)
@@ -61,6 +60,8 @@ struct DayEditorView: View {
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoadingPhoto
     }
+
+    private var categoryID: String { selectedCategory?.id ?? initialDay.categoryID }
 
     private var hasUnsavedChanges: Bool {
         isLoadingPhoto || title != initialDay.title || categoryID != initialDay.categoryID
@@ -100,6 +101,12 @@ struct DayEditorView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
         .interactiveDismissDisabled(hasUnsavedChanges)
+        .onChange(of: store.categories, initial: true) { _, categories in
+            // Remember a resolved selection so its later deletion cannot look like pending sync.
+            if let category = categories.first(where: { $0.id == categoryID }) {
+                selectedCategory = category
+            }
+        }
         .sheet(isPresented: $showDatePicker) { datePickerSheet }
         .sheet(isPresented: $showReminderSettings) {
             DayReminderSettingsView(offsets: reminderOffsets, time: reminderTime,
@@ -405,12 +412,23 @@ struct DayEditorView: View {
 
     private var categoryPills: some View {
         FlowLayout(spacing: 8) {
+            if !store.categories.contains(where: { $0.id == categoryID }) {
+                let name = selectedCategory?.name ?? initialDay.categoryLabel
+                let label = name.isEmpty ? "未知分类" : name
+                let status = selectedCategory == nil ? "未同步" : "不可用"
+                Chip("\(label)（\(status)）", selected: true, leading: {
+                    Image(systemName: "questionmark.folder")
+                        .font(.system(size: 14))
+                })
+                .disabled(true)
+                .accessibilityLabel("分类 \(label)，\(status)")
+            }
             ForEach(store.categories) { category in
                 Chip(category.name, selected: categoryID == category.id) {
                     Image(systemName: category.symbolName)
                         .font(.system(size: 14))
                 } action: {
-                    categoryID = category.id
+                    selectedCategory = category
                 }
                 .accessibilityLabel("分类 \(category.name)")
                 .accessibilityAddTraits(categoryID == category.id ? [.isSelected] : [])
@@ -471,6 +489,8 @@ struct DayEditorView: View {
             if solar {
                 DatePicker("选择日期", selection: $draftDate, displayedComponents: .date)
                     .datePickerStyle(.graphical)
+                    .environment(\.calendar, CNDate.calendar)
+                    .environment(\.timeZone, CNDate.calendar.timeZone)
                     .tint(Theme.ink)
                     .labelsHidden()
                     .padding(.horizontal, 16)
@@ -508,21 +528,34 @@ struct DayEditorView: View {
         return NotificationManager.shared.offsets(for: day, settings: settings)
     }
 
+    /// A nil selection preserves an original category that has not yet resolved locally.
+    static func applyingCategory(to draft: Day, selectedCategory: CategoryDefinition?,
+                                 categories: [CategoryDefinition]) -> Day? {
+        let id = selectedCategory?.id ?? draft.categoryID
+        guard let category = categories.first(where: { $0.id == id }) else {
+            return selectedCategory == nil ? draft : nil
+        }
+        var day = draft
+        day.categoryID = category.id
+        day.categoryLabel = category.name
+        day.category = DayCategory(rawValue: category.id) ?? .life
+        return day
+    }
+
     private func saveDay() {
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else { return }
 
-        let category = store.category(for: categoryID)
-        let new = Day(
+        let draft = Day(
             id: editingDay?.id ?? UUID().uuidString,
             title: cleanTitle,
             date: selectedDate,
             recurring: recurring,
             lunar: !solar,
-            category: DayCategory(rawValue: category.id) ?? .life,
+            category: initialDay.category,
             photo: photo,
             photoData: photoData,
-            categoryID: category.id,
+            categoryID: initialDay.categoryID,
             coverFocusX: coverFocusX,
             coverFocusY: coverFocusY,
             reminderOffsets: reminderOffsets,
@@ -530,13 +563,19 @@ struct DayEditorView: View {
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             location: location.trimmingCharacters(in: .whitespacesAndNewlines),
             pinned: editingDay?.pinned ?? false,
-            categoryLabel: category.name
+            categoryLabel: initialDay.categoryLabel
         )
+        guard let new = Self.applyingCategory(to: draft, selectedCategory: selectedCategory,
+                                             categories: store.categories) else {
+            saveError = "所选分类已不可用，修改尚未保存。请选择其他分类后重试。"
+            return
+        }
 
         if editingDay == nil {
             store.add(new)
-        } else {
-            store.update(new)
+        } else if !store.update(new) {
+            saveError = store.loadError ?? "这个日子已被删除，修改尚未保存。草稿已保留。"
+            return
         }
         guard store.loadError == nil else {
             saveError = store.loadError

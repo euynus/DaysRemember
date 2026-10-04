@@ -99,7 +99,7 @@ struct DetailView: View {
         var updated = currentDay
         updated.pinned.toggle()
         withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
-            store.update(updated)
+            _ = store.update(updated)
         }
     }
 

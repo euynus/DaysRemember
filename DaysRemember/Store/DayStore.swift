@@ -143,9 +143,11 @@ final class DayStore {
         deletedDays.removeAll { $0.id == day.id }
         persistDeletedDays()
     }
-    func update(_ day: Day) {
-        guard loadError == nil else { return }
-        if let i = days.firstIndex(where: { $0.id == day.id }) { days[i] = normalized(day) }
+    @discardableResult
+    func update(_ day: Day) -> Bool {
+        guard loadError == nil, let i = days.firstIndex(where: { $0.id == day.id }) else { return false }
+        days[i] = normalized(day)
+        return loadError == nil
     }
     func delete(_ day: Day) {
         guard loadError == nil, let current = days.first(where: { $0.id == day.id }) else { return }
