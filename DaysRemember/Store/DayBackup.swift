@@ -109,6 +109,7 @@ struct DayBackup: Codable {
                       && (1...9999).contains(CNDate.calendar.component(.year, from: day.date))
                       && day.coverFocusX.isFinite && day.coverFocusY.isFinite
                       && (day.reminderOffsets?.allSatisfy { (0...365).contains($0) } ?? true)
+                      && (day.reminderTime?.isValid ?? true)
               }) else { throw BackupError.invalidRecords }
     }
 }

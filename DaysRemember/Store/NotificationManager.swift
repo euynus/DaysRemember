@@ -249,6 +249,9 @@ final class NotificationManager {
         var candidates: [PlannedReminder] = []
 
         for day in days {
+            guard day.reminderTime?.isValid ?? true else { continue }
+            let hour = day.reminderTime?.hour ?? settings.notificationHour
+            let minute = day.reminderTime?.minute ?? settings.notificationMinute
             // An explicit empty (or invalid-only) override also opts out of memories.
             if let override = day.reminderOffsets, !override.contains(where: { $0 >= 0 }) { continue }
             let offsets = offsets(for: day, settings: settings)
@@ -269,7 +272,7 @@ final class NotificationManager {
             for date in dates where date >= calendar.startOfDay(for: day.date) {
                 for offset in offsets {
                     guard let trigger = triggerDate(displayDate: date, offset: offset,
-                                                    hour: settings.notificationHour, minute: settings.notificationMinute,
+                                                    hour: hour, minute: minute,
                                                     quietHours: settings.quietHours, now: now), trigger <= end else { continue }
                     candidates.append(PlannedReminder(
                         id: "dr.day.\(day.id).pre.\(offset).\(Int(date.timeIntervalSince1970))", date: trigger,
@@ -279,7 +282,7 @@ final class NotificationManager {
             if memory {
                 for date in annualDates where date > calendar.startOfDay(for: day.date) {
                     guard let trigger = triggerDate(displayDate: date, offset: 0,
-                                                    hour: settings.notificationHour, minute: settings.notificationMinute,
+                                                    hour: hour, minute: minute,
                                                     quietHours: settings.quietHours, now: now), trigger <= end else { continue }
                     candidates.append(PlannedReminder(
                         id: "dr.memory.\(day.id).\(Int(date.timeIntervalSince1970))", date: trigger,

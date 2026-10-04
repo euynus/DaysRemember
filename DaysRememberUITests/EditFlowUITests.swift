@@ -179,6 +179,78 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["lunarSolarDate"].label, before)
     }
 
+    func testMultipleRemindersAndCustomTimePersistAfterRelaunch() {
+        let app = launchApp()
+        app.buttons["添加日子"].tap()
+        app.buttons["dayReminderSettingsButton"].tap()
+        XCTAssertTrue(app.buttons["confirmDayReminders"].waitForExistence(timeout: 5))
+        app.segmentedControls.buttons["自定义"].tap()
+        for offset in [7, 3, 1, 0] {
+            let toggle = app.switches["dayReminderOffset\(offset)"]
+            let expected = offset == 3 ? "0" : "1"
+            if toggle.value as? String != expected {
+                toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+            }
+            XCTAssertEqual(toggle.value as? String, expected)
+        }
+        let globalTime = app.switches["dayReminderUsesGlobalTime"]
+        if globalTime.value as? String == "1" {
+            globalTime.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        }
+        app.buttons["时间选择器"].tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 5))
+        app.pickerWheels.element(boundBy: 0).adjust(toPickerWheelValue: "14")
+        app.pickerWheels.element(boundBy: 1).adjust(toPickerWheelValue: "35")
+        app.buttons["PopoverDismissRegion"].tap()
+        XCTAssertEqual(app.buttons["时间选择器"].value as? String, "14:35")
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Multiple day reminders and Beijing time"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        app.buttons["confirmDayReminders"].tap()
+        XCTAssertTrue(app.buttons["dayReminderSettingsButton"].label.contains("自定义（3次）"))
+        XCTAssertTrue(app.buttons["dayReminderSettingsButton"].label.contains("14:35"))
+        let title = "Reminders-" + UUID().uuidString.prefix(8)
+        app.textFields["日子名称"].tap()
+        app.textFields["日子名称"].typeText(title)
+        app.buttons["保存"].tap()
+
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "--seed-sample-data" }
+        app.launch()
+        app.buttons["搜索日子"].tap()
+        app.textFields["搜索日子"].tap()
+        app.textFields["搜索日子"].typeText(title)
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch.tap()
+        app.buttons["更多操作"].tap()
+        app.buttons["pencil"].firstMatch.tap()
+        app.buttons["dayReminderSettingsButton"].tap()
+        XCTAssertTrue(app.switches["dayReminderOffset7"].waitForExistence(timeout: 5))
+        for offset in [7, 3, 1, 0] {
+            XCTAssertEqual(app.switches["dayReminderOffset\(offset)"].value as? String,
+                           offset == 3 ? "0" : "1")
+        }
+        XCTAssertEqual(app.switches["dayReminderUsesGlobalTime"].value as? String, "0")
+        XCTAssertEqual(app.buttons["时间选择器"].value as? String, "14:35")
+    }
+
+    func testCancellingReminderChangesKeepsAnUnchangedEditorClean() {
+        let app = launchApp()
+        app.buttons["添加日子"].tap()
+        app.buttons["dayReminderSettingsButton"].tap()
+        app.segmentedControls.buttons["自定义"].tap()
+        app.switches["dayReminderUsesGlobalTime"].tap()
+        app.buttons["cancelDayReminders"].tap()
+        XCTAssertTrue(app.buttons["dayReminderSettingsButton"].label.contains("跟随全局设置"))
+        XCTAssertFalse(app.buttons["dayReminderSettingsButton"].label.contains("09:00"))
+        app.buttons["dayReminderSettingsButton"].tap()
+        XCTAssertTrue(app.segmentedControls.buttons["跟随全局"].isSelected)
+        app.buttons["confirmDayReminders"].tap()
+        app.buttons["取消"].tap()
+        XCTAssertTrue(app.textFields["日子名称"].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["放弃修改"].exists)
+    }
+
     /// Tap the "即将到来" spotlight to push a real Detail screen, open its menu,
     /// tap 编辑, and assert the editor sheet actually presents (its 保存 button).
     func testEditFromPushedDetailOpensEditor() {

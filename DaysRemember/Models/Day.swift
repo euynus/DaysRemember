@@ -18,6 +18,8 @@ struct Day: Identifiable, Codable, Hashable {
     /// Optional per-day reminder offsets, in days before the event.
     /// `nil` means the global reminder settings are used.
     var reminderOffsets: [Int]?
+    /// `nil` uses the global notification time; an override remains subject to quiet hours.
+    var reminderTime: DayReminderTime?
     var note: String
     var location: String
     var pinned: Bool
@@ -25,7 +27,7 @@ struct Day: Identifiable, Codable, Hashable {
     init(id: String, title: String, date: Date, recurring: Bool = false, lunar: Bool = false,
          category: DayCategory, photo: PhotoStyle, photoData: Data? = nil,
          categoryID: String? = nil, coverFocusX: Double = 0.5, coverFocusY: Double = 0.5,
-         reminderOffsets: [Int]? = nil,
+         reminderOffsets: [Int]? = nil, reminderTime: DayReminderTime? = nil,
          note: String = "", location: String = "",
          pinned: Bool = false, categoryLabel: String? = nil) {
         self.id = id
@@ -41,6 +43,7 @@ struct Day: Identifiable, Codable, Hashable {
         self.coverFocusX = Self.clampFocus(coverFocusX)
         self.coverFocusY = Self.clampFocus(coverFocusY)
         self.reminderOffsets = reminderOffsets
+        self.reminderTime = reminderTime
         self.note = note
         self.location = location
         self.pinned = pinned
@@ -48,7 +51,7 @@ struct Day: Identifiable, Codable, Hashable {
 
     private enum CodingKeys: String, CodingKey {
         case id, title, date, recurring, lunar, category, categoryLabel, categoryID, photo, photoData, photoFile
-        case coverFocusX, coverFocusY, reminderOffsets, note, location, pinned
+        case coverFocusX, coverFocusY, reminderOffsets, reminderTime, note, location, pinned
     }
 
     init(from decoder: Decoder) throws {
@@ -74,6 +77,7 @@ struct Day: Identifiable, Codable, Hashable {
         coverFocusX = Self.clampFocus(try container.decodeIfPresent(Double.self, forKey: .coverFocusX) ?? 0.5)
         coverFocusY = Self.clampFocus(try container.decodeIfPresent(Double.self, forKey: .coverFocusY) ?? 0.5)
         reminderOffsets = try container.decodeIfPresent([Int].self, forKey: .reminderOffsets)
+        reminderTime = try container.decodeIfPresent(DayReminderTime.self, forKey: .reminderTime)
         note = try container.decodeIfPresent(String.self, forKey: .note) ?? ""
         location = try container.decodeIfPresent(String.self, forKey: .location) ?? ""
         pinned = try container.decodeIfPresent(Bool.self, forKey: .pinned) ?? false
@@ -99,6 +103,7 @@ struct Day: Identifiable, Codable, Hashable {
         try container.encode(coverFocusX, forKey: .coverFocusX)
         try container.encode(coverFocusY, forKey: .coverFocusY)
         try container.encodeIfPresent(reminderOffsets, forKey: .reminderOffsets)
+        try container.encodeIfPresent(reminderTime, forKey: .reminderTime)
         try container.encode(note, forKey: .note)
         try container.encode(location, forKey: .location)
         try container.encode(pinned, forKey: .pinned)

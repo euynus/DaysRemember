@@ -19,6 +19,8 @@ struct DayEditorView: View {
     @State private var recurring: Bool
     @State private var solar: Bool
     @State private var reminderOffsets: [Int]?
+    @State private var reminderTime: DayReminderTime?
+    @State private var showReminderSettings = false
     @State private var selectedDate: Date
     @State private var draftDate: Date
     @State private var note: String
@@ -33,9 +35,6 @@ struct DayEditorView: View {
 
     private static let pickerOptions: [PhotoStyle] = [
         .systemDefault, .birthday, .japan, .study, .home,
-    ]
-    private static let reminders: [(label: String, offset: Int)] = [
-        ("当天", 0), ("1天", 1), ("3天", 3), ("7天", 7)
     ]
 
     init(day: Day? = nil) {
@@ -56,6 +55,7 @@ struct DayEditorView: View {
         _coverFocusX = State(initialValue: initial.coverFocusX)
         _coverFocusY = State(initialValue: initial.coverFocusY)
         _reminderOffsets = State(initialValue: initial.reminderOffsets)
+        _reminderTime = State(initialValue: initial.reminderTime)
     }
 
     private var canSave: Bool {
@@ -70,6 +70,7 @@ struct DayEditorView: View {
             || note != initialDay.note || location != initialDay.location
             || coverFocusX != initialDay.coverFocusX || coverFocusY != initialDay.coverFocusY
             || reminderOffsets != initialDay.reminderOffsets
+            || reminderTime != initialDay.reminderTime
     }
 
     var body: some View {
@@ -100,6 +101,13 @@ struct DayEditorView: View {
         .background(Theme.bg.ignoresSafeArea())
         .interactiveDismissDisabled(hasUnsavedChanges)
         .sheet(isPresented: $showDatePicker) { datePickerSheet }
+        .sheet(isPresented: $showReminderSettings) {
+            DayReminderSettingsView(offsets: reminderOffsets, time: reminderTime,
+                                    globalOffsets: globalReminderOffsets, globalTime: globalReminderTime) { offsets, time in
+                reminderOffsets = offsets
+                reminderTime = time
+            }
+        }
         .alert("放弃未保存的修改？", isPresented: $confirmDiscard) {
             Button("放弃修改", role: .destructive) { dismiss() }
             Button("继续编辑", role: .cancel) {}
@@ -339,22 +347,30 @@ struct DayEditorView: View {
             }
 
             RowDivider()
-            formRawRow(label: "提醒") {
-                Picker("提醒", selection: $reminderOffsets) {
-                    Text("跟随全局设置").tag(Optional<[Int]>.none)
-                    Text("不提醒").tag(Optional<[Int]>([]))
-                    ForEach(Self.reminders.indices, id: \.self) { index in
-                        Text(index == 0 ? "当天" : "提前 \(Self.reminders[index].offset) 天")
-                            .tag(Optional([Self.reminders[index].offset]))
-                    }
-                    if let offsets = reminderOffsets, !offsets.isEmpty,
-                       offsets.count != 1 || !Self.reminders.contains(where: { $0.offset == offsets[0] }) {
-                        Text("自定义（\(offsets.count)次）").tag(Optional(offsets))
+            Button {
+                showReminderSettings = true
+            } label: {
+                formRawRow(label: "提醒") {
+                    HStack(spacing: 8) {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(reminderSummary)
+                                .font(Theme.sans(14, weight: .semibold))
+                                .foregroundStyle(Theme.ink2)
+                            if let reminderTime, reminderOffsets != [] {
+                                Text(String(format: "%02d:%02d", reminderTime.hour, reminderTime.minute))
+                                    .font(Theme.sans(12, weight: .medium))
+                                    .foregroundStyle(Theme.muted)
+                            }
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Theme.muted)
                     }
                 }
-                .tint(Theme.accent)
-
+                .contentShape(Rectangle())
             }
+            .buttonStyle(PressScale(scale: 0.99))
+            .accessibilityIdentifier("dayReminderSettingsButton")
 
             RowDivider()
             HStack(spacing: 14) {
@@ -470,6 +486,28 @@ struct DayEditorView: View {
 
     // MARK: - Save
 
+    private var reminderSummary: String {
+        guard let offsets = reminderOffsets else { return "跟随全局设置" }
+        let selected = Set(offsets)
+        if selected.isEmpty { return "不提醒" }
+        if selected.count == 1, let offset = selected.first {
+            return offset == 0 ? "当天" : "提前 \(offset) 天"
+        }
+        return "自定义（\(selected.count)次）"
+    }
+
+    private var globalReminderTime: DayReminderTime {
+        DayReminderTime(hour: store.settings?.notificationHour ?? 9,
+                        minute: store.settings?.notificationMinute ?? 0)
+    }
+
+    private var globalReminderOffsets: [Int] {
+        guard let settings = store.settings else { return [7, 3, 0] }
+        var day = initialDay
+        day.reminderOffsets = nil
+        return NotificationManager.shared.offsets(for: day, settings: settings)
+    }
+
     private func saveDay() {
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else { return }
@@ -488,6 +526,7 @@ struct DayEditorView: View {
             coverFocusX: coverFocusX,
             coverFocusY: coverFocusY,
             reminderOffsets: reminderOffsets,
+            reminderTime: reminderTime,
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             location: location.trimmingCharacters(in: .whitespacesAndNewlines),
             pinned: editingDay?.pinned ?? false,
