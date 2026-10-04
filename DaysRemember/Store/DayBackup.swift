@@ -6,14 +6,46 @@ struct DeletedDay: Codable, Identifiable, Equatable {
     var id: String { day.id }
 }
 
+struct SyncConflict: Codable, Identifiable, Equatable {
+    var id = UUID().uuidString
+    var createdAt = Date()
+    var record: CloudLibraryRecord
+}
+
 struct DayBackup: Codable {
     static let maximumBytes = 100 * 1024 * 1024
 
-    var version = 1
+    var version = 2
     var createdAt = Date()
     var days: [Day]
     var categories: [CategoryDefinition]
     var deletedDays: [DeletedDay]
+    var syncConflicts: [SyncConflict]
+
+    init(version: Int = 2, createdAt: Date = Date(), days: [Day],
+         categories: [CategoryDefinition], deletedDays: [DeletedDay],
+         syncConflicts: [SyncConflict] = []) {
+        self.version = version
+        self.createdAt = createdAt
+        self.days = days
+        self.categories = categories
+        self.deletedDays = deletedDays
+        self.syncConflicts = syncConflicts
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case version, createdAt, days, categories, deletedDays, syncConflicts
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(version: try values.decode(Int.self, forKey: .version),
+                  createdAt: try values.decode(Date.self, forKey: .createdAt),
+                  days: try values.decode([Day].self, forKey: .days),
+                  categories: try values.decode([CategoryDefinition].self, forKey: .categories),
+                  deletedDays: try values.decode([DeletedDay].self, forKey: .deletedDays),
+                  syncConflicts: try values.decodeIfPresent([SyncConflict].self, forKey: .syncConflicts) ?? [])
+    }
 
     enum BackupError: LocalizedError {
         case tooLarge, unsupportedVersion, invalidRecords, unreadable
@@ -48,7 +80,7 @@ struct DayBackup: Codable {
     }
 
     func validate() throws {
-        guard version == 1 else { throw BackupError.unsupportedVersion }
+        guard (1...2).contains(version) else { throw BackupError.unsupportedVersion }
         guard createdAt.timeIntervalSinceReferenceDate.isFinite,
               Set(categories.map(\.id)).count == categories.count,
               categories.allSatisfy({ !$0.id.isEmpty && !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }),
@@ -60,6 +92,11 @@ struct DayBackup: Codable {
         guard Set(days.map(\.id)).isDisjoint(with: deletedDays.map(\.id)) else {
             throw BackupError.invalidRecords
         }
+        guard Set(syncConflicts.map(\.id)).count == syncConflicts.count,
+              syncConflicts.allSatisfy({ !$0.id.isEmpty && $0.createdAt.timeIntervalSinceReferenceDate.isFinite }) else {
+            throw BackupError.invalidRecords
+        }
+        for conflict in syncConflicts { try conflict.record.validate() }
     }
 
     static func validateDays(_ days: [Day]) throws {

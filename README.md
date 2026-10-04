@@ -34,6 +34,8 @@ Before enabling CloudKit, the app preserves a local migration backup. Legacy `NS
 
 Cloud updates merge by record ID. Before replacing conflicting local content, the app keeps a recoverable local snapshot. Account changes pause uploads until explicitly confirmed; a deleted server zone is not automatically recreated. Recently deleted records and recovery copies are device-local. Exported JSON includes photos and is not encrypted; the current backup size limit is 100 MB. Invalid imports or unreadable local data do not silently reset the library.
 
+Local versions replaced by cloud records are retained separately by record and version, so later remote changes cannot overwrite them. Data management can preview, restore, or discard a single saved version without rolling back other records. Backup format v2 includes these device-local versions and still imports v1 backups.
+
 For real iCloud operation, set `DEVELOPMENT_TEAM` in `project.yml`, enable the App Group, iCloud/CloudKit and Push Notifications capabilities, and associate `iCloud.com.shiguang.daysremember` with the app identifier. The project includes remote-notification background mode. Follow Apple's [CKSyncEngine sample setup](https://github.com/apple/sample-cloudkit-sync-engine), then deploy the CloudKit schema to Production before distributing a production build. Simulator builds intentionally do not connect to CloudKit and display a configuration notice; local features remain available. Simulator/unit checks do not verify provisioning, APNs, production schema, or two-device delivery; validate these on signed devices using the intended iCloud account.
 
 ## UI and tests

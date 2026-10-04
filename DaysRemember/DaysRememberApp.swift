@@ -30,6 +30,14 @@ struct DaysRememberApp: App {
                         try? store.restoreBackup(DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: []))
                         settings.hasOnboarded = false
                     }
+                    if ProcessInfo.processInfo.arguments.contains("--seed-sync-conflicts"),
+                       var local = store.days.first {
+                        local.note = "Local note retained before sync"
+                        store.update(local)
+                        var remote = local
+                        remote.note = "Remote note"
+                        try? store.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [remote], recoveryDays: [local]))
+                    }
                     #endif
                     if !automated {
                         store.enableCloudSync()
@@ -118,7 +126,8 @@ enum DebugLaunch {
     static var isAutomated: Bool {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("--screen") || args.contains("--tab") { return true }
-        if args.contains("--empty-library") || args.contains("--seed-sample-data") { return true }
+        if args.contains("--empty-library") || args.contains("--seed-sample-data")
+            || args.contains("--seed-sync-conflicts") { return true }
         if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] != nil { return true }
         return false
     }

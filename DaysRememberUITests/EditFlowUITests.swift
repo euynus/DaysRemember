@@ -22,6 +22,33 @@ final class EditFlowUITests: XCTestCase {
         return app
     }
 
+    func testRestoreSingleSyncVersionKeepsItsNoteAfterRelaunch() {
+        let app = launchApp(arguments: ["--seed-sample-data", "--seed-sync-conflicts"])
+        app.buttons["日子选项"].tap()
+        app.buttons["externaldrive"].firstMatch.tap()
+        let versions = app.buttons["同步保留版本（1）"]
+        XCTAssertTrue(versions.waitForExistence(timeout: 5))
+        versions.tap()
+        let restore = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@ AND label ENDSWITH %@",
+                                                       "恢复", "的本机保留版本")).firstMatch
+        for _ in 0..<3 where !restore.isHittable { app.swipeUp() }
+        XCTAssertTrue(app.staticTexts["Local note retained before sync"].exists)
+        XCTAssertTrue(restore.isHittable)
+        restore.tap()
+        app.buttons["恢复并同步"].tap()
+        XCTAssertTrue(app.staticTexts["没有本机保留版本"].waitForExistence(timeout: 5))
+
+        app.terminate()
+        app.launchArguments = ["--tab", "home"]
+        app.launch()
+        let wedding = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "结婚纪念日")).firstMatch
+        XCTAssertTrue(wedding.waitForExistence(timeout: 5))
+        wedding.tap()
+        for _ in 0..<3 where !app.staticTexts["Local note retained before sync"].exists { app.swipeUp() }
+        XCTAssertTrue(app.staticTexts["Local note retained before sync"].exists)
+        XCTAssertFalse(app.staticTexts["Remote note"].exists)
+    }
+
     /// Tap the "即将到来" spotlight to push a real Detail screen, open its menu,
     /// tap 编辑, and assert the editor sheet actually presents (its 保存 button).
     func testEditFromPushedDetailOpensEditor() {

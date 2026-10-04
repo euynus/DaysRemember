@@ -49,6 +49,12 @@ struct DataManagementView: View {
                         Label("同步", systemImage: "arrow.triangle.2.circlepath")
                     }
                     .disabled(cloud.isSyncing || store.loadError != nil)
+                    NavigationLink {
+                        SyncConflictsView()
+                    } label: {
+                        Label("同步保留版本（\(store.syncConflicts.count)）", systemImage: "clock.arrow.circlepath")
+                    }
+                    .disabled(store.loadError != nil)
                     if cloud.status == .accountChanged {
                         Button("确认使用当前 iCloud 账户", systemImage: "person.crop.circle.badge.checkmark") {
                             confirmAccountChange = true
@@ -80,7 +86,7 @@ struct DataManagementView: View {
                 } header: {
                     Text("备份与恢复")
                 } footer: {
-                    Text("备份包含日子、照片、分类和最近删除。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。")
+                    Text("备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。")
                 }
                 Section {
                     NavigationLink {
@@ -90,7 +96,7 @@ struct DataManagementView: View {
                     }
                     .disabled(store.loadError != nil)
                 } footer: {
-                    Text("最近删除与本机恢复副本只保存在这台设备。")
+                    Text("最近删除、本机恢复副本与同步保留版本只保存在这台设备。")
                 }
             }
             .scrollContentBackground(.hidden)

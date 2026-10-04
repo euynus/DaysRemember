@@ -88,7 +88,7 @@ final class BackupRecoveryTests: XCTestCase {
             var activeInTrash = original
             activeInTrash.deletedDays.append(DeletedDay(day: original.days[0], deletedAt: original.createdAt))
             var unsupported = original
-            unsupported.version = 2
+            unsupported.version = 99
 
             for invalid in [blankTitle, duplicateDays, duplicateCategories, duplicateTrash, activeInTrash, unsupported] {
                 let data = try JSONEncoder().encode(invalid)
@@ -104,7 +104,7 @@ final class BackupRecoveryTests: XCTestCase {
     }
 
     func testCorruptDataIsPreservedUntilExplicitRecoveryAndRemainsExportable() throws {
-        for key in ["days.v1", "categories.v1", "deletedDays.v1", "pendingRestore.v1"] {
+        for key in ["days.v1", "categories.v1", "deletedDays.v1", "syncConflicts.v1", "pendingRestore.v1"] {
             try withDefaults { defaults, suite in
                 let original = backup()
                 try DayStore(defaults: defaults).restoreBackup(original)

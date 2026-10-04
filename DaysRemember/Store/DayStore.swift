@@ -22,12 +22,14 @@ final class DayStore {
         }
     }
     private(set) var deletedDays: [DeletedDay] = []
+    private(set) var syncConflicts: [SyncConflict] = []
     private(set) var loadError: String?
     private(set) var syncPreparationError: String?
 
     private let storageKey = "days.v1"
     private let categoriesKey = "categories.v1"
     private let deletedKey = "deletedDays.v1"
+    private let conflictsKey = "syncConflicts.v1"
     private let recoveryKey = "recoveryBackup.v1"
     private let migrationKey = "preCloudKitBackup.v1"
     private let legacyDayIDsKey = "importedLegacyDayIDs.v1"
@@ -73,7 +75,11 @@ final class DayStore {
                 self.deletedDays = try JSONDecoder().decode([DeletedDay].self, from: data)
                     .filter { entry in !days.contains(where: { $0.id == entry.id }) }
             }
-            try DayBackup(days: days, categories: categories, deletedDays: deletedDays).validate()
+            if let data = defaults.data(forKey: conflictsKey) {
+                self.syncConflicts = try JSONDecoder().decode([SyncConflict].self, from: data)
+            }
+            try DayBackup(days: days, categories: categories, deletedDays: deletedDays,
+                          syncConflicts: syncConflicts).validate()
         } catch {
             loadError = "本机数据未能完整读取，原始数据已保留。请先导出原始数据，或从备份恢复。"
         }
@@ -151,11 +157,13 @@ final class DayStore {
 
     func exportBackup() throws -> Data {
         guard loadError == nil else { throw DayBackup.BackupError.unreadable }
-        return try DayBackup(days: days, categories: categories, deletedDays: deletedDays).encoded()
+        return try DayBackup(days: days, categories: categories, deletedDays: deletedDays,
+                             syncConflicts: syncConflicts).encoded()
     }
 
     func exportOriginalData() throws -> Data {
-        let keys = [storageKey, categoriesKey, deletedKey, pendingRestoreKey, recoveryKey, migrationKey, "unreadableData.v1"]
+        let keys = [storageKey, categoriesKey, deletedKey, conflictsKey, pendingRestoreKey,
+                    recoveryKey, migrationKey, "unreadableData.v1"]
         let original = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
             defaults.data(forKey: key).map { (key, $0) }
         })
@@ -198,6 +206,7 @@ final class DayStore {
         categories = Self.normalizedCategories(backup.categories)
         days = backup.days
         deletedDays = backup.deletedDays
+        syncConflicts = backup.syncConflicts
         isRestoring = false
         defaults.removeObject(forKey: pendingRestoreKey)
         rescheduleNotifications()
@@ -209,9 +218,40 @@ final class DayStore {
         let daysData = try encoder.encode(backup.days)
         let categoriesData = try encoder.encode(backup.categories)
         let deletedData = try encoder.encode(backup.deletedDays)
+        let conflictsData = try encoder.encode(backup.syncConflicts)
         defaults.set(daysData, forKey: storageKey)
         defaults.set(categoriesData, forKey: categoriesKey)
         defaults.set(deletedData, forKey: deletedKey)
+        defaults.set(conflictsData, forKey: conflictsKey)
+    }
+
+    func restoreSyncConflict(id: String) throws {
+        guard loadError == nil, let conflict = syncConflicts.first(where: { $0.id == id }) else {
+            throw DayBackup.BackupError.unreadable
+        }
+        var backup = DayBackup(days: days, categories: categories, deletedDays: deletedDays,
+                               syncConflicts: syncConflicts.filter { $0.id != id })
+        switch conflict.record {
+        case .day(let day):
+            if let index = backup.days.firstIndex(where: { $0.id == day.id }) { backup.days[index] = day }
+            else { backup.days.append(day) }
+            backup.deletedDays.removeAll { $0.id == day.id }
+        case .category(let category):
+            if let index = backup.categories.firstIndex(where: { $0.id == category.id }) {
+                backup.categories[index] = category
+            } else { backup.categories.append(category) }
+            for index in backup.days.indices where backup.days[index].categoryID == category.id {
+                backup.days[index].categoryLabel = category.name
+            }
+        }
+        try restoreBackup(backup)
+    }
+
+    func discardSyncConflict(id: String) throws {
+        guard loadError == nil else { throw DayBackup.BackupError.unreadable }
+        let remaining = syncConflicts.filter { $0.id != id }
+        defaults.set(try JSONEncoder().encode(remaining), forKey: conflictsKey)
+        syncConflicts = remaining
     }
 
     /// Nearest upcoming (future or today) within `within` days.
@@ -229,6 +269,8 @@ final class DayStore {
         guard loadError == nil else { return }
         deletedDays = []
         persistDeletedDays()
+        syncConflicts = []
+        defaults.removeObject(forKey: conflictsKey)
         categories = CategoryDefinition.system
         days = SampleData.days
     }
@@ -399,7 +441,8 @@ final class DayStore {
         let additions = legacyDays.filter { !seenDays.contains($0.id) }
         let categoryAdditions = legacyCategories.filter { !seenCategories.contains($0.id) }
         if !additions.isEmpty || !categoryAdditions.isEmpty {
-            let backup = DayBackup(days: days + additions, categories: categories + categoryAdditions, deletedDays: deletedDays)
+            let backup = DayBackup(days: days + additions, categories: categories + categoryAdditions,
+                                   deletedDays: deletedDays, syncConflicts: syncConflicts)
             let encoded = try backup.encoded()
             try keepMigrationBackup()
             try keepRecoveryBackup()
@@ -433,7 +476,23 @@ final class DayStore {
         for day in days where update.deletedDayIDs.contains(day.id) && !nextDeleted.contains(where: { $0.id == day.id }) {
             nextDeleted.append(DeletedDay(day: day, deletedAt: .now))
         }
-        let backup = DayBackup(days: nextDays, categories: nextCategories, deletedDays: nextDeleted)
+        var nextConflicts = syncConflicts
+        var conflictRecords = update.recoveryDays.map(CloudLibraryRecord.day)
+            + update.recoveryCategories.map(CloudLibraryRecord.category)
+        // A pending delivery can be replayed after another local edit; retain both versions.
+        conflictRecords += days.filter { day in
+            update.recoveryDays.contains(where: { $0.id == day.id })
+                && nextDays.first(where: { $0.id == day.id }) != day
+        }.map(CloudLibraryRecord.day)
+        conflictRecords += categories.filter { category in
+            update.recoveryCategories.contains(where: { $0.id == category.id })
+                && nextCategories.first(where: { $0.id == category.id }) != category
+        }.map(CloudLibraryRecord.category)
+        for record in conflictRecords where !nextConflicts.contains(where: { $0.record == record }) {
+            nextConflicts.append(SyncConflict(record: record))
+        }
+        let backup = DayBackup(days: nextDays, categories: nextCategories, deletedDays: nextDeleted,
+                               syncConflicts: nextConflicts)
         let encoded = try backup.encoded()
         guard nextDays != days || nextCategories != categories || nextDeleted != deletedDays
                 || !update.recoveryDays.isEmpty || !update.recoveryCategories.isEmpty else { return }
@@ -452,7 +511,8 @@ final class DayStore {
             recoveryCategories.append(category)
         }
         let recovery = DayBackup(days: recoveryDays, categories: recoveryCategories,
-                                 deletedDays: deletedDays.filter { entry in !recoveryDays.contains(where: { $0.id == entry.id }) })
+                                 deletedDays: deletedDays.filter { entry in !recoveryDays.contains(where: { $0.id == entry.id }) },
+                                 syncConflicts: syncConflicts)
         defaults.set(try recovery.encoded(), forKey: recoveryKey)
         try applyBackup(backup, encoded: encoded)
     }
