@@ -28,6 +28,7 @@ final class DayInfoTests: XCTestCase {
                        cal.startOfDay(for: date(2027, 1, 1)))
         XCTAssertNil(info.yearsAgo)
         XCTAssertNil(info.anniversaryNumber)
+        XCTAssertNil(info.elapsedDays)
     }
 
     func testNonRecurringPastIsMarkedPast() {
@@ -48,9 +49,44 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(info.days, 0)
         XCTAssertTrue(info.isToday)
         XCTAssertFalse(info.isPast)
+        XCTAssertEqual(info.elapsedDays, 0)
     }
 
     // MARK: - Recurring Gregorian
+
+    func testRecurringOriginalDayStartsAtZeroInBothCalendars() {
+        let today = date(2026, 5, 9)
+        for lunar in [false, true] {
+            let day = makeDay(date: today.addingTimeInterval(18 * 3600), recurring: true, lunar: lunar)
+            let info = DayInfo.compute(day, today: today)
+
+            XCTAssertEqual(info.displayDate, today)
+            XCTAssertEqual(info.days, 0)
+            XCTAssertTrue(info.isToday)
+            XCTAssertEqual(info.elapsedDays, 0)
+            XCTAssertEqual(info.anniversaryNumber, 0)
+
+            let tomorrow = DayInfo.compute(day, today: date(2026, 5, 10))
+            XCTAssertEqual(tomorrow.elapsedDays, 1)
+            XCTAssertEqual(tomorrow.anniversaryNumber, 1)
+            XCTAssertFalse(tomorrow.isToday)
+        }
+    }
+
+    func testFutureRecurringStartDoesNotCreateAnEarlierAnniversary() {
+        for lunar in [false, true] {
+            let day = makeDay(date: date(2028, 5, 9), recurring: true, lunar: lunar)
+            let info = DayInfo.compute(day, today: date(2026, 5, 9))
+
+            XCTAssertEqual(info.displayDate, day.date)
+            XCTAssertEqual(info.days, 731)
+            XCTAssertFalse(info.isPast)
+            XCTAssertFalse(info.isToday)
+            XCTAssertNil(info.elapsedDays)
+            XCTAssertEqual(info.anniversaryNumber, 0)
+            XCTAssertTrue(DayInfo.occurrences(of: day, inGregorianYear: 2026).isEmpty)
+        }
+    }
 
     func testRecurringGregorianTargetsThisYearWhenStillUpcoming() {
         let day = makeDay(date: date(2020, 12, 25), recurring: true)
@@ -63,6 +99,7 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(info.yearsAgo, 6)
         // Upcoming this year → 6th anniversary (not 7).
         XCTAssertEqual(info.anniversaryNumber, 6)
+        XCTAssertEqual(info.elapsedDays, 1961)
     }
 
     func testRecurringGregorianRollsToNextYearAfterAnniversary() {
@@ -75,6 +112,7 @@ final class DayInfoTests: XCTestCase {
         XCTAssertFalse(info.isPast)
         // Already passed this year → rolled to 2027 → 7th anniversary.
         XCTAssertEqual(info.anniversaryNumber, 7)
+        XCTAssertEqual(info.elapsedDays, 2253)
     }
 
     func testRecurringGregorianOnAnniversaryIsToday() {
@@ -98,6 +136,7 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(info.displayDate, date(2026, 1, 26))
         XCTAssertEqual(info.days, 25)
         XCTAssertEqual(info.anniversaryNumber, 1)
+        XCTAssertEqual(info.elapsedDays, 359)
         XCTAssertFalse(info.isPast)
         XCTAssertTrue(DayInfo.compute(day, today: date(2026, 1, 26)).isToday)
     }
@@ -111,7 +150,7 @@ final class DayInfoTests: XCTestCase {
     }
 
     func testGregorianYearCanContainTwoLunarAnniversaries() {
-        let day = makeDay(date: date(2025, 1, 7), recurring: true, lunar: true)
+        let day = makeDay(date: date(2021, 1, 20), recurring: true, lunar: true)
         XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2022),
                        [date(2022, 1, 10), date(2022, 12, 30)])
         XCTAssertEqual(DayInfo.compute(day, today: date(2022, 1, 11)).displayDate, date(2022, 12, 30))

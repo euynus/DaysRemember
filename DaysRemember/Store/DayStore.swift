@@ -9,6 +9,7 @@ import WidgetKit
 final class DayStore {
     var days: [Day] {
         didSet {
+            guard !isRestoring else { return }
             save()
             rescheduleNotifications()
             reloadWidgetTimelines()
@@ -16,18 +17,26 @@ final class DayStore {
     }
     var categories: [CategoryDefinition] {
         didSet {
+            guard !isRestoring else { return }
             saveCategories()
         }
     }
+    private(set) var deletedDays: [DeletedDay] = []
+    private(set) var loadError: String?
+    private(set) var syncPreparationError: String?
 
     private let storageKey = "days.v1"
     private let categoriesKey = "categories.v1"
-    private let cloud = ICloudSyncStore.shared
+    private let deletedKey = "deletedDays.v1"
+    private let recoveryKey = "recoveryBackup.v1"
+    private let migrationKey = "preCloudKitBackup.v1"
+    private let legacyDayIDsKey = "importedLegacyDayIDs.v1"
+    private let legacyCategoryIDsKey = "importedLegacyCategoryIDs.v1"
+    private let pendingRestoreKey = "pendingRestore.v1"
+    private let defaults: UserDefaults
+    private var isRestoring = false
     private var cloudSyncEnabled = false
-    private var cloudChangeToken: UUID?
-    /// Non-nil while a remote envelope is being written into `days`/`categories`. Acts
-    /// as both the "skip the push-back" guard and the source of the timestamp to mirror.
-    private var cloudApplyContext: (key: String, updatedAt: TimeInterval)?
+    private var cloudSyncRequested = false
     /// Debounce/serialize handle for `NotificationManager.sync`.
     private var rescheduleTask: Task<Void, Never>?
     /// Set after init so we can wire the notification scheduler without a circular dependency.
@@ -35,48 +44,56 @@ final class DayStore {
         didSet { rescheduleNotifications() }
     }
 
-    init() {
-        if let data = SharedStorage.defaults.data(forKey: storageKey),
-           let decoded = try? JSONDecoder().decode([Day].self, from: data) {
-            self.days = decoded
-        } else {
-            self.days = SampleData.days
-        }
-
-        if let data = SharedStorage.defaults.data(forKey: categoriesKey),
-           let decoded = try? JSONDecoder().decode([CategoryDefinition].self, from: data) {
-            self.categories = Self.normalizedCategories(decoded)
-        } else {
-            self.categories = CategoryDefinition.system
+    init(defaults: UserDefaults = SharedStorage.defaults) {
+        self.defaults = defaults
+        self.days = []
+        self.categories = CategoryDefinition.system
+        isRestoring = true
+        defer { isRestoring = false }
+        do {
+            // Replay an interrupted restore before exposing any partially restored data.
+            if let pending = defaults.data(forKey: pendingRestoreKey) {
+                let backup = try DayBackup.decode(pending)
+                try writeBackup(backup)
+                defaults.removeObject(forKey: pendingRestoreKey)
+            }
+            if let data = defaults.data(forKey: storageKey) {
+                let decoded = try JSONDecoder().decode([Day].self, from: data)
+                try DayBackup.validateDays(decoded)
+                self.days = decoded
+            }
+            if let data = defaults.data(forKey: categoriesKey) {
+                let decoded = try JSONDecoder().decode([CategoryDefinition].self, from: data)
+                guard Set(decoded.map(\.id)).count == decoded.count else {
+                    throw DayBackup.BackupError.invalidRecords
+                }
+                self.categories = Self.normalizedCategories(decoded)
+            }
+            if let data = defaults.data(forKey: deletedKey) {
+                self.deletedDays = try JSONDecoder().decode([DeletedDay].self, from: data)
+                    .filter { entry in !days.contains(where: { $0.id == entry.id }) }
+            }
+            try DayBackup(days: days, categories: categories, deletedDays: deletedDays).validate()
+        } catch {
+            loadError = "本机数据未能完整读取，原始数据已保留。请先导出原始数据，或从备份恢复。"
         }
     }
 
     func save() {
-        persist(days, storageKey: storageKey, cloudKey: ICloudSyncStore.Key.days)
+        persist(days, storageKey: storageKey)
     }
 
     func saveCategories() {
-        persist(categories, storageKey: categoriesKey, cloudKey: ICloudSyncStore.Key.categories)
+        persist(categories, storageKey: categoriesKey)
     }
 
-    /// Encode `value` to shared `UserDefaults` under `storageKey`. When this run is the
-    /// `didSet` echo of an in-flight cloud apply, mirror the remote timestamp; otherwise
-    /// record a fresh local write and (if enabled) push the new value to KVS.
-    private func persist<Value: Codable>(_ value: Value, storageKey: String, cloudKey: String) {
+    private func persist<Value: Encodable>(_ value: Value, storageKey: String) {
+        guard loadError == nil else { return }
         guard let data = try? JSONEncoder().encode(value) else { return }
-        SharedStorage.defaults.set(data, forKey: storageKey)
+        defaults.set(data, forKey: storageKey)
 
-        if let context = cloudApplyContext {
-            if context.key == cloudKey {
-                cloud.noteLocalWrite(for: cloudKey, updatedAt: context.updatedAt)
-            }
-            return
-        }
-
-        let updatedAt = Date().timeIntervalSinceReferenceDate
-        cloud.noteLocalWrite(for: cloudKey, updatedAt: updatedAt)
         if cloudSyncEnabled {
-            cloud.push(value, for: cloudKey, updatedAt: updatedAt)
+            CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
         }
     }
 
@@ -86,14 +103,115 @@ final class DayStore {
         #endif
     }
 
-    func add(_ day: Day) { days.insert(normalized(day), at: 0) }
+    func add(_ day: Day) {
+        guard loadError == nil, !days.contains(where: { $0.id == day.id }) else { return }
+        // Restore the active copy before removing its recoverable deleted copy.
+        days.insert(normalized(day), at: 0)
+        deletedDays.removeAll { $0.id == day.id }
+        persistDeletedDays()
+    }
     func update(_ day: Day) {
+        guard loadError == nil else { return }
         if let i = days.firstIndex(where: { $0.id == day.id }) { days[i] = normalized(day) }
     }
     func delete(_ day: Day) {
+        guard loadError == nil, let current = days.first(where: { $0.id == day.id }) else { return }
         let id = day.id
+        deletedDays.removeAll { $0.id == id }
+        deletedDays.insert(DeletedDay(day: current, deletedAt: .now), at: 0)
+        persistDeletedDays()
         days.removeAll { $0.id == id }
         Task { await NotificationManager.shared.cancel(dayId: id) }
+    }
+
+    func restoreDeletedDay(id: String) {
+        guard loadError == nil, let entry = deletedDays.first(where: { $0.id == id }),
+              !days.contains(where: { $0.id == id }) else { return }
+        add(entry.day)
+    }
+
+    func permanentlyDeleteDay(id: String) {
+        guard loadError == nil else { return }
+        deletedDays.removeAll { $0.id == id }
+        persistDeletedDays()
+    }
+
+    private func persistDeletedDays() {
+        guard let data = try? JSONEncoder().encode(deletedDays) else { return }
+        defaults.set(data, forKey: deletedKey)
+    }
+
+    var hasRecoveryBackup: Bool { defaults.data(forKey: recoveryKey) != nil }
+    var hasMigrationBackup: Bool { defaults.data(forKey: migrationKey) != nil }
+
+    func exportMigrationBackup() throws -> Data {
+        guard let data = defaults.data(forKey: migrationKey) else { throw DayBackup.BackupError.unreadable }
+        return data
+    }
+
+    func exportBackup() throws -> Data {
+        guard loadError == nil else { throw DayBackup.BackupError.unreadable }
+        return try DayBackup(days: days, categories: categories, deletedDays: deletedDays).encoded()
+    }
+
+    func exportOriginalData() throws -> Data {
+        let keys = [storageKey, categoriesKey, deletedKey, pendingRestoreKey, recoveryKey, migrationKey, "unreadableData.v1"]
+        let original = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
+            defaults.data(forKey: key).map { (key, $0) }
+        })
+        return try JSONEncoder().encode(original)
+    }
+
+    func restoreBackup(_ backup: DayBackup) throws {
+        let data = try backup.encoded()
+        if loadError == nil {
+            try keepRecoveryBackup()
+        } else {
+            defaults.set(try exportOriginalData(), forKey: "unreadableData.v1")
+        }
+        try applyBackup(backup, encoded: data)
+        loadError = nil
+        if cloudSyncEnabled {
+            CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
+        } else if cloudSyncRequested {
+            enableCloudSync()
+        }
+    }
+
+    func restorePreviousBackup() throws {
+        guard let data = defaults.data(forKey: recoveryKey) else { throw DayBackup.BackupError.unreadable }
+        try restoreBackup(DayBackup.decode(data))
+    }
+
+    private func keepRecoveryBackup() throws {
+        defaults.set(try exportBackup(), forKey: recoveryKey)
+    }
+
+    private func keepMigrationBackup() throws {
+        if !hasMigrationBackup { defaults.set(try exportBackup(), forKey: migrationKey) }
+    }
+
+    private func applyBackup(_ backup: DayBackup, encoded: Data) throws {
+        defaults.set(encoded, forKey: pendingRestoreKey)
+        try writeBackup(backup)
+        isRestoring = true
+        categories = Self.normalizedCategories(backup.categories)
+        days = backup.days
+        deletedDays = backup.deletedDays
+        isRestoring = false
+        defaults.removeObject(forKey: pendingRestoreKey)
+        rescheduleNotifications()
+        reloadWidgetTimelines()
+    }
+
+    private func writeBackup(_ backup: DayBackup) throws {
+        let encoder = JSONEncoder()
+        let daysData = try encoder.encode(backup.days)
+        let categoriesData = try encoder.encode(backup.categories)
+        let deletedData = try encoder.encode(backup.deletedDays)
+        defaults.set(daysData, forKey: storageKey)
+        defaults.set(categoriesData, forKey: categoriesKey)
+        defaults.set(deletedData, forKey: deletedKey)
     }
 
     /// Nearest upcoming (future or today) within `within` days.
@@ -108,6 +226,9 @@ final class DayStore {
     }
 
     func resetToSamples() {
+        guard loadError == nil else { return }
+        deletedDays = []
+        persistDeletedDays()
         categories = CategoryDefinition.system
         days = SampleData.days
     }
@@ -130,12 +251,19 @@ final class DayStore {
     }
 
     func enableCloudSync() {
-        guard !cloudSyncEnabled else { return }
-        cloudSyncEnabled = true
-        cloudChangeToken = cloud.addChangeHandler { [weak self] changedKeys in
-            self?.handleCloudChange(changedKeys)
+        cloudSyncRequested = true
+        guard !cloudSyncEnabled, loadError == nil else { return }
+        do {
+            try keepMigrationBackup()
+            syncPreparationError = nil
+            cloudSyncEnabled = true
+            CloudLibrarySync.shared.start(days: days, categories: categories) { [weak self] update in
+                guard let self else { throw DayBackup.BackupError.unreadable }
+                try self.applyCloudUpdate(update)
+            }
+        } catch {
+            syncPreparationError = "迁移前备份未完成，同步尚未开启；本机日子仍可使用。\(error.localizedDescription)"
         }
-        reconcileWithCloud()
     }
 
     func category(for id: String) -> CategoryDefinition {
@@ -169,6 +297,7 @@ final class DayStore {
 
     @discardableResult
     func addCategory(name: String, icon: String, colorToken: CategoryColorToken) -> CategoryDefinition {
+        guard loadError == nil else { return Self.fallbackCategory }
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanIcon = icon.trimmingCharacters(in: .whitespacesAndNewlines)
         let category = CategoryDefinition(
@@ -183,6 +312,7 @@ final class DayStore {
     }
 
     func updateCategory(_ category: CategoryDefinition) {
+        guard loadError == nil else { return }
         guard let index = categories.firstIndex(where: { $0.id == category.id }),
               !categories[index].isSystem else { return }
         let cleanName = category.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -205,6 +335,7 @@ final class DayStore {
     }
 
     func deleteCategory(id: String, migrateTo targetID: String) {
+        guard loadError == nil else { return }
         guard let category = categories.first(where: { $0.id == id }),
               !category.isSystem,
               categories.contains(where: { $0.id == targetID && $0.id != id }) else { return }
@@ -248,61 +379,82 @@ final class DayStore {
         return result
     }
 
-    private func handleCloudChange(_ changedKeys: Set<String>?) {
-        if changedKeys == nil || changedKeys?.contains(ICloudSyncStore.Key.categories) == true {
-            pullCategoriesIfNewer()
-        }
-        if changedKeys == nil || changedKeys?.contains(ICloudSyncStore.Key.days) == true {
-            pullDaysIfNewer()
-        }
-    }
-
-    private func reconcileWithCloud() {
-        reconcileCategoriesWithCloud()
-        reconcileDaysWithCloud()
-    }
-
-    private func reconcileDaysWithCloud() {
-        cloud.reconcile(days, for: ICloudSyncStore.Key.days, pull: pullDaysIfNewer)
-    }
-
-    private func reconcileCategoriesWithCloud() {
-        cloud.reconcile(categories, for: ICloudSyncStore.Key.categories, pull: pullCategoriesIfNewer)
+    // Legacy KVS has no per-record tombstones. Import only after explicit user action.
+    @discardableResult
+    func importLegacyCloudData() throws -> Int {
+        let legacy = ICloudSyncStore.shared
+        legacy.refresh()
+        let remoteDays: ICloudSyncStore.RemoteValue<[Day]>? = legacy.remoteValue(for: ICloudSyncStore.Key.days)
+        let remoteCategories: ICloudSyncStore.RemoteValue<[CategoryDefinition]>? = legacy.remoteValue(for: ICloudSyncStore.Key.categories)
+        return try importLegacyData(days: remoteDays?.value ?? [], categories: remoteCategories?.value ?? [])
     }
 
     @discardableResult
-    private func pullDaysIfNewer() -> Bool {
-        pullIfNewer(cloudKey: ICloudSyncStore.Key.days) { (remote: [Day]) in
-            days = remote.map(normalized)
+    func importLegacyData(days legacyDays: [Day], categories legacyCategories: [CategoryDefinition]) throws -> Int {
+        guard loadError == nil else { throw DayBackup.BackupError.unreadable }
+        try DayBackup(days: legacyDays, categories: legacyCategories, deletedDays: []).validate()
+        let seenDays = Set(defaults.stringArray(forKey: legacyDayIDsKey) ?? [])
+            .union(days.map(\.id)).union(deletedDays.map(\.id))
+        let seenCategories = Set(defaults.stringArray(forKey: legacyCategoryIDsKey) ?? []).union(categories.map(\.id))
+        let additions = legacyDays.filter { !seenDays.contains($0.id) }
+        let categoryAdditions = legacyCategories.filter { !seenCategories.contains($0.id) }
+        if !additions.isEmpty || !categoryAdditions.isEmpty {
+            let backup = DayBackup(days: days + additions, categories: categories + categoryAdditions, deletedDays: deletedDays)
+            let encoded = try backup.encoded()
+            try keepMigrationBackup()
+            try keepRecoveryBackup()
+            try applyBackup(backup, encoded: encoded)
+            if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
         }
+        defaults.set(Array(seenDays.union(legacyDays.map(\.id))), forKey: legacyDayIDsKey)
+        defaults.set(Array(seenCategories.union(legacyCategories.map(\.id))), forKey: legacyCategoryIDsKey)
+        return additions.count
     }
 
-    @discardableResult
-    private func pullCategoriesIfNewer() -> Bool {
-        pullIfNewer(cloudKey: ICloudSyncStore.Key.categories) { (remote: [CategoryDefinition]) in
-            categories = Self.normalizedCategories(remote)
-            days = days.map(normalized)
+    func applyCloudUpdate(_ update: CloudLibraryUpdate) throws {
+        guard loadError == nil else { throw DayBackup.BackupError.unreadable }
+        try DayBackup(days: update.upsertedDays, categories: update.upsertedCategories, deletedDays: []).validate()
+        for day in update.recoveryDays { try DayBackup.validateDays([day]) }
+        for category in update.recoveryCategories {
+            try DayBackup(days: [], categories: [category], deletedDays: []).validate()
         }
-    }
-
-    /// Apply the remote value through `apply` if its timestamp beats the local mirror.
-    /// `apply` runs inside `applyCloudChange` so the resulting `didSet`s skip pushing back.
-    @discardableResult
-    private func pullIfNewer<Value: Codable>(cloudKey: String, apply: (Value) -> Void) -> Bool {
-        guard let remote: ICloudSyncStore.RemoteValue<Value> = cloud.remoteValue(for: cloudKey),
-              remote.updatedAt > cloud.localTimestamp(for: cloudKey) + 0.001 else {
-            return false
+        var nextDays = days.filter { !update.deletedDayIDs.contains($0.id) }
+        var nextCategories = categories.filter { $0.isSystem || !update.deletedCategoryIDs.contains($0.id) }
+        for day in update.upsertedDays {
+            if let index = nextDays.firstIndex(where: { $0.id == day.id }) { nextDays[index] = day }
+            else { nextDays.append(day) }
         }
-        applyCloudChange(key: cloudKey, updatedAt: remote.updatedAt) {
-            apply(remote.value)
+        for category in update.upsertedCategories {
+            if let index = nextCategories.firstIndex(where: { $0.id == category.id }) { nextCategories[index] = category }
+            else { nextCategories.append(category) }
         }
-        return true
-    }
-
-    private func applyCloudChange(key: String, updatedAt: TimeInterval, _ changes: () -> Void) {
-        cloudApplyContext = (key, updatedAt)
-        defer { cloudApplyContext = nil }
-        changes()
+        nextCategories = Self.normalizedCategories(nextCategories)
+        var nextDeleted = deletedDays.filter { entry in !nextDays.contains(where: { $0.id == entry.id }) }
+        for day in days where update.deletedDayIDs.contains(day.id) && !nextDeleted.contains(where: { $0.id == day.id }) {
+            nextDeleted.append(DeletedDay(day: day, deletedAt: .now))
+        }
+        let backup = DayBackup(days: nextDays, categories: nextCategories, deletedDays: nextDeleted)
+        let encoded = try backup.encoded()
+        guard nextDays != days || nextCategories != categories || nextDeleted != deletedDays
+                || !update.recoveryDays.isEmpty || !update.recoveryCategories.isEmpty else { return }
+        var recoveryDays = days
+        var recoveryCategories = categories
+        for day in update.recoveryDays.reversed() {
+            // A retried delivery may follow a newer local edit. Preserve that edit;
+            // replayed remote content can use the original conflict recovery value.
+            guard days.first(where: { $0.id == day.id }) == nextDays.first(where: { $0.id == day.id }) else { continue }
+            recoveryDays.removeAll { $0.id == day.id }
+            recoveryDays.append(day)
+        }
+        for category in update.recoveryCategories.reversed() {
+            guard categories.first(where: { $0.id == category.id }) == nextCategories.first(where: { $0.id == category.id }) else { continue }
+            recoveryCategories.removeAll { $0.id == category.id }
+            recoveryCategories.append(category)
+        }
+        let recovery = DayBackup(days: recoveryDays, categories: recoveryCategories,
+                                 deletedDays: deletedDays.filter { entry in !recoveryDays.contains(where: { $0.id == entry.id }) })
+        defaults.set(try recovery.encoded(), forKey: recoveryKey)
+        try applyBackup(backup, encoded: encoded)
     }
 }
 
@@ -337,8 +489,8 @@ final class AppSettings {
         notifPre3 = d.object(forKey: "notif.pre3") as? Bool ?? true
         notifPre1 = d.object(forKey: "notif.pre1") as? Bool ?? false
         notifDay0 = d.object(forKey: "notif.day0") as? Bool ?? true
-        memoryEnabled = d.object(forKey: "notif.memory") as? Bool ?? true
-        momentsEnabled = d.object(forKey: "notif.moments") as? Bool ?? true
+        memoryEnabled = d.object(forKey: "notif.memory") as? Bool ?? false
+        momentsEnabled = d.object(forKey: "notif.moments") as? Bool ?? false
         quietHours = d.object(forKey: "notif.quiet") as? Bool ?? true
         notificationHour = d.object(forKey: "notif.hour") as? Int ?? 9
         notificationMinute = d.object(forKey: "notif.minute") as? Int ?? 0

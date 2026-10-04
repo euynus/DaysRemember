@@ -7,13 +7,17 @@ struct DayInfo {
     var isToday: Bool
     var displayDate: Date
     var yearsAgo: Int?
-    /// For recurring days: which occurrence the upcoming `displayDate` is (1-based).
-    /// `nil` for non-recurring days.
+    /// Years from the original date to `displayDate`; zero on the original date.
+    /// `nil` for non-recurring days. Lunar recurrence counts lunar years.
     var anniversaryNumber: Int?
+    /// Calendar days since the original date, starting at zero; nil before it starts.
+    var elapsedDays: Int? = nil
 
     /// Dates in a visible Gregorian year, shared by the countdown and calendar.
     static func occurrences(of day: Day, inGregorianYear year: Int) -> [Date] {
         let cal = CNDate.calendar
+        let original = cal.startOfDay(for: day.date)
+        guard year >= cal.component(.year, from: original) else { return [] }
         if !day.recurring {
             return cal.component(.year, from: day.date) == year
                 ? [cal.startOfDay(for: day.date)] : []
@@ -25,12 +29,12 @@ struct DayInfo {
             return ((year - 1)...year).filter { $0 >= 1900 }.map { lunarYear in
                 cal.startOfDay(for: Lunar.lunarToSolar(year: lunarYear, month: source.month,
                                                      day: source.day, isLeap: source.isLeap))
-            }.filter { cal.component(.year, from: $0) == year }
+            }.filter { cal.component(.year, from: $0) == year && $0 >= original }
         }
         let source = cal.dateComponents([.month, .day], from: day.date)
         guard let occurrence = cal.date(from: DateComponents(year: year, month: source.month,
                                                              day: source.day)) else { return [] }
-        return [cal.startOfDay(for: occurrence)]
+        return occurrence >= original ? [cal.startOfDay(for: occurrence)] : []
     }
 
     static func compute(_ d: Day, today: Date = Today.date) -> DayInfo {
@@ -52,7 +56,7 @@ struct DayInfo {
     private static func uncached(_ d: Day, todayStart: Date, calendar cal: Calendar) -> DayInfo {
         var displayDate = cal.startOfDay(for: d.date)
 
-        if d.recurring {
+        if d.recurring && displayDate < todayStart {
             let baseYear = cal.component(.year, from: todayStart)
             for year in baseYear...(baseYear + 2) {
                 if let candidate = occurrences(of: d, inGregorianYear: year).first(where: { $0 >= todayStart }) {
@@ -63,6 +67,7 @@ struct DayInfo {
         }
 
         let diff = CNDate.daysBetween(todayStart, displayDate)
+        let elapsed = CNDate.daysBetween(d.date, todayStart)
         let years = d.recurring
             ? (cal.component(.year, from: todayStart) - cal.component(.year, from: d.date))
             : nil
@@ -76,9 +81,9 @@ struct DayInfo {
             // Count in LUNAR years: a late-lunar-month anniversary (冬月/腊月) can resolve
             // to a solar date in the next Gregorian year, which a solar-year diff would
             // over-count by one.
-            anniversary = max(1, Lunar.solarToLunar(displayDate).year - Lunar.solarToLunar(d.date).year)
+            anniversary = max(0, Lunar.solarToLunar(displayDate).year - Lunar.solarToLunar(d.date).year)
         } else {
-            anniversary = max(1, cal.component(.year, from: displayDate) - cal.component(.year, from: d.date))
+            anniversary = max(0, cal.component(.year, from: displayDate) - cal.component(.year, from: d.date))
         }
 
         return DayInfo(
@@ -87,7 +92,8 @@ struct DayInfo {
             isToday: diff == 0,
             displayDate: displayDate,
             yearsAgo: years,
-            anniversaryNumber: anniversary
+            anniversaryNumber: anniversary,
+            elapsedDays: elapsed >= 0 ? elapsed : nil
         )
     }
 

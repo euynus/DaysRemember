@@ -13,7 +13,7 @@ enum SharedStorage {
     }()
 
     static func loadDays() -> [Day] {
-        guard let data = defaults.data(forKey: "days.v1") else { return SampleData.days }
+        guard let data = defaults.data(forKey: "days.v1") else { return [] }
         return (try? JSONDecoder().decode([Day].self, from: data)) ?? []
     }
 }

@@ -62,13 +62,12 @@ struct DayEditorView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     titleField.padding(.top, 12).padding(.bottom, 22)
+                    formCard.padding(.bottom, 22)
                     livePreview
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
                         .padding(.bottom, 12)
                     coverPicker.padding(.bottom, 28)
-
-                    formCard.padding(.bottom, 22)
 
                     SectionHeader("分类").padding(.bottom, 10)
                     categoryPills.padding(.bottom, 22)
@@ -471,6 +470,17 @@ struct DayEditorView: View {
         }
         Haptics.success()
         dismiss()
+        Task {
+            #if DEBUG
+            guard !DebugLaunch.isAutomated, !DebugLaunch.isUnitTesting else { return }
+            #endif
+            guard let settings = store.settings else { return }
+            let needsReminder = !NotificationManager.shared.offsets(for: new, settings: settings).isEmpty
+            if needsReminder {
+                _ = await NotificationManager.shared.requestAuthorization()
+                store.rescheduleNotifications()
+            }
+        }
     }
 
     private func resetFocus() {

@@ -187,6 +187,35 @@ final class RenderingTests: XCTestCase {
         }
     }
 
+    func testShareNotesRequireExplicitOptInForEveryTemplate() throws {
+        let day = Day(id: "private-note", title: "纪念日",
+                      date: CNDate.calendar.date(from: DateComponents(year: 2020, month: 3, day: 8))!,
+                      recurring: true, category: .life, photo: .home,
+                      note: "仅供自己阅读的笔记\n不应默认出现在分享图片中")
+        let today = CNDate.calendar.date(from: DateComponents(year: 2026, month: 5, day: 9))!
+        let info = DayInfo.compute(day, today: today)
+        var withoutNote = day
+        withoutNote.note = ""
+
+        XCTAssertEqual(ShareCardView.Template.allCases.count, 4)
+        for template in ShareCardView.Template.allCases {
+            let postcard = SharePostcard(day: day, info: info, template: template)
+            XCTAssertFalse(postcard.includeNote)
+            let hidden = try render(postcard.frame(width: 320))
+            let empty = try render(SharePostcard(day: withoutNote, info: info, template: template)
+                .frame(width: 320))
+            XCTAssertEqual(UIImage(cgImage: hidden).pngData(), UIImage(cgImage: empty).pngData(),
+                           "Hidden notes must not affect \(template.rawValue)")
+
+            let included = try render(SharePostcard(day: day, info: info, template: template, includeNote: true)
+                .frame(width: 320))
+            XCTAssertEqual(included.width, hidden.width)
+            XCTAssertGreaterThan(included.height, hidden.height, template.rawValue)
+            XCTAssertNotEqual(UIImage(cgImage: included).pngData(), UIImage(cgImage: hidden).pngData(),
+                              template.rawValue)
+        }
+    }
+
     private func render<V: View>(_ view: V) throws -> CGImage {
         let renderer = ImageRenderer(content: view.environment(\.dynamicTypeSize, .large))
         renderer.scale = 1

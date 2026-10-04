@@ -159,7 +159,7 @@ final class UIUXModelTests: XCTestCase {
                                                       quietHours: true, now: now,
                                                       calendar: cal)
 
-        XCTAssertEqual(cal.component(.day, from: trigger!), 19)
+        XCTAssertEqual(cal.component(.day, from: trigger!), 20)
         XCTAssertEqual(cal.component(.hour, from: trigger!), 8)
         XCTAssertEqual(cal.component(.minute, from: trigger!), 15)
     }

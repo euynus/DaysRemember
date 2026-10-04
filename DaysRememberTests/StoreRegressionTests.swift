@@ -58,8 +58,6 @@ final class StoreRegressionTests: XCTestCase {
             var category = store.addCategory(name: "Original", icon: "tag", colorToken: .dusty)
             store.add(Day(id: "member", title: "test", date: Date(), category: .life,
                           photo: .home, categoryID: category.id))
-            let cloud = ICloudSyncStore.shared
-            cloud.noteLocalWrite(for: ICloudSyncStore.Key.days, updatedAt: 123)
             let persisted = SharedStorage.defaults.data(forKey: "days.v1")
 
             category.icon = "star"
@@ -67,13 +65,12 @@ final class StoreRegressionTests: XCTestCase {
             store.updateCategory(category)
             XCTAssertEqual(store.category(for: category.id).icon, "star")
             XCTAssertEqual(store.category(for: category.id).colorToken, .sage)
-            XCTAssertEqual(cloud.localTimestamp(for: ICloudSyncStore.Key.days), 123)
             XCTAssertEqual(SharedStorage.defaults.data(forKey: "days.v1"), persisted)
 
             category.name = "Renamed"
             store.updateCategory(category)
             XCTAssertEqual(store.days.first?.categoryLabel, "Renamed")
-            XCTAssertGreaterThan(cloud.localTimestamp(for: ICloudSyncStore.Key.days), 123)
+            XCTAssertNotEqual(SharedStorage.defaults.data(forKey: "days.v1"), persisted)
         }
     }
 
@@ -82,11 +79,28 @@ final class StoreRegressionTests: XCTestCase {
             let store = DayStore()
             store.days = []
             var category = store.addCategory(name: "Unused", icon: "tag", colorToken: .dusty)
-            ICloudSyncStore.shared.noteLocalWrite(for: ICloudSyncStore.Key.days, updatedAt: 123)
+            let persisted = SharedStorage.defaults.data(forKey: "days.v1")
             category.name = "Renamed"
             store.updateCategory(category)
             XCTAssertEqual(store.category(for: category.id).name, "Renamed")
-            XCTAssertEqual(ICloudSyncStore.shared.localTimestamp(for: ICloudSyncStore.Key.days), 123)
+            XCTAssertEqual(SharedStorage.defaults.data(forKey: "days.v1"), persisted)
+        }
+    }
+
+    func testMemoryAndMomentsDefaultOffAndPreserveOptInAfterReload() {
+        withRestoredDefaults {
+            let defaults = UserDefaults.standard
+            defaults.removeObject(forKey: "notif.memory")
+            defaults.removeObject(forKey: "notif.moments")
+            let settings = AppSettings()
+            XCTAssertFalse(settings.memoryEnabled)
+            XCTAssertFalse(settings.momentsEnabled)
+
+            settings.memoryEnabled = true
+            settings.momentsEnabled = true
+            let reloaded = AppSettings()
+            XCTAssertTrue(reloaded.memoryEnabled)
+            XCTAssertTrue(reloaded.momentsEnabled)
         }
     }
 

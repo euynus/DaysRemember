@@ -6,6 +6,7 @@ struct ShareCardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
     @State private var template: Template = .polaroid
+    @State private var includeNote = false
     @State private var sharedImage: SharedImage?
     @State private var savedToast: String? = nil
 
@@ -27,7 +28,7 @@ struct ShareCardView: View {
     private var info: DayInfo { DayInfo.compute(day) }
 
     private var card: some View {
-        SharePostcard(day: day, info: info, template: template)
+        SharePostcard(day: day, info: info, template: template, includeNote: includeNote)
     }
 
     var body: some View {
@@ -38,7 +39,11 @@ struct ShareCardView: View {
             }
             templatePicker
                 .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                .padding(.bottom, 8)
+            ToggleCell(label: "包含笔记", isOn: $includeNote)
+                .accessibilityIdentifier("share.includeNote")
+                .padding(.horizontal, 6)
+                .padding(.bottom, 12)
             ScrollView {
                 VStack(spacing: 0) {
                     card.frame(maxWidth: 320)
@@ -168,6 +173,7 @@ struct SharePostcard: View {
     let day: Day
     let info: DayInfo
     let template: ShareCardView.Template
+    var includeNote = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -239,7 +245,7 @@ struct SharePostcard: View {
 
     @ViewBuilder
     private var note: some View {
-        if !day.note.isEmpty {
+        if includeNote && !day.note.isEmpty {
             Text(day.note)
                 .font(Theme.sans(14))
                 .lineSpacing(6)

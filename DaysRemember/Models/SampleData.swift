@@ -1,6 +1,6 @@
 import Foundation
 
-/// 10 sample days verbatim from `data.jsx`. Used as default seed data on first launch.
+/// Preview and explicit DEBUG fixtures; never seeded on a normal first launch.
 enum SampleData {
     static let days: [Day] = {
         let cal = CNDate.calendar

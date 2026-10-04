@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var isSearching = false
     @State private var searchText = ""
     @State private var showingWidgets = false
+    @State private var showingData = false
     @FocusState private var searchFocused: Bool
     var onOpen: (Day) -> Void = { _ in }
     var onAdd: () -> Void = {}
@@ -58,6 +59,12 @@ struct HomeView: View {
                         .foregroundStyle(Theme.muted)
                         .padding(.top, 56)
                         .padding(.horizontal, 24)
+                    if filter == .all && searchText.isEmpty {
+                        Button("记录第一个日子", systemImage: "plus", action: onAdd)
+                            .buttonStyle(.borderedProminent)
+                            .tint(Theme.accent)
+                            .padding(.top, 12)
+                    }
                 } else {
                     VStack(spacing: 0) {
                         if let hero {
@@ -67,7 +74,7 @@ struct HomeView: View {
                         }
                         if !feedDays.isEmpty {
                             HStack {
-                                SectionHeader(filter == .all ? "日子清单" : label(for: filter))
+                                SectionHeader(hero != nil ? "其他日子" : filter == .all ? "日子清单" : label(for: filter))
                                 Text("\(feedDays.count)")
                                     .font(Theme.sans(12))
                                     .foregroundStyle(Theme.muted)
@@ -88,6 +95,7 @@ struct HomeView: View {
         .background(Theme.bg)
         .sensoryFeedback(.selection, trigger: filter)
         .sheet(isPresented: $showingWidgets) { WidgetsPreviewView() }
+        .sheet(isPresented: $showingData) { DataManagementView() }
     }
 
     private var header: some View {
@@ -101,6 +109,7 @@ struct HomeView: View {
                 Spacer(minLength: 8)
                 Menu {
                     Button("小组件", systemImage: "rectangle.3.group") { showingWidgets = true }
+                    Button("数据与同步", systemImage: "externaldrive") { showingData = true }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .regular))
@@ -223,7 +232,7 @@ struct HomeView: View {
         case .all:
             return ("这里还没有日子",
                     "calendar.badge.plus",
-                    "点右上角加号，记录第一个重要日子。")
+                    "值得记住的，从这一天开始。")
         }
     }
 }

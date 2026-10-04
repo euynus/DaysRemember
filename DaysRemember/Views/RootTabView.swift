@@ -13,6 +13,10 @@ struct RootTabView: View {
     @State private var categoryPath = NavigationPath()
     @State private var addingDay = false
 
+    init(startWithNewDay: Bool = false) {
+        _addingDay = State(initialValue: startWithNewDay)
+    }
+
     /// Allows `xcrun simctl launch ... --tab calendar` for screenshotting.
     private static func initialTab() -> AppTab {
         let args = ProcessInfo.processInfo.arguments

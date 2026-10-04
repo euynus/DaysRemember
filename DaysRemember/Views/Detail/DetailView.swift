@@ -24,7 +24,7 @@ struct DetailView: View {
                     PhotoTile(day: day, flat: true, cornerRadius: 0)
                         .frame(height: 280)
                     VStack(alignment: .leading, spacing: 20) {
-                        titleBlock(day: day, info: info)
+                        titleBlock(day: day)
                         hero(day: day, info: info)
                         RowDivider()
                         if !day.note.isEmpty { linedNote(day.note) }
@@ -104,26 +104,45 @@ struct DetailView: View {
 
     // MARK: - Title + meta
 
-    private func titleBlock(day: Day, info: DayInfo) -> some View {
+    private func titleBlock(day: Day) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(day.title)
                 .font(Theme.sans(28, weight: .medium))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
-            MetaRow(metaItems(day: day, info: info))
+            MetaRow(metaItems(day: day))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func metaItems(day: Day, info: DayInfo) -> [String] {
-        var items = [CNDate.full(info.displayDate), CNDate.weekday(info.displayDate)]
+    private func metaItems(day: Day) -> [String] {
+        let date = CNDate.full(day.date)
+        var items = [day.recurring ? "原始日期 \(date)" : date, CNDate.weekday(day.date)]
         if day.recurring { items.append("每年") }
         return items
     }
 
     private func hero(day: Day, info: DayInfo) -> some View {
         VStack(alignment: .leading, spacing: 20) {
+            if day.recurring, let elapsedDays = info.elapsedDays {
+                Text("已过 \(elapsedDays) 天")
+                    .font(Theme.sans(24, weight: .medium))
+                    .foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if day.recurring {
+                VStack(alignment: .leading, spacing: 6) {
+                    if let number = info.anniversaryNumber, number > 0 {
+                        Text(info.isToday ? "本次 · 第\(number)周年" : "下一次 · 第\(number)周年")
+                    } else {
+                        Text("起始日")
+                    }
+                    Text(CNDate.full(info.displayDate))
+                }
+                .font(Theme.sans(13))
+                .foregroundStyle(Theme.ink2)
+            }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(info.isToday ? "今天" : "\(info.days)")
                     .font(info.isToday ? Theme.sans(44) : Theme.number(100))
@@ -165,9 +184,6 @@ struct DetailView: View {
             InfoChip(systemName: "moon", text: Lunar.fmt(info.displayDate))
             if let term = SolarTerms.name(for: info.displayDate) {
                 InfoChip(systemName: "leaf", text: term)
-            }
-            if day.recurring {
-                InfoChip(systemName: "arrow.triangle.2.circlepath", text: "第 \(info.anniversaryNumber ?? 1) 次")
             }
             if day.lunar {
                 InfoChip(systemName: "moon", text: "农历重复")

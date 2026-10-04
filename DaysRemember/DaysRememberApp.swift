@@ -1,7 +1,9 @@
 import SwiftUI
+import UIKit
 
 @main
 struct DaysRememberApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var store = DayStore()
     @State private var settings = AppSettings()
     @State private var router = DeepLinkRouter()
@@ -18,21 +20,28 @@ struct DaysRememberApp: App {
                 .tint(Theme.accent)
                 .task {
                     store.settings = settings
-                    store.enableCloudSync()
-                    settings.enableCloudSync {
-                        store.rescheduleNotifications()
-                    }
                     NotificationManager.shared.configureDelegate(router: router)
-                    // Skip the system permission prompt during automated screenshots —
-                    // it would block the simulator and can't be dismissed via simctl.
                     var automated = false
                     #if DEBUG
-                    automated = DebugLaunch.isAutomated
+                    automated = DebugLaunch.isAutomated || DebugLaunch.isUnitTesting
+                    if ProcessInfo.processInfo.arguments.contains("--seed-sample-data") {
+                        store.resetToSamples()
+                    } else if ProcessInfo.processInfo.arguments.contains("--empty-library") {
+                        try? store.restoreBackup(DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: []))
+                        settings.hasOnboarded = false
+                    }
                     #endif
                     if !automated {
-                        _ = await NotificationManager.shared.requestAuthorization()
+                        store.enableCloudSync()
+                        settings.enableCloudSync {
+                            store.rescheduleNotifications()
+                        }
+                        UIApplication.shared.registerForRemoteNotifications()
                     }
                     store.rescheduleNotifications()
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active { store.rescheduleNotifications() }
                 }
         }
     }
@@ -42,26 +51,29 @@ private struct RootGate: View {
     @Environment(AppSettings.self) var settings
     @Environment(DayStore.self) var store
     @Environment(DeepLinkRouter.self) var router
+    @State private var creatingFirstDay = false
 
+    @ViewBuilder
     var body: some View {
-        #if DEBUG
-        if let override = DebugLaunch.screenOverride {
-            override.makeView(store: store)
-        } else if settings.hasOnboarded || DebugLaunch.isAutomated {
-            // Automated runs (screenshots, UI tests) launch onto a fresh install
-            // with no persisted onboarding flag — skip the intro so they land in the
-            // app. Onboarding itself is still screenshottable via `--screen onboarding`.
-            RootTabView()
+        if store.loadError != nil {
+            DataManagementView()
         } else {
-            onboarding
+            #if DEBUG
+            if let override = DebugLaunch.screenOverride {
+                override.makeView(store: store)
+            } else if settings.hasOnboarded || (DebugLaunch.isAutomated && !DebugLaunch.showOnboarding) {
+                RootTabView(startWithNewDay: creatingFirstDay)
+            } else {
+                onboarding
+            }
+            #else
+            if settings.hasOnboarded {
+                RootTabView(startWithNewDay: creatingFirstDay)
+            } else {
+                onboarding
+            }
+            #endif
         }
-        #else
-        if settings.hasOnboarded {
-            RootTabView()
-        } else {
-            onboarding
-        }
-        #endif
     }
 
     /// Drop any reminder/widget link queued before onboarding finished, so it doesn't
@@ -69,6 +81,7 @@ private struct RootGate: View {
     private var onboarding: some View {
         OnboardingView(onFinish: {
             router.dayID = nil
+            creatingFirstDay = store.days.isEmpty
             settings.hasOnboarded = true
         })
     }
@@ -105,9 +118,18 @@ enum DebugLaunch {
     static var isAutomated: Bool {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("--screen") || args.contains("--tab") { return true }
+        if args.contains("--empty-library") || args.contains("--seed-sample-data") { return true }
         if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] != nil { return true }
         return false
     }
+
+    static var isUnitTesting: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || ProcessInfo.processInfo.environment["XCTestBundlePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
+
+    static var showOnboarding: Bool { ProcessInfo.processInfo.arguments.contains("--show-onboarding") }
 
     static var screenOverride: Screen? {
         let args = ProcessInfo.processInfo.arguments
@@ -118,10 +140,10 @@ enum DebugLaunch {
     static func day(store: DayStore) -> Day {
         let args = ProcessInfo.processInfo.arguments
         if let i = args.firstIndex(of: "--day"), i + 1 < args.count,
-           let match = store.days.first(where: { $0.id == args[i + 1] }) {
+           let match = (store.days + SampleData.days).first(where: { $0.id == args[i + 1] }) {
             return match
         }
-        return store.days[0]
+        return store.days.first ?? SampleData.days.first(where: { $0.id == "wedding" }) ?? SampleData.days[0]
     }
 
 }

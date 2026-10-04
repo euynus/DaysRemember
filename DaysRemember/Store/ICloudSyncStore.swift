@@ -27,8 +27,9 @@ final class ICloudSyncStore {
     private let maxEnvelopeBytes = 950_000
     private var observer: NSObjectProtocol?
     private var handlers: [UUID: (Set<String>?) -> Void] = [:]
-
     private init() {}
+
+    func refresh() { store.synchronize() }
 
     var deviceID: String {
         let key = "icloud.deviceID"
@@ -86,7 +87,10 @@ final class ICloudSyncStore {
     func reconcile<Value: Codable>(_ value: Value, for key: String, pull: () -> Bool) {
         if pull() { return }
         guard let remote: RemoteValue<Value> = remoteValue(for: key) else {
-            push(value, for: key)
+            // Never seed an empty/new installation over a not-yet-downloaded account.
+            if localTimestamp(for: key) > 0, store.object(forKey: key) == nil {
+                push(value, for: key)
+            }
             return
         }
         let localTimestamp = localTimestamp(for: key)

@@ -7,7 +7,7 @@ final class WidgetHomeUITests: XCTestCase {
         }
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = ["--tab", "home"]
+        app.launchArguments = ["--seed-sample-data", "--tab", "home"]
         app.launch()
         XCUIDevice.shared.press(.home)
         let home = XCUIApplication(bundleIdentifier: "com.apple.springboard")
