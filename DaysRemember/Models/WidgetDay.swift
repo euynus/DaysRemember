@@ -23,7 +23,7 @@ struct WidgetDayQuery: EntityQuery {
         let days = SharedStorage.loadDays()
         // Preserve a deleted selection so it cannot turn into automatic selection.
         return identifiers.map { id in
-            WidgetDay(id: id, title: days.first { $0.id == id }?.title ?? "日子已删除")
+            WidgetDay(id: id, title: days.first { $0.id == id }?.title ?? String(localized: "日子已删除"))
         }
     }
 

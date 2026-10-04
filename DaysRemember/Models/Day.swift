@@ -24,6 +24,10 @@ struct Day: Identifiable, Codable, Hashable {
     var location: String
     var pinned: Bool
 
+    var categoryDisplayName: String {
+        DayCategory(rawValue: categoryID)?.displayName ?? categoryLabel
+    }
+
     init(id: String, title: String, date: Date, recurring: Bool = false, lunar: Bool = false,
          category: DayCategory, photo: PhotoStyle, photoData: Data? = nil,
          categoryID: String? = nil, coverFocusX: Double = 0.5, coverFocusY: Double = 0.5,

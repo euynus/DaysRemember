@@ -21,7 +21,7 @@ struct OnboardingView: View {
             .padding(28)
         }
         .safeAreaInset(edge: .bottom) {
-            PillButton(title: "开始记录", trailingSystemName: "arrow.right", fill: true, action: onFinish)
+            PillButton(title: String(localized: "开始记录"), trailingSystemName: "arrow.right", fill: true, action: onFinish)
                 .padding(24)
                 .background(Theme.bg)
         }

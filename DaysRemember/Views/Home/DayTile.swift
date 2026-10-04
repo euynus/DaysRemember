@@ -9,6 +9,9 @@ struct DayRow: View {
 
     var body: some View {
         let info = DayInfo.compute(day, today: today)
+        let countdown = info.isToday ? String(localized: "就是今天")
+            : info.isPast ? String(localized: "\(info.days) 天前")
+            : String(localized: "\(info.days) 天后")
         Button { onOpen(day) } label: {
             HStack(spacing: 14) {
                 if !dynamicTypeSize.isAccessibilitySize {
@@ -16,11 +19,11 @@ struct DayRow: View {
                         .frame(width: 62, height: 72)
                 }
                 VStack(alignment: .leading, spacing: 7) {
-                    Text(day.title)
+                    Text(verbatim: day.title)
                         .font(Theme.sans(16, weight: .medium))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                    Text("\(CNDate.short(info.displayDate)) · \(store.category(for: day).name)")
+                    Text("\(CNDate.short(info.displayDate)) · \(store.category(for: day).displayName)")
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.muted)
                 }
@@ -31,16 +34,17 @@ struct DayRow: View {
                             .font(.caption2)
                             .foregroundStyle(Theme.catLove)
                     }
-                    Text(info.isToday ? "今天" : "\(info.days)")
+                    Text(info.isToday ? String(localized: "今天") : info.days.formatted())
                         .font(info.isToday ? Theme.sans(22) : Theme.number(38))
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                         .foregroundStyle(info.isPast ? Theme.ink2 : Theme.ink)
                     if !info.isToday {
-                        Text(info.isPast ? "天前" : "天后")
+                        Text(info.countdownUnit)
                             .font(Theme.sans(11))
                             .foregroundStyle(Theme.ink2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -50,7 +54,8 @@ struct DayRow: View {
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(day.title)，" + (info.isToday ? "就是今天" : "\(info.labelShort) \(info.days) 天") + (day.pinned ? "，已置顶" : ""))
+        .accessibilityLabel(day.pinned ? String(localized: "\(day.title)，\(countdown)，已置顶")
+                             : String(localized: "\(day.title)，\(countdown)"))
         .accessibilityHint("长按可置顶、编辑或分享")
     }
 }
@@ -63,6 +68,7 @@ struct UpcomingDayView: View {
 
     var body: some View {
         let info = DayInfo.compute(day, today: today)
+        let countdown = info.isToday ? String(localized: "就是今天") : String(localized: "\(info.days) 天后")
         Button { onOpen(day) } label: {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
@@ -81,7 +87,7 @@ struct UpcomingDayView: View {
                     : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
                 layout {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(day.title)
+                        Text(verbatim: day.title)
                             .font(Theme.sans(24, weight: .medium))
                             .foregroundStyle(Theme.ink)
                             .multilineTextAlignment(.leading)
@@ -91,12 +97,12 @@ struct UpcomingDayView: View {
                     }
                     if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
-                        Text(info.isToday ? "今天" : "\(info.days)")
+                        Text(info.isToday ? String(localized: "今天") : info.days.formatted())
                             .font(info.isToday ? Theme.sans(32) : Theme.number(76))
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
                         if !info.isToday {
-                            Text("天后").font(Theme.sans(11))
+                            Text(info.countdownUnit).font(Theme.sans(11))
                         }
                     }
                     .foregroundStyle(Theme.accent)
@@ -106,7 +112,7 @@ struct UpcomingDayView: View {
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("即将到来，\(day.title)，" + (info.isToday ? "就是今天" : "\(info.days) 天后"))
+        .accessibilityLabel(String(localized: "即将到来，\(day.title)，\(countdown)"))
         .accessibilityHint("长按可置顶、编辑或分享")
     }
 }
@@ -141,7 +147,7 @@ struct DayContextMenu: ViewModifier {
                     updated.pinned.toggle()
                     store.update(updated)
                 } label: {
-                    Label(current.pinned ? "取消置顶" : "置顶",
+                    Label(current.pinned ? String(localized: "取消置顶") : String(localized: "置顶"),
                           systemImage: current.pinned ? "star.slash" : "star")
                 }
                 Button { showEditor = true } label: {

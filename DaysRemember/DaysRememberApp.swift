@@ -16,7 +16,7 @@ struct DaysRememberApp: App {
                 .environment(settings)
                 .environment(router)
                 .environment(\.currentDay, currentDay)
-                .environment(\.locale, Locale(identifier: "zh_CN"))
+                .environment(\.locale, AppLocalization.locale)
                 // Artwork and exported cards use the same light appearance.
                 .preferredColorScheme(.light)
                 .tint(Theme.accent)

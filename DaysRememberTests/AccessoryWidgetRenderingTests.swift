@@ -72,7 +72,9 @@ final class AccessoryWidgetRenderingTests: XCTestCase {
                     let padded = try render(widget, size: size, padding: 6, textSize: .accessibility5)
                     try assertClearPadding(padded, contentSize: size, inset: 6)
                     XCTAssertTrue(widget.accessibilitySummary.hasPrefix(title))
-                    XCTAssertTrue(widget.accessibilitySummary.contains("123456\(offset < 0 ? "天前" : "天后")"))
+                    let count = abs(offset).formatted(.number.locale(AppLocalization.locale))
+                    XCTAssertTrue(widget.accessibilitySummary.contains("\(count)\(offset < 0 ? "天前" : "天后")"),
+                                  widget.accessibilitySummary)
                     attach(image, name: "Accessory-\(style)-LongTitle\(index)-\(offset)")
                 }
             }

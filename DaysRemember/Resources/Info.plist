@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key>
-  <string>zh_CN</string>
+  <string>zh-Hans</string>
   <key>CFBundleDisplayName</key>
   <string>时光</string>
   <key>CFBundleExecutable</key>
@@ -45,7 +45,9 @@
   </array>
   <key>CFBundleLocalizations</key>
   <array>
-    <string>zh_CN</string>
+    <string>zh-Hans</string>
+    <string>zh-Hant</string>
+    <string>en</string>
   </array>
   <key>NSPhotoLibraryAddUsageDescription</key>
   <string>「时光」需要权限来把分享卡片保存到相册。</string>

@@ -74,7 +74,7 @@ struct DetailView: View {
             Spacer()
             HStack(spacing: 8) {
                 FAB(systemName: currentDay.pinned ? "star.fill" : "star", action: togglePinned)
-                    .accessibilityLabel(currentDay.pinned ? "取消置顶" : "置顶")
+                    .accessibilityLabel(currentDay.pinned ? String(localized: "取消置顶") : String(localized: "置顶"))
                 Menu {
                     Button("编辑", systemImage: "pencil") { showEditor = true }
                     Button("分享", systemImage: "square.and.arrow.up") { showShare = true }
@@ -88,6 +88,7 @@ struct DetailView: View {
                         .overlay { Circle().strokeBorder(Theme.hairline, lineWidth: 1) }
                 }
                 .accessibilityLabel("更多操作")
+                .accessibilityIdentifier("detail.moreActions")
             }
         }
         .padding(.horizontal, 18)
@@ -107,7 +108,7 @@ struct DetailView: View {
 
     private func titleBlock(day: Day) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(day.title)
+            Text(verbatim: day.title)
                 .font(Theme.sans(28, weight: .medium))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(2)
@@ -119,13 +120,16 @@ struct DetailView: View {
 
     private func metaItems(day: Day) -> [String] {
         let date = CNDate.full(day.date)
-        var items = [day.recurring ? "原始日期 \(date)" : date, CNDate.weekday(day.date)]
-        if day.recurring { items.append("每年") }
+        var items = [day.recurring ? String(localized: "原始日期 \(date)") : date, CNDate.weekday(day.date)]
+        if day.recurring { items.append(String(localized: "每年")) }
         return items
     }
 
     private func hero(day: Day, info: DayInfo) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
+        let countdownLabel = info.isToday ? String(localized: "就是今天")
+            : info.isPast ? String(localized: "\(info.days) 天前")
+            : String(localized: "\(info.days) 天后")
+        return VStack(alignment: .leading, spacing: 20) {
             if day.recurring, let elapsedDays = info.elapsedDays {
                 Text("已过 \(elapsedDays) 天")
                     .font(Theme.sans(24, weight: .medium))
@@ -135,7 +139,8 @@ struct DetailView: View {
             if day.recurring {
                 VStack(alignment: .leading, spacing: 6) {
                     if let number = info.anniversaryNumber, number > 0 {
-                        Text(info.isToday ? "本次 · 第\(number)周年" : "下一次 · 第\(number)周年")
+                        Text(info.isToday ? String(localized: "本次 · 第\(number)周年")
+                             : String(localized: "下一次 · 第\(number)周年"))
                     } else {
                         Text("起始日")
                     }
@@ -145,19 +150,22 @@ struct DetailView: View {
                 .foregroundStyle(Theme.ink2)
             }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(info.isToday ? "今天" : "\(info.days)")
+                Text(info.isToday ? String(localized: "今天") : info.days.formatted())
                     .font(info.isToday ? Theme.sans(44) : Theme.number(100))
                     .monospacedDigit()
                     .foregroundStyle(Theme.accent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 if !info.isToday {
-                    Text(info.isPast ? "天前" : "天后")
+                    Text(info.countdownUnit)
                         .font(Theme.sans(14))
                         .foregroundStyle(Theme.ink2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(countdownLabel)
         }
     }
 
@@ -166,7 +174,7 @@ struct DetailView: View {
             Label("记忆", systemImage: "text.alignleft")
                 .font(Theme.sans(12))
                 .foregroundStyle(Theme.accent)
-            Text(text)
+            Text(verbatim: text)
                 .font(Theme.sans(16))
                 .lineSpacing(6)
                 .foregroundStyle(Theme.ink)
@@ -187,7 +195,7 @@ struct DetailView: View {
                 InfoChip(systemName: "leaf", text: term)
             }
             if day.lunar {
-                InfoChip(systemName: "moon", text: "农历重复")
+                InfoChip(systemName: "moon", text: String(localized: "农历重复"))
             }
         }
     }

@@ -17,7 +17,9 @@ enum SolarTerms {
         let cal = CNDate.calendar
         let m = cal.component(.month, from: date)
         let d = cal.component(.day, from: date)
-        return table.first { $0.month == m && $0.day == d }?.name
+        return table.first { $0.month == m && $0.day == d }.map {
+            String(localized: String.LocalizationValue($0.name))
+        }
     }
 
     /// Traditional Chinese holiday by lunar date (春节, 元宵, 端午, 中秋, …).
@@ -29,6 +31,6 @@ enum SolarTerms {
             "7-7":"七夕", "7-15":"中元", "8-15":"中秋", "9-9":"重阳",
             "12-8":"腊八", "12-23":"小年",
         ]
-        return map[key]
+        return map[key].map { String(localized: String.LocalizationValue($0)) }
     }
 }

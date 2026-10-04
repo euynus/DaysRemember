@@ -13,6 +13,16 @@ enum DayCategory: String, Codable, CaseIterable, Hashable {
         }
     }
 
+    var displayName: String {
+        switch self {
+        case .love: return String(localized: "爱情")
+        case .family: return String(localized: "家人")
+        case .travel: return String(localized: "旅行")
+        case .work: return String(localized: "工作")
+        case .life: return String(localized: "生活")
+        }
+    }
+
     var color: Color {
         switch self {
         case .love: return Theme.rose
@@ -41,11 +51,11 @@ enum CategoryColorToken: String, Codable, CaseIterable, Hashable, Identifiable {
 
     var label: String {
         switch self {
-        case .terracotta: return "赤陶"
-        case .rose: return "玫瑰"
-        case .amber: return "琥珀"
-        case .dusty: return "雾蓝"
-        case .sage: return "鼠尾草"
+        case .terracotta: return String(localized: "赤陶")
+        case .rose: return String(localized: "玫瑰")
+        case .amber: return String(localized: "琥珀")
+        case .dusty: return String(localized: "雾蓝")
+        case .sage: return String(localized: "鼠尾草")
         }
     }
 
@@ -76,6 +86,12 @@ struct CategoryDefinition: Identifiable, Codable, Hashable {
     var icon: String
     var colorToken: CategoryColorToken
     var isSystem: Bool
+
+    // Persisted names are not rewritten when the app language changes.
+    var displayName: String {
+        guard isSystem, let category = DayCategory(rawValue: id) else { return name }
+        return category.displayName
+    }
 
     /// Older custom categories stored sticker names rather than SF Symbols.
     var symbolName: String {

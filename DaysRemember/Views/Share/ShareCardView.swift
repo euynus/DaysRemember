@@ -16,8 +16,10 @@ struct ShareCardView: View {
         case polaroid, note, minimal, collage
         var label: String {
             switch self {
-            case .polaroid: return "照片"; case .note: return "手记"
-            case .minimal: return "极简"; case .collage: return "双栏"
+            case .polaroid: return String(localized: "照片")
+            case .note: return String(localized: "手记")
+            case .minimal: return String(localized: "极简")
+            case .collage: return String(localized: "双栏")
             }
         }
     }
@@ -35,14 +37,14 @@ struct ShareCardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            NavHeader(title: "分享", onBack: { dismiss() }) {
+            NavHeader(title: String(localized: "分享"), onBack: { dismiss() }) {
                 FAB(systemName: "square.and.arrow.down", size: 42, action: saveToPhotos)
                     .accessibilityLabel("保存到相册")
             }
             templatePicker
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)
-            ToggleCell(label: "包含笔记", isOn: $includeNote)
+            ToggleCell(label: String(localized: "包含笔记"), isOn: $includeNote)
                 .accessibilityIdentifier("share.includeNote")
                 .padding(.horizontal, 6)
                 .padding(.bottom, 12)
@@ -103,7 +105,7 @@ struct ShareCardView: View {
     private func presentShareSheet() {
         guard let img = renderCardImage() else {
             Haptics.warning()
-            flashToast("生成失败，请重试")
+            flashToast(String(localized: "生成失败，请重试"))
             return
         }
         sharedImage = SharedImage(image: img)
@@ -112,20 +114,20 @@ struct ShareCardView: View {
     private func saveToPhotos() {
         guard let img = renderCardImage() else {
             Haptics.warning()
-            flashToast("生成失败，请重试")
+            flashToast(String(localized: "生成失败，请重试"))
             return
         }
         Task {
             do {
                 try await PhotoSaver.save(image: img)
                 Haptics.success()
-                flashToast("已保存到相册")
+                flashToast(String(localized: "已保存到相册"))
             } catch PhotoSaver.SaveError.denied {
                 Haptics.warning()
-                flashToast("无相册权限")
+                flashToast(String(localized: "无相册权限"))
             } catch {
                 Haptics.warning()
-                flashToast("保存失败")
+                flashToast(String(localized: "保存失败"))
             }
         }
     }
@@ -190,10 +192,15 @@ struct SharePostcard: View {
         VStack(alignment: .leading, spacing: 0) {
             if template == .polaroid { cover.frame(height: 230) }
             VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    Text("时光").foregroundStyle(Theme.accent)
-                    Spacer()
-                    Text(CNDate.full(info.displayDate)).foregroundStyle(Theme.muted)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("时光")
+                        .foregroundStyle(Theme.accent)
+                        .fixedSize(horizontal: true, vertical: false)
+                    Spacer(minLength: 0)
+                    Text(CNDate.full(info.displayDate))
+                        .foregroundStyle(Theme.muted)
+                        .multilineTextAlignment(.trailing)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .font(Theme.sans(11))
                 switch template {
@@ -233,31 +240,40 @@ struct SharePostcard: View {
     }
 
     private var title: some View {
-        Text(day.title)
+        Text(verbatim: day.title)
             .font(Theme.sans(23, weight: .medium))
             .foregroundStyle(Theme.ink)
             .fixedSize(horizontal: false, vertical: true)
     }
 
     private var countdown: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Text(info.isToday ? "今天" : "\(info.days)")
+        let countdownLabel = info.isToday ? String(localized: "就是今天")
+            : info.isPast ? String(localized: "\(info.days) 天前")
+            : String(localized: "\(info.days) 天后")
+        let layout = template == .collage
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 6))
+        return layout {
+            Text(info.isToday ? String(localized: "今天") : info.days.formatted())
                 .font(info.isToday ? Theme.sans(34) : Theme.number(template == .minimal ? 112 : 66))
                 .foregroundStyle(Theme.accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
             if !info.isToday {
-                Text(info.isPast ? "天前" : "天后")
+                Text(info.countdownUnit)
                     .font(Theme.sans(12))
                     .foregroundStyle(Theme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(countdownLabel)
     }
 
     @ViewBuilder
     private var note: some View {
         if includeNote && !day.note.isEmpty {
-            Text(day.note)
+            Text(verbatim: day.note)
                 .font(Theme.sans(14))
                 .lineSpacing(6)
                 .foregroundStyle(Theme.ink2)

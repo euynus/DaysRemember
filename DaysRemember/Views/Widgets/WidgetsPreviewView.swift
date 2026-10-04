@@ -11,7 +11,7 @@ struct WidgetsPreviewView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            NavHeader(title: "小组件预览", onBack: { dismiss() })
+            NavHeader(title: String(localized: "小组件预览"), onBack: { dismiss() })
             Picker("位置", selection: $lockScreen) {
                 Text("主屏幕").tag(false)
                 Text("锁定屏幕").tag(true)

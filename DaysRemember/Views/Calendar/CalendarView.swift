@@ -17,8 +17,9 @@ struct CalendarMonthView: View {
         self.onOpen = onOpen
     }
 
-    private static let monthCN = ["一","二","三","四","五","六","七","八","九","十","十一","十二"]
-    private static let weekdayCN = ["日","一","二","三","四","五","六"]
+    private var monthDate: Date {
+        CNDate.calendar.date(from: DateComponents(year: year, month: month + 1, day: 1)) ?? today
+    }
 
     private var daysInMonth: Int {
         let cal = CNDate.calendar
@@ -51,13 +52,13 @@ struct CalendarMonthView: View {
     var body: some View {
         let eventsByDay = computeEventsByDay()
         return VStack(spacing: 0) {
-            NavHeader(title: "日历")
+            NavHeader(title: String(localized: "日历"))
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 18) {
                     monthHeader
                     calendarCard(eventsByDay: eventsByDay)
                         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    SectionHeader("本月日子")
+                    SectionHeader(String(localized: "本月日子"))
                     if eventsByDay.isEmpty {
                         Text("本月没有记录的日子")
                             .font(Theme.sans(15))
@@ -106,17 +107,20 @@ struct CalendarMonthView: View {
                 month = cal.component(.month, from: today) - 1
             } label: {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: "\(year)年")
+                    Text(CNDate.year(monthDate))
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.muted)
-                    Text("\(Self.monthCN[month])月")
+                    Text(CNDate.month(monthDate))
                         .font(Theme.sans(32, weight: .medium))
                         .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(year)年\(Self.monthCN[month])月，回到本月")
-            Spacer()
+            .accessibilityLabel(String(localized: "\(CNDate.year(monthDate)) \(CNDate.month(monthDate))，回到本月"))
+            Spacer(minLength: 8)
             HStack(spacing: 8) {
                 FAB(systemName: "chevron.left", size: 38, iconSize: 15) {
                     if month == 0 { month = 11; year -= 1 } else { month -= 1 }
@@ -127,6 +131,7 @@ struct CalendarMonthView: View {
                 }
                 .accessibilityLabel("下个月")
             }
+            .fixedSize(horizontal: true, vertical: false)
         }
         .padding(.top, 6)
         .padding(.bottom, 12)
@@ -145,10 +150,12 @@ struct CalendarMonthView: View {
 
         return VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ForEach(Self.weekdayCN, id: \.self) { d in
+                ForEach(CNDate.shortWeekdaySymbols, id: \.self) { d in
                     Text(d)
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.muted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .frame(maxWidth: .infinity)
                         .padding(.bottom, 8)
                 }
@@ -161,7 +168,7 @@ struct CalendarMonthView: View {
                         let events = eventsByDay[d] ?? []
                         cellView(d: d, events: events, isToday: isCurrentMonth && d == todayDay)
                     } else {
-                        Color.clear.aspectRatio(1, contentMode: .fit)
+                        Color.clear.aspectRatio(0.85, contentMode: .fit)
                     }
                 }
             }
@@ -178,18 +185,24 @@ struct CalendarMonthView: View {
         let cal = CNDate.calendar
         let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? today
         let term = SolarTerms.name(for: cellDate) ?? SolarTerms.lunarHoliday(for: cellDate)
+        let dateLabel = isToday ? String(localized: "今天，\(CNDate.full(cellDate))") : CNDate.full(cellDate)
+        let cellLabel = term.map { String(localized: "\(dateLabel)，\($0)") } ?? dateLabel
 
         let cell = VStack(spacing: 1) {
-            Text("\(d)")
+            Text(CNDate.day(cellDate))
                 .font(Theme.sans(15, weight: isToday ? .semibold : .regular))
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(isToday ? Color.white : Theme.ink)
             if let term {
                 Text(term)
                     .font(Theme.sans(9, weight: .medium))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                    .multilineTextAlignment(.center)
                     .foregroundStyle(isToday ? Color.white.opacity(0.8) : Theme.catTravel)
+                    .padding(.horizontal, 2)
             }
             if hasEvents {
                 Circle()
@@ -199,7 +212,7 @@ struct CalendarMonthView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .aspectRatio(1, contentMode: .fit)
+        .aspectRatio(0.85, contentMode: .fit)
         .background {
             Circle()
                 .fill(isToday ? Theme.accent : (hasEvents ? Theme.bg2 : .clear))
@@ -214,26 +227,30 @@ struct CalendarMonthView: View {
                 }
             } label: { cell }
                 .buttonStyle(PressScale(scale: 0.92))
-                .accessibilityLabel("\(isToday ? "今天，" : "")\(d)日，\(events.count) 个日子")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(String(localized: "\(cellLabel)，\(events.count) 个日子"))
         } else {
-            cell.accessibilityLabel(isToday ? "今天，\(d)日" : "\(d)日")
+            cell
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(cellLabel)
         }
     }
 
     // MARK: - This-month list
 
     private func monthRow(_ day: Day, dayNumber: Int) -> some View {
-        let metadata = subtitle(for: day, label: store.category(for: day).name)
+        let metadata = subtitle(for: day, label: store.category(for: day).displayName)
+        let date = CNDate.calendar.date(from: DateComponents(year: year, month: month + 1, day: dayNumber)) ?? today
         return Button { onOpen(day) } label: {
             HStack(alignment: .top, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("\(month + 1)月\(dayNumber)日")
+                    Text(CNDate.short(date))
                         .font(Theme.sans(12, weight: .medium))
                         .foregroundStyle(Theme.accent)
-                    Text(day.title)
+                    Text(verbatim: day.title)
                         .font(Theme.sans(16, weight: .medium))
                         .foregroundStyle(Theme.ink)
-                    Text(metadata)
+                    Text(verbatim: metadata)
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.ink2)
                 }
@@ -250,15 +267,15 @@ struct CalendarMonthView: View {
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(month + 1)月\(dayNumber)日，\(day.title)，\(metadata)")
+        .accessibilityLabel(String(localized: "\(CNDate.short(date))，\(day.title)，\(metadata)"))
         .accessibilityHint("查看日子详情")
         .accessibilityInputLabels([day.title])
     }
 
     private func subtitle(for day: Day, label: String) -> String {
         var parts = [label]
-        if day.recurring { parts.append("每年") }
-        if day.lunar { parts.append("农历") }
+        if day.recurring { parts.append(String(localized: "每年")) }
+        if day.lunar { parts.append(String(localized: "农历")) }
         return parts.joined(separator: " · ")
     }
 }

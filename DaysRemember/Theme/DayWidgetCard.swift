@@ -46,6 +46,8 @@ struct DayWidgetCard: View {
         .background(Theme.card)
         // A widget has fixed physical bounds, unlike the surrounding app controls.
         .dynamicTypeSize(...DynamicTypeSize.large)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilitySummary)
     }
 
     private var photo: some View {
@@ -56,7 +58,8 @@ struct DayWidgetCard: View {
     }
 
     private var eyebrow: some View {
-        Text(info.isToday ? "就是今天" : info.isPast ? "时光记忆" : "即将到来")
+        Text(info.isToday ? String(localized: "就是今天")
+             : info.isPast ? String(localized: "时光记忆") : String(localized: "即将到来"))
             .font(Theme.sans(11, weight: .semibold))
             .foregroundStyle(Theme.accent)
     }
@@ -71,16 +74,20 @@ struct DayWidgetCard: View {
 
     private var countdown: some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(info.isToday ? "今天" : "\(info.days)")
+            Text(info.isToday ? String(localized: "今天") : "\(info.days)")
                 .font(info.isToday ? Theme.sans(24) : Theme.number(size == .small ? 34 : 52))
                 .monospacedDigit()
                 .foregroundStyle(Theme.accent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
             if !info.isToday {
-                Text(info.isPast ? "天前" : "天后")
+                Text(info.isPast
+                     ? String(localized: "widget.daysAgoUnit", defaultValue: "天前")
+                     : String(localized: "widget.daysLeftUnit", defaultValue: "天后"))
                     .font(Theme.sans(11))
                     .foregroundStyle(Theme.ink2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
         }
     }
@@ -89,5 +96,12 @@ struct DayWidgetCard: View {
         Text(CNDate.short(info.displayDate))
             .font(Theme.sans(11))
             .foregroundStyle(Theme.ink2)
+    }
+
+    private var accessibilitySummary: String {
+        let info = self.info
+        let countdown = info.isToday ? String(localized: "就是今天")
+            : info.isPast ? String(localized: "\(info.days)天前") : String(localized: "\(info.days)天后")
+        return String(localized: "\(day.title)，\(countdown)，\(CNDate.full(info.displayDate))")
     }
 }

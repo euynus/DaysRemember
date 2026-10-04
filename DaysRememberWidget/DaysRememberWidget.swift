@@ -83,9 +83,11 @@ struct DaysWidgetEntryView: View {
                     Image(systemName: "calendar")
                         .font(.title)
                         .foregroundStyle(Theme.accent)
-                    Text(entry.selectionMissing ? "日子已删除" : entry.hasAnyDays ? "暂无即将到来的日子" : "还没有日子")
+                    Text(entry.selectionMissing ? String(localized: "日子已删除")
+                         : entry.hasAnyDays ? String(localized: "暂无即将到来的日子") : String(localized: "还没有日子"))
                         .font(Theme.sans(13))
                         .foregroundStyle(Theme.ink2)
+                        .multilineTextAlignment(.center)
                 }
             }
         }

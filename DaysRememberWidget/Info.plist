@@ -3,7 +3,13 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key>
-  <string>zh_CN</string>
+  <string>zh-Hans</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>zh-Hans</string>
+    <string>zh-Hant</string>
+    <string>en</string>
+  </array>
   <key>CFBundleDisplayName</key>
   <string>时光</string>
   <key>CFBundleExecutable</key>

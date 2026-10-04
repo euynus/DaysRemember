@@ -4,12 +4,6 @@ import SwiftUI
 struct LunarDatePicker: View {
     @Binding var selection: Date
 
-    private static let solarFormat = Date.FormatStyle(
-        date: .long, time: .omitted, locale: Locale(identifier: "zh_CN"),
-        calendar: Calendar(identifier: .gregorian),
-        timeZone: TimeZone(secondsFromGMT: 8 * 60 * 60) ?? .current
-    )
-
     private var lunar: Lunar.LunarDate { Lunar.pickerDate(for: selection) }
 
     var body: some View {
@@ -42,7 +36,7 @@ struct LunarDatePicker: View {
             }
 
             Section {
-                Text("公历 \(selection.formatted(Self.solarFormat))")
+                Text("公历 \(CNDate.full(selection))")
                     .accessibilityIdentifier("lunarSolarDate")
             } footer: {
                 if Lunar.supportedLunarDate(for: selection) == nil {

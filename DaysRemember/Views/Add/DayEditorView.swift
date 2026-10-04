@@ -87,10 +87,10 @@ struct DayEditorView: View {
                         .padding(.bottom, 12)
                     coverPicker.padding(.bottom, 28)
 
-                    SectionHeader("分类").padding(.bottom, 10)
+                    SectionHeader(String(localized: "分类")).padding(.bottom, 10)
                     categoryPills.padding(.bottom, 22)
 
-                    SectionHeader("心情笔记").padding(.bottom, 10)
+                    SectionHeader(String(localized: "心情笔记")).padding(.bottom, 10)
                     notesCard
                 }
                 .padding(.horizontal, 22)
@@ -153,16 +153,18 @@ struct DayEditorView: View {
                 .font(Theme.sans(16, weight: .semibold))
                 .foregroundStyle(Theme.ink2)
                 .buttonStyle(PressScale())
+                .accessibilityIdentifier("cancelDayButton")
 
             Spacer()
-            Text(editingDay == nil ? "新的日子" : "编辑日子")
+            Text(editingDay == nil ? String(localized: "新的日子") : String(localized: "编辑日子"))
                 .font(Theme.sans(16, weight: .bold))
                 .foregroundStyle(Theme.ink)
             Spacer()
 
-            PillButton(title: "保存", style: .dark, height: 44, action: saveDay)
+            PillButton(title: String(localized: "保存"), style: .dark, height: 44, action: saveDay)
                 .disabled(!canSave)
                 .opacity(canSave ? 1 : 0.45)
+                .accessibilityIdentifier("saveDayButton")
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
@@ -180,7 +182,9 @@ struct DayEditorView: View {
             .gesture(focusDrag)
             .accessibilityElement()
             .accessibilityLabel("封面取景")
-            .accessibilityHint(photoData != nil ? "上下轻扫调整照片裁剪位置" : "封面预览")
+            .accessibilityHint(photoData != nil
+                ? String(localized: "上下轻扫调整照片裁剪位置")
+                : String(localized: "封面预览"))
             .accessibilityAdjustableAction { direction in
                 guard photoData != nil else { return }
                 switch direction {
@@ -222,6 +226,7 @@ struct DayEditorView: View {
             .padding(.vertical, 14)
             .overlay(alignment: .bottom) { RowDivider() }
             .accessibilityLabel("日子名称")
+            .accessibilityIdentifier("dayTitleField")
     }
 
     // MARK: - Cover picker
@@ -285,6 +290,7 @@ struct DayEditorView: View {
             }
         }
         .accessibilityLabel("选择相册封面")
+        .accessibilityIdentifier("dayCoverPhotoPicker")
         .overlay { if isLoadingPhoto { ProgressView() } }
         .task(id: pickerItem) {
             guard let item = pickerItem else { isLoadingPhoto = false; return }
@@ -306,7 +312,7 @@ struct DayEditorView: View {
                 resetFocus()
             } catch {
                 guard !Task.isCancelled else { return }
-                photoError = "照片未能加载，原封面已保留。请重新选择。"
+                photoError = String(localized: "照片未能加载，原封面已保留。请重新选择。")
             }
         }
     }
@@ -344,20 +350,22 @@ struct DayEditorView: View {
             .accessibilityIdentifier("dayDatePickerButton")
 
             RowDivider()
-            formRawRow(label: "日历") {
-                SegPicker(options: [(true, "公历"), (false, "农历")], selection: $solar)
+            formRawRow(label: String(localized: "日历")) {
+                SegPicker(options: [(true, String(localized: "公历")),
+                                    (false, String(localized: "农历"))], selection: $solar)
             }
 
             RowDivider()
-            formRawRow(label: "类型") {
-                SegPicker(options: [(false, "一次"), (true, "每年")], selection: $recurring)
+            formRawRow(label: String(localized: "类型")) {
+                SegPicker(options: [(false, String(localized: "一次")),
+                                    (true, String(localized: "每年"))], selection: $recurring)
             }
 
             RowDivider()
             Button {
                 showReminderSettings = true
             } label: {
-                formRawRow(label: "提醒") {
+                formRawRow(label: String(localized: "提醒")) {
                     HStack(spacing: 8) {
                         VStack(alignment: .trailing, spacing: 2) {
                             Text(reminderSummary)
@@ -390,6 +398,7 @@ struct DayEditorView: View {
                     .multilineTextAlignment(.trailing)
                     .submitLabel(.done)
                     .accessibilityLabel("地点")
+                    .accessibilityIdentifier("dayLocationField")
             }
             .cardRow()
         }
@@ -413,24 +422,27 @@ struct DayEditorView: View {
     private var categoryPills: some View {
         FlowLayout(spacing: 8) {
             if !store.categories.contains(where: { $0.id == categoryID }) {
-                let name = selectedCategory?.name ?? initialDay.categoryLabel
-                let label = name.isEmpty ? "未知分类" : name
-                let status = selectedCategory == nil ? "未同步" : "不可用"
-                Chip("\(label)（\(status)）", selected: true, leading: {
+                let name = selectedCategory?.displayName ?? initialDay.categoryDisplayName
+                let label = name.isEmpty ? String(localized: "未知分类") : name
+                let status = selectedCategory == nil
+                    ? String(localized: "未同步") : String(localized: "不可用")
+                Chip(String(localized: "\(label)（\(status)）"), selected: true, leading: {
                     Image(systemName: "questionmark.folder")
                         .font(.system(size: 14))
                 })
                 .disabled(true)
                 .accessibilityLabel("分类 \(label)，\(status)")
+                .accessibilityIdentifier("unavailableDayCategory")
             }
             ForEach(store.categories) { category in
-                Chip(category.name, selected: categoryID == category.id) {
+                Chip(category.displayName, selected: categoryID == category.id) {
                     Image(systemName: category.symbolName)
                         .font(.system(size: 14))
                 } action: {
                     selectedCategory = category
                 }
-                .accessibilityLabel("分类 \(category.name)")
+                .accessibilityLabel("分类 \(category.displayName)")
+                .accessibilityIdentifier("dayCategory-\(category.id)")
                 .accessibilityAddTraits(categoryID == category.id ? [.isSelected] : [])
             }
         }
@@ -455,6 +467,7 @@ struct DayEditorView: View {
                 .frame(maxWidth: .infinity, minHeight: 92)
                 .padding(12)
                 .accessibilityLabel("心情笔记")
+                .accessibilityIdentifier("dayNoteEditor")
         }
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -471,9 +484,13 @@ struct DayEditorView: View {
                 Button("取消") { showDatePicker = false }
                     .font(Theme.sans(15, weight: .semibold))
                     .foregroundStyle(Theme.ink2)
+                    .accessibilityIdentifier("cancelDayDatePicker")
                 Spacer()
-                Text(solar ? "选择日期" : "选择农历日期")
+                Text(solar ? String(localized: "选择日期") : String(localized: "选择农历日期"))
                     .font(Theme.sans(16, weight: .bold)).foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("dayDatePickerTitle")
                 Spacer()
                 Button("完成") {
                     selectedDate = draftDate
@@ -481,19 +498,23 @@ struct DayEditorView: View {
                 }
                     .font(Theme.sans(15, weight: .bold))
                     .foregroundStyle(Theme.ink)
+                    .accessibilityIdentifier("confirmDayDatePicker")
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
             .padding(.bottom, 8)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
 
             if solar {
                 DatePicker("选择日期", selection: $draftDate, displayedComponents: .date)
                     .datePickerStyle(.graphical)
+                    .environment(\.locale, AppLocalization.locale)
                     .environment(\.calendar, CNDate.calendar)
                     .environment(\.timeZone, CNDate.calendar.timeZone)
                     .tint(Theme.ink)
                     .labelsHidden()
                     .padding(.horizontal, 16)
+                    .accessibilityIdentifier("daySolarDatePicker")
             } else {
                 LunarDatePicker(selection: $draftDate)
             }
@@ -501,19 +522,19 @@ struct DayEditorView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
-        .presentationDetents([.medium, .large])
+        .presentationDetents(dynamicTypeSize > .large ? [.large] : [.medium, .large])
     }
 
     // MARK: - Save
 
     private var reminderSummary: String {
-        guard let offsets = reminderOffsets else { return "跟随全局设置" }
+        guard let offsets = reminderOffsets else { return String(localized: "跟随全局设置") }
         let selected = Set(offsets)
-        if selected.isEmpty { return "不提醒" }
+        if selected.isEmpty { return String(localized: "不提醒") }
         if selected.count == 1, let offset = selected.first {
-            return offset == 0 ? "当天" : "提前 \(offset) 天"
+            return offset == 0 ? String(localized: "当天") : String(localized: "提前 \(offset) 天")
         }
-        return "自定义（\(selected.count)次）"
+        return String(localized: "自定义（\(selected.count)次）")
     }
 
     private var globalReminderTime: DayReminderTime {
@@ -567,14 +588,14 @@ struct DayEditorView: View {
         )
         guard let new = Self.applyingCategory(to: draft, selectedCategory: selectedCategory,
                                              categories: store.categories) else {
-            saveError = "所选分类已不可用，修改尚未保存。请选择其他分类后重试。"
+            saveError = String(localized: "所选分类已不可用，修改尚未保存。请选择其他分类后重试。")
             return
         }
 
         if editingDay == nil {
             store.add(new)
         } else if !store.update(new) {
-            saveError = store.loadError ?? "这个日子已被删除，修改尚未保存。草稿已保留。"
+            saveError = store.loadError ?? String(localized: "这个日子已被删除，修改尚未保存。草稿已保留。")
             return
         }
         guard store.loadError == nil else {

@@ -1,6 +1,10 @@
 # 时光 · Days Remember
 
-A Chinese-language anniversary and countdown app built with SwiftUI, iOS 17+. Native tabs, a photo-led day feed, monthly agenda, custom categories, reminders, share cards, and WidgetKit layouts share one visual system. The original prototype remains in `_design/days-remember/` as a historical reference.
+A multilingual anniversary and countdown app built with SwiftUI, iOS 17+. Native tabs, a photo-led day feed, monthly agenda, custom categories, reminders, share cards, and WidgetKit layouts share one visual system. The original prototype remains in `_design/days-remember/` as a historical reference.
+
+## Languages
+
+Simplified Chinese, Traditional Chinese, and English follow the system's preferred app language, including the per-app language setting in iOS Settings. Native String Catalogs under `Resources/Localization` are shared by the app and widget. Dates follow the selected language and the user's region; day boundaries and reminder times remain based on Beijing time. English countdowns and reminder counts use native plural rules. User titles, notes, locations, custom categories, and persisted system-category identifiers/names are never translated or rewritten.
 
 ## OS integrations
 
@@ -59,6 +63,8 @@ The visual system uses an off-white canvas, ink typography, restrained vermilion
 `DaysRememberTests` covers dates, lunar recurrence, persistence, settings, image crops, share rendering, and widget rendering. `DaysRememberUITests` exercises navigation, search, day CRUD across relaunch, category editing, system sharing, widget previews, and large accessibility text. Run `xcodebuild test -project DaysRemember.xcodeproj -scheme DaysRemember -destination 'platform=iOS Simulator,id=<UDID>'`. Simulator builds use local ad-hoc signing; do not disable signing for integration tests, because App Group registration and App Intents widgets depend on the simulated entitlements. This does not replace developer provisioning for physical devices.
 
 Use a dedicated test simulator: UI fixtures deliberately reset its library. Backup, migration, CloudKit record/state, and notification planning tests run without a live cloud account. Automated debug launches suppress cloud operations and notification permission prompts.
+
+The test scheme defaults to Simplified Chinese for existing regression assertions. Run `LocalizationTests` with `-testLanguage en -testRegion US` and `-testLanguage zh-Hant -testRegion TW` to check each language's runtime strings, plural rules, reminder payloads, and widget accessibility. `LocalizationUITests` covers English editors, large-text share/widget layouts, and persistent user content across a Traditional Chinese relaunch.
 
 ## Debug launch arguments
 

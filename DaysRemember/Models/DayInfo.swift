@@ -13,6 +13,11 @@ struct DayInfo {
     /// Calendar days since the original date, starting at zero; nil before it starts.
     var elapsedDays: Int? = nil
 
+    var countdownUnit: String {
+        isPast ? String(localized: "countdown.daysAgoUnit", defaultValue: "\(days)天前")
+            : String(localized: "countdown.daysLeftUnit", defaultValue: "\(days)天后")
+    }
+
     /// Dates in a visible Gregorian year, shared by the countdown and calendar.
     static func occurrences(of day: Day, inGregorianYear year: Int) -> [Date] {
         let cal = CNDate.calendar
@@ -127,13 +132,13 @@ struct DayInfo {
 
     /// "还有" / "已过去" / "就是今天"
     var label: String {
-        if isToday { return "就是今天" }
-        return isPast ? "已过去" : "还有"
+        if isToday { return String(localized: "就是今天") }
+        return isPast ? String(localized: "已过去") : String(localized: "还有")
     }
 
     /// Short "已过" / "还有"
     var labelShort: String {
-        if isToday { return "就是今天" }
-        return isPast ? "已过" : "还有"
+        if isToday { return String(localized: "就是今天") }
+        return isPast ? String(localized: "已过") : String(localized: "还有")
     }
 }

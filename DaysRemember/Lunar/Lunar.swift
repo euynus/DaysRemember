@@ -179,6 +179,7 @@ enum Lunar {
     // MARK: - Formatting
 
     static func dayCN(_ d: Int) -> String {
+        if AppLocalization.isEnglish { return String(localized: "第\(d)日") }
         if d == 10 { return "初十" }
         if d == 20 { return "二十" }
         if d == 30 { return "三十" }
@@ -188,7 +189,11 @@ enum Lunar {
     }
 
     static func monthCN(_ m: Int, isLeap: Bool) -> String {
-        (isLeap ? "闰" : "") + CN_MONTH[m - 1] + "月"
+        if AppLocalization.isEnglish {
+            return isLeap ? String(localized: "闰\(m)月") : String(localized: "\(m)月")
+        }
+        let month = String(localized: String.LocalizationValue(CN_MONTH[m - 1]))
+        return (isLeap ? String(localized: "闰") : "") + month + String(localized: "月")
     }
 
     static func ganZhi(_ y: Int) -> String {
@@ -196,18 +201,21 @@ enum Lunar {
     }
 
     static func zodiac(_ y: Int) -> String {
-        ZODIAC[(y - 4 + 60) % 12]
+        String(localized: String.LocalizationValue(ZODIAC[(y - 4 + 60) % 12]))
     }
 
     /// "九月十四"
     static func fmt(_ date: Date) -> String {
-        guard let l = supportedLunarDate(for: date) else { return "日期超出范围" }
-        return monthCN(l.month, isLeap: l.isLeap) + dayCN(l.day)
+        guard let l = supportedLunarDate(for: date) else { return String(localized: "日期超出范围") }
+        return monthCN(l.month, isLeap: l.isLeap) + (AppLocalization.isEnglish ? ", " : "") + dayCN(l.day)
     }
 
     /// "农历己亥猪年 · 九月十四"
     static func fmtFull(_ date: Date) -> String {
-        guard let l = supportedLunarDate(for: date) else { return "农历日期超出范围" }
-        return "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))"
+        guard let l = supportedLunarDate(for: date) else { return String(localized: "农历日期超出范围") }
+        if AppLocalization.isEnglish {
+            return String(localized: "农历\(String(l.year))年 · \(fmt(date))")
+        }
+        return String(localized: "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))")
     }
 }

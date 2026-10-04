@@ -17,6 +17,14 @@ struct DayReminderSettingsView: View {
         case global = "跟随全局"
         case off = "不提醒"
         case custom = "自定义"
+
+        var label: String {
+            switch self {
+            case .global: return String(localized: "跟随全局")
+            case .off: return String(localized: "不提醒")
+            case .custom: return String(localized: "自定义")
+            }
+        }
     }
 
     init(offsets: [Int]?, time: DayReminderTime?, globalOffsets: [Int], globalTime: DayReminderTime,
@@ -78,7 +86,8 @@ struct DayReminderSettingsView: View {
             if mode == .custom {
                 Section("提前提醒") {
                     ForEach(offsetOptions, id: \.self) { offset in
-                        Toggle(offset == 0 ? "当天提醒" : "提前 \(offset) 天",
+                        Toggle(offset == 0 ? String(localized: "当天提醒")
+                               : String(localized: "提前 \(offset) 天"),
                                isOn: offsetBinding(for: offset))
                             .accessibilityIdentifier("dayReminderOffset\(offset)")
                     }
@@ -92,6 +101,7 @@ struct DayReminderSettingsView: View {
                         .datePickerStyle(.compact)
                         .labelsHidden()
                         .disabled(time == nil)
+                        .environment(\.locale, AppLocalization.locale)
                         .environment(\.calendar, CNDate.calendar)
                         .environment(\.timeZone, CNDate.calendar.timeZone)
                         .accessibilityIdentifier("dayReminderTimePicker")
@@ -109,7 +119,7 @@ struct DayReminderSettingsView: View {
     private var modePicker: some View {
         Picker("提醒方式", selection: modeBinding) {
             ForEach(Mode.allCases, id: \.self) { mode in
-                Text(mode.rawValue).tag(mode)
+                Text(mode.label).tag(mode)
             }
         }
         .accessibilityIdentifier("dayReminderModePicker")

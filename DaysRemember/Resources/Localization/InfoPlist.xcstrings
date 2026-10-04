@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "zh-Hans",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Days Remember" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "时光" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "時光" } }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Days Remember needs permission to save your shared cards to Photos." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "「时光」需要权限来把分享卡片保存到相册。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "「時光」需要權限來將分享卡片儲存至相簿。" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

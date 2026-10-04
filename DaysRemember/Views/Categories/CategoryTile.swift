@@ -23,7 +23,7 @@ struct CategoryTile: View {
                         .accessibilityHidden(true)
                 }
                 HStack(alignment: .firstTextBaseline) {
-                    Label(category.name, systemImage: category.symbolName)
+                    Label(category.displayName, systemImage: category.symbolName)
                         .font(Theme.sans(15, weight: .medium))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(2)
@@ -50,7 +50,8 @@ struct CategoryTile: View {
                         .foregroundStyle(Theme.ink2)
                         .background(Theme.bg, in: Circle())
                 }
-                .accessibilityLabel("编辑\(category.name)")
+                .accessibilityLabel("编辑\(category.displayName)")
+                .accessibilityIdentifier("editCategory-\(category.id)")
             }
         }
     }

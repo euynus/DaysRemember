@@ -17,7 +17,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         case simulator
 
         var errorDescription: String? {
-            "当前模拟器构建不启用 iCloud 同步，请在配置开发者团队后的签名真机上验证。本机数据不受影响。"
+            String(localized: "当前模拟器构建不启用 iCloud 同步，请在配置开发者团队后的签名真机上验证。本机数据不受影响。")
         }
     }
 
@@ -30,15 +30,15 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     var statusMessage: String {
         switch status {
-        case .idle: return "尚未连接 iCloud"
-        case .checkingAccount: return "正在检查 iCloud 账户"
-        case .syncing: return "正在与 iCloud 同步"
-        case .pending: return "本机更改等待上传"
-        case .synced: return "已完成本次 iCloud 同步"
-        case .accountUnavailable: return "iCloud 账户暂不可用"
-        case .accountChanged: return "iCloud 账户已变更，同步已暂停"
-        case .configurationError: return "iCloud 配置未完成"
-        case .failed: return "同步未完成，本机数据已保留"
+        case .idle: return String(localized: "尚未连接 iCloud")
+        case .checkingAccount: return String(localized: "正在检查 iCloud 账户")
+        case .syncing: return String(localized: "正在与 iCloud 同步")
+        case .pending: return String(localized: "本机更改等待上传")
+        case .synced: return String(localized: "已完成本次 iCloud 同步")
+        case .accountUnavailable: return String(localized: "iCloud 账户暂不可用")
+        case .accountChanged: return String(localized: "iCloud 账户已变更，同步已暂停")
+        case .configurationError: return String(localized: "iCloud 配置未完成")
+        case .failed: return String(localized: "同步未完成，本机数据已保留")
         }
     }
 
@@ -191,7 +191,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 showAccountChange()
             } else {
                 status = .accountUnavailable
-                errorMessage = "请检查系统中的 iCloud 登录、账户限制和网络，再重试同步。"
+                errorMessage = String(localized: "请检查系统中的 iCloud 登录、账户限制和网络，再重试同步。")
             }
             return nil
         }
@@ -279,12 +279,12 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     private func showAccountChange() {
         status = .accountChanged
-        errorMessage = "iCloud 账户已退出或变更。本机数据未删除；确认当前账户后才能继续同步。"
+        errorMessage = String(localized: "iCloud 账户已退出或变更。本机数据未删除；确认当前账户后才能继续同步。")
     }
 
     private func showDeletedZone() {
         status = .failed
-        errorMessage = "云端资料区已删除，同步已暂停，未自动重新上传。请先导出本机备份。"
+        errorMessage = String(localized: "云端资料区已删除，同步已暂停，未自动重新上传。请先导出本机备份。")
     }
 
     private func fail(_ error: Error, stop: Bool = false) {

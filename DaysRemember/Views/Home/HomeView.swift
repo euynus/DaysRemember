@@ -35,7 +35,7 @@ struct HomeView: View {
                 guard d.categoryID == id else { return false }
             }
             guard !query.isEmpty else { return true }
-            let categoryName = store.category(for: d).name
+            let categoryName = store.category(for: d).displayName
             return [d.title, d.location, d.note, categoryName]
                 .contains { $0.localizedStandardContains(query) }
         }
@@ -75,7 +75,9 @@ struct HomeView: View {
                         }
                         if !feedDays.isEmpty {
                             HStack {
-                                SectionHeader(hero != nil ? "其他日子" : filter == .all ? "日子清单" : label(for: filter))
+                                SectionHeader(hero != nil ? String(localized: "其他日子")
+                                              : filter == .all ? String(localized: "日子清单")
+                                              : label(for: filter))
                                 Text("\(feedDays.count)")
                                     .font(Theme.sans(12))
                                     .foregroundStyle(Theme.muted)
@@ -118,15 +120,18 @@ struct HomeView: View {
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("日子选项")
+                .accessibilityIdentifier("home.options")
                 FAB(systemName: isSearching ? "xmark" : "magnifyingglass", size: 42) {
                     withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
                         isSearching.toggle()
                         if !isSearching { searchText = ""; searchFocused = false }
                     }
                 }
-                .accessibilityLabel(isSearching ? "关闭搜索" : "搜索日子")
+                .accessibilityLabel(isSearching ? String(localized: "关闭搜索") : String(localized: "搜索日子"))
+                .accessibilityIdentifier("home.search")
                 FAB(systemName: "plus", size: 42, dark: true, action: onAdd)
                     .accessibilityLabel("添加日子")
+                    .accessibilityIdentifier("home.addDay")
             }
             MetaRow(metaItems)
         }
@@ -138,7 +143,7 @@ struct HomeView: View {
     /// Today's date · lunar day · solar term (colored) — the JSX header `.meta` line.
     private var metaItems: [MetaItem] {
         var items: [MetaItem] = [
-            MetaItem(text: "\(CNDate.short(today)) \(CNDate.weekday(today))"),
+            MetaItem(text: String(localized: "\(CNDate.short(today)) \(CNDate.weekday(today))")),
             MetaItem(text: Lunar.fmt(today)),
         ]
         if let term = SolarTerms.name(for: today) {
@@ -188,7 +193,7 @@ struct HomeView: View {
             HStack(spacing: 24) {
                 ForEach(filters, id: \.self) { f in
                     Button { filter = f } label: {
-                        Text(label(for: f))
+                        Text(verbatim: label(for: f))
                             .font(Theme.sans(14, weight: f == filter ? .semibold : .regular))
                             .foregroundStyle(f == filter ? Theme.ink : Theme.muted)
                             .frame(minHeight: 44)
@@ -211,9 +216,9 @@ struct HomeView: View {
 
     private func label(for filter: Filter) -> String {
         switch filter {
-        case .all: return "全部"
-        case .pinned: return "置顶"
-        case .category(let id): return store.category(for: id).name
+        case .all: return String(localized: "全部")
+        case .pinned: return String(localized: "已置顶")
+        case .category(let id): return store.category(for: id).displayName
         }
     }
 
@@ -221,19 +226,19 @@ struct HomeView: View {
     /// is currently active so the message matches what the user is seeing.
     private func emptyStateCopy() -> (title: String, symbol: String, detail: String) {
         if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return ("没有找到日子", "magnifyingglass", "换个关键词试试。")
+            return (String(localized: "没有找到日子"), "magnifyingglass", String(localized: "换个关键词试试。"))
         }
         switch filter {
         case .pinned:
-            return ("还没有置顶的日子", "star", "在日子上长按可以置顶它。")
+            return (String(localized: "还没有置顶的日子"), "star", String(localized: "在日子上长按可以置顶它。"))
         case .category(let id):
-            return ("这个分类里还没有日子",
+            return (String(localized: "这个分类里还没有日子"),
                     store.category(for: id).symbolName,
-                    "切换分类，或在加号里给它添个新日子。")
+                    String(localized: "切换分类，或在加号里给它添个新日子。"))
         case .all:
-            return ("这里还没有日子",
+            return (String(localized: "这里还没有日子"),
                     "calendar.badge.plus",
-                    "值得记住的，从这一天开始。")
+                    String(localized: "值得记住的，从这一天开始。"))
         }
     }
 }

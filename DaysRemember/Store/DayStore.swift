@@ -100,7 +100,7 @@ final class DayStore {
             try DayBackup(days: days, categories: categories, deletedDays: deletedDays,
                           syncConflicts: syncConflicts).validate()
         } catch {
-            loadError = "本机数据未能完整读取，原始数据已保留。请先导出原始数据，或从备份恢复。"
+            loadError = String(localized: "本机数据未能完整读取，原始数据已保留。请先导出原始数据，或从备份恢复。")
         }
     }
 
@@ -124,7 +124,7 @@ final class DayStore {
             }
             return true
         } catch {
-            loadError = "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。"
+            loadError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。")
             return false
         }
     }
@@ -338,7 +338,7 @@ final class DayStore {
                 try self.applyCloudUpdate(update)
             }
         } catch {
-            syncPreparationError = "迁移前备份未完成，同步尚未开启；本机日子仍可使用。\(error.localizedDescription)"
+            syncPreparationError = String(localized: "迁移前备份未完成，同步尚未开启；本机日子仍可使用。\(error.localizedDescription)")
         }
     }
 
@@ -382,7 +382,7 @@ final class DayStore {
         let cleanIcon = icon.trimmingCharacters(in: .whitespacesAndNewlines)
         let category = CategoryDefinition(
             id: "custom.\(UUID().uuidString)",
-            name: cleanName.isEmpty ? "新分类" : cleanName,
+            name: cleanName.isEmpty ? String(localized: "新分类") : cleanName,
             icon: cleanIcon.isEmpty ? "tag" : cleanIcon,
             colorToken: colorToken,
             isSystem: false
@@ -448,7 +448,7 @@ final class DayStore {
             try applyBackup(backup, encoded: encoded)
             if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
         } catch {
-            loadError = "分类更改未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。"
+            loadError = String(localized: "分类更改未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。")
         }
     }
 

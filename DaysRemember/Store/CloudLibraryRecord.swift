@@ -62,11 +62,11 @@ enum CloudLibraryRecord: Codable, Equatable {
 
         var errorDescription: String? {
             switch self {
-            case .invalidRecord: return "iCloud 记录无效，未覆盖本机数据。"
-            case .unsupportedVersion: return "iCloud 数据来自更新版本，请先更新 App。"
-            case .missingPhoto: return "iCloud 照片未完整下载，未覆盖本机数据。"
-            case .metadataTooLarge: return "单条记录的文字数据过大，尚未上传。"
-            case .corruptState: return "同步状态无法读取，原文件已保留；同步已暂停。"
+            case .invalidRecord: return String(localized: "iCloud 记录无效，未覆盖本机数据。")
+            case .unsupportedVersion: return String(localized: "iCloud 数据来自更新版本，请先更新 App。")
+            case .missingPhoto: return String(localized: "iCloud 照片未完整下载，未覆盖本机数据。")
+            case .metadataTooLarge: return String(localized: "单条记录的文字数据过大，尚未上传。")
+            case .corruptState: return String(localized: "同步状态无法读取，原文件已保留；同步已暂停。")
             }
         }
     }

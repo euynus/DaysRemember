@@ -7,14 +7,14 @@ struct CalendarEventRow: View {
     var onOpen: (Day) -> Void
 
     var body: some View {
-        let categoryName = store.category(for: day).name
+        let categoryName = store.category(for: day).displayName
         Button(action: { onOpen(day) }) {
             HStack(alignment: .top, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(day.title)
+                    Text(verbatim: day.title)
                         .font(Theme.sans(15, weight: .bold))
                         .foregroundStyle(Theme.ink)
-                    Text(categoryName)
+                    Text(verbatim: categoryName)
                         .font(Theme.sans(12, weight: .medium))
                         .foregroundStyle(Theme.muted)
                 }

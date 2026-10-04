@@ -31,12 +31,24 @@ struct CategoryEditorView: View {
     /// Curated SF Symbols suited to anniversaries / life events — kept so custom
     /// categories that were created before stickers still round-trip their icon.
     private static let iconChoices: [(symbol: String, label: String)] = [
-        ("heart", "爱心"), ("house", "房屋"), ("airplane", "飞机"),
-        ("graduationcap", "毕业帽"), ("sparkles", "闪光"), ("star", "星星"),
-        ("gift", "礼物"), ("birthday.cake", "生日蛋糕"), ("camera", "相机"),
-        ("pawprint", "爪印"), ("sun.max", "太阳"), ("moon.stars", "月亮和星星"),
-        ("leaf", "叶子"), ("cup.and.saucer", "茶杯"), ("music.note", "音符"),
-        ("flag", "旗帜"), ("bell", "铃铛"), ("tag", "标签"),
+        ("heart", String(localized: "爱心")),
+        ("house", String(localized: "房屋")),
+        ("airplane", String(localized: "飞机")),
+        ("graduationcap", String(localized: "毕业帽")),
+        ("sparkles", String(localized: "闪光")),
+        ("star", String(localized: "星星")),
+        ("gift", String(localized: "礼物")),
+        ("birthday.cake", String(localized: "生日蛋糕")),
+        ("camera", String(localized: "相机")),
+        ("pawprint", String(localized: "爪印")),
+        ("sun.max", String(localized: "太阳")),
+        ("moon.stars", String(localized: "月亮和星星")),
+        ("leaf", String(localized: "叶子")),
+        ("cup.and.saucer", String(localized: "茶杯")),
+        ("music.note", String(localized: "音符")),
+        ("flag", String(localized: "旗帜")),
+        ("bell", String(localized: "铃铛")),
+        ("tag", String(localized: "标签")),
     ]
 
     var body: some View {
@@ -65,7 +77,7 @@ struct CategoryEditorView: View {
                             titleVisibility: .visible) {
             if let category {
                 ForEach(store.categories.filter { $0.id != category.id }) { target in
-                    Button("迁移到 \(target.name)") {
+                    Button("迁移到 \(target.displayName)") {
                         Haptics.warning()
                         store.deleteCategory(id: category.id, migrateTo: target.id)
                         dismiss()
@@ -77,7 +89,7 @@ struct CategoryEditorView: View {
     }
 
     private var navBar: some View {
-        NavHeader(title: category == nil ? "新建分类" : "编辑分类") {
+        NavHeader(title: category == nil ? String(localized: "新建分类") : String(localized: "编辑分类")) {
             dismiss()
         } trailing: {
             Button(action: save) {
@@ -89,6 +101,7 @@ struct CategoryEditorView: View {
             }
             .buttonStyle(.plain)
             .disabled(!canSave)
+            .accessibilityIdentifier("saveCategoryButton")
         }
     }
 
@@ -102,7 +115,7 @@ struct CategoryEditorView: View {
                 .frame(width: 56, height: 56)
                 .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
-                Text(name.isEmpty ? "分类名称" : name)
+                Text(name.isEmpty ? String(localized: "分类名称") : name)
                     .font(Theme.sans(22, weight: .medium))
                     .foregroundStyle(name.isEmpty ? Theme.muted : Theme.ink)
                 Text(colorToken.label)
@@ -120,7 +133,7 @@ struct CategoryEditorView: View {
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader("名称")
+            SectionHeader(String(localized: "名称"))
             TextField("例如：朋友", text: $name)
                 .font(Theme.sans(17))
                 .foregroundStyle(Theme.ink)
@@ -130,6 +143,8 @@ struct CategoryEditorView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
                 .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline, lineWidth: 1) }
+                .accessibilityLabel("分类名称")
+                .accessibilityIdentifier("categoryNameField")
         }
     }
 
@@ -137,7 +152,7 @@ struct CategoryEditorView: View {
 
     private var stickerPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader("图标")
+            SectionHeader(String(localized: "图标"))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
                       spacing: 10) {
                 ForEach(Self.iconChoices, id: \.symbol) { choice in
@@ -173,7 +188,7 @@ struct CategoryEditorView: View {
 
     private var colorPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader("颜色")
+            SectionHeader(String(localized: "颜色"))
             HStack(spacing: 12) {
                 ForEach(CategoryColorToken.allCases) { token in
                     let selected = colorToken == token
@@ -193,6 +208,7 @@ struct CategoryEditorView: View {
                     }
                     .buttonStyle(PressScale(scale: 0.9))
                     .accessibilityLabel("颜色 \(token.label)")
+                    .accessibilityIdentifier("category-color-\(token.rawValue)")
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
                 Spacer()
@@ -203,10 +219,11 @@ struct CategoryEditorView: View {
     // MARK: - Delete
 
     private var deleteButton: some View {
-        PillButton(title: "删除分类", style: .ghost, fill: true) {
+        PillButton(title: String(localized: "删除分类"), style: .ghost, fill: true) {
             confirmingDelete = true
         }
         .padding(.top, 4)
+        .accessibilityIdentifier("deleteCategoryButton")
     }
 
     private func save() {

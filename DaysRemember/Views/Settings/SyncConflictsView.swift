@@ -47,19 +47,19 @@ private struct SyncConflictSection: View {
                     LabeledContent("农历", value: Lunar.fmtFull(day.date))
                 }
                 LabeledContent("分类") {
-                    Text(day.categoryLabel)
+                    Text(day.categoryDisplayName)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text("笔记").foregroundStyle(.secondary)
-                    Text(day.note.isEmpty ? "无" : day.note)
+                    Text(day.note.isEmpty ? String(localized: "无") : day.note)
                         .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
                         .textSelection(.enabled)
                 }
             case .category(let category):
                 Label {
-                    Text(category.name)
+                    Text(category.displayName)
                         .font(.headline)
                         .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
@@ -126,14 +126,14 @@ private struct SyncConflictSection: View {
     private var recordTitle: String {
         switch conflict.record {
         case .day(let day): return day.title
-        case .category(let category): return category.name
+        case .category(let category): return category.displayName
         }
     }
 
     private var recordKind: String {
         switch conflict.record {
-        case .day: return "日子"
-        case .category: return "分类"
+        case .day: return String(localized: "日子")
+        case .category: return String(localized: "分类")
         }
     }
 

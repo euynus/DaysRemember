@@ -1,6 +1,6 @@
 import Foundation
 
-/// Chinese date formatters — match the prototype's `data.jsx` helpers.
+/// Display follows the app language; day boundaries remain in the stored calendar.
 enum CNDate {
     static let calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
@@ -8,23 +8,40 @@ enum CNDate {
         return c
     }()
 
-    /// "2026年4月23日"
-    static func full(_ date: Date) -> String {
-        let comps = calendar.dateComponents([.year, .month, .day], from: date)
-        return "\(comps.year!)年\(comps.month!)月\(comps.day!)日"
+    static func full(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
+        date.formatted(style(locale: locale).year().month(.wide).day())
     }
 
-    /// "4月23日"
-    static func short(_ date: Date) -> String {
-        let comps = calendar.dateComponents([.month, .day], from: date)
-        return "\(comps.month!)月\(comps.day!)日"
+    static func short(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
+        date.formatted(style(locale: locale).month(.abbreviated).day())
     }
 
-    /// "星期四"
-    static func weekday(_ date: Date) -> String {
-        let names = ["日","一","二","三","四","五","六"]
-        let w = calendar.component(.weekday, from: date) - 1
-        return "星期" + names[w]
+    static func weekday(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
+        date.formatted(style(locale: locale).weekday(.wide))
+    }
+
+    static func year(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
+        date.formatted(style(locale: locale).year())
+    }
+
+    static func month(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
+        date.formatted(style(locale: locale).month(.wide))
+    }
+
+    static func day(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
+        date.formatted(style(locale: locale).day())
+    }
+
+    static var shortWeekdaySymbols: [String] {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = AppLocalization.locale
+        return AppLocalization.isEnglish ? formatter.shortStandaloneWeekdaySymbols
+            : formatter.veryShortStandaloneWeekdaySymbols
+    }
+
+    private static func style(locale: Locale) -> Date.FormatStyle {
+        Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
     }
 
     static func daysBetween(_ a: Date, _ b: Date) -> Int {
