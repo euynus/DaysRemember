@@ -6,8 +6,7 @@ struct CalendarMonthView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var month: Int
     @State private var year: Int
-    @State private var selectedEvents: [Day] = []
-    @State private var selectedDayTitle = ""
+    @State private var selectedDay: CalendarDaySelection?
     var onOpen: (Day) -> Void
 
     init(onOpen: @escaping (Day) -> Void = { _ in }) {
@@ -53,8 +52,8 @@ struct CalendarMonthView: View {
         let eventsByDay = computeEventsByDay()
         return VStack(spacing: 0) {
             NavHeader(title: "日历")
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 18) {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 18) {
                     monthHeader
                     calendarCard(eventsByDay: eventsByDay)
                         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
@@ -77,6 +76,7 @@ struct CalendarMonthView: View {
                 .padding(.top, 18)
                 .padding(.bottom, 24)
             }
+            .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
@@ -89,14 +89,8 @@ struct CalendarMonthView: View {
                 month = calendar.component(.month, from: new) - 1
             }
         }
-        .sheet(isPresented: Binding(
-            get: { !selectedEvents.isEmpty },
-            set: { if !$0 { selectedEvents = [] } }
-        )) {
-            CalendarEventPicker(title: selectedDayTitle, events: selectedEvents) { day in
-                selectedEvents = []
-                onOpen(day)
-            }
+        .sheet(item: $selectedDay) { selection in
+            CalendarEventPicker(selection: selection, onOpen: onOpen)
         }
     }
 
@@ -216,8 +210,7 @@ struct CalendarMonthView: View {
                 if events.count == 1, let first = events.first {
                     onOpen(first)
                 } else {
-                    selectedDayTitle = "\(year)年\(Self.monthCN[month])月\(d)日"
-                    selectedEvents = events
+                    selectedDay = CalendarDaySelection(date: cellDate)
                 }
             } label: { cell }
                 .buttonStyle(PressScale(scale: 0.92))
@@ -267,83 +260,5 @@ struct CalendarMonthView: View {
         if day.recurring { parts.append("每年") }
         if day.lunar { parts.append("农历") }
         return parts.joined(separator: " · ")
-    }
-}
-
-// Multi-event day picker (a single calendar cell can carry several days).
-private struct CalendarEventPicker: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    let title: String
-    let events: [Day]
-    var onOpen: (Day) -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Spacer()
-                    Button { dismiss() } label: {
-                        Text("取消")
-                            .font(Theme.sans(15, weight: .semibold))
-                            .foregroundStyle(Theme.ink2)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                Text(title)
-                    .font(Theme.sans(20, weight: .bold))
-                    .foregroundStyle(Theme.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityAddTraits(.isHeader)
-            }
-            .padding(.horizontal, 22)
-            .padding(.top, 12)
-            .padding(.bottom, 12)
-
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(spacing: 0) {
-                    ForEach(events) { event in
-                        Button {
-                            onOpen(event)
-                            dismiss()
-                        } label: {
-                            HStack(alignment: .top, spacing: 14) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(event.title)
-                                        .font(Theme.sans(15, weight: .bold))
-                                        .foregroundStyle(Theme.ink)
-                                    Text(event.categoryLabel)
-                                        .font(Theme.sans(12, weight: .medium))
-                                        .foregroundStyle(Theme.muted)
-                                }
-                                .fixedSize(horizontal: false, vertical: true)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                if !dynamicTypeSize.isAccessibilitySize {
-                                    PhotoTile(day: event, flat: true, cornerRadius: 6, maximumPixelSize: 192)
-                                        .frame(width: 44, height: 44)
-                                        .accessibilityHidden(true)
-                                }
-                            }
-                            .frame(minHeight: 44, alignment: .leading)
-                            .padding(.vertical, 14)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(PressScale())
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("\(event.title)，\(event.categoryLabel)")
-                        .accessibilityHint("查看日子详情")
-                        .accessibilityInputLabels([event.title])
-                        RowDivider().accessibilityHidden(true)
-                    }
-                }
-                .padding(.horizontal, 22)
-                .padding(.bottom, 24)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Theme.bg)
-        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
     }
 }

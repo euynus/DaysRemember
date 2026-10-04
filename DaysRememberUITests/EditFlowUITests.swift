@@ -394,10 +394,16 @@ final class EditFlowUITests: XCTestCase {
         for _ in 0..<3 where !cell.isHittable { app.scrollViews.firstMatch.swipeUp() }
         XCTAssertTrue(cell.waitForExistence(timeout: 5))
         cell.tap()
+        XCTAssertTrue(app.staticTexts["2026年4月23日"].waitForExistence(timeout: 5))
         let first = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", titles[0])).firstMatch
         XCTAssertTrue(first.waitForExistence(timeout: 5))
         XCTAssertTrue(first.isHittable)
         XCTAssertGreaterThan(first.frame.width, 250)
+        app.buttons["取消"].tap()
+        XCTAssertTrue(cell.waitForExistence(timeout: 5))
+        cell.tap()
+        XCTAssertTrue(app.staticTexts["2026年4月23日"].waitForExistence(timeout: 5))
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Accessible calendar event picker"
         attachment.lifetime = .keepAlways
