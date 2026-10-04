@@ -8,6 +8,7 @@ struct DayEditorView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let editingDay: Day?
+    @State private var initialDay: Day
     @State private var title: String
     @State private var categoryID: String
     @State private var photo: PhotoStyle
@@ -27,6 +28,7 @@ struct DayEditorView: View {
     @State private var dragStartX: Double?
     @State private var dragStartY: Double?
     @State private var showDatePicker = false
+    @State private var confirmDiscard = false
 
     private static let pickerOptions: [PhotoStyle] = [
         .systemDefault, .birthday, .japan, .study, .home,
@@ -37,23 +39,36 @@ struct DayEditorView: View {
 
     init(day: Day? = nil) {
         editingDay = day
-        _title = State(initialValue: day?.title ?? "")
-        _categoryID = State(initialValue: day?.categoryID ?? DayCategory.life.rawValue)
-        _photo = State(initialValue: day?.photo ?? .systemDefault)
-        _photoData = State(initialValue: day?.photoData)
-        _recurring = State(initialValue: day?.recurring ?? true)
-        _solar = State(initialValue: !(day?.lunar ?? false))
-        _selectedDate = State(initialValue: day?.date ?? Today.date)
-        _draftDate = State(initialValue: day?.date ?? Today.date)
-        _note = State(initialValue: day?.note ?? "")
-        _location = State(initialValue: day?.location ?? "")
-        _coverFocusX = State(initialValue: day?.coverFocusX ?? 0.5)
-        _coverFocusY = State(initialValue: day?.coverFocusY ?? 0.5)
-        _reminderOffsets = State(initialValue: day?.reminderOffsets)
+        let initial = day ?? Day(id: "", title: "", date: Today.date, recurring: true,
+                                 category: .life, photo: .systemDefault)
+        _initialDay = State(initialValue: initial)
+        _title = State(initialValue: initial.title)
+        _categoryID = State(initialValue: initial.categoryID)
+        _photo = State(initialValue: initial.photo)
+        _photoData = State(initialValue: initial.photoData)
+        _recurring = State(initialValue: initial.recurring)
+        _solar = State(initialValue: !initial.lunar)
+        _selectedDate = State(initialValue: initial.date)
+        _draftDate = State(initialValue: initial.date)
+        _note = State(initialValue: initial.note)
+        _location = State(initialValue: initial.location)
+        _coverFocusX = State(initialValue: initial.coverFocusX)
+        _coverFocusY = State(initialValue: initial.coverFocusY)
+        _reminderOffsets = State(initialValue: initial.reminderOffsets)
     }
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoadingPhoto
+    }
+
+    private var hasUnsavedChanges: Bool {
+        isLoadingPhoto || title != initialDay.title || categoryID != initialDay.categoryID
+            || photo != initialDay.photo || photoData != initialDay.photoData
+            || recurring != initialDay.recurring || solar != !initialDay.lunar
+            || !CNDate.calendar.isDate(selectedDate, inSameDayAs: initialDay.date)
+            || note != initialDay.note || location != initialDay.location
+            || coverFocusX != initialDay.coverFocusX || coverFocusY != initialDay.coverFocusY
+            || reminderOffsets != initialDay.reminderOffsets
     }
 
     var body: some View {
@@ -82,7 +97,12 @@ struct DayEditorView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
+        .interactiveDismissDisabled(hasUnsavedChanges)
         .sheet(isPresented: $showDatePicker) { datePickerSheet }
+        .alert("放弃未保存的修改？", isPresented: $confirmDiscard) {
+            Button("放弃修改", role: .destructive) { dismiss() }
+            Button("继续编辑", role: .cancel) {}
+        }
         .alert("无法读取照片", isPresented: Binding(
             get: { photoError != nil },
             set: { if !$0 { photoError = nil } }
@@ -102,7 +122,10 @@ struct DayEditorView: View {
 
     private var navBar: some View {
         HStack {
-            Button("取消") { dismiss() }
+            Button("取消") {
+                if hasUnsavedChanges { confirmDiscard = true }
+                else { dismiss() }
+            }
                 .font(Theme.sans(16, weight: .semibold))
                 .foregroundStyle(Theme.ink2)
                 .buttonStyle(PressScale())

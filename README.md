@@ -32,6 +32,8 @@ New installations start empty; daily greetings and annual memories are opt-in. E
 
 The app refreshes its shared calendar day at midnight, on foreground entry, and after significant system time changes. Countdown, calendar, category, share, and widget-preview views observe that date without resetting navigation or in-progress editor state.
 
+Editors with unsaved changes or a photo import in progress block swipe dismissal. Cancel offers an explicit discard confirmation; unchanged drafts close directly. Drafts remain local to the open editor and are not promised to survive app termination.
+
 Before enabling CloudKit, the app preserves a local migration backup. Legacy `NSUbiquitousKeyValueStore` day/category keys remain untouched and are no longer written. The data page can explicitly append unseen legacy records without overwriting matching IDs; upgrade all devices before further edits. This is a one-way migration, not ongoing interoperability with old clients. Small notification preferences continue using KVS.
 
 Cloud updates merge by record ID. Before replacing conflicting local content, the app keeps a recoverable local snapshot. Account changes pause uploads until explicitly confirmed; a deleted server zone is not automatically recreated. Recently deleted records and recovery copies are device-local. Exported JSON includes photos and is not encrypted; the current backup size limit is 100 MB. Invalid imports or unreadable local data do not silently reset the library.

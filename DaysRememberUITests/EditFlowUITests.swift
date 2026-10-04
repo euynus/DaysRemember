@@ -85,6 +85,51 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["保存"].exists)
     }
 
+    func testEditorConfirmsDiscardAndKeepsDraftWhenContinuing() {
+        let app = launchApp()
+        app.buttons["添加日子"].tap()
+        let title = app.textFields["日子名称"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        title.typeText("Unsaved draft")
+        app.buttons["取消"].tap()
+        XCTAssertTrue(app.buttons["放弃修改"].waitForExistence(timeout: 5))
+        app.buttons["继续编辑"].tap()
+        XCTAssertEqual(title.value as? String, "Unsaved draft")
+        app.buttons["取消"].tap()
+        app.buttons["放弃修改"].tap()
+        expectation(for: NSPredicate { _, _ in !title.exists }, evaluatedWith: app)
+        waitForExpectations(timeout: 5)
+        XCTAssertFalse(title.exists)
+        XCTAssertTrue(app.buttons["添加日子"].isHittable)
+    }
+
+    func testEditorSwipeDismissesOnlyWithoutChanges() {
+        let app = launchApp()
+        func dragSheetDown() {
+            let header = app.staticTexts["新的日子"]
+            let start = header.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
+            start.press(forDuration: 0.1, thenDragTo: end)
+        }
+        app.buttons["添加日子"].tap()
+        XCTAssertTrue(app.textFields["日子名称"].waitForExistence(timeout: 5))
+        dragSheetDown()
+        XCTAssertFalse(app.textFields["日子名称"].exists)
+
+        app.buttons["添加日子"].tap()
+        XCTAssertTrue(app.segmentedControls.buttons["一次"].waitForExistence(timeout: 5))
+        app.segmentedControls.buttons["一次"].tap()
+        dragSheetDown()
+        XCTAssertTrue(app.textFields["日子名称"].exists)
+        XCTAssertTrue(app.segmentedControls.buttons["一次"].isSelected)
+        app.buttons["取消"].tap()
+        app.buttons["放弃修改"].tap()
+        expectation(for: NSPredicate { _, _ in app.buttons["添加日子"].isHittable }, evaluatedWith: app)
+        waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.buttons["添加日子"].isHittable)
+    }
+
     /// Tap the "即将到来" spotlight to push a real Detail screen, open its menu,
     /// tap 编辑, and assert the editor sheet actually presents (its 保存 button).
     func testEditFromPushedDetailOpensEditor() {
