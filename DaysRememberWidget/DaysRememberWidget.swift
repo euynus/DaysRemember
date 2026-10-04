@@ -22,7 +22,8 @@ struct DaysRememberWidget: Widget {
         .contentMarginsDisabled()
         .configurationDisplayName("时光 · 重要日子")
         .description("选择一个重要日子，或自动显示最近的日子。")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge,
+                            .accessoryCircular, .accessoryRectangular, .accessoryInline])
     }
 }
 
@@ -71,19 +72,33 @@ struct DaysWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        if let day = entry.day {
-            DayWidgetCard(day: day, size: cardSize, today: entry.date)
-                .widgetURL(URL(string: "daysremember://day/\(day.id)"))
-        } else {
-            VStack(spacing: 10) {
-                Image(systemName: "calendar")
-                    .font(.title)
-                    .foregroundStyle(Theme.accent)
-                Text(entry.selectionMissing ? "日子已删除" : entry.hasAnyDays ? "暂无即将到来的日子" : "还没有日子")
-                    .font(Theme.sans(13))
-                    .foregroundStyle(Theme.ink2)
+        Group {
+            if let accessoryStyle {
+                DayAccessoryWidget(day: entry.day, style: accessoryStyle, today: entry.date,
+                                   selectionMissing: entry.selectionMissing, hasAnyDays: entry.hasAnyDays)
+            } else if let day = entry.day {
+                DayWidgetCard(day: day, size: cardSize, today: entry.date)
+            } else {
+                VStack(spacing: 10) {
+                    Image(systemName: "calendar")
+                        .font(.title)
+                        .foregroundStyle(Theme.accent)
+                    Text(entry.selectionMissing ? "日子已删除" : entry.hasAnyDays ? "暂无即将到来的日子" : "还没有日子")
+                        .font(Theme.sans(13))
+                        .foregroundStyle(Theme.ink2)
+                }
             }
-            .widgetURL(URL(string: "daysremember://home"))
+        }
+        .widgetURL(entry.day.flatMap { URL(string: "daysremember://day/\($0.id)") }
+                   ?? URL(string: "daysremember://home"))
+    }
+
+    private var accessoryStyle: DayAccessoryWidget.Style? {
+        switch family {
+        case .accessoryCircular: return .circular
+        case .accessoryRectangular: return .rectangular
+        case .accessoryInline: return .inline
+        default: return nil
         }
     }
 

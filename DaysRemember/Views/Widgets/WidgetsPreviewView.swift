@@ -5,11 +5,20 @@ struct WidgetsPreviewView: View {
     @Environment(DayStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var size: DayWidgetCard.Size = .medium
+    @State private var lockScreen = false
+    @State private var accessoryStyle: DayAccessoryWidget.Style = .rectangular
     @State private var selectedID: String?
 
     var body: some View {
         VStack(spacing: 0) {
             NavHeader(title: "小组件预览", onBack: { dismiss() })
+            Picker("位置", selection: $lockScreen) {
+                Text("主屏幕").tag(false)
+                Text("锁定屏幕").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 22)
+            .padding(.bottom, 16)
             Picker("日子", selection: $selectedID) {
                 Text("最近的日子").tag(String?.none)
                 ForEach(store.days) { day in
@@ -17,16 +26,38 @@ struct WidgetsPreviewView: View {
                 }
             }
             .pickerStyle(.menu)
+            .accessibilityIdentifier("widgetPreviewDayPicker")
             .padding(.horizontal, 22)
-            Picker("尺寸", selection: $size) {
-                Text("小").tag(DayWidgetCard.Size.small)
-                Text("中").tag(DayWidgetCard.Size.medium)
-                Text("大").tag(DayWidgetCard.Size.large)
+            if lockScreen {
+                Picker("样式", selection: $accessoryStyle) {
+                    Text("圆形").tag(DayAccessoryWidget.Style.circular)
+                    Text("矩形").tag(DayAccessoryWidget.Style.rectangular)
+                    Text("行内").tag(DayAccessoryWidget.Style.inline)
+                }
+                .pickerStyle(.segmented)
+                .padding(22)
+            } else {
+                Picker("尺寸", selection: $size) {
+                    Text("小").tag(DayWidgetCard.Size.small)
+                    Text("中").tag(DayWidgetCard.Size.medium)
+                    Text("大").tag(DayWidgetCard.Size.large)
+                }
+                .pickerStyle(.segmented)
+                .padding(22)
             }
-            .pickerStyle(.segmented)
-            .padding(22)
             ScrollView {
-                if let day = WidgetDay.resolve(in: store.days, selectedID: selectedID, today: today) {
+                let day = WidgetDay.resolve(in: store.days, selectedID: selectedID, today: today)
+                if lockScreen {
+                    DayAccessoryWidget(day: day, style: accessoryStyle, today: today,
+                                       selectionMissing: selectedID != nil && day == nil,
+                                       hasAnyDays: !store.days.isEmpty)
+                        .frame(width: accessorySize.width, height: accessorySize.height)
+                        .accessibilityIdentifier("accessoryWidgetPreview")
+                        .padding(.vertical, 64)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.black)
+                        .environment(\.colorScheme, .dark)
+                } else if let day {
                     DayWidgetCard(day: day, size: size, today: today)
                         .frame(width: size == .small ? 160 : 320,
                                height: size == .large ? 340 : 160)
@@ -43,5 +74,13 @@ struct WidgetsPreviewView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Theme.bg)
+    }
+
+    private var accessorySize: CGSize {
+        switch accessoryStyle {
+        case .circular: return CGSize(width: 56, height: 56)
+        case .rectangular: return CGSize(width: 160, height: 56)
+        case .inline: return CGSize(width: 230, height: 20)
+        }
     }
 }
