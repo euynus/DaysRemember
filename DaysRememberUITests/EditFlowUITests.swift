@@ -295,7 +295,9 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertFalse(app.buttons["保存"].isEnabled)
         app.buttons["返回"].tap()
 
-        app.buttons["category-love"].tap()
+        let loveCategory = app.descendants(matching: .any).matching(identifier: "category-love").firstMatch
+        XCTAssertTrue(loveCategory.waitForExistence(timeout: 5), app.debugDescription)
+        loveCategory.tap()
         let loveDay = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "结婚纪念日")).firstMatch
         XCTAssertTrue(loveDay.waitForExistence(timeout: 5))
         loveDay.tap()
@@ -390,9 +392,11 @@ final class EditFlowUITests: XCTestCase {
             app.buttons["保存"].tap()
         }
         app.tabBars.buttons["日历"].tap()
-        let cell = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "23日，2 个日子")).firstMatch
+        let cell = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label CONTAINS %@ AND label MATCHES %@", "2026年4月23日", ".*[^0-9]2 个日子"
+        )).firstMatch
         for _ in 0..<3 where !cell.isHittable { app.scrollViews.firstMatch.swipeUp() }
-        XCTAssertTrue(cell.waitForExistence(timeout: 5))
+        XCTAssertTrue(cell.waitForExistence(timeout: 5), app.debugDescription)
         cell.tap()
         XCTAssertTrue(app.staticTexts["2026年4月23日"].waitForExistence(timeout: 5))
         let first = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", titles[0])).firstMatch
@@ -413,8 +417,10 @@ final class EditFlowUITests: XCTestCase {
         app.buttons["更多操作"].tap()
         app.buttons["trash"].firstMatch.tap()
         app.buttons["删除"].firstMatch.tap()
-        let remaining = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "23日，1 个日子")).firstMatch
-        XCTAssertTrue(remaining.waitForExistence(timeout: 5))
+        let remaining = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label CONTAINS %@ AND label MATCHES %@", "2026年4月23日", ".*[^0-9]1 个日子"
+        )).firstMatch
+        XCTAssertTrue(remaining.waitForExistence(timeout: 5), app.debugDescription)
         remaining.tap()
         XCTAssertTrue(app.buttons["更多操作"].waitForExistence(timeout: 5))
         app.buttons["更多操作"].tap()
@@ -642,12 +648,22 @@ final class EditFlowUITests: XCTestCase {
 
         openDataManagement()
         app.buttons["导出备份"].tap()
-        let save = app.buttons["Save"].firstMatch
+        let save = app.buttons["DOCPicker.actionButton"]
         XCTAssertTrue(save.waitForExistence(timeout: 10), app.debugDescription)
-        let filename = app.textFields["DOCPicker.filenameTextField"]
-        filename.tap()
-        filename.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 100) + title)
-        XCTAssertEqual(filename.value as? String, title)
+        // A unique directory keeps the default export name from overwriting an older backup.
+        app.buttons["OverflowBarButtonItem"].tap()
+        let newFolder = app.buttons["新建文件夹"]
+        XCTAssertTrue(newFolder.waitForExistence(timeout: 5), app.debugDescription)
+        newFolder.tap()
+        let folderName = app.textViews["DOC.inlineRenameField"]
+        XCTAssertTrue(folderName.waitForExistence(timeout: 5), app.debugDescription)
+        let initialFolderName = folderName.value as? String ?? ""
+        folderName.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: initialFolderName.count) + title + "\n")
+        XCTAssertTrue(folderName.waitForNonExistence(timeout: 5), app.debugDescription)
+        let folderTitle = app.navigationBars.descendants(matching: .any).matching(NSPredicate(
+            format: "label == %@ OR label BEGINSWITH %@", title, title + ", "
+        )).firstMatch
+        XCTAssertTrue(folderTitle.waitForExistence(timeout: 5), app.debugDescription)
         save.tap()
         XCTAssertTrue(app.staticTexts["备份已导出。"].waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["好"].tap()
@@ -662,7 +678,13 @@ final class EditFlowUITests: XCTestCase {
 
         openDataManagement()
         app.buttons["从文件恢复"].tap()
-        let file = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
+        if !folderTitle.waitForExistence(timeout: 2) {
+            let folder = app.cells.matching(NSPredicate(format: "label == %@", title)).firstMatch
+            XCTAssertTrue(folder.waitForExistence(timeout: 10), app.debugDescription)
+            folder.images.firstMatch.tap()
+        }
+        XCTAssertTrue(folderTitle.waitForExistence(timeout: 5), app.debugDescription)
+        let file = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "时光备份-")).firstMatch
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
         file.images.firstMatch.tap()
         let restore = app.buttons["恢复备份"].firstMatch

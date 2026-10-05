@@ -1,0 +1,47 @@
+name: iOS CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests and Release Build
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      IOS_RUNTIME: com.apple.CoreSimulator.SimRuntime.iOS-26-5
+      IOS_DEVICE_TYPE: com.apple.CoreSimulator.SimDeviceType.iPhone-17
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Test and build
+        run: bash scripts/ci.sh
+
+      - name: Upload test results and logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ios-ci-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/ci/*/*.log
+            build/ci/*/coverage.json
+            build/ci/*/Tests.xcresult
+          retention-days: 14
+          if-no-files-found: warn

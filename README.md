@@ -66,6 +66,22 @@ The visual system uses an off-white canvas, ink typography, restrained vermilion
 
 Use a dedicated test simulator: UI fixtures deliberately reset its library. Backup, migration, CloudKit record/state, and notification planning tests run without a live cloud account. Automated debug launches suppress cloud operations and notification permission prompts.
 
+### Continuous integration
+
+[iOS CI](.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatches with Xcode 26.6 on a macOS 26 runner. It generates the Xcode project, runs unit tests and application UI tests with coverage, then builds the app and widget in Release for the simulator. No signing certificates or cloud credentials are required; simulator ad-hoc signing remains enabled.
+
+Run the same entry point locally with Xcode, XcodeGen, and `jq` installed:
+
+```sh
+bash scripts/ci.sh
+```
+
+The script creates a disposable iPhone 17 simulator and deletes only that device on exit, including test failures. It does not reset existing simulators. Locally it selects the newest installed iOS runtime; `IOS_RUNTIME` and `IOS_DEVICE_TYPE` can select another installed runtime and compatible device type. The workflow pins both for reproducibility.
+
+Logs, line coverage (`coverage.json`), and test results with XCTest attachments (`Tests.xcresult`) are saved under `build/ci/run.*` and uploaded by CI for 14 days, including failed-test results. Open an `.xcresult` in Xcode to inspect failures and screenshots. Coverage is reported without an arbitrary pass threshold.
+
+The `DaysRememberCI` scheme skips only `WidgetHomeUITests`, which depends on a manually configured Home Screen. Both application widget galleries and widget rendering tests remain covered. The regular `DaysRemember` scheme retains the manual Home Screen test. CI does not validate device provisioning, live CloudKit sync, APNs, or App Store archives.
+
 The test scheme defaults to Simplified Chinese for existing regression assertions. Run `LocalizationTests` with `-testLanguage en -testRegion US` and `-testLanguage zh-Hant -testRegion TW` to check each language's runtime strings, plural rules, reminder payloads, and widget accessibility. `LocalizationUITests` covers English editors, large-text share/widget layouts, and persistent user content across a Traditional Chinese relaunch.
 
 `LanguagePreferencesTests` uses isolated defaults to cover the local language preference and bundle selection. `LanguagePreferencesUITests` covers in-app switching, cancellation, relaunch persistence, data preservation, and the language sheet at the largest Dynamic Type size; teardown restores System Default and normal text size.

@@ -114,6 +114,25 @@ schemes:
       config: Debug
     archive:
       config: Release
+  DaysRememberCI:
+    build:
+      targets:
+        DaysRemember: all
+    test:
+      config: Debug
+      language: zh-Hans
+      region: CN
+      gatherCoverageData: true
+      coverageTargets:
+        - DaysRemember
+      targets:
+        - name: DaysRememberTests
+          parallelizable: false
+        - name: DaysRememberUITests
+          parallelizable: false
+          skippedTests:
+            # Requires a manually configured SpringBoard Home Screen.
+            - WidgetHomeUITests
   DaysRememberWidget:
     build:
       targets:

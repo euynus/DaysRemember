@@ -13,7 +13,7 @@ final class SwiftUIEditorUITests: XCTestCase {
         let draftTitle = "Template gallery draft"
         title.tap()
         title.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: initialTitle.count))
-        title.typeText(draftTitle)
+        title.typeText(draftTitle + "\n")
         openTemplateGallery(in: app)
 
         let original = revealTemplate("systemDefault", in: app, scrollingDown: true)
@@ -149,7 +149,9 @@ final class SwiftUIEditorUITests: XCTestCase {
         XCTAssertTrue(open.isHittable)
         XCTAssertTrue(photos.isHittable)
         open.tap()
-        XCTAssertTrue(app.buttons["closeDayCoverTemplateGallery"].waitForExistence(timeout: 5))
+        let opened = app.buttons["closeDayCoverTemplateGallery"].waitForExistence(timeout: 5)
+        if !opened { attach(app, name: "Template gallery did not open") }
+        XCTAssertTrue(opened, app.debugDescription)
     }
 
     private func revealTemplate(_ rawValue: String, in app: XCUIApplication,

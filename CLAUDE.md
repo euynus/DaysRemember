@@ -21,11 +21,10 @@ CLI build (no Xcode UI). The simulator UDID is whichever iPhone 17/Pro is booted
 ```sh
 xcodebuild -project DaysRemember.xcodeproj -scheme DaysRemember \
   -destination 'platform=iOS Simulator,id=<UDID>' \
-  -derivedDataPath /tmp/dr-dd build \
-  CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+  -derivedDataPath /tmp/dr-dd build
 ```
 
-Tests: `xcodebuild ... test` with the same flags. Single test class: append `-only-testing:DaysRememberTests/LunarTests`.
+Keep simulator ad-hoc signing enabled as configured in `project.yml`; App Group and widget integration require it. Use `bash scripts/ci.sh` for the full CI suite and Release build on a disposable simulator. The `DaysRememberCI` scheme excludes only the manually configured Home Screen widget test. Single test class on a dedicated test device: `xcodebuild ... test -only-testing:DaysRememberTests/LunarTests`. UI fixtures reset their simulator's library, so never use a simulator containing user data.
 
 When SourceKit reports "Cannot find Theme / Day / DayInfo in scope" on a single file, that is **file-isolation** — there's no per-file build context outside the project. Run `xcodegen generate` and rely on `xcodebuild` for ground truth.
 
