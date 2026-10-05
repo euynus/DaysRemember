@@ -362,6 +362,135 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
+    func testLocalRecoverySnapshotRetainsActiveDeletedAndConflictPhotos() throws {
+        try withStorage { defaults, _, directory in
+            let original = backup()
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            try store.restoreBackup(original)
+            var remote = original.days[0]
+            remote.photoData = Data([10, 11, 12])
+            try store.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [remote]))
+
+            let recovery = try XCTUnwrap(defaults.data(forKey: "recoveryBackup.v1"))
+            XCTAssertThrowsError(try JSONDecoder().decode(DayBackup.self, from: recovery))
+            let decoded = try PhotoFileStore(directory: directory).decoder().decode(DayBackup.self, from: recovery)
+            XCTAssertEqual(decoded.days, original.days)
+            XCTAssertEqual(decoded.deletedDays, original.deletedDays)
+            XCTAssertEqual(decoded.syncConflicts, original.syncConflicts)
+            let reloaded = DayStore(defaults: defaults, photoDirectory: directory)
+            try reloaded.restorePreviousBackup()
+            assertLibrary(reloaded, matches: original)
+            assertLibrary(DayStore(defaults: defaults, photoDirectory: directory), matches: original)
+        }
+    }
+
+    func testLocalMigrationSnapshotExportsPortablePhotosAfterRelaunch() throws {
+        try withStorage { defaults, _, directory in
+            let original = backup()
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            try store.restoreBackup(original)
+            let imported = day("Legacy addition", photo: Data([10, 11, 12]))
+            XCTAssertEqual(try store.importLegacyData(days: [imported], categories: []), 1)
+
+            let migration = try XCTUnwrap(defaults.data(forKey: "preCloudKitBackup.v1"))
+            XCTAssertThrowsError(try JSONDecoder().decode(DayBackup.self, from: migration))
+            let portable = try store.exportMigrationBackup()
+            let decoded = try DayBackup.decode(portable)
+            XCTAssertEqual(decoded.days, original.days)
+            XCTAssertEqual(decoded.categories, original.categories)
+            XCTAssertEqual(decoded.deletedDays, original.deletedDays)
+            XCTAssertEqual(decoded.syncConflicts, original.syncConflicts)
+            XCTAssertEqual(try DayStore(defaults: defaults, photoDirectory: directory).exportMigrationBackup(), portable)
+        }
+    }
+
+    func testPreviousInlineRecoverySnapshotsRemainReadable() throws {
+        for version in [1, 2] {
+            try withStorage { defaults, _, directory in
+                var original = backup()
+                original.version = version
+                if version == 1 { original.syncConflicts = [] }
+                defaults.set(try original.encoded(), forKey: "recoveryBackup.v1")
+
+                let store = DayStore(defaults: defaults, photoDirectory: directory)
+                try store.restorePreviousBackup()
+
+                assertLibrary(store, matches: original)
+                assertLibrary(DayStore(defaults: defaults, photoDirectory: directory), matches: original)
+            }
+        }
+    }
+
+    func testFailedCloudPhotoStagingKeepsPreviousRecoverySnapshot() throws {
+        try withStorage { defaults, suite, directory in
+            var original = day("Current without photo")
+            original.photoData = nil
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            store.add(original)
+            let recovery = try DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: []).encoded()
+            defaults.set(recovery, forKey: "recoveryBackup.v1")
+            try Data("blocked directory".utf8).write(to: directory)
+            let before = persisted(defaults, suite: suite)
+            var remote = original
+            remote.photoData = Data([10, 11, 12])
+
+            XCTAssertThrowsError(try store.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [remote])))
+
+            XCTAssertEqual(store.days, [original])
+            XCTAssertEqual(persisted(defaults, suite: suite), before)
+            XCTAssertEqual(defaults.data(forKey: "recoveryBackup.v1"), recovery)
+            XCTAssertNil(defaults.data(forKey: "pendingRestore.v1"))
+        }
+    }
+
+    func testCloudUpdateAndRecoveryWorkBeyondPortableBackupLimit() throws {
+        try withStorage { defaults, _, directory in
+            let photo = Data(repeating: 0x5a, count: 1024 * 1024)
+            let original = (0..<80).map { day("Large library \($0)", photo: photo) }
+            XCTAssertGreaterThan(original.count * photo.count * 4 / 3, DayBackup.maximumBytes)
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            store.days = original
+            XCTAssertNil(store.saveError)
+            var remote = original[0]
+            remote.title = "Small remote title change"
+
+            try store.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [remote]))
+
+            var expected = original
+            expected[0] = remote
+            XCTAssertEqual(store.days, expected)
+            let recovery = try XCTUnwrap(defaults.data(forKey: "recoveryBackup.v1"))
+            XCTAssertLessThan(recovery.count, 100_000)
+            let snapshot = try PhotoFileStore(directory: directory).decoder().decode(DayBackup.self, from: recovery)
+            XCTAssertEqual(snapshot.days, original)
+            try store.applyCloudUpdate(CloudLibraryUpdate())
+            XCTAssertEqual(defaults.data(forKey: "recoveryBackup.v1"), recovery)
+
+            let reloaded = DayStore(defaults: defaults, photoDirectory: directory)
+            XCTAssertNil(reloaded.loadError)
+            XCTAssertEqual(reloaded.days, expected)
+            XCTAssertEqual(reloaded.syncConflicts.map(\.record), [.day(original[0])])
+            XCTAssertThrowsError(try reloaded.exportBackup()) { error in
+                guard case DayBackup.BackupError.tooLarge = error else {
+                    return XCTFail("Portable exports must retain their size limit: \(error)")
+                }
+            }
+            try reloaded.restorePreviousBackup()
+            XCTAssertEqual(reloaded.days, original)
+            XCTAssertTrue(reloaded.syncConflicts.isEmpty)
+            try reloaded.restorePreviousBackup()
+            XCTAssertEqual(reloaded.days, expected)
+            XCTAssertEqual(reloaded.syncConflicts.map(\.record), [.day(original[0])])
+            XCTAssertEqual(DayStore(defaults: defaults, photoDirectory: directory).days, expected)
+
+            let conflict = try XCTUnwrap(reloaded.syncConflicts.first)
+            try reloaded.restoreSyncConflict(id: conflict.id)
+            XCTAssertEqual(reloaded.days, original)
+            XCTAssertTrue(reloaded.syncConflicts.isEmpty)
+            XCTAssertEqual(DayStore(defaults: defaults, photoDirectory: directory).days, original)
+        }
+    }
+
     private func assertUnreadablePhoto(replacement: Data?) throws {
         try withStorage { defaults, suite, directory in
             let original = day("Affected photo")

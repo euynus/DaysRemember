@@ -191,15 +191,18 @@ final class DayStore {
     var hasRecoveryBackup: Bool { defaults.data(forKey: recoveryKey) != nil }
     var hasMigrationBackup: Bool { defaults.data(forKey: migrationKey) != nil }
 
+    private var currentBackup: DayBackup {
+        DayBackup(days: days, categories: categories, deletedDays: deletedDays, syncConflicts: syncConflicts)
+    }
+
     func exportMigrationBackup() throws -> Data {
         guard let data = defaults.data(forKey: migrationKey) else { throw DayBackup.BackupError.unreadable }
-        return data
+        return try decodeLocalBackup(data).encoded()
     }
 
     func exportBackup() throws -> Data {
         guard loadError == nil else { throw DayBackup.BackupError.unreadable }
-        return try DayBackup(days: days, categories: categories, deletedDays: deletedDays,
-                             syncConflicts: syncConflicts).encoded()
+        return try currentBackup.encoded()
     }
 
     func exportOriginalData() throws -> Data {
@@ -213,12 +216,22 @@ final class DayStore {
     }
 
     func restoreBackup(_ backup: DayBackup) throws {
-        let data = try backup.encoded()
+        try restoreBackup(backup, encoded: backup.encoded())
+    }
+
+    private func restoreBackup(_ backup: DayBackup, encoded: Data?) throws {
+        try backup.validate()
         if loadError == nil {
-            try keepRecoveryBackup()
+            do {
+                try keepRecoveryBackup()
+            } catch {
+                // Damaged photo files must not prevent an explicit repair or lose their original bytes.
+                defaults.set(try exportOriginalData(), forKey: "unreadableData.v1")
+            }
         } else {
             defaults.set(try exportOriginalData(), forKey: "unreadableData.v1")
         }
+        let data = try encoded ?? localBackupData(backup, repairCorruptFiles: true)
         try applyBackup(backup, encoded: data, repairCorruptFiles: true)
         loadError = nil
         saveError = nil
@@ -231,15 +244,27 @@ final class DayStore {
 
     func restorePreviousBackup() throws {
         guard let data = defaults.data(forKey: recoveryKey) else { throw DayBackup.BackupError.unreadable }
-        try restoreBackup(DayBackup.decode(data))
+        try restoreBackup(decodeLocalBackup(data), encoded: nil)
     }
 
     private func keepRecoveryBackup() throws {
-        defaults.set(try exportBackup(), forKey: recoveryKey)
+        defaults.set(try localBackupData(currentBackup), forKey: recoveryKey)
     }
 
     private func keepMigrationBackup() throws {
-        if !hasMigrationBackup { defaults.set(try exportBackup(), forKey: migrationKey) }
+        if !hasMigrationBackup { defaults.set(try localBackupData(currentBackup), forKey: migrationKey) }
+    }
+
+    private func localBackupData(_ backup: DayBackup, repairCorruptFiles: Bool = false) throws -> Data {
+        try backup.validate()
+        // Internal journals reference immutable photos and do not inherit the portable export limit.
+        return try (photoFiles?.encoder(repairCorruptFiles: repairCorruptFiles) ?? JSONEncoder()).encode(backup)
+    }
+
+    private func decodeLocalBackup(_ data: Data) throws -> DayBackup {
+        let backup = try (photoFiles?.decoder() ?? JSONDecoder()).decode(DayBackup.self, from: data)
+        try backup.validate()
+        return backup
     }
 
     private func applyBackup(_ backup: DayBackup, encoded: Data, repairCorruptFiles: Bool = false) throws {
@@ -254,6 +279,7 @@ final class DayStore {
         syncConflicts = backup.syncConflicts
         isRestoring = false
         defaults.removeObject(forKey: pendingRestoreKey)
+        saveError = nil
         rescheduleNotifications()
         reloadWidgetTimelines()
     }
@@ -291,7 +317,7 @@ final class DayStore {
                 backup.days[index].categoryLabel = category.name
             }
         }
-        try restoreBackup(backup)
+        try restoreBackup(backup, encoded: nil)
     }
 
     func discardSyncConflict(id: String) throws {
@@ -457,9 +483,7 @@ final class DayStore {
         do {
             let backup = DayBackup(days: days, categories: categories, deletedDays: deletedDays,
                                    syncConflicts: syncConflicts)
-            try backup.validate()
-            // This local journal references staged photos, so edits do not inherit the export size limit.
-            let encoded = try (photoFiles?.encoder() ?? JSONEncoder()).encode(backup)
+            let encoded = try localBackupData(backup)
             try applyBackup(backup, encoded: encoded)
             saveError = nil
             if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
@@ -518,7 +542,7 @@ final class DayStore {
         if !additions.isEmpty || !categoryAdditions.isEmpty {
             let backup = DayBackup(days: days + additions, categories: categories + categoryAdditions,
                                    deletedDays: deletedDays, syncConflicts: syncConflicts)
-            let encoded = try backup.encoded()
+            let encoded = try localBackupData(backup)
             try keepMigrationBackup()
             try keepRecoveryBackup()
             try applyBackup(backup, encoded: encoded)
@@ -566,7 +590,6 @@ final class DayStore {
         }
         let backup = DayBackup(days: nextDays, categories: nextCategories, deletedDays: nextDeleted,
                                syncConflicts: nextConflicts)
-        let encoded = try backup.encoded()
         guard nextDays != days || nextCategories != categories || nextDeleted != deletedDays
                 || !update.recoveryDays.isEmpty || !update.recoveryCategories.isEmpty else { return }
         var recoveryDays = days
@@ -586,7 +609,9 @@ final class DayStore {
         let recovery = DayBackup(days: recoveryDays, categories: recoveryCategories,
                                  deletedDays: deletedDays.filter { entry in !recoveryDays.contains(where: { $0.id == entry.id }) },
                                  syncConflicts: syncConflicts)
-        defaults.set(try recovery.encoded(), forKey: recoveryKey)
+        let recoveryData = try localBackupData(recovery)
+        let encoded = try localBackupData(backup)
+        defaults.set(recoveryData, forKey: recoveryKey)
         try applyBackup(backup, encoded: encoded)
     }
 }

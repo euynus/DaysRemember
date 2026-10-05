@@ -63,7 +63,7 @@ struct DayBackup: Codable {
     func encoded() throws -> Data {
         try validate()
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .withoutEscapingSlashes
+        encoder.outputFormatting = [.withoutEscapingSlashes, .sortedKeys]
         let data = try encoder.encode(self)
         guard data.count <= Self.maximumBytes else { throw BackupError.tooLarge }
         return data
