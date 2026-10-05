@@ -554,14 +554,12 @@ final class DayStore {
         var nextConflicts = syncConflicts
         var conflictRecords = update.recoveryDays.map(CloudLibraryRecord.day)
             + update.recoveryCategories.map(CloudLibraryRecord.category)
-        // A pending delivery can be replayed after another local edit; retain both versions.
+        // Even an equal value can be queued before a later local edit. Retain every replaced version.
         conflictRecords += days.filter { day in
-            update.recoveryDays.contains(where: { $0.id == day.id })
-                && nextDays.first(where: { $0.id == day.id }) != day
+            nextDays.first(where: { $0.id == day.id }) != day
         }.map(CloudLibraryRecord.day)
         conflictRecords += categories.filter { category in
-            update.recoveryCategories.contains(where: { $0.id == category.id })
-                && nextCategories.first(where: { $0.id == category.id }) != category
+            nextCategories.first(where: { $0.id == category.id }) != category
         }.map(CloudLibraryRecord.category)
         for record in conflictRecords where !nextConflicts.contains(where: { $0.record == record }) {
             nextConflicts.append(SyncConflict(record: record))

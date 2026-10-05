@@ -194,6 +194,61 @@ final class SyncConflictTests: XCTestCase {
         }
     }
 
+    func testFailedEqualDeliveryRetainsEditsMadeBeforeRetryWithoutRecoveryHints() throws {
+        try withDefaults { defaults in
+            let directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("SyncConflictTests.\(UUID().uuidString)")
+            try Data("blocked photo directory".utf8).write(to: directory)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            let category = CategoryDefinition(id: "custom.equal", name: "Original category",
+                                              icon: "tag", colorToken: .sage, isSystem: false)
+            store.categories.append(category)
+            var original = day("equal-before-failure", photo: nil)
+            original.categoryID = category.id
+            original.categoryLabel = category.name
+            store.add(original)
+            let other = day("other-batch-record", photo: Data([4, 5, 6]))
+            let pending = CloudLibraryUpdate(upsertedDays: [original, other], upsertedCategories: [category])
+            XCTAssertTrue(pending.recoveryDays.isEmpty)
+            XCTAssertTrue(pending.recoveryCategories.isEmpty)
+            XCTAssertThrowsError(try store.applyCloudUpdate(pending))
+            XCTAssertEqual(store.days, [original])
+            XCTAssertTrue(store.syncConflicts.isEmpty)
+            XCTAssertNil(defaults.data(forKey: "pendingRestore.v1"))
+
+            var editedCategory = category
+            editedCategory.name = "Edited while sync was paused"
+            store.updateCategory(editedCategory)
+            var edited = try XCTUnwrap(store.days.first)
+            edited.note = "Local draft saved after the failed delivery"
+            XCTAssertTrue(store.update(edited))
+            try FileManager.default.removeItem(at: directory)
+
+            let relaunched = DayStore(defaults: defaults, photoDirectory: directory)
+            XCTAssertEqual(relaunched.days, [edited])
+            try relaunched.applyCloudUpdate(pending)
+            XCTAssertEqual(relaunched.days, [original, other])
+            XCTAssertEqual(relaunched.category(for: category.id), category)
+            XCTAssertEqual(relaunched.syncConflicts.count, 2)
+            XCTAssertEqual(relaunched.syncConflicts.filter { $0.record == .day(edited) }.count, 1)
+            XCTAssertEqual(relaunched.syncConflicts.filter { $0.record == .category(editedCategory) }.count, 1)
+
+            let conflicts = relaunched.syncConflicts
+            try relaunched.applyCloudUpdate(pending)
+            XCTAssertEqual(relaunched.syncConflicts, conflicts)
+            let unrelated = day("later-remote-addition", photo: nil)
+            try relaunched.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [unrelated]))
+            let final = DayStore(defaults: defaults, photoDirectory: directory)
+            XCTAssertEqual(final.syncConflicts, conflicts)
+            XCTAssertEqual(final.days, [original, other, unrelated])
+            let selected = try XCTUnwrap(conflicts.first { $0.record == .day(edited) })
+            try final.restoreSyncConflict(id: selected.id)
+            XCTAssertEqual(final.days, [edited, other, unrelated])
+            XCTAssertEqual(final.syncConflicts, conflicts.filter { $0.id != selected.id })
+        }
+    }
+
     func testDiscardRemovesOnlySelectedConflictAndPersistsWithoutChangingLibrary() throws {
         try withDefaults { defaults in
             let store = DayStore(defaults: defaults)
