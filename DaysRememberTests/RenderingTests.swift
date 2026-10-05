@@ -216,6 +216,38 @@ final class RenderingTests: XCTestCase {
         }
     }
 
+    func testPolishedDayLayoutsRenderAtCompactAndAccessibleWidths() throws {
+        let suite = "PolishedLayoutTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = DayStore(defaults: defaults)
+        let today = try XCTUnwrap(CNDate.calendar.date(from: DateComponents(year: 2026, month: 4, day: 23)))
+        let day = Day(id: "layout-long", title: "Long-term memories from a summer journey together",
+                      date: today.addingTimeInterval(-12_000 * 86_400), category: .travel, photo: .japan, pinned: true)
+        let upcoming = Day(id: "layout-upcoming", title: "下一个夏天，一起去看从未见过的海岸线",
+                           date: today.addingTimeInterval(23 * 86_400), category: .travel, photo: .japan)
+        let category = CategoryDefinition(id: "layout-category", name: "Journeys and the people we meet along the way",
+                                          icon: "camera", colorToken: .dusty, isSystem: false)
+        for width in [272.0, 342.0, 382.0] {
+            for size in [DynamicTypeSize.large, .accessibility5] {
+                let content = VStack(alignment: .leading, spacing: 24) {
+                    UpcomingDayView(day: upcoming)
+                    DayRow(day: day)
+                    CategoryTile(category: category, coverDay: day, count: 12_345, onEdit: {})
+                }
+                .environment(store)
+                .environment(\.currentDay, today)
+                .environment(\.dynamicTypeSize, size)
+                .frame(width: width)
+                .background(Theme.bg)
+                let image = try render(content)
+                XCTAssertEqual(image.width, Int(width))
+                XCTAssertGreaterThan(image.height, 300)
+                attach(image, name: "Polished-layout-\(Int(width))-\(size)")
+            }
+        }
+    }
+
     private func render<V: View>(_ view: V) throws -> CGImage {
         let renderer = ImageRenderer(content: view.environment(\.dynamicTypeSize, .large))
         renderer.scale = 1

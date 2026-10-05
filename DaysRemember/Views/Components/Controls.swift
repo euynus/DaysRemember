@@ -124,11 +124,13 @@ struct InfoChip: View {
             Image(systemName: systemName)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Theme.ink2)
+                .accessibilityHidden(true)
             Text(text).font(Theme.sans(13)).foregroundStyle(Theme.ink2)
         }
         .padding(.vertical, 8)
         .frame(minHeight: 36)
         .padding(.trailing, 12)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -184,9 +186,10 @@ struct NavHeader<Trailing: View>: View {
                     .accessibilityLabel("返回")
             }
             Text(title)
-                .font(Theme.sans(onBack == nil ? 28 : 19, weight: .medium))
+                .font(Theme.sans(onBack == nil ? 28 : 19, weight: .medium,
+                                 relativeTo: onBack == nil ? .largeTitle : .headline))
                 .foregroundStyle(Theme.ink)
-                .lineLimit(1)
+                .lineLimit(onBack == nil ? 1 : 2)
                 .minimumScaleFactor(0.5)
             Spacer(minLength: 8)
             trailing()

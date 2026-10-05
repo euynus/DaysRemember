@@ -52,54 +52,70 @@ struct HomeView: View {
             header
             if isSearching { searchField }
             chips
-            ScrollView(.vertical, showsIndicators: false) {
-                if days.isEmpty {
-                    let empty = emptyStateCopy()
-                    ContentUnavailableView(empty.title,
-                                           systemImage: empty.symbol,
-                                           description: Text(empty.detail))
-                        .foregroundStyle(Theme.muted)
-                        .padding(.top, 56)
-                        .padding(.horizontal, 24)
-                    if filter == .all && searchText.isEmpty {
-                        Button("记录第一个日子", systemImage: "plus", action: onAdd)
-                            .buttonStyle(.borderedProminent)
-                            .tint(Theme.accent)
-                            .padding(.top, 12)
-                    }
-                } else {
+            ScrollViewReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
-                        if let hero {
-                            UpcomingDayView(day: hero, onOpen: onOpen)
-                                .dayContextMenu(day: hero)
-                                .padding(.bottom, feedDays.isEmpty ? 0 : 26)
-                        }
-                        if !feedDays.isEmpty {
-                            HStack {
-                                SectionHeader(hero != nil
-                                              ? String(localized: "其他日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                                              : filter == .all
-                                              ? String(localized: "日子清单", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                                              : label(for: filter))
-                                Text("\(feedDays.count)")
-                                    .font(Theme.sans(12))
-                                    .foregroundStyle(Theme.muted)
+                        if days.isEmpty {
+                            let empty = emptyStateCopy()
+                            ContentUnavailableView(empty.title,
+                                                   systemImage: empty.symbol,
+                                                   description: Text(empty.detail))
+                                .foregroundStyle(Theme.muted)
+                                .padding(.top, 56)
+                                .padding(.horizontal, 24)
+                            if filter == .all && searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                Button("记录第一个日子", systemImage: "plus", action: onAdd)
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(Theme.accent)
+                                    .padding(.top, 12)
                             }
-                            .padding(.top, 8)
-                            .padding(.bottom, 10)
-                            DayList(days: feedDays, onOpen: onOpen)
+                        } else {
+                            VStack(spacing: 0) {
+                                if let hero {
+                                    UpcomingDayView(day: hero, onOpen: onOpen)
+                                        .dayContextMenu(day: hero)
+                                        .padding(.bottom, feedDays.isEmpty ? 0 : 26)
+                                }
+                                if !feedDays.isEmpty {
+                                    HStack {
+                                        SectionHeader(hero != nil
+                                                      ? String(localized: "其他日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                                                      : filter == .all
+                                                      ? String(localized: "日子清单", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                                                      : label(for: filter))
+                                        Text("\(feedDays.count)")
+                                            .font(Theme.sans(12))
+                                            .foregroundStyle(Theme.muted)
+                                    }
+                                    .padding(.top, 8)
+                                    .padding(.bottom, 10)
+                                    DayList(days: feedDays, onOpen: onOpen)
+                                }
+                            }
+                            .padding(.horizontal, 24)
+                            .padding(.top, 4)
+                            .padding(.bottom, 24)
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 4)
-                    .padding(.bottom, 24)
+                    .id("home.feed.top")
                 }
+                .accessibilityIdentifier("home.feed")
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: filter) {
+                    searchFocused = false
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
+                        proxy.scrollTo("home.feed.top", anchor: .top)
+                    }
+                }
+                .onChange(of: searchText) { proxy.scrollTo("home.feed.top", anchor: .top) }
             }
-            .scrollDismissesKeyboard(.interactively)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
         .sensoryFeedback(.selection, trigger: filter)
+        .onChange(of: store.categories.map(\.id)) { _, ids in
+            if case .category(let id) = filter, !ids.contains(id) { filter = .all }
+        }
         .sheet(isPresented: $showingWidgets) { WidgetsPreviewView() }
         .sheet(isPresented: $showingData) { DataManagementView() }
         .sheet(isPresented: $showingLanguage) { LanguageSettingsView() }
@@ -109,7 +125,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center) {
                 Text("时光")
-                    .font(Theme.sans(30, weight: .medium))
+                    .font(Theme.sans(30, weight: .medium, relativeTo: .largeTitle))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -172,12 +188,14 @@ struct HomeView: View {
                 .focused($searchFocused)
                 .onSubmit { searchFocused = false }
                 .accessibilityLabel("搜索日子")
+                .accessibilityIdentifier("home.searchField")
             if !searchText.isEmpty {
                 Button("清除", systemImage: "xmark.circle.fill") { searchText = "" }
                     .labelStyle(.iconOnly)
                     .frame(width: 44, height: 44)
                     .foregroundStyle(Theme.muted)
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("home.clearSearch")
             }
         }
         .padding(.horizontal, 14)
@@ -199,13 +217,17 @@ struct HomeView: View {
 
     private var chips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 24) {
+            HStack(spacing: 16) {
                 ForEach(filters, id: \.self) { f in
                     Button { filter = f } label: {
                         Text(verbatim: label(for: f))
                             .font(Theme.sans(14, weight: f == filter ? .semibold : .regular))
                             .foregroundStyle(f == filter ? Theme.ink : Theme.muted)
-                            .frame(minHeight: 44)
+                            .lineLimit(1)
+                            .frame(maxWidth: 220)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                             .overlay(alignment: .bottom) {
                                 if f == filter {
                                     Rectangle().fill(Theme.accent).frame(height: 2)

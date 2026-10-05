@@ -4,6 +4,7 @@ struct DetailView: View {
     @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let day: Day
     @State private var showShare = false
     @State private var showEditor = false
@@ -22,8 +23,9 @@ struct DetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    PhotoTile(day: day, flat: true, cornerRadius: 0)
-                        .frame(height: 280)
+                    Color.clear
+                        .aspectRatio(1.5, contentMode: .fit)
+                        .overlay { PhotoTile(day: day, flat: true, cornerRadius: 0) }
                     VStack(alignment: .leading, spacing: 20) {
                         titleBlock(day: day)
                         hero(day: day, info: info)
@@ -75,6 +77,7 @@ struct DetailView: View {
             HStack(spacing: 8) {
                 FAB(systemName: currentDay.pinned ? "star.fill" : "star", action: togglePinned)
                     .accessibilityLabel(currentDay.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                    .accessibilityAddTraits(currentDay.pinned ? .isSelected : [])
                 Menu {
                     Button("编辑", systemImage: "pencil") { showEditor = true }
                     Button("分享", systemImage: "square.and.arrow.up") { showShare = true }
@@ -99,7 +102,7 @@ struct DetailView: View {
     private func togglePinned() {
         var updated = currentDay
         updated.pinned.toggle()
-        withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+        withAnimation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.78)) {
             _ = store.update(updated)
         }
     }
@@ -109,10 +112,10 @@ struct DetailView: View {
     private func titleBlock(day: Day) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(verbatim: day.title)
-                .font(Theme.sans(28, weight: .medium))
+                .font(Theme.sans(28, weight: .medium, relativeTo: .title))
                 .foregroundStyle(Theme.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.7)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("detail.title")
             MetaRow(metaItems(day: day))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -129,13 +132,7 @@ struct DetailView: View {
         let countdownLabel = info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             : info.isPast ? String(localized: "\(info.days) 天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             : String(localized: "\(info.days) 天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        return VStack(alignment: .leading, spacing: 20) {
-            if day.recurring, let elapsedDays = info.elapsedDays {
-                Text("已过 \(elapsedDays) 天")
-                    .font(Theme.sans(24, weight: .medium))
-                    .foregroundStyle(Theme.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+        return VStack(alignment: .leading, spacing: 14) {
             if day.recurring {
                 VStack(alignment: .leading, spacing: 6) {
                     if let number = info.anniversaryNumber, number > 0 {
@@ -151,7 +148,7 @@ struct DetailView: View {
             }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
-                    .font(info.isToday ? Theme.sans(44) : Theme.number(100))
+                    .font(info.isToday ? Theme.sans(44) : Theme.number(92))
                     .monospacedDigit()
                     .foregroundStyle(Theme.accent)
                     .lineLimit(1)
@@ -166,6 +163,13 @@ struct DetailView: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(countdownLabel)
+            .accessibilityIdentifier("detail.countdown")
+            if day.recurring, let elapsedDays = info.elapsedDays {
+                Text("已过 \(elapsedDays) 天")
+                    .font(Theme.sans(16, weight: .medium))
+                    .foregroundStyle(Theme.ink2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 

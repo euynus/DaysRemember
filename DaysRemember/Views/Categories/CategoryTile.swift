@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CategoryTile: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let category: CategoryDefinition
     let coverDay: Day?
     let count: Int
@@ -9,33 +10,41 @@ struct CategoryTile: View {
     var body: some View {
         NavigationLink(value: CategoryRoute.category(category.id)) {
             VStack(alignment: .leading, spacing: 12) {
-                if let coverDay {
-                    PhotoTile(day: coverDay, flat: true, cornerRadius: 3)
-                        .frame(height: 118)
-                } else {
-                    Rectangle().fill(category.colorToken.soft)
-                        .frame(height: 118)
-                        .overlay {
+                Rectangle()
+                    .fill(category.colorToken.soft)
+                    .aspectRatio(4.0 / 3.0, contentMode: .fit)
+                    .overlay {
+                        if let coverDay {
+                            PhotoTile(day: coverDay, flat: true, cornerRadius: 3)
+                        } else {
                             Image(systemName: category.symbolName)
                                 .font(.system(size: 30, weight: .light))
                                 .foregroundStyle(category.colorToken.color)
                         }
-                        .accessibilityHidden(true)
-                }
-                HStack(alignment: .firstTextBaseline) {
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 6) {
                     Label(category.displayName, systemImage: category.symbolName)
                         .font(Theme.sans(15, weight: .medium))
                         .foregroundStyle(Theme.ink)
-                        .lineLimit(2)
-                    Spacer(minLength: 4)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 3)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("\(count)")
                         .font(Theme.number(22))
-                        .foregroundStyle(Theme.muted)
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.ink2)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressableTileStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(category.displayName)，\(count) 个日子")
         .accessibilityIdentifier("category-\(category.id)")
         .contextMenu {
             if !category.isSystem {
@@ -45,13 +54,21 @@ struct CategoryTile: View {
         .overlay(alignment: .topTrailing) {
             if !category.isSystem {
                 Button(action: onEdit) {
-                    Image(systemName: "ellipsis")
-                        .frame(width: 44, height: 44)
-                        .foregroundStyle(Theme.ink2)
+                    Label("编辑分类", systemImage: "pencil")
+                        .labelStyle(.iconOnly)
+                        .font(.body.weight(.medium))
+                        .frame(minWidth: 44, minHeight: 44)
+                        .foregroundStyle(Theme.ink)
                         .background(Theme.bg, in: Circle())
+                        .overlay {
+                            Circle().strokeBorder(Theme.hairlineStrong, lineWidth: 1)
+                        }
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel("编辑\(category.displayName)")
                 .accessibilityIdentifier("editCategory-\(category.id)")
+                .help("编辑分类")
+                .padding(6)
             }
         }
     }

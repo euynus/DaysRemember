@@ -172,6 +172,27 @@ private struct RootGate: View {
 @MainActor
 enum DebugLaunch {
     static func makeStore() -> DayStore {
+        if ProcessInfo.processInfo.arguments.contains("--ui-polish-fixture") {
+            let name = "UIPolishUITests.\(UUID().uuidString)"
+            guard let defaults = UserDefaults(suiteName: name) else {
+                preconditionFailure("Unable to create isolated UI test storage")
+            }
+            let store = DayStore(defaults: defaults)
+            let category = CategoryDefinition(id: "ui-polish-custom", name: "Journeys and the people we meet along the way",
+                                              icon: "camera", colorToken: .dusty, isSystem: false)
+            store.categories = [category] + CategoryDefinition.system
+            let calendar = CNDate.calendar
+            let featured = Day(id: "ui-polish-featured", title: "和朋友去看海",
+                               date: calendar.date(byAdding: .day, value: 10, to: Today.date)!,
+                               category: .travel, photo: .japan)
+            let long = Day(id: "ui-polish-long",
+                           title: "Long-term memories from a summer journey together, with every little moment kept close to our hearts",
+                           date: calendar.date(byAdding: .day, value: -12_000, to: Today.date)!,
+                           category: .travel, photo: .japan, categoryID: category.id,
+                           note: "Every day has a story worth remembering.", pinned: true, categoryLabel: category.name)
+            store.days = [featured, long] + SampleData.days
+            return store
+        }
         guard ProcessInfo.processInfo.arguments.contains("--simulate-photo-save-failure") else {
             return DayStore()
         }
@@ -220,7 +241,8 @@ enum DebugLaunch {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("--screen") || args.contains("--tab") { return true }
         if args.contains("--empty-library") || args.contains("--seed-sample-data")
-            || args.contains("--seed-sync-conflicts") || args.contains("--simulate-photo-save-failure") { return true }
+            || args.contains("--seed-sync-conflicts") || args.contains("--simulate-photo-save-failure")
+            || args.contains("--ui-polish-fixture") { return true }
         if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] != nil { return true }
         return false
     }
