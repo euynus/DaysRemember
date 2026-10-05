@@ -10,18 +10,18 @@ import XCTest
 /// scenario. Step descriptions are written in Chinese to match the app's domain
 /// language; method names stay in English so the report is greppable.
 final class BDDTests: XCTestCase {
+    private var suite = ""
+    private var defaults: UserDefaults!
 
-    override func setUp() {
-        super.setUp()
-        SharedStorage.defaults.removeObject(forKey: "days.v1")
-        SharedStorage.defaults.removeObject(forKey: "days.v2")
-        SharedStorage.defaults.removeObject(forKey: "categories.v1")
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        suite = "BDDTests.\(UUID().uuidString)"
+        defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
     }
 
     override func tearDown() {
-        SharedStorage.defaults.removeObject(forKey: "days.v1")
-        SharedStorage.defaults.removeObject(forKey: "days.v2")
-        SharedStorage.defaults.removeObject(forKey: "categories.v1")
+        defaults?.removePersistentDomain(forName: suite)
+        defaults = nil
         super.tearDown()
     }
 
@@ -29,7 +29,7 @@ final class BDDTests: XCTestCase {
 
     @MainActor
     func test_addingADay_landsAtTopOfTheList() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
 
         given("一个空的日子列表") {
             store.days = []
@@ -50,7 +50,7 @@ final class BDDTests: XCTestCase {
 
     @MainActor
     func test_pinningADay_movesItAheadOfCloserNonPinnedDays() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
 
         given("两个未置顶的日子，一近一远") {
             store.days = [
@@ -78,7 +78,7 @@ final class BDDTests: XCTestCase {
 
     @MainActor
     func test_filteringByCategory_returnsOnlyMatchingDays() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
 
         given("分布在爱情 / 家人 / 旅行三个分类的日子") {
             store.days = [
@@ -105,7 +105,7 @@ final class BDDTests: XCTestCase {
 
     @MainActor
     func test_creatingCustomCategoryAndUsingIt_dayCarriesItsLabel() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
         var customID = ""
 
         given("初始状态：仅有 5 个系统分类") {
@@ -134,7 +134,7 @@ final class BDDTests: XCTestCase {
 
     @MainActor
     func test_renamingCustomCategory_existingDaysGetTheNewLabelAutomatically() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
         var customID = ""
 
         given("一个自定义分类 朋友 + 它下面的一条日子") {
@@ -162,7 +162,7 @@ final class BDDTests: XCTestCase {
 
     @MainActor
     func test_deletingCustomCategory_migratesDaysToTheChosenTarget() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
         var customID = ""
 
         given("一个有两条日子的自定义分类 朋友") {

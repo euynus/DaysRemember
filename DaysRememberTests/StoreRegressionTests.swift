@@ -6,7 +6,8 @@ final class StoreRegressionTests: XCTestCase {
     private func withRestoredDefaults(_ body: () throws -> Void) rethrows {
         let shared = SharedStorage.defaults
         let standard = UserDefaults.standard
-        let sharedKeys = ["days.v1", "days.v2", "categories.v1", "icloud.localTimestamp.icloud.days.v1",
+        let sharedKeys = ["days.v1", "days.v2", "categories.v1", "deletedDays.v1", "syncConflicts.v1",
+                          "pendingRestore.v1", "icloud.localTimestamp.icloud.days.v1",
                           "icloud.localTimestamp.icloud.categories.v1", "icloud.localTimestamp.icloud.settings.v1"]
         let settingsKeys = ["hasOnboarded", "notif.pre7", "notif.pre3", "notif.pre1", "notif.day0",
                             "notif.memory", "notif.moments", "notif.quiet", "notif.hour", "notif.minute"]

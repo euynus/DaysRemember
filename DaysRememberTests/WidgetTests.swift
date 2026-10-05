@@ -88,11 +88,10 @@ final class WidgetTests: XCTestCase {
 
     @MainActor
     func testQueryReadsAppWritesAndRemovesDeletedDays() async throws {
-        let original = SharedStorage.defaults.data(forKey: "days.v1")
-        let current = SharedStorage.defaults.data(forKey: "days.v2")
+        let keys = ["days.v1", "days.v2", "deletedDays.v1"]
+        let original = keys.map { ($0, SharedStorage.defaults.object(forKey: $0)) }
         defer {
-            SharedStorage.defaults.set(original, forKey: "days.v1")
-            SharedStorage.defaults.set(current, forKey: "days.v2")
+            for (key, value) in original { SharedStorage.defaults.set(value, forKey: key) }
         }
         let store = DayStore()
         store.days = []

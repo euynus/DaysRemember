@@ -2,6 +2,9 @@ import XCTest
 @testable import DaysRemember
 
 final class UIUXModelTests: XCTestCase {
+    private var suite = ""
+    private var defaults: UserDefaults!
+
     func testLegacyCategoryIconsKeepTheirMeaning() {
         let icons = ["plane": "airplane", "cake": "birthday.cake",
                      "cap": "graduationcap", "paw": "pawprint",
@@ -12,17 +15,15 @@ final class UIUXModelTests: XCTestCase {
         }
     }
 
-    override func setUp() {
-        super.setUp()
-        SharedStorage.defaults.removeObject(forKey: "days.v1")
-        SharedStorage.defaults.removeObject(forKey: "days.v2")
-        SharedStorage.defaults.removeObject(forKey: "categories.v1")
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        suite = "UIUXModelTests.\(UUID().uuidString)"
+        defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
     }
 
     override func tearDown() {
-        SharedStorage.defaults.removeObject(forKey: "days.v1")
-        SharedStorage.defaults.removeObject(forKey: "days.v2")
-        SharedStorage.defaults.removeObject(forKey: "categories.v1")
+        defaults?.removePersistentDomain(forName: suite)
+        defaults = nil
         super.tearDown()
     }
 
@@ -51,7 +52,7 @@ final class UIUXModelTests: XCTestCase {
 
     @MainActor
     func testDeletingCustomCategoryMigratesDays() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
         store.days = []
         let custom = store.addCategory(name: "朋友", icon: "person.2", colorToken: .dusty)
         store.add(Day(id: "friend", title: "朋友聚会", date: Date(),
@@ -67,7 +68,7 @@ final class UIUXModelTests: XCTestCase {
 
     @MainActor
     func testSortedDaysOrdersByPinnedThenUpcomingThenDistance() {
-        let store = DayStore()
+        let store = DayStore(defaults: defaults)
         let today = CNDate.calendar.startOfDay(for: Today.date)
         func offset(_ days: Int) -> Date {
             CNDate.calendar.date(byAdding: .day, value: days, to: today)!
