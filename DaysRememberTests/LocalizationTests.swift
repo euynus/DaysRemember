@@ -43,6 +43,29 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    func testTemplateLibraryNamesAreLocalizedInAppAndWidget() throws {
+        let plugins = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
+        let widget = try XCTUnwrap(Bundle(url: plugins.appendingPathComponent("DaysRememberWidget.appex")))
+        let names = [
+            ("远山", "Distant Peaks", "遠山"),
+            ("花园", "Garden", "花園"),
+            ("星野", "Under the Stars", "星野"),
+            ("归家", "Homecoming", "歸家"),
+            ("相伴", "Companions", "相伴"),
+            ("启程", "Off We Go", "啟程"),
+            ("模板插图", "Illustrations", "模板插圖"),
+        ]
+        for bundle in [Bundle.main, widget] {
+            for language in languages {
+                let localized = try localizedBundle(language, in: bundle)
+                for (key, english, traditional) in names {
+                    let text = String(localized: String.LocalizationValue(key), bundle: localized)
+                    XCTAssertEqual(text, language == "en" ? english : language == "zh-Hant" ? traditional : key)
+                }
+            }
+        }
+    }
+
     func testLocalizedDatesKeepShanghaiDayBoundaries() throws {
         let date = try XCTUnwrap(CNDate.calendar.date(from: DateComponents(year: 2026, month: 4, day: 23)))
         XCTAssertEqual(CNDate.full(date, locale: Locale(identifier: "en_US")), "April 23, 2026")

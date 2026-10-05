@@ -134,7 +134,7 @@ final class RenderingTests: XCTestCase {
 
     func testDefaultIllustrationsFitWithoutCropping() throws {
         for size in [CGSize(width: 300, height: 120), CGSize(width: 62, height: 72)] {
-            for style in [PhotoStyle.systemDefault, .birthday, .japan, .study, .home] {
+            for style in PhotoStyle.pickerOptions {
                 let image = try XCTUnwrap(UIImage(named: style.assetName))
                 let expected = try render(Image(uiImage: image).resizable().scaledToFit()
                     .frame(width: size.width, height: size.height)
@@ -145,6 +145,86 @@ final class RenderingTests: XCTestCase {
                                "\(style.rawValue) at \(size)")
             }
         }
+    }
+
+    func testTemplatePickerUsesDistinctArtworkWithoutRemappingLegacyStyles() throws {
+        XCTAssertEqual(PhotoStyle.pickerOptions.count, 12)
+        XCTAssertEqual(Set(PhotoStyle.pickerOptions).count, 12)
+        XCTAssertEqual(Set(PhotoStyle.pickerOptions.map(\.assetName)).count, 12)
+        XCTAssertEqual(Set(PhotoStyle.allCases.map(\.assetName)), Set(PhotoStyle.pickerOptions.map(\.assetName)))
+
+        let legacyAssets: [String: [String]] = [
+            "CoverFlowers": ["systemDefault", "wedding", "memorial", "health", "sketchLove", "sketchGarden"],
+            "CoverCelebration": ["baby", "birthday", "sketchFamily"],
+            "CoverCoast": ["japan", "sketchTravel", "sketchMountain", "sketchSea"],
+            "CoverJournal": ["study", "work", "sketchWork", "sketchCafe"],
+            "CoverEveryday": ["pet", "home", "sketchLife"],
+        ]
+        for (asset, identifiers) in legacyAssets {
+            for identifier in identifiers {
+                let data = try JSONEncoder().encode(identifier)
+                let style = try JSONDecoder().decode(PhotoStyle.self, from: data)
+                XCTAssertEqual(style.rawValue, identifier)
+                XCTAssertEqual(style.assetName, asset, identifier)
+            }
+        }
+    }
+
+    func testEveryTemplateSurvivesPersistenceAndBackupRoundTrip() throws {
+        let suite = "TemplatePersistenceTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let days = PhotoStyle.pickerOptions.map { style in
+            Day(id: "template.\(style.rawValue)", title: style.displayName,
+                date: Date(timeIntervalSince1970: 1_777_000_000), category: .life, photo: style)
+        }
+        let store = DayStore(defaults: defaults)
+        store.days = days
+        XCTAssertEqual(DayStore(defaults: defaults).days, days)
+        XCTAssertEqual(SharedStorage.loadDays(defaults: defaults), days)
+        XCTAssertEqual(try DayBackup.decode(store.exportBackup()).days, days)
+    }
+
+    func testEveryTemplateAssetIsAvailableInAppAndWidget() throws {
+        let plugins = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
+        let widget = try XCTUnwrap(Bundle(url: plugins.appendingPathComponent("DaysRememberWidget.appex")))
+        for bundle in [Bundle.main, widget] {
+            for style in PhotoStyle.pickerOptions {
+                let image = try XCTUnwrap(UIImage(named: style.assetName, in: bundle, compatibleWith: nil),
+                                          "\(style.assetName) in \(bundle.bundleURL.lastPathComponent)")
+                XCTAssertGreaterThanOrEqual(image.size.width, 1024)
+                XCTAssertGreaterThanOrEqual(image.size.height, 1024)
+                let thumbnail = try XCTUnwrap(PhotoTile.thumbnail(image, maximumPixelSize: 512)?.cgImage)
+                XCTAssertLessThanOrEqual(max(thumbnail.width, thumbnail.height), 512)
+            }
+        }
+    }
+
+    func testTemplateLibraryRendersCoverAndWidgetContactSheet() throws {
+        let styles = PhotoStyle.pickerOptions
+        let sheet = VStack(spacing: 20) {
+            ForEach(Array(stride(from: 0, to: styles.count, by: 3)), id: \.self) { start in
+                HStack(alignment: .top, spacing: 16) {
+                    ForEach(styles[start..<min(start + 3, styles.count)], id: \.self) { style in
+                        VStack(spacing: 8) {
+                            PhotoTile(style: style, flat: true, cornerRadius: 3)
+                                .frame(width: 164, height: 104)
+                            Text(style.displayName).font(Theme.sans(14))
+                            DayWidgetCard(day: Day(id: style.rawValue, title: style.displayName,
+                                                   date: Today.date.addingTimeInterval(10 * 86_400),
+                                                   category: .life, photo: style), size: .small)
+                                .frame(width: 164, height: 164)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Theme.bg)
+        let image = try render(sheet)
+        XCTAssertEqual(image.width, 556)
+        XCTAssertGreaterThan(image.height, 1100)
+        attach(image, name: "All 12 template covers and small widgets")
     }
 
     func testUserPhotoFocusSelectsTheCorrectCrop() throws {

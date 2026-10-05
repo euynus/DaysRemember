@@ -1,6 +1,62 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "远山" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Distant Peaks" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "远山" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "遠山" } }
+      }
+    },
+    "花园" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Garden" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "花园" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "花園" } }
+      }
+    },
+    "星野" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Under the Stars" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "星野" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "星野" } }
+      }
+    },
+    "归家" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Homecoming" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "归家" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "歸家" } }
+      }
+    },
+    "相伴" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Companions" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "相伴" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "相伴" } }
+      }
+    },
+    "启程" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Off We Go" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "启程" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "啟程" } }
+      }
+    },
+    "模板插图" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Illustrations" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "模板插图" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "模板插圖" } }
+      }
+    },
     "语言" : {
       "extractionState" : "manual",
       "localizations" : {

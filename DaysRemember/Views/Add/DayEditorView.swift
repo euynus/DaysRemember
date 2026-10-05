@@ -16,6 +16,8 @@ struct DayEditorView: View {
     @State private var pickerItem: PhotosPickerItem?
     @State private var isLoadingPhoto = false
     @State private var photoError: String?
+    @State private var showTemplateGallery = false
+    @ScaledMetric(relativeTo: .caption) private var coverSwatchWidth: CGFloat = 80
     @State private var recurring: Bool
     @State private var solar: Bool
     @State private var reminderOffsets: [Int]?
@@ -32,10 +34,6 @@ struct DayEditorView: View {
     @State private var showDatePicker = false
     @State private var confirmDiscard = false
     @State private var saveError: String?
-
-    private static let pickerOptions: [PhotoStyle] = [
-        .systemDefault, .birthday, .japan, .study, .home,
-    ]
 
     init(day: Day? = nil) {
         editingDay = day
@@ -97,6 +95,7 @@ struct DayEditorView: View {
                 .padding(.bottom, 40)
             }
             .scrollDismissesKeyboard(.interactively)
+            .accessibilityIdentifier("dayEditorScroll")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
@@ -108,6 +107,7 @@ struct DayEditorView: View {
             }
         }
         .sheet(isPresented: $showDatePicker) { datePickerSheet }
+        .sheet(isPresented: $showTemplateGallery) { templateGallery }
         .sheet(isPresented: $showReminderSettings) {
             DayReminderSettingsView(offsets: reminderOffsets, time: reminderTime,
                                     globalOffsets: globalReminderOffsets, globalTime: globalReminderTime) { offsets, time in
@@ -232,30 +232,166 @@ struct DayEditorView: View {
     // MARK: - Cover picker
 
     private var coverPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(Self.pickerOptions, id: \.self) { preset in
-                    let selected = photoData == nil && photo.assetName == preset.assetName
-                    Button {
-                        pickerItem = nil
-                        photo = preset
-                        photoData = nil
-                        resetFocus()
-                    } label: {
-                        miniPolaroid(selected: selected) {
-                            PhotoTile(style: preset, flat: true, cornerRadius: 8, maximumPixelSize: 192)
-                                .frame(width: 50, height: 50)
-                        }
-                    }
-                    .buttonStyle(PressScale(scale: 0.95))
-                    .accessibilityLabel("选择\(preset.displayName)封面")
-                    .accessibilityAddTraits(selected ? [.isSelected] : [])
+        VStack(alignment: .leading, spacing: 10) {
+            let layout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+                : AnyLayout(HStackLayout(spacing: 12))
+            layout {
+                Button {
+                    showTemplateGallery = true
+                } label: {
+                    Label("模板插图", systemImage: "square.grid.2x2")
+                        .font(Theme.sans(14, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(PressScale())
+                .accessibilityIdentifier("openDayCoverTemplateGallery")
+
+                if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
                 photosPickerTile
             }
-            .padding(.vertical, 4)
-            .padding(.horizontal, 1)
+
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 10) {
+                        ForEach(PhotoStyle.pickerOptions, id: \.self) { preset in
+                            let selected = isTemplateSelected(preset)
+                            Button {
+                                selectTemplate(preset)
+                            } label: {
+                                VStack(spacing: 7) {
+                                    miniPolaroid(selected: selected) {
+                                        PhotoTile(style: preset, flat: true, cornerRadius: 4, maximumPixelSize: 192)
+                                            .frame(width: 64, height: 64)
+                                    }
+                                    Text(preset.displayName)
+                                        .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
+                                        .foregroundStyle(selected ? Theme.accent : Theme.ink2)
+                                        .multilineTextAlignment(.center)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .frame(width: coverSwatchWidth)
+                            }
+                            .buttonStyle(PressScale(scale: 0.95))
+                            .accessibilityLabel("选择\(preset.displayName)封面")
+                            .accessibilityIdentifier("cover-quick-template.\(preset.rawValue)")
+                            .accessibilityAddTraits(selected ? [.isSelected] : [])
+                            .id(preset.assetName)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 1)
+                }
+                .accessibilityIdentifier("dayCoverQuickTemplates")
+                .onChange(of: photoData == nil ? photo.assetName : nil, initial: true) { _, asset in
+                    if let asset { proxy.scrollTo(asset, anchor: .center) }
+                }
+            }
         }
+    }
+
+    private var templateGallery: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Text("模板插图")
+                    .font(Theme.sans(18, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityIdentifier("dayCoverTemplateGalleryTitle")
+                Spacer(minLength: 8)
+                Button {
+                    showTemplateGallery = false
+                } label: {
+                    Label("关闭", systemImage: "xmark")
+                        .labelStyle(.iconOnly)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.ink2)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressScale())
+                .accessibilityIdentifier("closeDayCoverTemplateGallery")
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 20)
+            .padding(.bottom, 10)
+
+            RowDivider()
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14),
+                                             count: dynamicTypeSize.isAccessibilitySize ? 1 : 2),
+                              alignment: .leading, spacing: 22) {
+                        ForEach(PhotoStyle.pickerOptions, id: \.self) { preset in
+                            galleryTemplate(preset)
+                                .id(preset.assetName)
+                        }
+                    }
+                    .padding(22)
+                }
+                .accessibilityIdentifier("dayCoverTemplateGallery")
+                .onAppear {
+                    if photoData == nil {
+                        proxy.scrollTo(photo.assetName, anchor: .center)
+                    }
+                }
+            }
+        }
+        .background(Theme.bg.ignoresSafeArea())
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func galleryTemplate(_ preset: PhotoStyle) -> some View {
+        let selected = isTemplateSelected(preset)
+        return Button {
+            selectTemplate(preset)
+            showTemplateGallery = false
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                PhotoTile(style: preset, flat: true, cornerRadius: 6, maximumPixelSize: 1024)
+                    .aspectRatio(4.0 / 3.0, contentMode: .fit)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(selected ? Theme.accent : Theme.hairline,
+                                          lineWidth: selected ? 2 : 1)
+                    }
+                HStack(alignment: .top, spacing: 8) {
+                    Text(preset.displayName)
+                        .font(Theme.sans(15, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.body)
+                        .foregroundStyle(Theme.accent)
+                        .opacity(selected ? 1 : 0)
+                        .accessibilityHidden(true)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressScale(scale: 0.98))
+        .accessibilityLabel("选择\(preset.displayName)封面")
+        .accessibilityIdentifier("cover-template.\(preset.rawValue)")
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
+    }
+
+    private func isTemplateSelected(_ preset: PhotoStyle) -> Bool {
+        photoData == nil && photo.assetName == preset.assetName
+    }
+
+    private func selectTemplate(_ preset: PhotoStyle) {
+        pickerItem = nil
+        guard !isTemplateSelected(preset) else { return }
+        photo = preset
+        photoData = nil
+        resetFocus()
     }
 
     /// Compact cover swatch with an explicit selection outline.
@@ -268,29 +404,44 @@ struct DayEditorView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .strokeBorder(selected ? Theme.accent : Theme.hairline, lineWidth: selected ? 2 : 1)
             }
+            .overlay(alignment: .bottomTrailing) {
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, Theme.accent)
+                        .padding(2)
+                        .accessibilityHidden(true)
+                }
+            }
     }
 
     private var photosPickerTile: some View {
         PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
-            Group {
+            HStack(spacing: 8) {
                 if let data = photoData {
                     miniPolaroid(selected: true) {
                         PhotoTile(style: photo, imageData: data, focusX: coverFocusX, focusY: coverFocusY,
-                                  flat: true, cornerRadius: 8, maximumPixelSize: 192)
-                            .frame(width: 50, height: 50)
+                                  flat: true, cornerRadius: 4, maximumPixelSize: 192)
+                            .frame(width: 32, height: 32)
                     }
                 } else {
-                    Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .regular))
-                        .foregroundStyle(Theme.muted)
-                        .frame(width: 58, height: 58)
-                        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
-                        .shadow(color: Color(hex: 0x15171C).opacity(0.05), radius: 1, x: 0, y: 1)
+                    Image(systemName: "photo.badge.plus")
+                        .font(.system(size: 20))
+                        .frame(width: 40, height: 40)
                 }
+                Text("照片")
+                    .font(Theme.sans(14, weight: .semibold))
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .foregroundStyle(Theme.ink2)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(PressScale())
         .accessibilityLabel("选择相册封面")
         .accessibilityIdentifier("dayCoverPhotoPicker")
+        .accessibilityAddTraits(photoData != nil ? [.isSelected] : [])
         .overlay { if isLoadingPhoto { ProgressView() } }
         .task(id: pickerItem) {
             guard let item = pickerItem else { isLoadingPhoto = false; return }
