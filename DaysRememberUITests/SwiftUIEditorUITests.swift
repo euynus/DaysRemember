@@ -6,6 +6,37 @@ final class SwiftUIEditorUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    func testFailedPhotoSaveKeepsEditorDraft() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchArguments = ["--simulate-photo-save-failure", "--tab", "home"]
+        app.launch()
+        let day = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Save failure fixture")).firstMatch
+        XCTAssertTrue(day.waitForExistence(timeout: 5), app.debugDescription)
+        day.tap()
+        app.buttons["detail.moreActions"].tap()
+        app.buttons["pencil"].firstMatch.tap()
+
+        let title = app.textFields["dayTitleField"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        title.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Save failure fixture".count))
+        let draft = "Draft survives failed save"
+        title.typeText(draft)
+        app.buttons["saveDayButton"].tap()
+
+        let alert = app.alerts["未能保存"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        alert.buttons["好"].tap()
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertEqual(title.value as? String, draft)
+        XCTAssertTrue(app.buttons["saveDayButton"].exists)
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Editor draft retained after photo write failure"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     func testGregorianPickerKeepsTheStoredDayOutsideShanghaiTimeZone() {
         let app = XCUIApplication()
         app.launchEnvironment["DR_PIN_TODAY"] = "1"

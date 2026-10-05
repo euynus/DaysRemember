@@ -220,7 +220,8 @@ final class PhotoFilePersistenceTests: XCTestCase {
             edited.photoData = Data([30, 31, 32])
             store.update(edited)
 
-            XCTAssertNotNil(store.loadError)
+            XCTAssertNil(store.loadError)
+            XCTAssertNotNil(store.saveError)
             XCTAssertEqual(store.days, [original])
             XCTAssertEqual(persisted(defaults, suite: suite), before)
             XCTAssertEqual(defaults.data(forKey: "days.v1"), legacy)
@@ -272,13 +273,15 @@ final class PhotoFilePersistenceTests: XCTestCase {
                 var edited = original
                 edited.title = "Must not save an unreadable reference"
                 store.update(edited)
-                XCTAssertNotNil(store.loadError)
+                XCTAssertNil(store.loadError)
+                XCTAssertNotNil(store.saveError)
                 XCTAssertEqual(store.days, [original])
                 XCTAssertEqual(defaults.data(forKey: "days.v2"), metadata)
                 if let damage { XCTAssertEqual(try Data(contentsOf: url), damage) }
 
                 try store.restoreBackup(DayBackup(days: [original], categories: CategoryDefinition.system, deletedDays: []))
                 XCTAssertNil(store.loadError)
+                XCTAssertNil(store.saveError)
                 XCTAssertEqual(DayStore(defaults: defaults, photoDirectory: directory).days, [original])
                 if let damage {
                     let raw = try JSONDecoder().decode([String: Data].self, from: store.exportOriginalData())
@@ -304,11 +307,28 @@ final class PhotoFilePersistenceTests: XCTestCase {
                 let before = persisted(defaults, suite: suite)
                 if deleting { store.deleteCategory(id: category.id, migrateTo: DayCategory.life.rawValue) }
                 else { category.name = "Renamed"; store.updateCategory(category) }
-                XCTAssertNotNil(store.loadError)
+                XCTAssertNil(store.loadError)
+                XCTAssertNotNil(store.saveError)
                 XCTAssertEqual(store.days, [original])
                 XCTAssertEqual(store.categories, categories)
                 XCTAssertEqual(persisted(defaults, suite: suite), before)
                 XCTAssertNil(defaults.data(forKey: "pendingRestore.v1"))
+
+                try FileManager.default.removeItem(at: directory)
+                if deleting {
+                    store.deleteCategory(id: category.id, migrateTo: DayCategory.life.rawValue)
+                    XCTAssertFalse(store.categories.contains { $0.id == category.id })
+                    XCTAssertEqual(store.days.first?.categoryID, DayCategory.life.rawValue)
+                } else {
+                    store.updateCategory(category)
+                    XCTAssertEqual(store.category(for: category.id).name, "Renamed")
+                    XCTAssertEqual(store.days.first?.categoryLabel, "Renamed")
+                }
+                XCTAssertNil(store.loadError)
+                XCTAssertNil(store.saveError)
+                let reloaded = DayStore(defaults: defaults, photoDirectory: directory)
+                XCTAssertEqual(reloaded.days, store.days)
+                XCTAssertEqual(reloaded.categories, store.categories)
             }
         }
     }

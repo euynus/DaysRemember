@@ -34,6 +34,7 @@ final class DayStore {
     private(set) var deletedDays: [DeletedDay] = []
     private(set) var syncConflicts: [SyncConflict] = []
     private(set) var loadError: String?
+    private(set) var saveError: String?
     private(set) var syncPreparationError: String?
 
     private let storageKey: String
@@ -120,15 +121,20 @@ final class DayStore {
         do {
             let data = try (photoFiles?.encoder() ?? JSONEncoder()).encode(value)
             defaults.set(data, forKey: storageKey)
+            saveError = nil
             if cloudSyncEnabled {
                 CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
             }
             return true
         } catch {
-            loadError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
+            saveError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
                                bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             return false
         }
+    }
+
+    func dismissSaveError() {
+        saveError = nil
     }
 
     private func reloadWidgetTimelines() {
@@ -137,19 +143,23 @@ final class DayStore {
         #endif
     }
 
-    func add(_ day: Day) {
-        guard loadError == nil, !days.contains(where: { $0.id == day.id }) else { return }
+    @discardableResult
+    func add(_ day: Day) -> Bool {
+        saveError = nil
+        guard loadError == nil, !days.contains(where: { $0.id == day.id }) else { return false }
         // Restore the active copy before removing its recoverable deleted copy.
         days.insert(normalized(day), at: 0)
-        guard loadError == nil else { return }
+        guard saveError == nil else { return false }
         deletedDays.removeAll { $0.id == day.id }
         persistDeletedDays()
+        return true
     }
     @discardableResult
     func update(_ day: Day) -> Bool {
+        saveError = nil
         guard loadError == nil, let i = days.firstIndex(where: { $0.id == day.id }) else { return false }
         days[i] = normalized(day)
-        return loadError == nil
+        return saveError == nil
     }
     func delete(_ day: Day) {
         guard loadError == nil, let current = days.first(where: { $0.id == day.id }) else { return }
@@ -211,6 +221,7 @@ final class DayStore {
         }
         try applyBackup(backup, encoded: data, repairCorruptFiles: true)
         loadError = nil
+        saveError = nil
         if cloudSyncEnabled {
             CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
         } else if cloudSyncRequested {
@@ -450,9 +461,10 @@ final class DayStore {
             // This local journal references staged photos, so edits do not inherit the export size limit.
             let encoded = try (photoFiles?.encoder() ?? JSONEncoder()).encode(backup)
             try applyBackup(backup, encoded: encoded)
+            saveError = nil
             if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
         } catch {
-            loadError = String(localized: "分类更改未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
+            saveError = String(localized: "分类更改未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
                                bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }

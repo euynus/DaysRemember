@@ -5,7 +5,11 @@ import WidgetKit
 @main
 struct DaysRememberApp: App {
     @Environment(\.scenePhase) private var scenePhase
+    #if DEBUG
+    @State private var store = DebugLaunch.makeStore()
+    #else
     @State private var store = DayStore()
+    #endif
     @State private var settings = AppSettings()
     @State private var router = DeepLinkRouter()
     @State private var currentDay = CNDate.calendar.startOfDay(for: Today.date)
@@ -167,6 +171,28 @@ private struct RootGate: View {
 /// DEBUG-only — never compiled into the App Store / Release build.
 @MainActor
 enum DebugLaunch {
+    static func makeStore() -> DayStore {
+        guard ProcessInfo.processInfo.arguments.contains("--simulate-photo-save-failure") else {
+            return DayStore()
+        }
+        // The failure fixture never reads or writes the real App Group library.
+        let name = "EditorSaveUITests.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: name) else {
+            preconditionFailure("Unable to create isolated editor test storage")
+        }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        let day = Day(id: "save-failure-fixture", title: "Save failure fixture", date: Today.date,
+                      category: .life, photo: .systemDefault,
+                      photoData: Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII="))
+        do {
+            defaults.set(try JSONEncoder().encode([day]), forKey: SharedStorage.legacyDaysKey)
+            try Data("blocked photo directory".utf8).write(to: directory)
+        } catch {
+            preconditionFailure("Unable to prepare editor save failure: \(error)")
+        }
+        return DayStore(defaults: defaults, photoDirectory: directory)
+    }
+
     enum Screen: String {
         case onboarding, detail, add, share, widgets
 
@@ -194,7 +220,7 @@ enum DebugLaunch {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("--screen") || args.contains("--tab") { return true }
         if args.contains("--empty-library") || args.contains("--seed-sample-data")
-            || args.contains("--seed-sync-conflicts") { return true }
+            || args.contains("--seed-sync-conflicts") || args.contains("--simulate-photo-save-failure") { return true }
         if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] != nil { return true }
         return false
     }

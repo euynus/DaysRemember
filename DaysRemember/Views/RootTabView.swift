@@ -29,6 +29,22 @@ struct RootTabView: View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .tint(Theme.accent)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if let error = store.saveError {
+                    HStack(alignment: .top, spacing: 12) {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button("关闭", systemImage: "xmark") { store.dismissSaveError() }
+                            .labelStyle(.iconOnly)
+                            .frame(minWidth: 44, minHeight: 44)
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(Theme.bg)
+                }
+            }
             .sheet(isPresented: $addingDay) { AddDayView().environment(store) }
             .onOpenURL { handleDeepLink($0) }
             .onChange(of: router.dayID) { _, id in routePending(id) }

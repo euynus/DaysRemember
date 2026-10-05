@@ -19,7 +19,7 @@ struct DataManagementView: View {
     var body: some View {
         NavigationStack {
             Form {
-                if let error = store.loadError {
+                if let error = store.loadError ?? store.saveError {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(Theme.accent)

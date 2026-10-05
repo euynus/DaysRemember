@@ -10,6 +10,7 @@ struct CategoryEditorView: View {
     @State private var icon: String
     @State private var colorToken: CategoryColorToken
     @State private var confirmingDelete = false
+    @State private var saveError: String?
 
     init(category: CategoryDefinition? = nil) {
         self.category = category
@@ -80,11 +81,18 @@ struct CategoryEditorView: View {
                     Button("迁移到 \(target.displayName)") {
                         Haptics.warning()
                         store.deleteCategory(id: category.id, migrateTo: target.id)
-                        dismiss()
+                        finishSaving()
                     }
                 }
             }
             Button("取消", role: .cancel) {}
+        }
+        .alert("未能保存", isPresented: Binding(
+            get: { saveError != nil }, set: { if !$0 { saveError = nil } }
+        )) {
+            Button("好", role: .cancel) { saveError = nil }
+        } message: {
+            Text(saveError ?? "")
         }
     }
 
@@ -234,6 +242,14 @@ struct CategoryEditorView: View {
             store.updateCategory(category)
         } else {
             store.addCategory(name: name, icon: icon, colorToken: colorToken)
+        }
+        finishSaving()
+    }
+
+    private func finishSaving() {
+        if let error = store.loadError ?? store.saveError {
+            saveError = error
+            return
         }
         Haptics.success()
         dismiss()

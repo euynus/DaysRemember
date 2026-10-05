@@ -592,14 +592,10 @@ struct DayEditorView: View {
             return
         }
 
-        if editingDay == nil {
-            store.add(new)
-        } else if !store.update(new) {
-            saveError = store.loadError ?? String(localized: "这个日子已被删除，修改尚未保存。草稿已保留。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            return
-        }
-        guard store.loadError == nil else {
-            saveError = store.loadError
+        let saved = editingDay == nil ? store.add(new) : store.update(new)
+        guard saved else {
+            saveError = store.loadError ?? store.saveError
+                ?? String(localized: "这个日子已被删除，修改尚未保存。草稿已保留。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             return
         }
         Haptics.success()

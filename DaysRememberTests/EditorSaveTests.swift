@@ -82,9 +82,16 @@ final class EditorSaveTests: XCTestCase {
 
             XCTAssertFalse(store.update(edited))
 
-            XCTAssertNotNil(store.loadError)
+            XCTAssertNil(store.loadError, "A recoverable save failure must not replace the root editor")
+            XCTAssertNotNil(store.saveError)
             XCTAssertEqual(store.days, [original])
             XCTAssertEqual(defaults.data(forKey: "days.v2"), before)
+
+            try FileManager.default.removeItem(at: blockedDirectory)
+            XCTAssertTrue(store.update(edited), "The same draft must be saveable after storage recovers")
+            XCTAssertNil(store.saveError)
+            XCTAssertEqual(store.days, [edited])
+            XCTAssertEqual(DayStore(defaults: defaults, photoDirectory: blockedDirectory).days, [edited])
         }
     }
 
@@ -107,6 +114,39 @@ final class EditorSaveTests: XCTestCase {
             XCTAssertEqual(reloaded.days.first?.categoryID, original.categoryID)
             XCTAssertEqual(reloaded.days.first?.categoryLabel, original.categoryLabel)
             XCTAssertEqual(reloaded.days.first?.category, .travel)
+        }
+    }
+
+    func testFailedAdditionPreservesDeletedCopyAndCanBeRetried() throws {
+        try withDefaults { defaults in
+            let directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("EditorSaveTests.\(UUID().uuidString)")
+            try Data("blocked photo directory".utf8).write(to: directory)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            var original = day("deleted-before-retry")
+            original.photoData = nil
+            XCTAssertTrue(store.add(original))
+            store.delete(original)
+            let deleted = store.deletedDays
+            var draft = original
+            draft.title = "Restored draft"
+            draft.photoData = Data([7, 8, 9])
+
+            XCTAssertFalse(store.add(draft))
+            XCTAssertNil(store.loadError)
+            XCTAssertNotNil(store.saveError)
+            XCTAssertTrue(store.days.isEmpty)
+            XCTAssertEqual(store.deletedDays, deleted)
+
+            try FileManager.default.removeItem(at: directory)
+            XCTAssertTrue(store.add(draft))
+            XCTAssertNil(store.saveError)
+            XCTAssertEqual(store.days, [draft])
+            XCTAssertTrue(store.deletedDays.isEmpty)
+            let reloaded = DayStore(defaults: defaults, photoDirectory: directory)
+            XCTAssertEqual(reloaded.days, [draft])
+            XCTAssertTrue(reloaded.deletedDays.isEmpty)
         }
     }
 
