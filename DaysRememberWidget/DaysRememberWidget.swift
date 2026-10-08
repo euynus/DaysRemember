@@ -44,24 +44,46 @@ struct DaysProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: SelectWidgetDay, in context: Context) async -> DaysEntry {
-        let entry = makeEntry(configuration: configuration, days: SharedStorage.loadDays(), asOf: Date())
+        var photos = PhotoLoader(library: SharedStorage.loadLibrary(), family: context.family)
+        let entry = makeEntry(configuration: configuration, photos: &photos, asOf: Date())
         return context.isPreview && configuration.day == nil && entry.day == nil
             ? placeholder(in: context) : entry
     }
 
     func timeline(for configuration: SelectWidgetDay, in context: Context) async -> Timeline<DaysEntry> {
         let now = Date()
-        let days = SharedStorage.loadDays()
+        var photos = PhotoLoader(library: SharedStorage.loadLibrary(), family: context.family)
         let entries = ([now] + CNDate.dayStarts(after: now, count: 7)).map {
-            makeEntry(configuration: configuration, days: days, asOf: $0)
+            makeEntry(configuration: configuration, photos: &photos, asOf: $0)
         }
         return Timeline(entries: entries, policy: .atEnd)
     }
 
-    private func makeEntry(configuration: SelectWidgetDay, days: [Day], asOf today: Date) -> DaysEntry {
+    private func makeEntry(configuration: SelectWidgetDay, photos: inout PhotoLoader, asOf today: Date) -> DaysEntry {
+        let days = photos.library.days
         let day = WidgetDay.resolve(in: days, selectedID: configuration.day?.id, today: today)
-        return DaysEntry(date: today, day: day, hasAnyDays: !days.isEmpty,
+        return DaysEntry(date: today, day: day.map { photos.load($0) }, hasAnyDays: !days.isEmpty,
                          selectionMissing: configuration.day != nil && day == nil)
+    }
+
+    /// Reads each displayed photo once per timeline; Lock Screen layouts never show photos.
+    private struct PhotoLoader {
+        let library: SharedStorage.Library
+        let showsPhotos: Bool
+        private var loaded: [String: Day] = [:]
+
+        init(library: SharedStorage.Library, family: WidgetFamily) {
+            self.library = library
+            showsPhotos = [.systemSmall, .systemMedium, .systemLarge].contains(family)
+        }
+
+        mutating func load(_ day: Day) -> Day {
+            guard showsPhotos else { return day }
+            if let cached = loaded[day.id] { return cached }
+            let withPhoto = library.withPhoto(day)
+            loaded[day.id] = withPhoto
+            return withPhoto
+        }
     }
 }
 

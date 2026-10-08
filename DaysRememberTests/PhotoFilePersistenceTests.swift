@@ -203,6 +203,33 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
+    func testWidgetLibraryReadsOnlyRequestedPhotos() throws {
+        try withStorage { defaults, _, directory in
+            let first = day("First widget photo", photo: Data([30, 31]))
+            let second = day("Second widget photo", photo: Data([40, 41]))
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            store.add(first)
+            store.add(second)
+            XCTAssertNil(store.loadError)
+
+            let library = SharedStorage.loadLibrary(defaults: defaults, photoDirectory: directory)
+            XCTAssertEqual(Set(library.days.map(\.id)), [first.id, second.id])
+            XCTAssertTrue(library.days.allSatisfy { $0.photoData == nil })
+            let loaded = library.withPhoto(try XCTUnwrap(library.days.first { $0.id == first.id }))
+            XCTAssertEqual(loaded, first)
+
+            // A damaged photo keeps the rest of the library visible and drops only that cover.
+            let metadata = try XCTUnwrap(defaults.data(forKey: "days.v2"))
+            let reference = try photoReference(in: metadata, for: second)
+            try Data("damaged".utf8).write(to: directory.appendingPathComponent(reference))
+            let damaged = SharedStorage.loadLibrary(defaults: defaults, photoDirectory: directory)
+            XCTAssertEqual(damaged.days.count, 2)
+            let fallback = damaged.withPhoto(try XCTUnwrap(damaged.days.first { $0.id == second.id }))
+            XCTAssertNil(fallback.photoData)
+            XCTAssertEqual(fallback.title, second.title)
+        }
+    }
+
     func testFailedPhotoWritePreservesInMemoryLibraryAndLegacyBytes() throws {
         try withStorage { defaults, suite, directory in
             let original = day("Original photo")

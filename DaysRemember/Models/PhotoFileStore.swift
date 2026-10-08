@@ -6,7 +6,14 @@ import Foundation
 final class PhotoFileStore {
     static let codingKey = CodingUserInfoKey(rawValue: "DaysRemember.PhotoFileStore")!
     static let repairKey = CodingUserInfoKey(rawValue: "DaysRemember.RepairPhotoFiles")!
+    static let deferredKey = CodingUserInfoKey(rawValue: "DaysRemember.DeferredPhotoFiles")!
     let directory: URL
+
+    /// Collects photo references during a metadata-only decode instead of reading files.
+    final class DeferredReferences {
+        private(set) var byDayID: [String: String] = [:]
+        func record(_ reference: String, for id: String) { byDayID[id] = reference }
+    }
     private var cached: [String: (reference: String, data: Data, stamp: FileStamp)] = [:]
 
     private struct FileStamp: Equatable {
@@ -47,6 +54,14 @@ final class PhotoFileStore {
     func decoder() -> JSONDecoder {
         let decoder = JSONDecoder()
         decoder.userInfo[Self.codingKey] = self
+        return decoder
+    }
+
+    /// Decodes file-backed photos as `nil` and records their references for `data(for:id:)`.
+    /// Inline photos from legacy records still decode in place.
+    func metadataDecoder(collecting references: DeferredReferences) -> JSONDecoder {
+        let decoder = decoder()
+        decoder.userInfo[Self.deferredKey] = references
         return decoder
     }
 

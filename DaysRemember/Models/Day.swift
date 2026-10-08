@@ -70,11 +70,16 @@ struct Day: Identifiable, Codable, Hashable {
         categoryID = try container.decodeIfPresent(String.self, forKey: .categoryID) ?? category.rawValue
         photo = try container.decodeIfPresent(PhotoStyle.self, forKey: .photo) ?? .home
         if let reference = try container.decodeIfPresent(String.self, forKey: .photoFile) {
-            guard let files = decoder.userInfo[PhotoFileStore.codingKey] as? PhotoFileStore else {
-                throw DecodingError.dataCorruptedError(forKey: .photoFile, in: container,
-                                                       debugDescription: "Local photo references are not portable.")
+            if let deferred = decoder.userInfo[PhotoFileStore.deferredKey] as? PhotoFileStore.DeferredReferences {
+                deferred.record(reference, for: id)
+                photoData = nil
+            } else {
+                guard let files = decoder.userInfo[PhotoFileStore.codingKey] as? PhotoFileStore else {
+                    throw DecodingError.dataCorruptedError(forKey: .photoFile, in: container,
+                                                           debugDescription: "Local photo references are not portable.")
+                }
+                photoData = try files.data(for: reference, id: id)
             }
-            photoData = try files.data(for: reference, id: id)
         } else {
             photoData = try container.decodeIfPresent(Data.self, forKey: .photoData)
         }
