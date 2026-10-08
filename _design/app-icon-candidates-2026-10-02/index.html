@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>时光 · 图标候选</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #242424; background: #f7f7f8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 0; }
+  main { max-width: 1200px; margin: auto; padding: 48px 36px 40px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
+  h1 { font-size: 24px; font-weight: 600; margin: 0; }
+  header span { font-size: 13px; color: #737373; }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+  figure { margin: 0; min-width: 0; }
+  a { display: block; border-radius: 22%; }
+  a:focus-visible { outline: 3px solid #1476b8; outline-offset: 6px; }
+  .large { display: block; width: 100%; aspect-ratio: 1; border-radius: 22%; }
+  figcaption { display: flex; gap: 10px; align-items: baseline; margin-top: 20px; font-size: 17px; }
+  figcaption b { color: #737373; font-size: 13px; }
+  .sizes { display: flex; align-items: end; gap: 24px; margin-top: 26px; padding-top: 24px; border-top: 1px solid #dedee0; }
+  .size { display: grid; justify-items: center; gap: 10px; color: #737373; font-size: 11px; }
+  .size img { display: block; border-radius: 22%; }
+  footer { margin-top: 40px; border-top: 1px solid #dedee0; padding-top: 20px; color: #737373; font-size: 12px; }
+  @media (max-width: 700px) { main { padding: 28px 20px; } header { display: block; margin-bottom: 28px; } header span { display: block; margin-top: 10px; } .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 20px; } figcaption { font-size: 15px; } .sizes { gap: 16px; } }
+</style>
+<main>
+  <header><h1>时光 · 图标候选</h1><span>2026.10.02 / 04 OPTIONS</span></header>
+  <section class="grid" aria-label="四款图标">
+    <figure>
+      <a href="a-bookmark.png" aria-label="打开 A 心愿书签原图"><img class="large" src="a-bookmark.png" alt="红底白色心形书签"></a>
+      <figcaption><b>A</b>心愿书签</figcaption>
+      <div class="sizes"><div class="size"><img src="a-bookmark.png" width="60" height="60" alt=""><span>60 px</span></div><div class="size"><img src="a-bookmark.png" width="40" height="40" alt=""><span>40 px</span></div></div>
+    </figure>
+    <figure>
+      <a href="b-handdrawn-calendar.png" aria-label="打开 B 手绘日历原图"><img class="large" src="b-handdrawn-calendar.png" alt="红色日历和绿色爱心的彩色手绘"></a>
+      <figcaption><b>B</b>手绘日历</figcaption>
+      <div class="sizes"><div class="size"><img src="b-handdrawn-calendar.png" width="60" height="60" alt=""><span>60 px</span></div><div class="size"><img src="b-handdrawn-calendar.png" width="40" height="40" alt=""><span>40 px</span></div></div>
+    </figure>
+    <figure>
+      <a href="c-day-night.png" aria-label="打开 C 昼夜时光原图"><img class="large" src="c-day-night.png" alt="黑底金色太阳与白色月牙"></a>
+      <figcaption><b>C</b>昼夜时光</figcaption>
+      <div class="sizes"><div class="size"><img src="c-day-night.png" width="60" height="60" alt=""><span>60 px</span></div><div class="size"><img src="c-day-night.png" width="40" height="40" alt=""><span>40 px</span></div></div>
+    </figure>
+    <figure>
+      <a href="d-memory-photo.png" aria-label="打开 D 珍藏瞬间原图"><img class="large" src="d-memory-photo.png" alt="蓝底叠放的日落照片与红色书签"></a>
+      <figcaption><b>D</b>珍藏瞬间</figcaption>
+      <div class="sizes"><div class="size"><img src="d-memory-photo.png" width="60" height="60" alt=""><span>60 px</span></div><div class="size"><img src="d-memory-photo.png" width="40" height="40" alt=""><span>40 px</span></div></div>
+    </figure>
+  </section>
+  <footer>时光 · Days Remember</footer>
+</main>
+</html>

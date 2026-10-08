@@ -1,0 +1,26 @@
+{
+  "mode": "built-in image_gen",
+  "purpose": "Non-destructive refinement candidates for the selected C day-and-night icon. The active AppIcon asset is unchanged.",
+  "reference": "current.png",
+  "recommended": "C1",
+  "candidates": [
+    {
+      "id": "C1",
+      "name": "几何精修",
+      "file": "c1-geometric.png",
+      "prompt": "Use case: precise-object-edit. Asset type: one standalone production-quality square iOS app icon bitmap, 1024x1024. Image 1 is the EDIT TARGET: the user's selected day-and-night icon for the meaningful-days and anniversary journal app Days Remember. Preserve its identity exactly: a golden sun disk in the upper-left of a bold ivory crescent moon, on a nearly black full-bleed background. Create a disciplined geometric refinement, not a new concept. Change only the proportions, optical alignment, spacing and edge finish. Reduce the sun slightly, give the crescent a stronger even body and gently softened tips, replace the knife-thin negative-space gap with a deliberate clear consistent black separation that survives at 40 pixels. Make the two shapes form one optically centered compact almost-circular emblem, occupying about 67 percent of the canvas width and height with generous balanced outer breathing room. The sun must remain a true simple circle; the moon hugs its right and lower side without touching the sun. Use exactly three perfectly flat solid colors: warm golden yellow, soft ivory, and near-black. Immaculate smooth edges and beautifully resolved curves, quiet confident premium editorial design. Opaque background extends to every edge and corner. No gradients, grain, textures, 3D, glow, drop shadow, embossing, outline, tiny details, extra dots, stars, rays, clock hands, heart, calendar, letters, text, border, inset rounded-square tile, phone, grid or comparison sheet. Return only this single refined square icon."
+    },
+    {
+      "id": "C2",
+      "name": "温润叠层",
+      "file": "c2-soft-relief.png",
+      "prompt": "Use case: style-transfer. Asset type: one standalone square iOS app icon bitmap, 1024x1024. Image 1 is the EDIT TARGET: the user's approved black, golden-yellow and ivory day-and-night mark for Days Remember, a personal meaningful-days journal. Preserve the exact recognizable idea and orientation: one golden sun disk upper-left, one ivory crescent encircling its right and lower side, no other motifs. Refine this into a warm tactile premium version with two exquisitely cut, very shallow matte paper layers. The sun is a clean circle and the moon has a broad graceful body, optically centered together in an emblem about 67 percent of the canvas. Give a clear substantial charcoal separation between the sun and moon so both remain distinct at 40px. Material treatment should be restrained: smooth matte warm-gold and ivory surfaces, extremely subtle local thickness at the shape edges, soft rounded crescent tips, no visible grain or busy texture, not inflated or glossy. Background is absolutely flat near-black extending to all four canvas edges. The impression is a treasured printed keepsake, sophisticated and calm, not a weather app. No additional elements, stars, rays, clock hands, calendar, letters or text; no glow, dramatic shadows, chrome, glass, gradients in the background, realistic planet textures, inset icon tile, border, premasked outer corners, mockup or comparison sheet. Output only one finished opaque square icon."
+    },
+    {
+      "id": "C3",
+      "name": "柔和轮廓",
+      "file": "c3-editorial.png",
+      "prompt": "Use case: style-transfer. Asset type: one standalone square iOS app icon bitmap, 1024x1024. Image 1 is the EDIT TARGET, the selected day-and-night brand mark for a meaningful-days journal. Keep its unmistakable two-shape composition and exact palette family: golden sun at upper-left and ivory crescent wrapping the right and lower side on a near-black background. Create a restrained editorial hand-cut-paper refinement that harmonizes with colorful hand-drawn journal covers, but is still a bold highly legible app icon. The emblem should be slightly more compact, centered with ample even negative space, roughly 65 percent of the canvas. Use a gently organic almost-circular golden disk and one broad confident ivory moon silhouette with softly rounded endpoints, separated by a clean thick crescent of the black background. Add personality through only very subtle asymmetry in the outer curves, like shapes carefully cut by an artist, not through extra decorations. Mostly flat solid fills, meticulously clean edges, absolutely no noisy paint texture, hatching or fine outlines. Warm, human, memorable, mature, not childish clipart. Preserve the golden-yellow / ivory / black identity; do not introduce other colors. Full-bleed opaque square, no outer round corners, no background gradient, drop shadow, 3D, stars, rays, dots, faces, clock, hourglass, calendar, text, letters, numerals, border, phone or presentation. A single finished square app icon only."
+    }
+  ]
+}

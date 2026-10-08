@@ -1,0 +1,30 @@
+{
+  "mode": "built-in image_gen",
+  "purpose": "Selection candidates only; current app icon is unchanged.",
+  "candidates": [
+    {
+      "id": "A",
+      "name": "心愿书签",
+      "file": "a-bookmark.png",
+      "prompt": "Use case: logo-brand. Asset type: standalone iOS app icon candidate, square opaque bitmap, 1024x1024 requested. Design a premium, memorable app icon for a Chinese anniversary and meaningful-days journal called Days Remember. Direction A: a beautifully proportioned ivory bookmark ribbon standing vertically on a rich flat vermilion-red full-bleed background. The bookmark has gently rounded upper corners and one deep neat V-shaped cut at its lower end. A small heart is cut out of the upper middle, showing the red background through it. Bold simple silhouette, optically centered, wide confident shapes, highly readable at 48px, editorial and warm but not childish. The bookmark occupies about 60 percent of canvas height and 38 percent of width. Immaculate flat graphic design with subtle paper feel, not 3D plastic. No text, letters, numbers, clock, hourglass, extra symbols, sparkles, gradients, border, drop shadow, mockup, phone, grid, outer rounded-square tile, or surrounding margins. The red artwork fills every edge; the OS will mask the square icon later. Generate only this one icon, not a presentation."
+    },
+    {
+      "id": "B",
+      "name": "手绘日历",
+      "file": "b-handdrawn-calendar.png",
+      "prompt": "Use case: logo-brand. Asset type: standalone iOS app icon candidate, square opaque bitmap, 1024x1024 requested. Design an exceptionally polished colorful pen-and-ink app icon for a personal anniversary journal called Days Remember. Direction B: one charming, bold, slightly tilted tear-off calendar page on a clean warm-white full-bleed background. Calendar has a vivid coral-red header, two chunky charcoal-black binder loops, an ivory paper body, and ONE large forest-green heart at its center instead of date numbers. Loose confident black ink contours with beautiful controlled irregularities; Notion-like editorial hand drawing with colored gouache flat fills. One tiny turned-up paper corner adds character. Very simple, sophisticated, not a busy scene or a clipart sticker. Calendar silhouette occupies 72 percent of canvas, broad forms readable at 48px. No lettering, numbers, words, grid of dates, flowers, surrounding objects, sparkles, drop shadows, branding, phone mockup, outer rounded-square border, or inset icon tile. Only a single icon design on an opaque square canvas."
+    },
+    {
+      "id": "C",
+      "name": "昼夜时光",
+      "file": "c-day-night.png",
+      "prompt": "Use case: logo-brand. Asset type: standalone iOS app icon candidate, square opaque bitmap, 1024x1024 requested. Create a striking premium app icon for an anniversary countdown and memory app called Days Remember. Direction C: an original elegant day-and-night emblem, one large buttery golden sun disk interlocked with one bold ivory crescent moon, together forming a balanced almost-circular composition. The crescent overlaps the disk with a clean sculptural negative-space curve. Deep charcoal-black full-bleed background, warm golden-yellow sun, ivory crescent. Strictly three colors, no gradient. Timeless Swiss graphic design, sophisticated geometric curves, warm optimistic sense of passing days, outstanding 48px recognition. Main emblem occupies roughly 68 percent of canvas. NOT a yin-yang symbol, no faces, no tiny stars, no rays, no clock hands, no numerals, text, lettering, extra decorative dots, shiny materials, shadow, border, rounded-square backing tile, phone mockup, or multiple variants. Background must fill every corner of the square. A single complete opaque square icon."
+    },
+    {
+      "id": "D",
+      "name": "珍藏瞬间",
+      "file": "d-memory-photo.png",
+      "prompt": "Use case: stylized-concept. Asset type: standalone iOS app icon candidate, square opaque bitmap, 1024x1024 requested. Design a refined tactile-paper app icon for a meaningful-days and anniversary journal called Days Remember. Direction D: two overlapping ivory instant-photo prints, the front print upright with a subtle playful tilt and the back one barely peeking out. The front photo contains an extremely simple graphic sunset: one big coral-red sun above one soft teal-green horizontal horizon on a light sky field. A tiny coral-red ribbon tab attached at the top marks this photo as a cherished memory. Rich clear cobalt-blue full-bleed background. Main photo group large, occupying 70 percent of canvas, beautiful broad silhouette and substantial cream paper border. Sophisticated restrained paper relief, gentle realistic paper thickness and very subtle local contact shadows, NOT glossy plastic and NOT photorealistic landscape. Readable as one compact mark at 48px. No text, letters, date numerals, scenery details, flowers, hearts, glitter, interface elements, phone mockup, surrounding rounded icon tile or extra border. The cobalt color fills every canvas edge. Generate one opaque square app icon only."
+    }
+  ]
+}
