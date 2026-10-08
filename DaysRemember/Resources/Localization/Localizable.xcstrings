@@ -1,6 +1,14 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "除夕" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Lunar New Year's Eve" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "除夕" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "除夕" } }
+      }
+    },
     "远山" : {
       "extractionState" : "manual",
       "localizations" : {

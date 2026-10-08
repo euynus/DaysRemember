@@ -22,15 +22,20 @@ enum SolarTerms {
         }
     }
 
-    /// Traditional Chinese holiday by lunar date (春节, 元宵, 端午, 中秋, …).
+    private static let holidays: [String: String] = [
+        "1-1":"春节", "1-15":"元宵", "2-2":"龙抬头", "5-5":"端午",
+        "7-7":"七夕", "7-15":"中元", "8-15":"中秋", "9-9":"重阳",
+        "12-8":"腊八", "12-23":"小年",
+    ]
+
+    /// Traditional Chinese holiday by lunar date (春节, 元宵, 端午, 中秋, 除夕, …).
+    /// Leap months repeat a month number but never its festivals.
     static func lunarHoliday(for date: Date) -> String? {
         let l = Lunar.solarToLunar(date)
-        let key = "\(l.month)-\(l.day)"
-        let map: [String: String] = [
-            "1-1":"春节", "1-15":"元宵", "2-2":"龙抬头", "5-5":"端午",
-            "7-7":"七夕", "7-15":"中元", "8-15":"中秋", "9-9":"重阳",
-            "12-8":"腊八", "12-23":"小年",
-        ]
-        return map[key].map { String(localized: String.LocalizationValue($0), bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
+        guard !l.isLeap else { return nil }
+        // 除夕 is the last day of the twelfth month, which has either 29 or 30 days.
+        let name = l.month == 12 && l.day == Lunar.dayCount(year: l.year, month: 12)
+            ? "除夕" : holidays["\(l.month)-\(l.day)"]
+        return name.map { String(localized: String.LocalizationValue($0), bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
     }
 }

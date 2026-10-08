@@ -68,6 +68,29 @@ final class LunarTests: XCTestCase {
         add(attachment)
     }
 
+    /// A leap month repeats its month number but not its festivals.
+    func testLunarHolidaysSkipLeapMonths() {
+        let doubled = [
+            ("端午", date(2028, 5, 28), date(2028, 6, 27)),  // 闰五月初五
+            ("龙抬头", date(2023, 2, 21), date(2023, 3, 23)), // 闰二月初二
+        ]
+        for (name, regular, leap) in doubled {
+            XCTAssertEqual(SolarTerms.lunarHoliday(for: regular), name)
+            XCTAssertTrue(Lunar.solarToLunar(leap).isLeap)
+            XCTAssertNil(SolarTerms.lunarHoliday(for: leap))
+        }
+    }
+
+    /// 除夕 falls on the last day of the twelfth month, whether it has 29 or 30 days.
+    func testLunarNewYearsEve() {
+        for (eve, newYear) in [(date(2026, 2, 16), date(2026, 2, 17)),
+                               (date(2025, 1, 28), date(2025, 1, 29))] {
+            XCTAssertEqual(SolarTerms.lunarHoliday(for: eve), "除夕")
+            XCTAssertEqual(SolarTerms.lunarHoliday(for: newYear), "春节")
+        }
+        XCTAssertNil(SolarTerms.lunarHoliday(for: date(2026, 2, 15)))
+    }
+
     func testFormatting() {
         let s = Lunar.fmt(date(2026, 4, 23))
         XCTAssertFalse(s.isEmpty)
