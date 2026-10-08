@@ -391,6 +391,26 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(spotlight.exists)
     }
 
+    func testCalendarTodayButtonAndEmptyDayStartsANewDay() {
+        let app = launchApp()
+        app.tabBars.buttons["日历"].tap()
+        let today = app.buttons["calendar.today"]
+        XCTAssertFalse(today.exists)
+        app.buttons["下个月"].tap()
+        XCTAssertTrue(today.waitForExistence(timeout: 5))
+        today.tap()
+        XCTAssertTrue(today.waitForNonExistence(timeout: 5))
+
+        let emptyDay = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "2026年4月9日")).firstMatch
+        XCTAssertTrue(emptyDay.waitForExistence(timeout: 5), app.debugDescription)
+        emptyDay.tap()
+        let date = app.buttons["dayDatePickerButton"]
+        XCTAssertTrue(date.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["2026年4月9日"].exists, app.debugDescription)
+        app.buttons["cancelDayButton"].tap()
+        XCTAssertTrue(date.waitForNonExistence(timeout: 5))
+    }
+
     func testCalendarMultiEventPickerAtLargestTextSize() {
         let app = XCUIApplication()
         app.launchEnvironment["DR_PIN_TODAY"] = "1"

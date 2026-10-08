@@ -1,6 +1,14 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "新建这一天的日子" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Creates a day on this date" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新建这一天的日子" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "新增這一天的日子" } }
+      }
+    },
     "关于提醒排程" : {
       "extractionState" : "manual",
       "localizations" : {

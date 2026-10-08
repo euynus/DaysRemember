@@ -37,9 +37,10 @@ struct DayEditorView: View {
     @State private var confirmDiscard = false
     @State private var saveError: String?
 
-    init(day: Day? = nil) {
+    /// `date` prefills a new day, e.g. from an empty calendar cell.
+    init(day: Day? = nil, date: Date? = nil) {
         editingDay = day
-        let initial = day ?? Day(id: "", title: "", date: Today.date, recurring: true,
+        let initial = day ?? Day(id: "", title: "", date: date ?? Today.date, recurring: true,
                                  category: .life, photo: .systemDefault)
         _initialDay = State(initialValue: initial)
         _title = State(initialValue: initial.title)

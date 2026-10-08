@@ -40,6 +40,13 @@ enum CNDate {
             : formatter.veryShortStandaloneWeekdaySymbols
     }
 
+    /// The user's first day of the week (1 = Sunday), including the iOS
+    /// Language & Region override, which the app locale carries over.
+    static func firstWeekday(locale: Locale = AppLocalization.locale) -> Int {
+        let days: [Locale.Weekday] = [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        return (days.firstIndex(of: locale.firstDayOfWeek) ?? 0) + 1
+    }
+
     private static func style(locale: Locale) -> Date.FormatStyle {
         Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
     }
