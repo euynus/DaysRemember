@@ -285,6 +285,21 @@ final class EditFlowUITests: XCTestCase {
         if cancel.exists { cancel.tap() }
     }
 
+    /// The detail screen hides the navigation bar, but the edge swipe must still go back.
+    func testEdgeSwipeReturnsFromPushedDetail() {
+        let app = launchApp()
+        let wedding = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "结婚纪念日")).firstMatch
+        XCTAssertTrue(wedding.waitForExistence(timeout: 10))
+        wedding.tap()
+        let title = app.staticTexts["detail.title"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        edge.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)))
+        XCTAssertTrue(title.waitForNonExistence(timeout: 5), "Edge swipe should pop the detail screen")
+        XCTAssertTrue(wedding.waitForExistence(timeout: 5))
+    }
+
     func testTabsSearchAndCategoryEditor() {
         let app = launchApp()
         app.tabBars.buttons["分类"].tap()
@@ -302,9 +317,10 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(loveDay.waitForExistence(timeout: 5))
         loveDay.tap()
         XCTAssertTrue(app.buttons["更多操作"].waitForExistence(timeout: 5))
-        app.buttons["返回"].tap()
+        // The system back button is labelled with the previous screen's title (爱情).
+        app.navigationBars.buttons.firstMatch.tap()
         XCTAssertTrue(loveDay.waitForExistence(timeout: 5))
-        app.buttons["返回"].tap()
+        app.navigationBars.buttons.firstMatch.tap()
 
         app.tabBars.buttons["提醒"].tap()
         XCTAssertTrue(app.switches.firstMatch.waitForExistence(timeout: 5))

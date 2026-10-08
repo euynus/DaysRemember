@@ -4,6 +4,12 @@ enum AppTab: String, Hashable {
     case home, calendar, categories, notifications
 }
 
+/// Navigation value for a day's detail. Routing by ID keeps photo bytes out of the
+/// path's hashing and lets the detail read the live record.
+struct DayRoute: Hashable {
+    let id: String
+}
+
 struct RootTabView: View {
     @Environment(DayStore.self) private var store
     @Environment(DeepLinkRouter.self) private var router
@@ -71,7 +77,7 @@ struct RootTabView: View {
         guard let day = store.days.first(where: { $0.id == id }) else { return }
         tab = .home
         homePath = NavigationPath()
-        homePath.append(day)
+        homePath.append(DayRoute(id: day.id))
     }
 
     @ViewBuilder
@@ -95,7 +101,7 @@ struct RootTabView: View {
     private var homeStack: some View {
         NavigationStack(path: $homePath) {
             HomeView(
-                onOpen: { day in homePath.append(day) },
+                onOpen: { day in homePath.append(DayRoute(id: day.id)) },
                 onAdd: { addingDay = true }
             )
             .toolbar(.hidden, for: .navigationBar)
@@ -105,7 +111,7 @@ struct RootTabView: View {
 
     private var calendarStack: some View {
         NavigationStack(path: $calendarPath) {
-            CalendarMonthView(onOpen: { day in calendarPath.append(day) })
+            CalendarMonthView(onOpen: { day in calendarPath.append(DayRoute(id: day.id)) })
                 .toolbar(.hidden, for: .navigationBar)
                 .dayDetailDestination()
         }
@@ -120,10 +126,10 @@ struct RootTabView: View {
                     switch route {
                     case .all:
                         CategoryDaysListView(title: String(localized: "全部日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale), categoryID: nil,
-                                             onOpen: { categoryPath.append($0) })
+                                             onOpen: { categoryPath.append(DayRoute(id: $0.id)) })
                     case .category(let id):
                         CategoryDaysListView(title: store.category(for: id).displayName, categoryID: id,
-                                             onOpen: { categoryPath.append($0) })
+                                             onOpen: { categoryPath.append(DayRoute(id: $0.id)) })
                     }
                 }
         }
@@ -131,13 +137,12 @@ struct RootTabView: View {
 }
 
 private extension View {
-    /// Shared `Day` → `DetailView` push used by all three tab stacks: hidden nav
-    /// bar and a custom back button — one place to keep them identical.
+    /// Shared `DayRoute` → `DetailView` push used by all three tab stacks. Pushed screens
+    /// keep the system navigation bar: hiding it disables the interactive edge swipe.
     func dayDetailDestination() -> some View {
-        navigationDestination(for: Day.self) { day in
-            DetailView(day: day)
-                .toolbar(.hidden, for: .navigationBar)
-                .navigationBarBackButtonHidden(true)
+        navigationDestination(for: DayRoute.self) { route in
+            DetailView(dayID: route.id)
+                .toolbar(.visible, for: .navigationBar)
         }
     }
 }

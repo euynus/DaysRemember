@@ -5,22 +5,54 @@ struct DetailView: View {
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let day: Day
+    let dayID: String
+    /// The last value shown, so a pop animation after deletion never renders an empty screen.
+    @State private var snapshot: Day?
     @State private var showShare = false
     @State private var showEditor = false
     @State private var showDeleteConfirm = false
+    @State private var deletedHere = false
 
-    private var currentDay: Day {
-        store.days.first(where: { $0.id == day.id }) ?? day
+    init(dayID: String) {
+        self.dayID = dayID
+    }
+
+    init(day: Day) {
+        dayID = day.id
+        _snapshot = State(initialValue: day)
+    }
+
+    private var liveDay: Day? {
+        store.days.first(where: { $0.id == dayID })
     }
 
     var body: some View {
-        let day = currentDay
+        if let day = liveDay ?? snapshot {
+            content(day)
+                .onAppear { snapshot = liveDay ?? snapshot }
+                .onChange(of: liveDay) { _, live in
+                    if let live { snapshot = live }
+                }
+                // A sync from another device can delete the day while it is open here.
+                .onChange(of: liveDay == nil) { _, missing in
+                    if missing && !deletedHere { dismiss() }
+                }
+        } else {
+            ContentUnavailableView("日子已删除", systemImage: "calendar")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Theme.bg.ignoresSafeArea())
+        }
+    }
+
+    private var currentDay: Day {
+        liveDay ?? snapshot ?? Day(id: dayID, title: "", date: Today.date, category: .life, photo: .systemDefault)
+    }
+
+    @ViewBuilder
+    private func content(_ day: Day) -> some View {
         let info = DayInfo.compute(day, today: today)
 
         VStack(spacing: 0) {
-            topBar
-
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Color.clear
@@ -48,6 +80,10 @@ struct DetailView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg.ignoresSafeArea())
+        // The native bar keeps the system back button, and with it the edge swipe.
+        .toolbar { toolbarItems(day: day) }
+        .toolbarRole(.editor)
+        .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.impact(flexibility: .soft), trigger: day.pinned)
         .sheet(isPresented: $showShare) {
             ShareCardView(day: currentDay)
@@ -58,8 +94,9 @@ struct DetailView: View {
         .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("删除", role: .destructive) {
                 Haptics.warning()
+                deletedHere = true
                 store.delete(currentDay)
-                dismiss()
+                if liveDay == nil { dismiss() } else { deletedHere = false }
             }
             Button("取消", role: .cancel) {}
         } message: {
@@ -67,36 +104,26 @@ struct DetailView: View {
         }
     }
 
-    // MARK: - Top bar (back + pin + more)
+    // MARK: - Toolbar (pin + more)
 
-    private var topBar: some View {
-        HStack(alignment: .top) {
-            FAB(systemName: "chevron.left", action: { dismiss() })
-                .accessibilityLabel("返回")
-            Spacer()
-            HStack(spacing: 8) {
-                FAB(systemName: currentDay.pinned ? "star.fill" : "star", action: togglePinned)
-                    .accessibilityLabel(currentDay.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-                    .accessibilityAddTraits(currentDay.pinned ? .isSelected : [])
-                Menu {
-                    Button("编辑", systemImage: "pencil") { showEditor = true }
-                    Button("分享", systemImage: "square.and.arrow.up") { showShare = true }
-                    Button("删除", systemImage: "trash", role: .destructive) { showDeleteConfirm = true }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Theme.ink)
-                        .frame(width: 46, height: 46)
-                        .background(Circle().fill(Color.white))
-                        .overlay { Circle().strokeBorder(Theme.hairline, lineWidth: 1) }
-                }
-                .accessibilityLabel("更多操作")
-                .accessibilityIdentifier("detail.moreActions")
+    @ToolbarContentBuilder
+    private func toolbarItems(day: Day) -> some ToolbarContent {
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            Button(action: togglePinned) {
+                Label(day.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                          : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                      systemImage: day.pinned ? "star.fill" : "star")
             }
+            .accessibilityAddTraits(day.pinned ? .isSelected : [])
+            Menu {
+                Button("编辑", systemImage: "pencil") { showEditor = true }
+                Button("分享", systemImage: "square.and.arrow.up") { showShare = true }
+                Button("删除", systemImage: "trash", role: .destructive) { showDeleteConfirm = true }
+            } label: {
+                Label("更多操作", systemImage: "ellipsis")
+            }
+            .accessibilityIdentifier("detail.moreActions")
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 12)
-        .padding(.bottom, 6)
     }
 
     private func togglePinned() {

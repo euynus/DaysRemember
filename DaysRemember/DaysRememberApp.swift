@@ -224,7 +224,7 @@ enum DebugLaunch {
             case .onboarding:
                 OnboardingView()
             case .detail:
-                DetailView(day: DebugLaunch.day(store: store))
+                NavigationStack { DetailView(day: DebugLaunch.day(store: store)) }
             case .add:
                 AddDayView()
             case .share:
