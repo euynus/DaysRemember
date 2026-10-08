@@ -137,8 +137,9 @@ final class RenderingTests: XCTestCase {
             for style in PhotoStyle.pickerOptions {
                 let image = try XCTUnwrap(UIImage(named: style.assetName))
                 let expected = try render(Image(uiImage: image).resizable().scaledToFit()
+                    .mask { PhotoTile.featheredEdges }
                     .frame(width: size.width, height: size.height)
-                    .background(Color(hex: 0xF7F8F5)))
+                    .background(Theme.coverPaper))
                 let actual = try render(PhotoTile(style: style, flat: true, cornerRadius: 0)
                     .frame(width: size.width, height: size.height))
                 XCTAssertEqual(UIImage(cgImage: actual).pngData(), UIImage(cgImage: expected).pngData(),

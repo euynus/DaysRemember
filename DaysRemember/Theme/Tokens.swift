@@ -13,6 +13,9 @@ enum Theme {
     static let accent = Color(hex: 0xBB4235)
     static let accentForeground = Color.white
 
+    /// Matches the paper of the bundled cover illustrations.
+    static let coverPaper = Color(hex: 0xF7F8F5)
+
     static let hairline = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.08)
     static let hairlineStrong = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.14)
 

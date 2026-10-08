@@ -100,8 +100,9 @@ struct PhotoTile: View {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
+                        .mask { Self.featheredEdges }
                         .frame(width: geometry.size.width, height: geometry.size.height)
-                        .background(Color(hex: 0xF7F8F5))
+                        .background(Theme.coverPaper)
                 } else {
                     style.background()
                         .frame(width: geometry.size.width, height: geometry.size.height)
@@ -122,6 +123,17 @@ struct PhotoTile: View {
         // Clipping pixels does not clip hit testing for a scaled-to-fill image.
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .accessibilityHidden(true)
+    }
+
+    /// Feathers the artwork's paper texture into the letterbox fill, so a fitted
+    /// illustration never shows a hard rectangular edge in wider or taller frames.
+    static var featheredEdges: some View {
+        let stops: [Gradient.Stop] = [
+            .init(color: .clear, location: 0), .init(color: .black, location: 0.06),
+            .init(color: .black, location: 0.94), .init(color: .clear, location: 1),
+        ]
+        return LinearGradient(stops: stops, startPoint: .leading, endPoint: .trailing)
+            .mask(LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom))
     }
 
     static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {
