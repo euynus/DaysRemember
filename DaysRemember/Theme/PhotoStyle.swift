@@ -14,6 +14,19 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
         .mountains, .cafe, .garden, .camping, .homecoming, .companionship, .voyage,
     ]
 
+    /// The template a new day starts from in a system category. Custom categories keep
+    /// whatever cover is current.
+    static func defaultCover(forCategoryID id: String) -> PhotoStyle? {
+        switch DayCategory(rawValue: id) {
+        case .love: return .systemDefault
+        case .family: return .birthday
+        case .travel: return .japan
+        case .work: return .study
+        case .life: return .home
+        case nil: return nil
+        }
+    }
+
     var displayName: String {
         switch self {
         case .systemDefault: return String(localized: "花与光", bundle: AppLocalization.bundle, locale: AppLocalization.locale)

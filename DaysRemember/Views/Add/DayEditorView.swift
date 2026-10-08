@@ -17,6 +17,8 @@ struct DayEditorView: View {
     @State private var isLoadingPhoto = false
     @State private var photoError: String?
     @State private var showTemplateGallery = false
+    /// New days follow the selected category's cover until a template or photo is picked.
+    @State private var coverChosen: Bool
     @ScaledMetric(relativeTo: .caption) private var coverSwatchWidth: CGFloat = 80
     @State private var recurring: Bool
     @State private var solar: Bool
@@ -53,6 +55,7 @@ struct DayEditorView: View {
         _coverFocusY = State(initialValue: initial.coverFocusY)
         _reminderOffsets = State(initialValue: initial.reminderOffsets)
         _reminderTime = State(initialValue: initial.reminderTime)
+        _coverChosen = State(initialValue: day != nil)
     }
 
     private var canSave: Bool {
@@ -79,14 +82,14 @@ struct DayEditorView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     titleField.padding(.top, 12).padding(.bottom, 22)
                     formCard.padding(.bottom, 22)
-                    livePreview
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
-                    coverPicker.padding(.bottom, 28)
 
                     SectionHeader(String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     categoryPills.padding(.bottom, 22)
+
+                    livePreview
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 12)
+                    coverPicker.padding(.bottom, 28)
 
                     SectionHeader(String(localized: "心情笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     notesCard
@@ -179,7 +182,8 @@ struct DayEditorView: View {
                   focusX: coverFocusX, focusY: coverFocusY,
                   flat: true, cornerRadius: 3)
             .frame(height: 200)
-            .gesture(focusDrag)
+            // Only a photo can be reframed; otherwise the preview must not swallow scrolling.
+            .gesture(focusDrag, including: photoData != nil ? .all : .subviews)
             .accessibilityElement()
             .accessibilityLabel("封面取景")
             .accessibilityHint(photoData != nil
@@ -387,6 +391,7 @@ struct DayEditorView: View {
     }
 
     private func selectTemplate(_ preset: PhotoStyle) {
+        coverChosen = true
         pickerItem = nil
         guard !isTemplateSelected(preset) else { return }
         photo = preset
@@ -460,6 +465,7 @@ struct DayEditorView: View {
                     throw CocoaError(.fileReadCorruptFile)
                 }
                 photoData = compressed
+                coverChosen = true
                 resetFocus()
             } catch {
                 guard !Task.isCancelled else { return }
@@ -591,6 +597,10 @@ struct DayEditorView: View {
                         .font(.system(size: 14))
                 } action: {
                     selectedCategory = category
+                    if !coverChosen, photoData == nil,
+                       let cover = PhotoStyle.defaultCover(forCategoryID: category.id) {
+                        photo = cover
+                    }
                 }
                 .accessibilityLabel("分类 \(category.displayName)")
                 .accessibilityIdentifier("dayCategory-\(category.id)")

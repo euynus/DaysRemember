@@ -15,6 +15,15 @@ final class UIUXModelTests: XCTestCase {
         }
     }
 
+    func testSystemCategoriesSuggestDistinctPickerCovers() {
+        let covers = DayCategory.allCases.compactMap { PhotoStyle.defaultCover(forCategoryID: $0.rawValue) }
+        XCTAssertEqual(covers.count, DayCategory.allCases.count)
+        XCTAssertEqual(Set(covers.map(\.assetName)).count, covers.count)
+        XCTAssertTrue(covers.allSatisfy(PhotoStyle.pickerOptions.contains))
+        XCTAssertEqual(PhotoStyle.defaultCover(forCategoryID: "travel")?.assetName, "CoverCoast")
+        XCTAssertNil(PhotoStyle.defaultCover(forCategoryID: "custom.trip"))
+    }
+
     override func setUpWithError() throws {
         try super.setUpWithError()
         suite = "UIUXModelTests.\(UUID().uuidString)"
