@@ -172,7 +172,7 @@ struct HomeView: View {
             MetaItem(text: Lunar.fmt(today)),
         ]
         if let term = SolarTerms.name(for: today) {
-            items.append(MetaItem(text: term, color: Theme.catTravel, bold: true))
+            items.append(MetaItem(text: term, color: Theme.solarTerm, bold: true))
         }
         return items
     }

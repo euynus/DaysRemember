@@ -1,6 +1,14 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "关于提醒排程" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "About Reminder Scheduling" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关于提醒排程" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "關於提醒排程" } }
+      }
+    },
     "最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -91,7 +91,7 @@ struct UpcomingDayView: View {
                         .font(Theme.sans(12, weight: .medium))
                         .foregroundStyle(Theme.accent)
                     Spacer()
-                    Image(systemName: "arrow.up.right")
+                    Image(systemName: "chevron.right")
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.ink2)
                 }

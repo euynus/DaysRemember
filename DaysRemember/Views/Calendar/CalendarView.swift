@@ -201,7 +201,7 @@ struct CalendarMonthView: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.6)
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(isToday ? Color.white.opacity(0.8) : Theme.catTravel)
+                    .foregroundStyle(isToday ? Color.white.opacity(0.8) : Theme.solarTerm)
                     .padding(.horizontal, 2)
             }
             if hasEvents {

@@ -43,7 +43,7 @@ struct CategoriesView: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: 4)
-                            Image(systemName: "arrow.up.right")
+                            Image(systemName: "chevron.right")
                                 .font(.body)
                                 .accessibilityHidden(true)
                         }

@@ -58,7 +58,7 @@ struct NotificationsView: View {
                     previewCard.padding(.bottom, 26)
                     if let error = manager.lastError {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(error).font(Theme.sans(13)).foregroundStyle(Theme.catLove)
+                            Text(error).font(Theme.sans(13)).foregroundStyle(Theme.danger)
                             Button("重试", systemImage: "arrow.clockwise") {
                                 Task { await reschedule(requestPermission: true) }
                             }
@@ -126,9 +126,11 @@ struct NotificationsView: View {
                     .frame(width: 80, height: 106)
             }
             VStack(alignment: .leading, spacing: 12) {
-                Label("下一次已安排提醒", systemImage: "bell.badge")
-                    .font(Theme.sans(12))
-                    .foregroundStyle(Theme.accent)
+                if next != nil {
+                    Label("下一次已安排提醒", systemImage: "bell.badge")
+                        .font(Theme.sans(12))
+                        .foregroundStyle(Theme.accent)
+                }
                 Text(next?.request.content.body ?? emptyScheduleTitle)
                     .font(Theme.sans(19, weight: .medium))
                     .foregroundStyle(Theme.ink)
@@ -145,6 +147,7 @@ struct NotificationsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 4)
         .padding(.bottom, 22)
         .overlay(alignment: .bottom) { RowDivider() }
@@ -169,6 +172,7 @@ struct NotificationsView: View {
         return String(localized: "22:00 起顺延次日 \(morning)；08:00 前顺延当日 \(morning)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
+    /// The count stays visible; system scheduling limits sit behind a disclosure.
     private var coverageSummary: some View {
         let dated = manager.pendingReminders.filter { !$0.repeats }
         return VStack(alignment: .leading, spacing: 8) {
@@ -177,12 +181,22 @@ struct NotificationsView: View {
                 if let last = dated.last {
                     Text("其中 \(dated.count) 条日期提醒，最晚至 \(CNDate.full(last.date))")
                 }
-                if manager.pendingReminders.contains(where: \.repeats) {
-                    Text("晨间问候由系统每日重复，占用 1 个名额。")
-                }
             }
-            Text("公历与农历最多预排未来 \(NotificationManager.planningYears) 年，按时间保留最早 \(NotificationManager.pendingLimit) 条（含晨间问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。")
-            Text("请定期打开应用更新排程；长期不打开，日期提醒到期后不会自动续排。单日“不提醒”也不参与年度回忆。")
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 8) {
+                    if manager.pendingReminders.contains(where: \.repeats) {
+                        Text("晨间问候由系统每日重复，占用 1 个名额。")
+                    }
+                    Text("公历与农历最多预排未来 \(NotificationManager.planningYears) 年，按时间保留最早 \(NotificationManager.pendingLimit) 条（含晨间问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。")
+                    Text("请定期打开应用更新排程；长期不打开，日期提醒到期后不会自动续排。单日“不提醒”也不参与年度回忆。")
+                }
+                .padding(.top, 6)
+            } label: {
+                Text("关于提醒排程")
+                    .font(Theme.sans(13, weight: .medium))
+                    .foregroundStyle(Theme.ink2)
+            }
+            .tint(Theme.ink2)
         }
         .font(Theme.sans(12))
         .foregroundStyle(Theme.ink2)
@@ -207,7 +221,7 @@ struct NotificationsView: View {
                 .environment(\.calendar, CNDate.calendar)
                 .environment(\.timeZone, CNDate.calendar.timeZone)
                 .environment(\.locale, AppLocalization.locale)
-                .tint(Theme.catWork)
+                .tint(Theme.accent)
         }
         .cardRow()
     }
@@ -220,7 +234,7 @@ struct NotificationsView: View {
         HStack(spacing: 12) {
             Image(systemName: "bell.slash.fill")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.catLove)
+                .foregroundStyle(Theme.danger)
             VStack(alignment: .leading, spacing: 2) {
                 Text("通知权限已关闭")
                     .font(Theme.sans(14, weight: .bold))

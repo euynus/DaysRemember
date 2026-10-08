@@ -16,6 +16,12 @@ enum Theme {
     static let hairline = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.08)
     static let hairlineStrong = Color(.sRGB, red: 21/255, green: 23/255, blue: 28/255, opacity: 0.14)
 
+    // MARK: - Semantic colors
+    /// 节气 and traditional festival labels.
+    static let solarTerm = Color(hex: 0x267C9F)
+    /// Errors and disabled permissions.
+    static let danger = Color(hex: 0xB83F65)
+
     // MARK: - Category backgrounds
     static let noteBlue = Color(hex: 0xE7EFF4)
     static let noteYellow = Color(hex: 0xF4EEDC)
