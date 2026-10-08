@@ -68,6 +68,51 @@ final class LunarTests: XCTestCase {
         add(attachment)
     }
 
+    /// Published equinox, solstice and 立春 instants (UTC) for recent years.
+    func testSolarTermInstantsMatchPublishedTimes() throws {
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try XCTUnwrap(TimeZone(identifier: "UTC"))
+        let published: [(year: Int, index: Int, month: Int, day: Int, hour: Int, minute: Int)] = [
+            (2024, 2, 2, 4, 8, 27), (2024, 5, 3, 20, 3, 6), (2024, 11, 6, 20, 20, 51),
+            (2024, 17, 9, 22, 12, 44), (2024, 23, 12, 21, 9, 21),
+            (2025, 2, 2, 3, 14, 10), (2025, 5, 3, 20, 9, 1), (2025, 11, 6, 21, 2, 42),
+            (2025, 17, 9, 22, 18, 19), (2025, 23, 12, 21, 15, 3),
+            (2026, 2, 2, 3, 20, 2), (2026, 5, 3, 20, 14, 46), (2026, 11, 6, 21, 8, 24),
+            (2026, 17, 9, 23, 0, 5), (2026, 23, 12, 21, 20, 50),
+        ]
+        for term in published {
+            let expected = try XCTUnwrap(utc.date(from: DateComponents(
+                year: term.year, month: term.month, day: term.day, hour: term.hour, minute: term.minute)))
+            let computed = SolarTerms.instants(in: term.year)[term.index]
+            XCTAssertLessThan(abs(computed.timeIntervalSince(expected)), 120, "\(term)")
+        }
+    }
+
+    /// Terms are dated in Beijing time; these differ from the old fixed Gregorian table.
+    func testSolarTermNamesUseBeijingDates() {
+        XCTAssertEqual(SolarTerms.name(for: date(2025, 2, 3)), "立春")
+        XCTAssertNil(SolarTerms.name(for: date(2025, 2, 4)))
+        XCTAssertEqual(SolarTerms.name(for: date(2025, 12, 21)), "冬至") // 23:03 Beijing
+        XCTAssertEqual(SolarTerms.name(for: date(2026, 3, 20)), "春分")
+        XCTAssertNil(SolarTerms.name(for: date(2026, 3, 21)))
+        XCTAssertEqual(SolarTerms.name(for: date(2026, 10, 8)), "寒露")
+        XCTAssertEqual(SolarTerms.name(for: date(2026, 9, 23)), "秋分")
+    }
+
+    func testEverySupportedYearHasTwentyFourOrderedTerms() {
+        var beijing = Calendar(identifier: .gregorian)
+        beijing.timeZone = TimeZone(secondsFromGMT: 8 * 60 * 60)!
+        for year in 1900...2100 {
+            let instants = SolarTerms.instants(in: year)
+            XCTAssertEqual(instants.count, 24)
+            XCTAssertEqual(instants.map { beijing.component(.year, from: $0) }, Array(repeating: year, count: 24))
+            for (earlier, later) in zip(instants, instants.dropFirst()) {
+                let gap = later.timeIntervalSince(earlier) / 86400
+                XCTAssertTrue((14...16.5).contains(gap), "\(year): \(gap) days between terms")
+            }
+        }
+    }
+
     /// A leap month repeats its month number but not its festivals.
     func testLunarHolidaysSkipLeapMonths() {
         let doubled = [
