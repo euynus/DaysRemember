@@ -91,12 +91,15 @@ final class DayStore {
                 }
                 self.categories = Self.normalizedCategories(decoded)
             }
+            // Older builds stored these photos inline; both formats decode.
             if let data = defaults.data(forKey: deletedKey) {
-                self.deletedDays = try JSONDecoder().decode([DeletedDay].self, from: data)
-                    .filter { entry in !days.contains(where: { $0.id == entry.id }) }
+                self.deletedDays = Self.unexpired(try (photoFiles?.decoder() ?? JSONDecoder())
+                    .decode([DeletedDay].self, from: data)
+                    .filter { entry in !days.contains(where: { $0.id == entry.id }) })
             }
             if let data = defaults.data(forKey: conflictsKey) {
-                self.syncConflicts = try JSONDecoder().decode([SyncConflict].self, from: data)
+                self.syncConflicts = Self.unexpired(try (photoFiles?.decoder() ?? JSONDecoder())
+                    .decode([SyncConflict].self, from: data))
             }
             try DayBackup(days: days, categories: categories, deletedDays: deletedDays,
                           syncConflicts: syncConflicts).validate()
@@ -164,9 +167,17 @@ final class DayStore {
     func delete(_ day: Day) {
         guard loadError == nil, let current = days.first(where: { $0.id == day.id }) else { return }
         let id = day.id
+        let previous = deletedDays
         deletedDays.removeAll { $0.id == id }
         deletedDays.insert(DeletedDay(day: current, deletedAt: .now), at: 0)
-        persistDeletedDays()
+        deletedDays = Self.unexpired(deletedDays)
+        // Keep the day active unless its recoverable copy was saved first.
+        guard persistDeletedDays() else {
+            deletedDays = previous
+            saveError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
+                               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            return
+        }
         days.removeAll { $0.id == id }
         Task { await NotificationManager.shared.cancel(dayId: id) }
     }
@@ -183,9 +194,22 @@ final class DayStore {
         persistDeletedDays()
     }
 
-    private func persistDeletedDays() {
-        guard let data = try? JSONEncoder().encode(deletedDays) else { return }
+    @discardableResult
+    private func persistDeletedDays() -> Bool {
+        guard let data = try? (photoFiles?.encoder() ?? JSONEncoder()).encode(deletedDays) else { return false }
         defaults.set(data, forKey: deletedKey)
+        return true
+    }
+
+    /// Recently deleted days and replaced sync versions stay recoverable for 30 days.
+    static let retention: TimeInterval = 30 * 24 * 60 * 60
+
+    private static func unexpired(_ entries: [DeletedDay], now: Date = .now) -> [DeletedDay] {
+        entries.filter { now.timeIntervalSince($0.deletedAt) < retention }
+    }
+
+    private static func unexpired(_ entries: [SyncConflict], now: Date = .now) -> [SyncConflict] {
+        entries.filter { now.timeIntervalSince($0.createdAt) < retention }
     }
 
     var hasRecoveryBackup: Bool { defaults.data(forKey: recoveryKey) != nil }
@@ -290,10 +314,12 @@ final class DayStore {
 
     private func encodedBackupValues(_ backup: DayBackup, repairCorruptFiles: Bool = false) throws -> [(String, Data)] {
         let encoder = JSONEncoder()
-        let daysData = try (photoFiles?.encoder(repairCorruptFiles: repairCorruptFiles) ?? encoder).encode(backup.days)
+        // Photos in active, deleted and retained days all live in the shared file store.
+        let photoEncoder = photoFiles?.encoder(repairCorruptFiles: repairCorruptFiles) ?? encoder
+        let daysData = try photoEncoder.encode(backup.days)
         let categoriesData = try encoder.encode(backup.categories)
-        let deletedData = try encoder.encode(backup.deletedDays)
-        let conflictsData = try encoder.encode(backup.syncConflicts)
+        let deletedData = try photoEncoder.encode(backup.deletedDays)
+        let conflictsData = try photoEncoder.encode(backup.syncConflicts)
         return [(storageKey, daysData), (categoriesKey, categoriesData),
                 (deletedKey, deletedData), (conflictsKey, conflictsData)]
     }
@@ -323,7 +349,7 @@ final class DayStore {
     func discardSyncConflict(id: String) throws {
         guard loadError == nil else { throw DayBackup.BackupError.unreadable }
         let remaining = syncConflicts.filter { $0.id != id }
-        defaults.set(try JSONEncoder().encode(remaining), forKey: conflictsKey)
+        defaults.set(try (photoFiles?.encoder() ?? JSONEncoder()).encode(remaining), forKey: conflictsKey)
         syncConflicts = remaining
     }
 
@@ -578,7 +604,8 @@ final class DayStore {
         var nextConflicts = syncConflicts
         var conflictRecords = update.recoveryDays.map(CloudLibraryRecord.day)
             + update.recoveryCategories.map(CloudLibraryRecord.category)
-        // Even an equal value can be queued before a later local edit. Retain every replaced version.
+        // Even an equal value can be queued before a later local edit. Retain every replaced
+        // version for the retention period.
         conflictRecords += days.filter { day in
             nextDays.first(where: { $0.id == day.id }) != day
         }.map(CloudLibraryRecord.day)
@@ -588,6 +615,8 @@ final class DayStore {
         for record in conflictRecords where !nextConflicts.contains(where: { $0.record == record }) {
             nextConflicts.append(SyncConflict(record: record))
         }
+        nextDeleted = Self.unexpired(nextDeleted)
+        nextConflicts = Self.unexpired(nextConflicts)
         let backup = DayBackup(days: nextDays, categories: nextCategories, deletedDays: nextDeleted,
                                syncConflicts: nextConflicts)
         guard nextDays != days || nextCategories != categories || nextDeleted != deletedDays

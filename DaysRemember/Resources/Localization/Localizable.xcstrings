@@ -1,6 +1,14 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recently deleted days and saved sync versions are kept for 30 days. They and local recovery copies are stored only on this device." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "最近刪除和同步保留版本保留 30 天。它們與本機還原副本都只儲存在這台裝置。" } }
+      }
+    },
     "除夕" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6553,29 +6561,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近刪除"
-          }
-        }
-      }
-    },
-    "最近删除、本机恢复副本与同步保留版本只保存在这台设备。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recently deleted days, local recovery copies, and saved sync versions are stored only on this device."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近删除、本机恢复副本与同步保留版本只保存在这台设备。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近刪除、本機還原副本與同步保留版本只儲存在這台裝置。"
           }
         }
       }

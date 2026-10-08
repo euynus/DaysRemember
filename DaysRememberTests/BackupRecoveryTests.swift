@@ -1,6 +1,9 @@
 import XCTest
 @testable import DaysRemember
 
+/// Within the 30-day retention for recently deleted days and sync versions.
+private let recentDate = Date(timeIntervalSinceReferenceDate: (Date.now.timeIntervalSinceReferenceDate - 86400).rounded())
+
 @MainActor
 final class BackupRecoveryTests: XCTestCase {
     func testFreshInstallationIsEmptyWithoutWritingSampleData() throws {
@@ -391,7 +394,7 @@ final class BackupRecoveryTests: XCTestCase {
         deleted.id = "backup-test.\(UUID().uuidString)"
         deleted.title = "Deleted photo day"
         return DayBackup(createdAt: active.date, days: [active], categories: CategoryDefinition.system + [category],
-                         deletedDays: [DeletedDay(day: deleted, deletedAt: active.date.addingTimeInterval(86400))])
+                         deletedDays: [DeletedDay(day: deleted, deletedAt: recentDate)])
     }
 
     private func assertLibrary(_ store: DayStore, matches expected: DayBackup,

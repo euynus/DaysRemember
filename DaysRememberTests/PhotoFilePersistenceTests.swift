@@ -2,6 +2,9 @@ import CryptoKit
 import XCTest
 @testable import DaysRemember
 
+/// Within the 30-day retention for recently deleted days and sync versions.
+private let recentDate = Date(timeIntervalSinceReferenceDate: (Date.now.timeIntervalSinceReferenceDate - 86400).rounded())
+
 @MainActor
 final class PhotoFilePersistenceTests: XCTestCase {
     func testLegacyTitleEditMigratesPhotosWithoutChangingLegacyBytes() throws {
@@ -200,6 +203,33 @@ final class PhotoFilePersistenceTests: XCTestCase {
             XCTAssertNotNil(defaults.data(forKey: "days.v2"))
             XCTAssertEqual(defaults.data(forKey: "days.v1"), legacy)
             XCTAssertEqual(SharedStorage.loadDays(defaults: defaults, photoDirectory: directory), [edited])
+        }
+    }
+
+    func testRecentlyDeletedAndSyncVersionsUsePhotoFilesAndExpireAfterRetention() throws {
+        try withStorage { defaults, _, directory in
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            let kept = day("Kept deleted photo", photo: Data([50, 51]))
+            store.add(kept)
+            store.delete(kept)
+            XCTAssertNil(store.saveError)
+            let trash = try XCTUnwrap(defaults.data(forKey: "deletedDays.v1"))
+            let entries = try XCTUnwrap(JSONSerialization.jsonObject(with: trash) as? [[String: Any]])
+            let record = try XCTUnwrap(entries.first?["day"] as? [String: Any])
+            XCTAssertNil(record["photoData"])
+            XCTAssertNotNil(record["photoFile"])
+
+            // Older builds stored inline photos; those still load, and expired entries are dropped.
+            let old = Date(timeIntervalSinceNow: -DayStore.retention - 60)
+            let expired = DeletedDay(day: day("Expired deleted photo"), deletedAt: old)
+            let current = SyncConflict(record: .day(day("Current version")))
+            let outdated = SyncConflict(createdAt: old, record: .day(day("Expired version")))
+            defaults.set(try JSONEncoder().encode(store.deletedDays + [expired]), forKey: "deletedDays.v1")
+            defaults.set(try JSONEncoder().encode([outdated, current]), forKey: "syncConflicts.v1")
+            let relaunched = DayStore(defaults: defaults, photoDirectory: directory)
+            XCTAssertNil(relaunched.loadError)
+            XCTAssertEqual(relaunched.deletedDays.map(\.day), [kept])
+            XCTAssertEqual(relaunched.syncConflicts, [current])
         }
     }
 
@@ -602,8 +632,8 @@ final class PhotoFilePersistenceTests: XCTestCase {
         conflict.title = "Earlier photo version"
         conflict.photoData = Data([7, 8, 9])
         return DayBackup(createdAt: active.date, days: [active], categories: CategoryDefinition.system + [category],
-                         deletedDays: [DeletedDay(day: deleted, deletedAt: active.date)],
-                         syncConflicts: [SyncConflict(createdAt: active.date, record: .day(conflict))])
+                         deletedDays: [DeletedDay(day: deleted, deletedAt: recentDate)],
+                         syncConflicts: [SyncConflict(createdAt: recentDate, record: .day(conflict))])
     }
 
     private func photoRecord(in data: Data, id: String) throws -> [String: Any] {

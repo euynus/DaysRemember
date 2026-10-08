@@ -1,6 +1,9 @@
 import XCTest
 @testable import DaysRemember
 
+/// Within the 30-day retention for recently deleted days and sync versions.
+private let recentDate = Date(timeIntervalSinceReferenceDate: (Date.now.timeIntervalSinceReferenceDate - 86400).rounded())
+
 @MainActor
 final class SyncConflictTests: XCTestCase {
     func testConflictSurvivesUnrelatedCloudAdditionAndRelaunchRestoringOnlyItsDay() throws {
@@ -161,7 +164,7 @@ final class SyncConflictTests: XCTestCase {
             remoteCategory.name = "Active cloud category"
             let conflicts = [SyncConflict(record: .day(older)), SyncConflict(record: .day(local)),
                              SyncConflict(record: .category(category))]
-            let deleted = DeletedDay(day: day("exported-trash"), deletedAt: local.date)
+            let deleted = DeletedDay(day: day("exported-trash"), deletedAt: recentDate)
             let original = DayBackup(days: [remote], categories: CategoryDefinition.system + [remoteCategory],
                                      deletedDays: [deleted], syncConflicts: conflicts)
             try source.restoreBackup(original)
@@ -304,7 +307,7 @@ final class SyncConflictTests: XCTestCase {
             unrelated.categoryLabel = otherCategory.name
             let categoryConflict = SyncConflict(record: .category(localCategory))
             let dayConflict = SyncConflict(record: .day(day(unrelated.id, note: "Older unrelated note")))
-            let deleted = DeletedDay(day: day("category-trash"), deletedAt: first.date)
+            let deleted = DeletedDay(day: day("category-trash"), deletedAt: recentDate)
             try store.restoreBackup(DayBackup(
                 days: [first, second, unrelated], categories: CategoryDefinition.system + [remoteCategory, otherCategory],
                 deletedDays: [deleted], syncConflicts: [categoryConflict, dayConflict]))
@@ -329,7 +332,7 @@ final class SyncConflictTests: XCTestCase {
 
     func testVersionOneBackupWithoutConflictFieldDecodesAndImportsWithNoConflicts() throws {
         let active = day("legacy-active")
-        let deleted = DeletedDay(day: day("legacy-trash"), deletedAt: active.date)
+        let deleted = DeletedDay(day: day("legacy-trash"), deletedAt: recentDate)
         let original = DayBackup(version: 1, createdAt: active.date, days: [active],
                                  categories: CategoryDefinition.system, deletedDays: [deleted])
         var payload = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(original)) as? [String: Any])
