@@ -738,7 +738,12 @@ final class EditFlowUITests: XCTestCase {
             if !file.waitForExistence(timeout: 3) && onMyiPhone.exists { onMyiPhone.tap() }
         }
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
-        file.images.firstMatch.tap()
+        // Just after switching to Browse the icon can still be moving into place, so wait for it to
+        // settle, then tap where it is.
+        let icon = file.images.firstMatch
+        _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: icon)],
+                           timeout: 5)
+        icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let restore = app.buttons["恢复备份"].firstMatch
         XCTAssertTrue(restore.waitForExistence(timeout: 10), app.debugDescription)
         restore.tap()
