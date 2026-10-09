@@ -37,6 +37,11 @@ struct DayBackup: Codable {
         case version, createdAt, days, categories, deletedDays, syncConflicts
     }
 
+    /// False for a fresh library: no days, trash, sync versions or custom categories.
+    var holdsUserData: Bool {
+        !days.isEmpty || !deletedDays.isEmpty || !syncConflicts.isEmpty || categories.contains { !$0.isSystem }
+    }
+
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         self.init(version: try values.decode(Int.self, forKey: .version),

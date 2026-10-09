@@ -26,6 +26,36 @@ final class BackupRecoveryTests: XCTestCase {
         }
     }
 
+    func testMigrationBackupIsDecidedOnceAndSkippedForAnEmptyLibrary() throws {
+        try withDefaults { defaults, _ in
+            let fresh = DayStore(defaults: defaults)
+            try fresh.keepMigrationBackup()
+            XCTAssertFalse(fresh.hasMigrationBackup)
+            // Days added once CloudKit runs are not pre-migration data.
+            XCTAssertTrue(fresh.add(day("Added after CloudKit started")))
+            try DayStore(defaults: defaults).keepMigrationBackup()
+            XCTAssertFalse(DayStore(defaults: defaults).hasMigrationBackup)
+        }
+        try withDefaults { defaults, _ in
+            let original = backup()
+            let store = DayStore(defaults: defaults)
+            try store.restoreBackup(original)
+            try store.keepMigrationBackup()
+            XCTAssertEqual(try DayBackup.decode(store.exportMigrationBackup()).days, original.days)
+            store.delete(original.days[0])
+            try store.keepMigrationBackup()
+            XCTAssertEqual(try DayBackup.decode(store.exportMigrationBackup()).days, original.days)
+        }
+        try withDefaults { defaults, _ in
+            let empty = DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: [])
+            defaults.set(try JSONEncoder().encode(empty), forKey: "preCloudKitBackup.v1")
+            let store = DayStore(defaults: defaults)
+            XCTAssertTrue(store.hasMigrationBackup)
+            try store.keepMigrationBackup()
+            XCTAssertFalse(store.hasMigrationBackup)
+        }
+    }
+
     func testBackupRoundTripPreservesPhotosCategoriesAndTrashAfterRelaunch() throws {
         try withDefaults { defaults, _ in
             let original = backup()

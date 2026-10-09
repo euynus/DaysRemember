@@ -46,6 +46,7 @@ final class DayStore {
     private let conflictsKey = "syncConflicts.v1"
     private let recoveryKey = "recoveryBackup.v1"
     private let migrationKey = "preCloudKitBackup.v1"
+    private let migrationDecidedKey = "preCloudKitBackupDecided.v1"
     private let legacyDayIDsKey = "importedLegacyDayIDs.v1"
     private let legacyCategoryIDsKey = "importedLegacyCategoryIDs.v1"
     private let pendingRestoreKey = "pendingRestore.v1"
@@ -288,8 +289,19 @@ final class DayStore {
         defaults.set(try localBackupData(currentBackup), forKey: recoveryKey)
     }
 
-    private func keepMigrationBackup() throws {
-        if !hasMigrationBackup { defaults.set(try localBackupData(currentBackup), forKey: migrationKey) }
+    /// Decided once, before CloudKit first starts: keeps the library as it was, unless it holds
+    /// nothing. Libraries edited after that already belong to CloudKit.
+    func keepMigrationBackup() throws {
+        guard !defaults.bool(forKey: migrationDecidedKey) else { return }
+        if let data = defaults.data(forKey: migrationKey) {
+            // Earlier builds also kept one for a fresh, empty library.
+            if let backup = try? decodeLocalBackup(data), !backup.holdsUserData {
+                defaults.removeObject(forKey: migrationKey)
+            }
+        } else if currentBackup.holdsUserData {
+            defaults.set(try localBackupData(currentBackup), forKey: migrationKey)
+        }
+        defaults.set(true, forKey: migrationDecidedKey)
     }
 
     private func localBackupData(_ backup: DayBackup, repairCorruptFiles: Bool = false) throws -> Data {
