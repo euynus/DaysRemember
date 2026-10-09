@@ -102,8 +102,8 @@ struct DayInfo {
         )
     }
 
-    /// Memoization key — uses Day.id + date + recurrence + today's day-boundary so
-    /// cache entries naturally drift out at midnight without manual invalidation.
+    /// Memoization key — uses Day.id + date + recurrence + today's day-boundary, so a new
+    /// day starts a fresh cache instead of serving yesterday's countdowns.
     /// Avoids hashing Day directly because Day.photoData would make Hashable O(N).
     private struct CacheKey: Hashable {
         let dayID: String
@@ -117,6 +117,7 @@ struct DayInfo {
         static let shared = Cache()
         private let lock = NSLock()
         private var entries: [CacheKey: DayInfo] = [:]
+        private var day: TimeInterval?
 
         func fetch(_ key: CacheKey) -> DayInfo? {
             lock.lock(); defer { lock.unlock() }
@@ -125,7 +126,11 @@ struct DayInfo {
 
         func store(_ key: CacheKey, _ info: DayInfo) {
             lock.lock(); defer { lock.unlock() }
-            if entries.count >= 256 { entries.removeAll(keepingCapacity: true) }
+            // Entries for another day are never hit again; the cap only bounds unusual mixes.
+            if key.todayStartRef != day || entries.count >= 4096 {
+                entries.removeAll(keepingCapacity: true)
+                day = key.todayStartRef
+            }
             entries[key] = info
         }
     }

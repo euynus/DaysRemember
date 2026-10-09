@@ -139,7 +139,7 @@ struct NotificationsView: View {
         let day = next?.dayID.flatMap { id in store.days.first { $0.id == id } }
         return HStack(alignment: .top, spacing: 18) {
             if let day, !dynamicTypeSize.isAccessibilitySize {
-                PhotoTile(day: day, flat: true, cornerRadius: 3)
+                PhotoTile(day: day, flat: true, cornerRadius: 3, maximumPixelSize: 320)
                     .frame(width: 80, height: 106)
             }
             VStack(alignment: .leading, spacing: 12) {

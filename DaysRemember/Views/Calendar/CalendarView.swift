@@ -299,7 +299,8 @@ struct CalendarMonthView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if !dynamicTypeSize.isAccessibilitySize {
-                    PhotoTile(day: day, flat: true, cornerRadius: 8, maximumPixelSize: 256)
+                    PhotoTile(day: day, flat: true, cornerRadius: 8, maximumPixelSize: 256,
+                              decodesAsynchronously: true)
                         .frame(width: 56, height: 62)
                         .accessibilityHidden(true)
                 }

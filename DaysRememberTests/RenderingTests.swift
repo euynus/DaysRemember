@@ -132,6 +132,19 @@ final class RenderingTests: XCTestCase {
         }
     }
 
+    func testCacheLookupNeverDecodes() throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let data = try XCTUnwrap(UIGraphicsImageRenderer(size: CGSize(width: 41, height: 29), format: format)
+            .image { context in
+                UIColor(red: 0.2, green: 0.6, blue: 0.3, alpha: 1).setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 41, height: 29))
+            }.jpegData(compressionQuality: 0.9))
+        XCTAssertNil(PhotoDecodeCache.cached(data, maximumPixelSize: 37))
+        let decoded = try XCTUnwrap(PhotoDecodeCache.decoded(data, maximumPixelSize: 37))
+        XCTAssertTrue(PhotoDecodeCache.cached(data, maximumPixelSize: 37) === decoded)
+    }
+
     func testShareExportsAreSharpAndPortraitIsThreeByFour() throws {
         let day = Day(id: "share-export", title: String(repeating: "A long summer journey together ", count: 4),
                       date: Date(timeIntervalSince1970: 1_700_000_000), recurring: true, category: .travel,

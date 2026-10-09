@@ -21,7 +21,8 @@ struct CalendarEventRow: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if !dynamicTypeSize.isAccessibilitySize {
-                    PhotoTile(day: day, flat: true, cornerRadius: 6, maximumPixelSize: 192)
+                    PhotoTile(day: day, flat: true, cornerRadius: 6, maximumPixelSize: 192,
+                              decodesAsynchronously: true)
                         .frame(width: 44, height: 44)
                         .accessibilityHidden(true)
                 }

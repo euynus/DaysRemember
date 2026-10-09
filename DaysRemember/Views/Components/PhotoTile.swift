@@ -13,13 +13,22 @@ enum PhotoDecodeCache {
     }()
 
     static func decoded(_ data: Data, maximumPixelSize: CGFloat) -> UIImage? {
-        guard maximumPixelSize.isFinite, maximumPixelSize >= 1 else { return nil }
-        let digest = Data(SHA256.hash(data: data)).base64EncodedString()
-        let key = "photo:\(digest):\(maximumPixelSize)" as NSString
+        guard let key = key(for: data, maximumPixelSize: maximumPixelSize) else { return nil }
         if let cached = storage.object(forKey: key) { return cached }
         guard let image = downsample(data, maximumPixelSize: maximumPixelSize) else { return nil }
         store(image, forKey: key)
         return image
+    }
+
+    /// A cache lookup that never decodes, for views that decode off the main actor.
+    static func cached(_ data: Data, maximumPixelSize: CGFloat) -> UIImage? {
+        key(for: data, maximumPixelSize: maximumPixelSize).flatMap { storage.object(forKey: $0) }
+    }
+
+    private static func key(for data: Data, maximumPixelSize: CGFloat) -> NSString? {
+        guard maximumPixelSize.isFinite, maximumPixelSize >= 1 else { return nil }
+        let digest = Data(SHA256.hash(data: data)).base64EncodedString()
+        return "photo:\(digest):\(maximumPixelSize)" as NSString
     }
 
     static func bundled(_ name: String, maximumPixelSize: CGFloat) -> UIImage? {
@@ -63,9 +72,14 @@ struct PhotoTile: View {
     var flat: Bool = false
     var cornerRadius: CGFloat = 20
     var maximumPixelSize: CGFloat = 1600
+    /// Scrolling lists decode uncached photos off the main actor and show plain paper
+    /// meanwhile. Widgets and image exports must stay synchronous.
+    var decodesAsynchronously = false
+    @State private var loadedImage: UIImage?
 
     init(style: PhotoStyle, imageData: Data? = nil, focusX: Double = 0.5, focusY: Double = 0.5,
-         flat: Bool = false, cornerRadius: CGFloat = 20, maximumPixelSize: CGFloat = 1600) {
+         flat: Bool = false, cornerRadius: CGFloat = 20, maximumPixelSize: CGFloat = 1600,
+         decodesAsynchronously: Bool = false) {
         self.style = style
         self.imageData = imageData
         self.focusX = focusX
@@ -73,19 +87,25 @@ struct PhotoTile: View {
         self.flat = flat
         self.cornerRadius = cornerRadius
         self.maximumPixelSize = maximumPixelSize
+        self.decodesAsynchronously = decodesAsynchronously
     }
 
     /// Convenience for callers that have a `Day`.
-    init(day: Day, flat: Bool = false, cornerRadius: CGFloat = 20, maximumPixelSize: CGFloat = 1600) {
+    init(day: Day, flat: Bool = false, cornerRadius: CGFloat = 20, maximumPixelSize: CGFloat = 1600,
+         decodesAsynchronously: Bool = false) {
         self.init(style: day.photo, imageData: day.photoData,
                   focusX: day.coverFocusX, focusY: day.coverFocusY,
-                  flat: flat, cornerRadius: cornerRadius, maximumPixelSize: maximumPixelSize)
+                  flat: flat, cornerRadius: cornerRadius, maximumPixelSize: maximumPixelSize,
+                  decodesAsynchronously: decodesAsynchronously)
     }
 
     var body: some View {
-        let pickedImage = imageData.flatMap {
-            PhotoDecodeCache.decoded($0, maximumPixelSize: maximumPixelSize)
+        let pickedImage = imageData.flatMap { data in
+            decodesAsynchronously
+                ? PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize) ?? loadedImage
+                : PhotoDecodeCache.decoded(data, maximumPixelSize: maximumPixelSize)
         }
+        let awaitingPhoto = imageData != nil && pickedImage == nil && decodesAsynchronously
         let image = pickedImage ?? PhotoDecodeCache.bundled(style.assetName, maximumPixelSize: maximumPixelSize)
         // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
@@ -93,7 +113,9 @@ struct PhotoTile: View {
 
         GeometryReader { geometry in
             ZStack {
-                if let pickedImage {
+                if awaitingPhoto {
+                    Theme.coverPaper
+                } else if let pickedImage {
                     focusedImage(pickedImage, in: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                 } else if let image {
@@ -123,6 +145,16 @@ struct PhotoTile: View {
         // Clipping pixels does not clip hit testing for a scaled-to-fill image.
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .accessibilityHidden(true)
+        .task(id: decodesAsynchronously ? imageData : nil) {
+            guard decodesAsynchronously, let data = imageData else { return }
+            loadedImage = nil
+            guard PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize) == nil else { return }
+            let size = maximumPixelSize
+            let image = await Task.detached(priority: .userInitiated) {
+                PhotoDecodeCache.decoded(data, maximumPixelSize: size)
+            }.value
+            if !Task.isCancelled { loadedImage = image }
+        }
     }
 
     /// Feathers the artwork's paper texture into the letterbox fill, so a fitted

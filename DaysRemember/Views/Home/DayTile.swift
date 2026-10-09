@@ -18,7 +18,8 @@ struct DayRow: View {
                 : AnyLayout(HStackLayout(alignment: .center, spacing: 14))
             layout {
                 if !dynamicTypeSize.isAccessibilitySize {
-                    PhotoTile(day: day, flat: true, cornerRadius: 3, maximumPixelSize: 256)
+                    PhotoTile(day: day, flat: true, cornerRadius: 3, maximumPixelSize: 256,
+                              decodesAsynchronously: true)
                         .frame(width: 62, height: 72)
                 }
                 VStack(alignment: .leading, spacing: 7) {

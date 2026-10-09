@@ -15,7 +15,9 @@ struct CategoryTile: View {
                     .aspectRatio(4.0 / 3.0, contentMode: .fit)
                     .overlay {
                         if let coverDay {
-                            PhotoTile(day: coverDay, flat: true, cornerRadius: 3)
+                            // A ~170 pt tile never needs the 1600 px full cover.
+                            PhotoTile(day: coverDay, flat: true, cornerRadius: 3, maximumPixelSize: 512,
+                                      decodesAsynchronously: true)
                         } else {
                             Image(systemName: category.symbolName)
                                 .font(.system(size: 30, weight: .light))
