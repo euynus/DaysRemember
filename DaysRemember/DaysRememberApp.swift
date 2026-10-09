@@ -34,6 +34,9 @@ struct DaysRememberApp: App {
                     automated = DebugLaunch.isAutomated || DebugLaunch.isUnitTesting
                     if ProcessInfo.processInfo.arguments.contains("--seed-sample-data") {
                         store.resetToSamples()
+                        if ProcessInfo.processInfo.arguments.contains("--localized-samples") {
+                            store.days = SampleTranslations.days(for: SampleTranslations.currentLocalization)
+                        }
                     } else if ProcessInfo.processInfo.arguments.contains("--empty-library") {
                         try? store.restoreBackup(DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: []))
                         settings.hasOnboarded = false
@@ -242,7 +245,7 @@ enum DebugLaunch {
     static var isAutomated: Bool {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("--screen") || args.contains("--tab") { return true }
-        if args.contains("--empty-library") || args.contains("--seed-sample-data")
+        if args.contains("--empty-library") || args.contains("--seed-sample-data") || args.contains("--localized-samples")
             || args.contains("--seed-sync-conflicts") || args.contains("--simulate-photo-save-failure")
             || args.contains("--ui-polish-fixture") { return true }
         if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] != nil { return true }

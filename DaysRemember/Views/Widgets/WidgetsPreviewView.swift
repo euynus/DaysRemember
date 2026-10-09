@@ -4,10 +4,21 @@ struct WidgetsPreviewView: View {
     @Environment(\.currentDay) private var today
     @Environment(DayStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @State private var size: DayWidgetCard.Size = .medium
+    @State private var size = WidgetsPreviewView.initialSize()
     @State private var lockScreen = false
     @State private var accessoryStyle: DayAccessoryWidget.Style = .rectangular
     @State private var selectedID: String?
+
+    /// Allows `xcrun simctl launch ... --screen widgets --widget-size large` for screenshotting.
+    private static func initialSize() -> DayWidgetCard.Size {
+        let args = ProcessInfo.processInfo.arguments
+        guard let i = args.firstIndex(of: "--widget-size"), i + 1 < args.count else { return .medium }
+        switch args[i + 1] {
+        case "small": return .small
+        case "large": return .large
+        default: return .medium
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
