@@ -34,6 +34,23 @@ let accent = NSColor(hex: 0xBB4235)
 let accentSoft = NSColor(hex: 0xF4E3E0)
 let hairline = NSColor(hex: 0x15171C, alpha: 0.14)
 
+/// PhotoTile.featheredEdges: the outer 6% of each edge fades out.
+let featheredEdges: CGImage = {
+    let side = 256
+    func edge(_ index: Int) -> Double {
+        let u = (Double(index) + 0.5) / Double(side)
+        return clamp(min(u, 1 - u) / 0.06)
+    }
+    var pixels = [UInt8](repeating: 0, count: side * side)
+    for y in 0..<side {
+        for x in 0..<side { pixels[y * side + x] = UInt8((edge(x) * edge(y) * 255).rounded()) }
+    }
+    return CGImage(width: side, height: side, bitsPerComponent: 8, bitsPerPixel: 8, bytesPerRow: side,
+                   space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
+                   provider: CGDataProvider(data: Data(pixels) as CFData)!, decode: nil, shouldInterpolate: true,
+                   intent: .defaultIntent)!
+}()
+
 func font(_ name: String, _ size: CGFloat) -> NSFont {
     guard let font = NSFont(name: name, size: size) else { fatalError("Missing font \(name)") }
     return font
@@ -122,6 +139,14 @@ final class Canvas {
         context.restoreGState()
     }
 
+    /// Draws a cover illustration with its edges faded into the paper, as the app does.
+    func drawCover(_ image: CGImage, in rect: CGRect) {
+        context.saveGState()
+        context.clip(to: rect, mask: featheredEdges)
+        draw(image, in: rect)
+        context.restoreGState()
+    }
+
     func attributed(_ string: String, _ font: NSFont, _ color: NSColor, align: NSTextAlignment = .center,
                     kern: CGFloat = 0, lineHeight: CGFloat? = nil) -> NSAttributedString {
         let style = NSMutableParagraphStyle()
@@ -200,7 +225,7 @@ func coverTile(_ image: CGImage, center: CGPoint, side: CGFloat, on canvas: Canv
     canvas.context.restoreGState()
     canvas.context.saveGState()
     canvas.clip(rect, radius: side * 0.08)
-    canvas.draw(image, in: rect.insetBy(dx: side * 0.04, dy: side * 0.04))
+    canvas.drawCover(image, in: rect.insetBy(dx: side * 0.04, dy: side * 0.04))
     canvas.context.restoreGState()
     canvas.stroke(rect, hairline, radius: side * 0.08, width: 1.5)
 }
@@ -265,8 +290,8 @@ func scenes(_ assets: Assets) -> [Scene] {
     let stickers: [(name: String, x: CGFloat, y: CGFloat, side: CGFloat, angle: Double, delay: Double)] = [
         ("Celebration", 250, 330, 300, -7, 0.0),
         ("Flowers", 840, 300, 270, 6, 0.12),
-        ("Homecoming", 135, 960, 210, -5, 0.24),
-        ("Journal", 948, 1010, 210, 7, 0.36),
+        ("Homecoming", 140, 720, 210, -5, 0.24),
+        ("Journal", 940, 760, 210, 7, 0.36),
         ("Voyage", 210, 1560, 290, 5, 0.48),
         ("Garden", 860, 1600, 300, -6, 0.6),
     ]
@@ -306,7 +331,7 @@ func scenes(_ assets: Assets) -> [Scene] {
             canvas.context.saveGState()
             canvas.clip(cover, radius: 0)
             let flowers = assets.covers["Flowers"]!
-            canvas.draw(flowers, in: CGRect(x: cover.midX - 290, y: cover.midY - 290, width: 580, height: 580))
+            canvas.drawCover(flowers, in: CGRect(x: cover.midX - 290, y: cover.midY - 290, width: 580, height: 580))
             canvas.context.restoreGState()
 
             canvas.text(canvas.attributed("结婚纪念日", sansBold(76), ink, align: .left), x: 90, y: 1010, width: 900)
