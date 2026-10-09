@@ -1,0 +1,8 @@
+// Cloudflare Workers Builds deploys the product site from this file on each push to main: the files in
+// docs/ served as static assets at https://days.gooday.dev. There is no Worker code and no build step.
+// "name" must match the Worker's name in the Cloudflare dashboard.
+{
+  "name": "days-remember",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./docs" }
+}
