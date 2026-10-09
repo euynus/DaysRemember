@@ -11,6 +11,19 @@
 - **版本 / 构建号**：1.0 / 1
 - **支持设备**：iPhone，竖屏，iOS 17+
 - **语言**：简体中文、繁體中文、English
+- **名称是否可用**：App Store 名称全局唯一，「时光」很可能已被占用。被占用时可改用「时光 · 纪念日倒数」这类名称，主屏幕上显示的仍是 `CFBundleDisplayName` 里的「时光」。
+
+## 网址
+
+产品网站在 `docs/`，由 GitHub Pages 从 `main` 分支的 `/docs` 发布（需在仓库 Settings → Pages 开启）。隐私政策与支持页面包含三种语言，按锚点区分。
+
+| 字段 | 简体中文 | 繁體中文 | English |
+|---|---|---|---|
+| 隐私政策网址（必填） | `https://euynus.github.io/DaysRemember/privacy.html#zh-Hans` | `…/privacy.html#zh-Hant` | `…/privacy.html#en` |
+| 支持网址（必填） | `https://euynus.github.io/DaysRemember/support.html#zh-Hans` | `…/support.html#zh-Hant` | `…/support.html#en` |
+| 营销网址（可选） | `https://euynus.github.io/DaysRemember/` | `…/zh-Hant/` | `…/en/` |
+
+App 内「设置 › 关于」的「隐私政策」「帮助与反馈」打开同样的页面（`SettingsView.siteURL`）。换域名时两处一起改。
 
 ## 描述（草稿，可编辑）
 
@@ -30,6 +43,50 @@
 **关键词（建议）**：纪念日,倒数日,倒计时,生日提醒,农历,节日,纪念,Anniversary,Countdown,Widget
 
 **宣传文本（建议）**：把重要的日子放在主屏，温柔提醒，从容相聚。
+
+## 繁體中文（草稿）
+
+- **名稱**：時光
+- **副標題**：溫柔記住每一個重要的日子
+
+時光是一款溫暖的紀念日與倒數 App。記錄結婚紀念、寶寶出生、一場旅行、考試倒數……讓重要的日子從容到來。
+
+- 倒數與紀念：未來的值得期待，過去的可以回望
+- 農曆支援：按國曆或農曆每年重複，日曆顯示農曆日期、節氣與傳統節日
+- 自訂分類：圖示與顏色隨心搭配
+- 照片封面：為日子加一張照片，或選用手繪插圖封面
+- 貼心提醒：提前 7/3/1 天或當天提醒，提醒時間自選
+- 小工具：主畫面小 / 中 / 大三種尺寸，以及鎖定畫面樣式
+- iCloud 同步：日子在你的裝置間自動同步
+- 分享卡片：四種範本，可匯出 3:4 直圖，一鍵儲存或分享
+
+所有資料都儲存在你的裝置與你自己的 iCloud 中——不蒐集、不上傳、無廣告、無追蹤。
+
+**關鍵字**：紀念日,倒數日,倒數計時,生日提醒,農曆,節日,紀念,小工具,Anniversary,Countdown
+
+**宣傳文字**：把重要的日子放在主畫面，溫柔提醒，從容相聚。
+
+## English (draft)
+
+- **Name**: Days Remember
+- **Subtitle**: Anniversaries and countdowns
+
+Days Remember is a warm anniversary and countdown app. Keep track of a wedding anniversary, a baby’s birth, a trip or an exam, and let the days that matter arrive without a rush.
+
+- Countdowns and anniversaries: look forward to what’s ahead, and look back on what has passed
+- Lunar calendar: repeat a day every year by the Gregorian or lunar calendar; the calendar shows lunar dates, solar terms and traditional festivals
+- Custom categories: choose your own icons and colors
+- Photo covers: give a day a photo, or pick a hand-drawn illustration
+- Reminders: 7, 3 or 1 day ahead, or on the day, at a time you choose
+- Widgets: small, medium and large on the Home Screen, plus Lock Screen styles
+- iCloud sync: your days sync across your devices
+- Share cards: four templates and a 3:4 portrait export, ready to save or share
+
+Everything stays on your devices and in your own iCloud. No data collection, no uploads, no ads, no tracking.
+
+**Keywords**: anniversary,countdown,birthday,reminder,lunar,calendar,widget,days since,days until,events
+
+**Promotional text**: Keep the days that matter on your Home Screen, with gentle reminders.
 
 ## 隐私（App 隐私问卷答案）
 
@@ -61,7 +118,13 @@
 - [ ] 开发者账号中为 App ID 与 Widget App ID 启用 App Groups（`group.com.shiguang.daysremember`），为 App ID 启用 iCloud（CloudKit 容器 `iCloud.com.shiguang.daysremember`）与推送
 - [ ] CloudKit：用真机 Development 环境完成一次同步，确认 `DaysRememberLibrary` 区域里有 `LibraryDay` / `LibraryCategory` 记录，再在 CloudKit Console 把 Schema **部署到 Production**（否则 App Store 用户的同步全部失败；模拟器不会连接 CloudKit）
 - [ ] 归档后在 Organizer 检查导出的 App 权限：`aps-environment` 应为 `production`（源文件里是 `development`，由分发签名改写）
-- [ ] App Store Connect：隐私政策网址与支持网址（必填）、年龄分级问卷、版权
+- [x] 隐私政策与支持页面：`docs/privacy.html`、`docs/support.html`，App 内「设置 › 关于」可打开
+- [ ] 在仓库 Settings → Pages 选择 `main` / `/docs` 开启 GitHub Pages，确认上面三个网址能打开
+- [ ] App Store Connect：填写上面的网址、年龄分级问卷、版权
+- [ ] App Store Connect：新建 App 记录时确认名称可用；为繁體中文与英文添加本地化，填入上面的草稿
+- [ ] 中国大陆上架需要 App 备案号（ICP）：在「价格与销售范围」选中国大陆时填写。备案通过接入商（如阿里云、腾讯云）办理，需要 Bundle ID 与签名证书信息，通常要一到几周。暂未备案就先不选中国大陆
+- [ ] 欧盟上架需要在 App Store Connect 声明「交易商身份」（DSA）。声明为交易商时，地址、电话与邮箱会公开显示在商店页
+- [ ] 用正式版 Xcode 归档（不能是 beta），并在 Organizer 中验证后上传
 - [x] App Store 截图：`docs/screenshots/<语言>/`，6.9 英寸 1320×2868、无 alpha 的 JPEG，简体 / 繁体 / 英文各 6 张（首页、详情、日历、小组件、分享、分类）。按文件名顺序上传到 App Store Connect 各语言的「6.9 英寸 iPhone」截图位；`bash scripts/screenshots.sh` 可重新生成
 - [ ] TestFlight 真机回归：两台设备间的 iCloud 同步、通知权限与点按跳转、主屏/锁屏小组件、触感、动态字体放大
 - [ ] App Store Connect 隐私问卷按上文填写

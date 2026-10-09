@@ -39,6 +39,10 @@ App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha 
 <img src="docs/screenshots/en/06-categories.jpg" width="130" alt="Categories">
 </p>
 
+## Website
+
+`docs/` is also the product site, published by GitHub Pages from `main` / `/docs`: <https://euynus.github.io/DaysRemember/>. It has a product page in Simplified Chinese (`index.html`), Traditional Chinese (`zh-Hant/`), and English (`en/`), plus the privacy policy (`privacy.html`) and support page (`support.html`) used as the App Store Connect URLs. Those two pages hold all three languages, each under its own anchor (`#zh-Hans`, `#zh-Hant`, `#en`), and Settings › About links to the anchor for the app language. The pages are static HTML with shared `assets/site.css` and `assets/site.js` and use system fonts only, since Google Fonts does not load in mainland China. The countdown demo counts in Beijing time, like the app.
+
 ## Languages
 
 Open **Settings** (the gear on the home screen) and choose **Language**, then select System Default, Simplified Chinese, Traditional Chinese, or English and tap Done. The choice applies immediately and persists only on this device, shared with its widgets; scheduled reminder text is refreshed as well. System Default follows iOS's preferred app language, including the per-app language setting in iOS Settings. System-owned UI such as permission prompts and the Home Screen app name continues to follow iOS language settings.

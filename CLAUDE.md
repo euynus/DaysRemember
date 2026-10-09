@@ -133,3 +133,4 @@ Per-day reminder offsets use `nil` for global settings and `[]` for no day remin
 - Tests in `DaysRememberTests/` use `@testable import DaysRemember`. The target requires the main module to be built with `-enable-testing` (XcodeGen does this automatically for the test bundle).
 - Sample data in `Models/SampleData.swift` is verbatim from `_design/days-remember/project/data.jsx` — keep them in sync if regenerating.
 - Validate UI changes with simulator screenshots and the rendering/UI tests, including compact screens and large accessibility text.
+- `docs/` is the public GitHub Pages site (product page in three languages, privacy policy, support page) and holds the App Store screenshots. Everything there is published, and its claims must match the app; update the pages when a described feature, setting name or data practice changes. `SettingsView.siteURL` links to it.
