@@ -6,6 +6,8 @@ A multilingual anniversary and countdown app built with SwiftUI, iOS 17+. Native
 
 App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha channel) live in `docs/screenshots/<language>/`: home, day detail, calendar, widget preview, share card, and categories. `bash scripts/screenshots.sh` regenerates all three languages on a disposable iPhone 17 Pro Max, with translated sample days and today pinned to 2026-04-23 (the calendar to 2026-07-08, so the month has days in it). The detail, widget, and share screens are opened directly and therefore show no tab bar.
 
+`bash scripts/promo-video.sh` draws a promotional video from the Simplified Chinese screenshots and the cover illustrations: 9:16 (1080 × 1920), 30 fps, about 28 seconds, silent, with Chinese captions. It writes `build/promo/days-remember-promo-zh-Hans.mp4` and a contact sheet with one frame per second; add music in an editor before posting.
+
 **简体中文**
 
 <p>
