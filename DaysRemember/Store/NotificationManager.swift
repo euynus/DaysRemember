@@ -73,7 +73,7 @@ final class NotificationManager {
             return .denied
         case .notDetermined:
             do {
-                let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+                let granted = try await center.requestAuthorization(options: [.alert, .sound])
                 lastError = nil
                 return granted ? .granted : .denied
             } catch {
