@@ -36,30 +36,34 @@
 - **是否收集数据**：否。App 不收集任何数据。
 - **追踪**：无（`NSPrivacyTracking = false`，无追踪域名）。
 - **数据存储**：日子 / 分类保存在设备（App Group 的 `UserDefaults` 与照片文件）和用户自己的 iCloud 私有数据库（CloudKit，照片为 `CKAsset`）；提醒设置通过用户自己的 iCloud 键值存储（`NSUbiquitousKeyValueStore`）同步。
-- **隐私清单**：`PrivacyInfo.xcprivacy` 已声明 `NSPrivacyAccessedAPICategoryUserDefaults`（原因 `CA92.1`）。
+- **隐私清单**：App 与 Widget 的 `PrivacyInfo.xcprivacy` 均声明 `NSPrivacyAccessedAPICategoryUserDefaults`（原因 `CA92.1`、App Group `1C8F.1`）与 `NSPrivacyAccessedAPICategoryFileTimestamp`（原因 `C617.1`，检查容器内的照片文件）。
 - **出口合规**：`ITSAppUsesNonExemptEncryption = false`。
 
 ## 权限用途（Info.plist 文案）
 
 - **相册添加**（`NSPhotoLibraryAddUsageDescription`）：用于把分享卡片保存到相册。
-- **通知**：本地通知，用于日子提醒（首次启动时请求授权；拒绝后「提醒」页会显示前往设置的提示）。
+- **通知**：本地通知，用于日子提醒与每日问候（保存一个带提醒的日子、或在「提醒」页打开开关时才请求授权；拒绝后「提醒」页会显示前往设置的提示）。
 
 ## 审核备注（App Review Notes，建议）
 
-- 纯本地 App，无账号、无登录、无服务器。首次启动预置了若干示例「日子」用于展示功能。
+- 无账号、无登录、无自有服务器。首次启动为空白资料库：点首页右上角「+」新建一个日子，即可体验倒数、提醒、分享卡片与小组件。
 - 通知为本地通知（`UNUserNotificationCenter`），用于纪念日 / 倒数提醒。
 - 分享与「保存到相册」通过系统分享面板与 `PHPhotoLibrary`，无第三方 SDK。
 - iCloud 同步通过 CloudKit 私有数据库（`CKSyncEngine`）与 `NSUbiquitousKeyValueStore`（仅提醒设置），只同步用户自己的数据。
 
 ## 提交前清单
 
-- [x] App 图标 1024²、无 alpha 通道（旅行手账风：拍立得 + 贴纸）
-- [x] 启动屏背景与 App 背景一致（冷灰 `#EDECEF`，仅浅色）
+- [x] App 图标 1024²、无 alpha 通道（黑底日月图形）
+- [x] 启动屏背景与 App 背景一致（米白 `#FCFCFA`，仅浅色）
 - [x] 隐私清单（App + Widget）
 - [x] 出口合规声明
-- [ ] 在 Xcode 签名里填入真实 `DEVELOPMENT_TEAM`（归档上传所需；当前为空）
-- [ ] App Store 截图（可在模拟器截取：首页、详情、日历、分类、提醒、分享、小组件、引导页；仅浅色）
-- [ ] 真机回归：通知权限提示、各尺寸小组件、动态字体放大
+- [ ] 在 Xcode 签名里填入真实 `DEVELOPMENT_TEAM`（归档上传所需；当前为空。`project.yml` 里的值会在 `xcodegen generate` 时覆盖 Xcode 中手动选的团队）
+- [ ] 开发者账号中为 App ID 与 Widget App ID 启用 App Groups（`group.com.shiguang.daysremember`），为 App ID 启用 iCloud（CloudKit 容器 `iCloud.com.shiguang.daysremember`）与推送
+- [ ] CloudKit：用真机 Development 环境完成一次同步，确认 `DaysRememberLibrary` 区域里有 `LibraryDay` / `LibraryCategory` 记录，再在 CloudKit Console 把 Schema **部署到 Production**（否则 App Store 用户的同步全部失败；模拟器不会连接 CloudKit）
+- [ ] 归档后在 Organizer 检查导出的 App 权限：`aps-environment` 应为 `production`（源文件里是 `development`，由分发签名改写）
+- [ ] App Store Connect：隐私政策网址与支持网址（必填）、年龄分级问卷、版权
+- [ ] App Store 截图（6.9 英寸必需，可在模拟器截取：首页、详情、日历、分类、提醒、分享、小组件、引导页；仅浅色）
+- [ ] TestFlight 真机回归：两台设备间的 iCloud 同步、通知权限与点按跳转、主屏/锁屏小组件、触感、动态字体放大
 - [ ] App Store Connect 隐私问卷按上文填写
 
 > 注：App 已锁定浅色外观（`UIUserInterfaceStyle = Light`），无需深色截图。
