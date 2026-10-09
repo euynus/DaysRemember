@@ -673,6 +673,8 @@ final class AppSettings {
     var quietHours: Bool { didSet { persist(quietHours, "notif.quiet"); scheduleCloudPush() } }
     var notificationHour: Int { didSet { persist(notificationHour, "notif.hour"); scheduleCloudPush() } }
     var notificationMinute: Int { didSet { persist(notificationMinute, "notif.minute"); scheduleCloudPush() } }
+    var greetingHour: Int { didSet { persist(greetingHour, "notif.greeting.hour"); scheduleCloudPush() } }
+    var greetingMinute: Int { didSet { persist(greetingMinute, "notif.greeting.minute"); scheduleCloudPush() } }
 
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private let cloud = ICloudSyncStore.shared
@@ -694,6 +696,8 @@ final class AppSettings {
         quietHours = d.object(forKey: "notif.quiet") as? Bool ?? true
         notificationHour = d.object(forKey: "notif.hour") as? Int ?? 9
         notificationMinute = d.object(forKey: "notif.minute") as? Int ?? 0
+        greetingHour = d.object(forKey: "notif.greeting.hour") as? Int ?? 8
+        greetingMinute = d.object(forKey: "notif.greeting.minute") as? Int ?? 0
     }
 
     private func persist(_ value: Bool, _ key: String) { defaults.set(value, forKey: key) }
@@ -772,6 +776,8 @@ final class AppSettings {
         quietHours = snapshot.quietHours
         notificationHour = min(23, max(0, snapshot.notificationHour))
         notificationMinute = min(59, max(0, snapshot.notificationMinute))
+        greetingHour = min(23, max(0, snapshot.greetingHour))
+        greetingMinute = min(59, max(0, snapshot.greetingMinute))
     }
 }
 
@@ -786,6 +792,8 @@ struct AppSettingsSnapshot: Codable, Equatable {
     var quietHours: Bool
     var notificationHour: Int
     var notificationMinute: Int
+    var greetingHour = 8
+    var greetingMinute = 0
 
     @MainActor
     init(settings: AppSettings) {
@@ -799,5 +807,24 @@ struct AppSettingsSnapshot: Codable, Equatable {
         quietHours = settings.quietHours
         notificationHour = settings.notificationHour
         notificationMinute = settings.notificationMinute
+        greetingHour = settings.greetingHour
+        greetingMinute = settings.greetingMinute
+    }
+
+    /// Snapshots from older devices have no greeting time; they keep the original 08:00.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        hasOnboarded = try values.decode(Bool.self, forKey: .hasOnboarded)
+        notifPre7 = try values.decode(Bool.self, forKey: .notifPre7)
+        notifPre3 = try values.decode(Bool.self, forKey: .notifPre3)
+        notifPre1 = try values.decode(Bool.self, forKey: .notifPre1)
+        notifDay0 = try values.decode(Bool.self, forKey: .notifDay0)
+        memoryEnabled = try values.decode(Bool.self, forKey: .memoryEnabled)
+        momentsEnabled = try values.decode(Bool.self, forKey: .momentsEnabled)
+        quietHours = try values.decode(Bool.self, forKey: .quietHours)
+        notificationHour = try values.decode(Int.self, forKey: .notificationHour)
+        notificationMinute = try values.decode(Int.self, forKey: .notificationMinute)
+        greetingHour = try values.decodeIfPresent(Int.self, forKey: .greetingHour) ?? 8
+        greetingMinute = try values.decodeIfPresent(Int.self, forKey: .greetingMinute) ?? 0
     }
 }

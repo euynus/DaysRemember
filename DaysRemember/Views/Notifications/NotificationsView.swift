@@ -49,6 +49,25 @@ struct NotificationsView: View {
         )
     }
 
+    private var greetingTime: Binding<Date> {
+        Binding(
+            get: {
+                let components = DateComponents(calendar: CNDate.calendar, year: 2000, month: 1, day: 1,
+                                                 hour: settings.greetingHour, minute: settings.greetingMinute)
+                return CNDate.calendar.date(from: components) ?? Date()
+            },
+            set: { newValue in
+                settings.greetingHour = CNDate.calendar.component(.hour, from: newValue)
+                settings.greetingMinute = CNDate.calendar.component(.minute, from: newValue)
+                store.rescheduleNotifications()
+            }
+        )
+    }
+
+    private var greetingTimeText: String {
+        String(format: "%02d:%02d", settings.greetingHour, settings.greetingMinute)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             NavHeader(title: String(localized: "提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
@@ -81,8 +100,13 @@ struct NotificationsView: View {
 
                     SectionHeader(String(localized: "问候与回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     CardList {
-                        ToggleCell(label: String(localized: "每日晨间问候", bundle: AppLocalization.bundle, locale: AppLocalization.locale), sub: String(localized: "每天 08:00", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                        ToggleCell(label: String(localized: "每日问候", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                                   sub: String(localized: "每天 \(greetingTimeText)", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                    isOn: reactiveBinding(\.momentsEnabled))
+                        if settings.momentsEnabled {
+                            RowDivider()
+                            greetingTimeRow
+                        }
                         RowDivider()
                         ToggleCell(label: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                    sub: String(localized: "过往日子的年度回忆，遵循公历或农历", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
@@ -185,9 +209,9 @@ struct NotificationsView: View {
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
                     if manager.pendingReminders.contains(where: \.repeats) {
-                        Text("晨间问候由系统每日重复，占用 1 个名额。")
+                        Text("每日问候由系统重复，占用 1 个名额。")
                     }
-                    Text("公历与农历最多预排未来 \(NotificationManager.planningYears) 年，按时间保留最早 \(NotificationManager.pendingLimit) 条（含晨间问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。")
+                    Text("公历与农历最多预排未来 \(NotificationManager.planningYears) 年，按时间保留最早 \(NotificationManager.pendingLimit) 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。")
                     Text("请定期打开应用更新排程；长期不打开，日期提醒到期后不会自动续排。单日“不提醒”也不参与年度回忆。")
                 }
                 .padding(.top, 6)
@@ -201,6 +225,25 @@ struct NotificationsView: View {
         .font(Theme.sans(12))
         .foregroundStyle(Theme.ink2)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    // MARK: - Greeting time row
+
+    private var greetingTimeRow: some View {
+        HStack(spacing: 14) {
+            Text("问候时间（北京时间）")
+                .font(Theme.sans(15))
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            DatePicker("问候时间（北京时间）", selection: greetingTime, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .environment(\.calendar, CNDate.calendar)
+                .environment(\.timeZone, CNDate.calendar.timeZone)
+                .environment(\.locale, AppLocalization.locale)
+                .tint(Theme.accent)
+                .accessibilityIdentifier("greetingTimePicker")
+        }
+        .cardRow()
     }
 
     // MARK: - Daily reminder time row

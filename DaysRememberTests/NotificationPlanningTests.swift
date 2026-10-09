@@ -165,6 +165,26 @@ final class NotificationPlanningTests: XCTestCase {
         XCTAssertEqual(operations, ["old add started", "old add finished", "delete", "new add"])
     }
 
+    func testDailyGreetingUsesItsOwnTimeAndMorningWording() throws {
+        var config = try settings()
+        XCTAssertEqual(config.greetingHour, 8, "Snapshots without a greeting time keep 08:00")
+        config.momentsEnabled = true
+        config.greetingHour = 20
+        config.greetingMinute = 30
+        let now = date(2026, 4, 23, 12)
+        let evening = try XCTUnwrap(NotificationManager.plan(days: [], settings: config, now: now)
+            .first { $0.id == "dr.daily.greeting" })
+        XCTAssertTrue(evening.repeats)
+        XCTAssertEqual(CNDate.calendar.component(.hour, from: evening.date), 20)
+        XCTAssertEqual(CNDate.calendar.component(.minute, from: evening.date), 30)
+        XCTAssertFalse(evening.body.hasPrefix("早安"))
+
+        config.greetingHour = 7
+        let morning = try XCTUnwrap(NotificationManager.plan(days: [], settings: config, now: now)
+            .first { $0.id == "dr.daily.greeting" })
+        XCTAssertTrue(morning.body.hasPrefix("早安"))
+    }
+
     private func settings() throws -> AppSettingsSnapshot {
         try JSONDecoder().decode(AppSettingsSnapshot.self, from: Data("""
         {"hasOnboarded":true,"notifPre7":false,"notifPre3":false,"notifPre1":false,"notifDay0":true,

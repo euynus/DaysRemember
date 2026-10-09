@@ -1,6 +1,54 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "每日问候" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Daily Greeting" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每日问候" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "每日問候" } }
+      }
+    },
+    "每天 %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Every Day at %@" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每天 %@" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "每天 %@" } }
+      }
+    },
+    "问候时间（北京时间）" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Greeting Time (Beijing)" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "问候时间（北京时间）" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "問候時間（北京時間）" } }
+      }
+    },
+    "今天也要好好生活，珍惜每一个值得记住的日子。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cherish today and every day worth remembering." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "今天也要好好生活，珍惜每一个值得记住的日子。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "今天也要好好生活，珍惜每一個值得記住的日子。" } }
+      }
+    },
+    "每日问候由系统重复，占用 1 个名额。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The system repeats the daily greeting, using one reminder slot." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每日问候由系统重复，占用 1 个名额。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "每日問候由系統重複，佔用 1 個名額。" } }
+      }
+    },
+    "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gregorian and lunar reminders are scheduled up to %lld years ahead. Only the earliest %lld reminders, including the daily greeting, are kept, so more events shorten the coverage. Lunar dates are limited to 1900–2100." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "公曆與農曆最多預排未來 %lld 年，按時間保留最早 %lld 條（含每日問候）；日子較多時範圍會縮短。農曆日期限於 1900–2100 年。" } }
+      }
+    },
     "设置" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2106,29 +2154,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "國曆 %@"
-          }
-        }
-      }
-    },
-    "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含晨间问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gregorian and lunar reminders are scheduled up to %lld years ahead. Only the earliest %lld reminders, including the morning greeting, are kept, so more events shorten the coverage. Lunar dates are limited to 1900–2100."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含晨间问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "公曆與農曆最多預排未來 %lld 年，按時間保留最早 %lld 條（含晨間問候）；日子較多時範圍會縮短。農曆日期限於 1900–2100 年。"
           }
         }
       }
@@ -6446,29 +6471,6 @@
         }
       }
     },
-    "晨间问候由系统每日重复，占用 1 个名额。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The system repeats the morning greeting daily, using one reminder slot."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "晨间问候由系统每日重复，占用 1 个名额。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "晨間問候由系統每日重複，佔用 1 個名額。"
-          }
-        }
-      }
-    },
     "暂时无法确认通知权限" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7263,29 +7265,6 @@
         }
       }
     },
-    "每天 08:00" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every Day at 08:00"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每天 08:00"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每天 08:00"
-          }
-        }
-      }
-    },
     "每年" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7305,29 +7284,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每年"
-          }
-        }
-      }
-    },
-    "每日晨间问候" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Daily Morning Greeting"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每日晨间问候"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每日晨間問候"
           }
         }
       }

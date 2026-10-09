@@ -292,13 +292,19 @@ final class NotificationManager {
                 }
             }
         }
+        let greetingHour = min(23, max(0, settings.greetingHour))
         if settings.momentsEnabled,
-           let morning = calendar.nextDate(after: now, matching: DateComponents(hour: 8, minute: 0, second: 0),
-                                           matchingPolicy: .nextTime) {
-            candidates.append(PlannedReminder(id: "dr.daily.greeting", date: morning,
+           let greeting = calendar.nextDate(after: now, matching: DateComponents(hour: greetingHour,
+                                                                                 minute: min(59, max(0, settings.greetingMinute)),
+                                                                                 second: 0),
+                                            matchingPolicy: .nextTime) {
+            // "早安" only suits a morning greeting.
+            let body = (5..<12).contains(greetingHour)
+                ? String(localized: "早安 · 今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                : String(localized: "今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            candidates.append(PlannedReminder(id: "dr.daily.greeting", date: greeting,
                                                title: String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                                               body: String(localized: "早安 · 今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                                               dayID: nil, repeats: true))
+                                               body: body, dayID: nil, repeats: true))
         }
         // ponytail: finite five-year window; reopening the app replenishes it, not a background recurrence engine.
         return Array(candidates.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date < $1.date }
