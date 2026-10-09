@@ -43,7 +43,8 @@
 - [x] 详情页边缘左滑返回手势：SwipeBackEnabler 已移除；详情与分类列表改用系统导航栏，`testEdgeSwipeReturnsFromPushedDetail` 覆盖
 - [ ] Widget 点按深链 / 点按提醒跳转 / 前台横幅（需主屏 Widget + 真实通知交互）
 - [ ] 触感反馈实际手感
-- [ ] 极大动态字体 / 真·小屏（SE，当前无该模拟器）布局压力测试
+- [x] 小屏与大屏：iPhone SE（第 3 代）与 iPhone 17 Pro Max 模拟器（iOS 27）完整 CI 通过，含最大动态字体用例
+- [ ] 真机上的极大动态字体目检
 - [x] 产品决策：新用户首次启动不再预置示例日子（README：New installations start empty）
 
 ## Review 优化（2026-10）
