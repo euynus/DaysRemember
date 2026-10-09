@@ -18,6 +18,15 @@
   <link rel="icon" href="assets/icon-180.png">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
   <link rel="stylesheet" href="assets/site.css">
+  <script>
+    // Motion unless the visitor asks for less (site.css, site.js). If site.js never runs, everything shows after 3 s.
+    (function (root) {
+      if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (!("IntersectionObserver" in window)) return;
+      root.classList.add("motion");
+      setTimeout(function () { if (!root.hasAttribute("data-motion-ready")) root.classList.remove("motion"); }, 3000);
+    })(document.documentElement);
+  </script>
 </head>
 <body>
   <div class="wrap">
@@ -42,18 +51,17 @@
             <span class="requirements">iPhone · iOS 17 及以上</span>
           </div>
         </div>
-        <img class="phone" src="screenshots/zh-Hans/01-home.jpg" width="1320" height="2868"
-             alt="时光首页：即将到来的妈妈生日还有 69 天，下面是其他日子">
+        <div class="phone"><img src="screenshots/zh-Hans/01-home.jpg" width="1320" height="2868" alt="时光首页：即将到来的妈妈生日还有 69 天，下面是其他日子"></div>
       </section>
 
       <section class="section" aria-labelledby="demo-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">试一试</p>
           <h2 id="demo-heading">离那一天，还有多少天？</h2>
           <p>填一个日子，看看它在时光里的样子。</p>
         </div>
         <div class="demo">
-          <form class="demo-form" data-demo>
+          <form class="demo-form reveal" data-demo>
             <div class="field">
               <label for="demo-title">名字</label>
               <input id="demo-title" type="text" value="结婚纪念日" placeholder="结婚纪念日" maxlength="24" autocomplete="off">
@@ -67,7 +75,7 @@
             </label>
             <p class="demo-note">按北京时间计算，和 App 里一样。App 里还能按农历每年重复。</p>
           </form>
-          <div class="day-card" data-demo-card aria-live="polite">
+          <div class="day-card reveal" data-demo-card aria-live="polite">
             <div class="cover"><img src="assets/covers/celebration.jpg" alt="" width="320" height="320"></div>
             <div class="day-card-body">
               <div class="day-card-title">
@@ -82,42 +90,42 @@
       </section>
 
       <section class="section" aria-labelledby="features-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">功能</p>
           <h2 id="features-heading">把重要的日子放在主屏，温柔提醒，从容相聚</h2>
         </div>
         <ul class="rows">
-          <li class="row">
+          <li class="row reveal">
             <img src="assets/covers/garden.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>农历与节气</h3><p>按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。</p></div>
             <p class="figure"><b>24</b><small>个节气</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="assets/covers/flowers.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>手绘封面</h3><p>为日子配一张照片，或从手绘插图里挑一张。新建的日子会按分类先配好封面。</p></div>
             <p class="figure"><b>12</b><small>张插图</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="assets/covers/journal.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>贴心提醒</h3><p>提前 7 天、3 天、1 天或当天提醒，时间自选。每日问候和时光回忆可以分别打开。</p></div>
             <p class="figure"><b>7&thinsp;·&thinsp;3&thinsp;·&thinsp;1</b><small>天前提醒</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="assets/covers/homecoming.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>小组件</h3><p>主屏幕小、中、大三种尺寸，加上锁定屏幕的三种样式。每个小组件都可以单独选一个日子。</p></div>
             <p class="figure"><b>6</b><small>种样式</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="assets/covers/voyage.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>分享卡片</h3><p>照片、手记、极简、双栏四种模板，可以导出 3:4 竖图。笔记默认不出现在图片上。</p></div>
             <p class="figure"><b>4</b><small>种模板</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="assets/covers/everyday.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>自定义分类</h3><p>在爱情、家人、旅行、工作、生活之外，新建自己的分类，图标和颜色自己挑。</p></div>
             <p class="figure"><b>5</b><small>种颜色</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="assets/covers/companionship.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>iCloud 同步</h3><p>日子、分类和照片通过你自己的 iCloud 在设备间同步。误删的日子在这台设备上保留 30 天，可以恢复。</p></div>
             <p class="figure"><b>30</b><small>天内可恢复</small></p>
@@ -126,23 +134,23 @@
       </section>
 
       <section class="section" aria-labelledby="shots-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">截图</p>
           <h2 id="shots-heading">在 iPhone 上</h2>
         </div>
         <div class="shots" tabindex="0" aria-label="App 截图，可横向滚动">
-          <figure><img src="screenshots/zh-Hans/01-home.jpg" width="1320" height="2868" loading="lazy" alt="首页"><figcaption>首页</figcaption></figure>
-          <figure><img src="screenshots/zh-Hans/02-detail.jpg" width="1320" height="2868" loading="lazy" alt="日子详情"><figcaption>日子详情</figcaption></figure>
-          <figure><img src="screenshots/zh-Hans/03-calendar.jpg" width="1320" height="2868" loading="lazy" alt="日历"><figcaption>日历</figcaption></figure>
-          <figure><img src="screenshots/zh-Hans/04-widgets.jpg" width="1320" height="2868" loading="lazy" alt="小组件"><figcaption>小组件</figcaption></figure>
-          <figure><img src="screenshots/zh-Hans/05-share.jpg" width="1320" height="2868" loading="lazy" alt="分享卡片"><figcaption>分享卡片</figcaption></figure>
-          <figure><img src="screenshots/zh-Hans/06-categories.jpg" width="1320" height="2868" loading="lazy" alt="分类"><figcaption>分类</figcaption></figure>
+          <figure class="reveal"><img src="screenshots/zh-Hans/01-home.jpg" width="1320" height="2868" loading="lazy" alt="首页"><figcaption>首页</figcaption></figure>
+          <figure class="reveal"><img src="screenshots/zh-Hans/02-detail.jpg" width="1320" height="2868" loading="lazy" alt="日子详情"><figcaption>日子详情</figcaption></figure>
+          <figure class="reveal"><img src="screenshots/zh-Hans/03-calendar.jpg" width="1320" height="2868" loading="lazy" alt="日历"><figcaption>日历</figcaption></figure>
+          <figure class="reveal"><img src="screenshots/zh-Hans/04-widgets.jpg" width="1320" height="2868" loading="lazy" alt="小组件"><figcaption>小组件</figcaption></figure>
+          <figure class="reveal"><img src="screenshots/zh-Hans/05-share.jpg" width="1320" height="2868" loading="lazy" alt="分享卡片"><figcaption>分享卡片</figcaption></figure>
+          <figure class="reveal"><img src="screenshots/zh-Hans/06-categories.jpg" width="1320" height="2868" loading="lazy" alt="分类"><figcaption>分类</figcaption></figure>
         </div>
       </section>
 
       <section class="section promise" aria-labelledby="privacy-heading">
-        <p class="figure"><b>0</b></p>
-        <div class="promise-text">
+        <p class="figure reveal"><b>0</b></p>
+        <div class="promise-text reveal">
           <h2 id="privacy-heading">不收集任何数据</h2>
           <p>日子、照片和设置只保存在你的设备和你自己的 iCloud 中，不会上传给开发者。</p>
           <ul><li>无需账号</li><li>无广告</li><li>无追踪</li><li>无第三方 SDK</li></ul>
@@ -151,7 +159,7 @@
       </section>
 
       <section class="section" aria-labelledby="support-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">支持</p>
           <h2 id="support-heading">遇到问题？</h2>
           <p>小组件怎么选日子、收不到提醒、换手机怎么办……常见问题和反馈方式都在<a href="support/#zh-Hans">支持页面</a>。</p>

@@ -1,10 +1,14 @@
-// Today's date line and the countdown demo. Like the app, days turn over at midnight Beijing time.
+// Today's date line, the countdown demo and the page's motion. Like the app, days turn over at
+// midnight Beijing time.
 (function () {
   "use strict";
 
   var TIME_ZONE = "Asia/Shanghai";
   var DAY = 86400000;
-  var lang = document.documentElement.lang;
+  var root = document.documentElement;
+  var lang = root.lang;
+  // Set by the head script unless reduced motion is asked for.
+  var motion = root.classList.contains("motion");
 
   var TEXT = {
     "zh-Hans": {
@@ -39,6 +43,20 @@
   if (!TEXT) return;
 
   var number = new Intl.NumberFormat(TEXT.locale);
+
+  // Counts the text of `element` from `from` to `to`, easing out; returns a function that stops it.
+  function countTo(element, from, to, duration, done) {
+    var start = null;
+    var frame = requestAnimationFrame(function step(now) {
+      if (start === null) start = now;
+      var progress = Math.min((now - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      element.textContent = number.format(Math.round(from + (to - from) * eased));
+      if (progress < 1) frame = requestAnimationFrame(step);
+      else if (done) done();
+    });
+    return function () { cancelAnimationFrame(frame); };
+  }
 
   function beijingToday() {
     var parts = {};
@@ -108,12 +126,33 @@
     var valueOut = figure.querySelector("b");
     var unitOut = figure.querySelector("small");
     var elapsedOut = card.querySelector("[data-elapsed]");
+    var revealed = false;
+    var stop = function () {};
+
+    function shownCount() {
+      var digits = valueOut.textContent.replace(/\D/g, "");
+      return digits ? Number(digits) : null;
+    }
+
+    // Counts on from the number already shown. The card is a live region, so it stays busy while
+    // counting and only the final number is announced.
+    function show(count, from) {
+      stop();
+      card.removeAttribute("aria-busy");
+      if (!motion || !revealed || from === null || from === count) {
+        valueOut.textContent = number.format(count);
+        return;
+      }
+      card.setAttribute("aria-busy", "true");
+      stop = countTo(valueOut, from, count, 600, function () { card.removeAttribute("aria-busy"); });
+    }
 
     function update() {
       titleOut.textContent = titleInput.value.trim() || titleInput.placeholder;
       var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateInput.value);
       if (!match) return;
       var y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
+      if (y < 1900 || y > 2100) return;
       var today = beijingToday();
       var t = dayNumber(today.y, today.m, today.d);
       var original = dayNumber(y, m, d);
@@ -136,11 +175,13 @@
       elapsedOut.textContent = elapsed;
       figure.classList.toggle("is-today", diff === 0);
       if (diff === 0) {
+        stop();
+        card.removeAttribute("aria-busy");
         valueOut.textContent = TEXT.today;
         unitOut.textContent = "";
       } else {
         var count = Math.abs(diff);
-        valueOut.textContent = number.format(count);
+        show(count, shownCount());
         unitOut.textContent = diff > 0
           ? (count === 1 && TEXT.aheadOne) || TEXT.ahead
           : (count === 1 && TEXT.agoOne) || TEXT.ago;
@@ -149,9 +190,89 @@
 
     form.addEventListener("input", update);
     form.addEventListener("submit", function (event) { event.preventDefault(); });
+    // Counts up from zero the first time the card comes into view.
+    card.addEventListener("reveal", function () {
+      revealed = true;
+      var count = shownCount();
+      if (count !== null) show(count, 0);
+    });
     update();
+  }
+
+  // Feature figures count up as their rows come into view; 7·3·1 stays as it is.
+  function countUpFigures() {
+    if (!motion) return;
+    var rows = document.querySelectorAll(".row.reveal");
+    Array.prototype.forEach.call(rows, function (row) {
+      var figure = row.querySelector(".figure b");
+      if (!figure || !/^\d+$/.test(figure.textContent)) return;
+      var to = Number(figure.textContent);
+      // Holding the final width keeps the row from reflowing while the digits change.
+      figure.style.minWidth = figure.getBoundingClientRect().width + "px";
+      figure.textContent = number.format(0);
+      row.addEventListener("reveal", function () {
+        countTo(figure, 0, to, 900, function () { figure.style.minWidth = ""; });
+      });
+    });
+  }
+
+  // Each .reveal shows as it comes into view (site.css) and gets a "reveal" event. Marking the page
+  // ready stops the head script from taking .motion back.
+  function revealOnScroll() {
+    if (!motion) return;
+    root.setAttribute("data-motion-ready", "");
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("in");
+        entry.target.dispatchEvent(new CustomEvent("reveal"));
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.12 });
+    var targets = document.querySelectorAll(".reveal");
+    for (var i = 0; i < targets.length; i++) observer.observe(targets[i]);
+  }
+
+  // The hero phone cross-fades through the screenshots below it, once the page has loaded and only
+  // while it is on screen.
+  function cyclePhone() {
+    var phone = document.querySelector(".hero .phone");
+    var shots = document.querySelectorAll(".shots img");
+    if (!motion || !phone || shots.length < 2) return;
+
+    function start() {
+      var frames = Array.prototype.map.call(shots, function (shot) {
+        var frame = new Image();
+        frame.alt = "";
+        frame.decoding = "async";
+        frame.src = shot.src;
+        phone.appendChild(frame);
+        return frame;
+      });
+      var current = 0;
+      var layer = 1;
+      var visible = true;
+      frames[current].classList.add("is-current");
+      new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; }).observe(phone);
+      setInterval(function () {
+        var index = (current + 1) % frames.length;
+        var next = frames[index];
+        if (!visible || document.hidden || !next.complete || !next.naturalWidth) return;
+        var previous = frames[current];
+        current = index;
+        next.style.zIndex = String(++layer);
+        next.classList.add("is-current");
+        setTimeout(function () { previous.classList.remove("is-current"); }, 900);
+      }, 3200);
+    }
+
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start);
   }
 
   renderToday();
   renderDemo();
+  countUpFigures();
+  revealOnScroll();
+  cyclePhone();
 })();

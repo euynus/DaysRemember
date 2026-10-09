@@ -23,6 +23,9 @@
   --step-2: 1.5rem;
   --step-3: clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem);
 
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   --page: 68rem;
   --gutter: clamp(1rem, 4vw, 2.5rem);
   color-scheme: light;
@@ -124,6 +127,7 @@ p { margin: 0; }
 .requirements { color: var(--muted); font-size: var(--step--1); }
 
 .phone {
+  position: relative;
   justify-self: end;
   width: 100%;
   max-width: 22rem;
@@ -132,6 +136,10 @@ p { margin: 0; }
   background: var(--paper);
   overflow: hidden;
 }
+.phone img { width: 100%; }
+/* The other screens site.js stacks over the first, cross-fading from one to the next. */
+.phone img + img { position: absolute; inset: 0; height: 100%; opacity: 0; transition: opacity 0.9s var(--ease-out); }
+.phone img.is-current { opacity: 1; }
 
 /* Section scaffolding */
 .section { padding-block: clamp(2.5rem, 6vw, 4.5rem); border-top: 1px solid var(--hairline); }
@@ -312,6 +320,43 @@ p { margin: 0; }
   .site-header { flex-wrap: wrap; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .figure b { transition: opacity 160ms ease; }
+/* Motion. Only under html.motion, which each page's head script sets before the first paint unless
+   reduced motion is asked for (and takes back if site.js never runs). Reveals fill backwards only, so
+   once they end, hover transitions own the transform again. Only opacity and transforms move. */
+@keyframes rise { from { opacity: 0; translate: 0 var(--rise, 24px); } }
+@keyframes place { from { opacity: 0; rotate: -8deg; scale: 0.8; } }
+@keyframes pop { from { opacity: 0; scale: 0.6; } }
+
+.motion .hero .today { animation: rise 0.8s var(--ease-out) backwards; }
+.motion .hero h1 { animation: rise 0.9s var(--ease-out) 0.06s backwards; }
+.motion .hero h1 span { animation: rise 0.9s var(--ease-out) 0.14s backwards; }
+.motion .hero .lead { animation: rise 0.9s var(--ease-out) 0.22s backwards; }
+.motion .hero .cta-row { animation: rise 0.9s var(--ease-out) 0.3s backwards; }
+.motion .hero .phone { --rise: 64px; animation: rise 1.2s var(--ease-out) 0.3s backwards; }
+
+.motion .reveal:not(.in) { opacity: 0; }
+.motion .reveal.in { animation: rise 0.9s var(--ease-out) var(--d, 0s) backwards; }
+.motion .day-card.in, .motion .promise-text.in { --d: 0.12s; }
+.motion .shots figure:nth-child(2) { --d: 0.06s; }
+.motion .shots figure:nth-child(3) { --d: 0.12s; }
+.motion .shots figure:nth-child(4) { --d: 0.18s; }
+.motion .shots figure:nth-child(5) { --d: 0.24s; }
+.motion .shots figure:nth-child(6) { --d: 0.3s; }
+.motion .promise .figure.in { animation-name: pop; animation-timing-function: var(--spring); }
+
+/* Covers land like stickers on a journal page, and lift a little under the pointer. */
+.motion .row.in img { animation: place 0.8s var(--spring) 0.1s backwards; }
+.motion .row img { transition: rotate 0.3s var(--ease-out), scale 0.3s var(--ease-out); }
+.motion .row:hover img { rotate: -4deg; scale: 1.06; }
+.motion .day-card .cover img { transition: scale 0.4s var(--spring); }
+.motion .day-card[aria-busy="true"] .cover img { scale: 1.06; }
+
+/* Where scroll-driven animations exist, the hero phone leans back and settles flat as the page scrolls. */
+@supports (animation-timeline: scroll()) {
+  @keyframes settle { from { transform: perspective(2000px) rotateX(12deg) scale(0.95); } }
+  .motion .hero .phone {
+    animation: rise 1.2s var(--ease-out) 0.3s backwards, settle linear both;
+    animation-timeline: auto, scroll(root);
+    animation-range: normal, 0 60vh;
+  }
 }

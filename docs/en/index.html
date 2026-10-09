@@ -18,6 +18,15 @@
   <link rel="icon" href="../assets/icon-180.png">
   <link rel="apple-touch-icon" href="../assets/icon-180.png">
   <link rel="stylesheet" href="../assets/site.css">
+  <script>
+    // Motion unless the visitor asks for less (site.css, site.js). If site.js never runs, everything shows after 3 s.
+    (function (root) {
+      if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (!("IntersectionObserver" in window)) return;
+      root.classList.add("motion");
+      setTimeout(function () { if (!root.hasAttribute("data-motion-ready")) root.classList.remove("motion"); }, 3000);
+    })(document.documentElement);
+  </script>
 </head>
 <body>
   <div class="wrap">
@@ -42,18 +51,17 @@
             <span class="requirements">iPhone · iOS 17 or later</span>
           </div>
         </div>
-        <img class="phone" src="../screenshots/en/01-home.jpg" width="1320" height="2868"
-             alt="The Days Remember home screen: Mom’s Birthday is 69 days away, with other days listed below">
+        <div class="phone"><img src="../screenshots/en/01-home.jpg" width="1320" height="2868" alt="The Days Remember home screen: Mom’s Birthday is 69 days away, with other days listed below"></div>
       </section>
 
       <section class="section" aria-labelledby="demo-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">Try it</p>
           <h2 id="demo-heading">How many days until that day?</h2>
           <p>Enter a day and see how it looks in Days Remember.</p>
         </div>
         <div class="demo">
-          <form class="demo-form" data-demo>
+          <form class="demo-form reveal" data-demo>
             <div class="field">
               <label for="demo-title">Name</label>
               <input id="demo-title" type="text" value="Wedding Anniversary" placeholder="Wedding Anniversary" maxlength="32" autocomplete="off">
@@ -67,7 +75,7 @@
             </label>
             <p class="demo-note">Counted in Beijing time, as in the app. In the app, a day can also repeat by the lunar calendar.</p>
           </form>
-          <div class="day-card" data-demo-card aria-live="polite">
+          <div class="day-card reveal" data-demo-card aria-live="polite">
             <div class="cover"><img src="../assets/covers/celebration.jpg" alt="" width="320" height="320"></div>
             <div class="day-card-body">
               <div class="day-card-title">
@@ -82,42 +90,42 @@
       </section>
 
       <section class="section" aria-labelledby="features-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">Features</p>
           <h2 id="features-heading">Keep the days that matter on your Home Screen, with gentle reminders</h2>
         </div>
         <ul class="rows">
-          <li class="row">
+          <li class="row reveal">
             <img src="../assets/covers/garden.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>Lunar calendar and solar terms</h3><p>Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.</p></div>
             <p class="figure"><b>24</b><small>solar terms</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="../assets/covers/flowers.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>Hand-drawn covers</h3><p>Give a day a photo, or pick one of the hand-drawn illustrations. A new day starts with a cover that suits its category.</p></div>
             <p class="figure"><b>12</b><small>illustrations</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="../assets/covers/journal.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>Reminders</h3><p>Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose. The Daily Greeting and Memories can be turned on separately.</p></div>
             <p class="figure"><b>7&thinsp;·&thinsp;3&thinsp;·&thinsp;1</b><small>days before</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="../assets/covers/homecoming.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>Widgets</h3><p>Small, medium and large on the Home Screen, plus three Lock Screen styles. Each widget can show a day of its own.</p></div>
             <p class="figure"><b>6</b><small>styles</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="../assets/covers/voyage.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>Share cards</h3><p>Photo, Journal, Minimal and Split templates, with a 3:4 portrait export. Notes stay off the image unless you include them.</p></div>
             <p class="figure"><b>4</b><small>templates</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="../assets/covers/everyday.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>Custom categories</h3><p>Besides Love, Family, Travel, Work and Life, create categories of your own, each with its own icon and color.</p></div>
             <p class="figure"><b>5</b><small>colors</small></p>
           </li>
-          <li class="row">
+          <li class="row reveal">
             <img src="../assets/covers/companionship.jpg" alt="" width="320" height="320" loading="lazy">
             <div><h3>iCloud sync</h3><p>Days, categories and photos sync across your devices through your own iCloud. A deleted day stays on the device for 30 days, so you can restore it.</p></div>
             <p class="figure"><b>30</b><small>days to restore</small></p>
@@ -126,23 +134,23 @@
       </section>
 
       <section class="section" aria-labelledby="shots-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">Screenshots</p>
           <h2 id="shots-heading">On iPhone</h2>
         </div>
         <div class="shots" tabindex="0" aria-label="App screenshots, scrolls sideways">
-          <figure><img src="../screenshots/en/01-home.jpg" width="1320" height="2868" loading="lazy" alt="Home"><figcaption>Home</figcaption></figure>
-          <figure><img src="../screenshots/en/02-detail.jpg" width="1320" height="2868" loading="lazy" alt="Day detail"><figcaption>Day detail</figcaption></figure>
-          <figure><img src="../screenshots/en/03-calendar.jpg" width="1320" height="2868" loading="lazy" alt="Calendar"><figcaption>Calendar</figcaption></figure>
-          <figure><img src="../screenshots/en/04-widgets.jpg" width="1320" height="2868" loading="lazy" alt="Widgets"><figcaption>Widgets</figcaption></figure>
-          <figure><img src="../screenshots/en/05-share.jpg" width="1320" height="2868" loading="lazy" alt="Share card"><figcaption>Share card</figcaption></figure>
-          <figure><img src="../screenshots/en/06-categories.jpg" width="1320" height="2868" loading="lazy" alt="Categories"><figcaption>Categories</figcaption></figure>
+          <figure class="reveal"><img src="../screenshots/en/01-home.jpg" width="1320" height="2868" loading="lazy" alt="Home"><figcaption>Home</figcaption></figure>
+          <figure class="reveal"><img src="../screenshots/en/02-detail.jpg" width="1320" height="2868" loading="lazy" alt="Day detail"><figcaption>Day detail</figcaption></figure>
+          <figure class="reveal"><img src="../screenshots/en/03-calendar.jpg" width="1320" height="2868" loading="lazy" alt="Calendar"><figcaption>Calendar</figcaption></figure>
+          <figure class="reveal"><img src="../screenshots/en/04-widgets.jpg" width="1320" height="2868" loading="lazy" alt="Widgets"><figcaption>Widgets</figcaption></figure>
+          <figure class="reveal"><img src="../screenshots/en/05-share.jpg" width="1320" height="2868" loading="lazy" alt="Share card"><figcaption>Share card</figcaption></figure>
+          <figure class="reveal"><img src="../screenshots/en/06-categories.jpg" width="1320" height="2868" loading="lazy" alt="Categories"><figcaption>Categories</figcaption></figure>
         </div>
       </section>
 
       <section class="section promise" aria-labelledby="privacy-heading">
-        <p class="figure"><b>0</b></p>
-        <div class="promise-text">
+        <p class="figure reveal"><b>0</b></p>
+        <div class="promise-text reveal">
           <h2 id="privacy-heading">No data collected</h2>
           <p>Your days, photos and settings stay on your devices and in your own iCloud. Nothing is sent to the developer.</p>
           <ul><li>No account</li><li>No ads</li><li>No tracking</li><li>No third-party SDKs</li></ul>
@@ -151,7 +159,7 @@
       </section>
 
       <section class="section" aria-labelledby="support-heading">
-        <div class="section-head">
+        <div class="section-head reveal">
           <p class="eyebrow">Support</p>
           <h2 id="support-heading">Need help?</h2>
           <p>Choosing a day for a widget, missing reminders, moving to a new iPhone: answers and ways to get in touch are on the <a href="../support/#en">support page</a>.</p>
