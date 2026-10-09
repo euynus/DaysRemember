@@ -3,33 +3,31 @@ import UserNotifications
 @testable import DaysRemember
 
 final class NotificationPlanningTests: XCTestCase {
-    func testQuietHoursMoveLateRemindersForwardAcrossYearBoundary() {
+    func testLateAndEarlyRemindersFireAtTheChosenTimeAcrossYearBoundary() {
         let now = date(2026, 12, 31, 22)
         XCTAssertEqual(NotificationManager.triggerDate(displayDate: date(2027, 1, 1), offset: 1,
-                                                         hour: 23, minute: 15, quietHours: true, now: now),
-                       date(2027, 1, 1, 8, 15))
+                                                         hour: 23, minute: 15, now: now),
+                       date(2026, 12, 31, 23, 15))
         XCTAssertEqual(NotificationManager.triggerDate(displayDate: date(2027, 1, 1), offset: 0,
-                                                         hour: 7, minute: 15, quietHours: true, now: now),
-                       date(2027, 1, 1, 8, 15))
-        XCTAssertEqual(NotificationManager.triggerDate(displayDate: date(2026, 12, 31), offset: 0,
-                                                         hour: 22, minute: 0, quietHours: true, now: now),
-                       date(2027, 1, 1, 8))
+                                                         hour: 7, minute: 15, now: now),
+                       date(2027, 1, 1, 7, 15))
+        XCTAssertNil(NotificationManager.triggerDate(displayDate: date(2026, 12, 31), offset: 0,
+                                                      hour: 22, minute: 0, now: now))
         XCTAssertNil(NotificationManager.triggerDate(displayDate: date(2027, 1, 1), offset: -1,
-                                                      hour: 9, minute: 0, quietHours: false, now: now))
+                                                      hour: 9, minute: 0, now: now))
     }
 
-    func testQuietHoursBodyUsesDeliveryDayAndDoesNotDropYesterday() throws {
+    func testLateReminderTimeKeepsEachReminderOnItsOwnDay() throws {
         var config = try settings()
+        XCTAssertFalse(config.quietHours, "Older snapshots no longer enable quiet hours")
         config.notificationHour = 23
         config.notificationMinute = 15
         let event = day("event", date(2026, 7, 20), offsets: [7, 1, 0])
         let plan = NotificationManager.plan(days: [event], settings: config, now: date(2026, 7, 1))
 
-        XCTAssertEqual(plan.map(\.date), [date(2026, 7, 14, 8, 15), date(2026, 7, 20, 8, 15), date(2026, 7, 21, 8, 15)])
-        XCTAssertEqual(plan.map(\.body), ["「event」还有 6 天", "今天是「event」", "昨天是「event」"])
-        let afterMidnight = NotificationManager.plan(days: [event], settings: config, now: date(2026, 7, 21, 1))
-        XCTAssertEqual(afterMidnight.map(\.date), [date(2026, 7, 21, 8, 15)])
-        XCTAssertTrue(NotificationManager.plan(days: [event], settings: config, now: date(2026, 7, 21, 9)).isEmpty)
+        XCTAssertEqual(plan.map(\.date), [date(2026, 7, 13, 23, 15), date(2026, 7, 19, 23, 15), date(2026, 7, 20, 23, 15)])
+        XCTAssertEqual(plan.map(\.body), ["「event」还有 7 天", "「event」就是明天", "今天是「event」"])
+        XCTAssertTrue(NotificationManager.plan(days: [event], settings: config, now: date(2026, 7, 21, 1)).isEmpty)
     }
 
     func testEmptyOverridesExcludeAnnualMemoriesAndOrdinaryReminders() throws {
@@ -73,13 +71,13 @@ final class NotificationPlanningTests: XCTestCase {
                        [date(2022, 1, 10, 9), date(2022, 12, 30, 9)])
     }
 
-    func testMemoriesHonorLunarDatesAndQuietHoursInEveryYear() throws {
+    func testMemoriesHonorLunarDatesAndLateTimesInEveryYear() throws {
         var config = try settings()
         config.memoryEnabled = true
         config.notificationHour = 23
         let event = day("memory", date(2025, 1, 7), lunar: true)
         let plan = NotificationManager.plan(days: [event], settings: config, now: date(2026, 1, 1))
-        XCTAssertEqual(Array(plan.prefix(2)).map(\.date), [date(2026, 1, 27, 8), date(2027, 1, 16, 8)])
+        XCTAssertEqual(Array(plan.prefix(2)).map(\.date), [date(2026, 1, 26, 23), date(2027, 1, 15, 23)])
         XCTAssertTrue(plan.allSatisfy { $0.id.hasPrefix("dr.memory.") && !$0.repeats })
         XCTAssertEqual(plan.first?.body, "想起这一天 · 「memory」 · 2026年1月26日")
     }
@@ -100,15 +98,15 @@ final class NotificationPlanningTests: XCTestCase {
         XCTAssertTrue(NotificationManager.plan(days: days, settings: config, now: date(2026, 1, 1), capacity: -1).isEmpty)
     }
 
-    func testYearBoundaryIncludesUpcomingOffsetsAndDelayedPreviousYear() throws {
+    func testYearBoundaryIncludesUpcomingOffsetsAtLateTimes() throws {
         var config = try settings()
         config.notificationHour = 23
         let upcoming = day("new-year", date(2020, 1, 1), recurring: true, offsets: [7, 0])
         let oldYear = day("old-year", date(2020, 12, 31), recurring: true, offsets: [0])
         let before = NotificationManager.plan(days: [upcoming], settings: config, now: date(2026, 12, 24))
-        XCTAssertEqual(before.first?.date, date(2026, 12, 26, 8))
+        XCTAssertEqual(before.first?.date, date(2026, 12, 25, 23))
         let after = NotificationManager.plan(days: [oldYear], settings: config, now: date(2027, 1, 1))
-        XCTAssertEqual(after.first?.date, date(2027, 1, 1, 8))
+        XCTAssertEqual(after.first?.date, date(2027, 12, 31, 23))
     }
 
     func testHorizonAndOriginalDateAreRespected() throws {

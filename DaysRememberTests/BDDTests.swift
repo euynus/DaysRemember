@@ -236,24 +236,24 @@ final class BDDTests: XCTestCase {
 
     // MARK: - 提醒触发时间
 
-    func test_quietHoursPushTriggerPastEightAM() {
+    func test_lateReminderFiresAtTheChosenTime() {
         var trigger: Date?
 
-        when("提醒计算落在勿扰时段（设定 23:15）") {
+        when("提前 1 天的提醒设在深夜 23:15") {
             trigger = NotificationManager.triggerDate(
                 displayDate: dateAt(2026, 7, 20),
                 offset: 1,
                 hour: 23, minute: 15,
-                quietHours: true,
                 now: dateAt(2026, 7, 1),
                 calendar: CNDate.calendar
             )
         }
 
-        then("实际触发时间被推迟到当日 08:15") {
+        then("按设定在前一天 23:15 触发") {
             let cal = CNDate.calendar
             XCTAssertNotNil(trigger)
-            XCTAssertEqual(cal.component(.hour, from: trigger!), 8)
+            XCTAssertEqual(cal.component(.day, from: trigger!), 19)
+            XCTAssertEqual(cal.component(.hour, from: trigger!), 23)
             XCTAssertEqual(cal.component(.minute, from: trigger!), 15)
         }
     }

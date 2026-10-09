@@ -18,7 +18,7 @@ struct Day: Identifiable, Codable, Hashable {
     /// Optional per-day reminder offsets, in days before the event.
     /// `nil` means the global reminder settings are used.
     var reminderOffsets: [Int]?
-    /// `nil` uses the global notification time; an override remains subject to quiet hours.
+    /// `nil` uses the global notification time.
     var reminderTime: DayReminderTime?
     var note: String
     var location: String

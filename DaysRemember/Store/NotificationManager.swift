@@ -54,10 +54,6 @@ final class NotificationManager {
         UNUserNotificationCenter.current().delegate = delegate
     }
 
-    /// Quiet hours bounds — notifications are pushed past the upper bound when they fall inside.
-    nonisolated private static let quietStart = 22
-    nonisolated private static let quietEnd = 8
-
     enum AuthorizationResult { case granted, denied, deferred }
 
     /// Read-only current authorization status (does not prompt). Used to surface a
@@ -272,8 +268,7 @@ final class NotificationManager {
             for date in dates where date >= calendar.startOfDay(for: day.date) {
                 for offset in offsets {
                     guard let trigger = triggerDate(displayDate: date, offset: offset,
-                                                    hour: hour, minute: minute,
-                                                    quietHours: settings.quietHours, now: now), trigger <= end else { continue }
+                                                    hour: hour, minute: minute, now: now), trigger <= end else { continue }
                     candidates.append(PlannedReminder(
                         id: "dr.day.\(day.id).pre.\(offset).\(Int(date.timeIntervalSince1970))", date: trigger,
                         title: String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
@@ -283,8 +278,7 @@ final class NotificationManager {
             if memory {
                 for date in annualDates where date > calendar.startOfDay(for: day.date) {
                     guard let trigger = triggerDate(displayDate: date, offset: 0,
-                                                    hour: hour, minute: minute,
-                                                    quietHours: settings.quietHours, now: now), trigger <= end else { continue }
+                                                    hour: hour, minute: minute, now: now), trigger <= end else { continue }
                     candidates.append(PlannedReminder(
                         id: "dr.memory.\(day.id).\(Int(date.timeIntervalSince1970))", date: trigger,
                         title: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
@@ -314,9 +308,7 @@ final class NotificationManager {
     nonisolated private static func body(for day: Day, offset: Int) -> String {
         let lead: String
         switch offset {
-        case ..<0:
-            lead = String(localized: "昨天是「\(day.title)」", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        case 0:
+        case ...0:
             lead = String(localized: "今天是「\(day.title)」", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case 1:
             lead = String(localized: "「\(day.title)」就是明天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
@@ -330,24 +322,21 @@ final class NotificationManager {
     }
 
     nonisolated static func triggerDate(displayDate: Date, offset: Int, hour: Int, minute: Int,
-                                        quietHours: Bool, now: Date,
-                                        calendar: Calendar = CNDate.calendar) -> Date? {
+                                        now: Date, calendar: Calendar = CNDate.calendar) -> Date? {
         guard offset >= 0,
-              let baseDay = calendar.date(byAdding: .day, value: -offset, to: displayDate) else {
+              let deliveryDay = calendar.date(byAdding: .day, value: -offset, to: displayDate) else {
             return nil
         }
-        let time = notificationTime(hour: hour, minute: minute, quietHours: quietHours)
-        guard let deliveryDay = calendar.date(byAdding: .day, value: time.dayOffset, to: baseDay),
-              let trigger = calendar.date(bySettingHour: time.hour, minute: time.minute, second: 0,
+        let time = notificationTime(hour: hour, minute: minute)
+        guard let trigger = calendar.date(bySettingHour: time.hour, minute: time.minute, second: 0,
                                           of: deliveryDay) else {
             return nil
         }
         return trigger > now ? trigger : nil
     }
 
-    nonisolated static func notificationTime(hour: Int, minute: Int, quietHours: Bool) -> (hour: Int, minute: Int, dayOffset: Int) {
-        let hour = min(23, max(0, hour))
-        return (quietHours && (hour >= quietStart || hour < quietEnd) ? quietEnd : hour,
-                min(59, max(0, minute)), quietHours && hour >= quietStart ? 1 : 0)
+    /// Clamps a stored hour and minute into a valid time of day.
+    nonisolated static func notificationTime(hour: Int, minute: Int) -> (hour: Int, minute: Int) {
+        (min(23, max(0, hour)), min(59, max(0, minute)))
     }
 }

@@ -712,29 +712,6 @@
         }
       }
     },
-    "22:00 起顺延次日 %@；08:00 前顺延当日 %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "At or after 22:00, reminders move to %@ the next day; before 08:00, to %@ the same day."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "22:00 起顺延次日 %@；08:00 前顺延当日 %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "22:00 起順延次日 %@；08:00 前順延當日 %@"
-          }
-        }
-      }
-    },
     "countdown.daysAgoUnit" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2939,29 +2916,6 @@
         }
       }
     },
-    "勿扰" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do Not Disturb"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "勿扰"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "勿擾"
-          }
-        }
-      }
-    },
     "包含笔记" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3717,29 +3671,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "夏至"
-          }
-        }
-      }
-    },
-    "夜间勿扰" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quiet Hours"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "夜间勿扰"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "夜間勿擾"
           }
         }
       }
@@ -6444,29 +6375,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "春節"
-          }
-        }
-      }
-    },
-    "昨天是「%@」" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "“%@” was yesterday."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "昨天是「%@」"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "昨天是「%@」"
           }
         }
       }

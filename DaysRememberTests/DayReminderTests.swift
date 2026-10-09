@@ -29,7 +29,7 @@ final class DayReminderTests: XCTestCase {
         XCTAssertTrue(memories.allSatisfy { $0.id.hasPrefix("dr.memory.") })
     }
 
-    func testGlobalQuietHoursDelayOverrideForOrdinaryAndAnnualMemories() throws {
+    func testLateOverrideTimeAppliesToOrdinaryRemindersAndAnnualMemories() throws {
         var config = try settings()
         config.memoryEnabled = true
         let time = DayReminderTime(hour: 23, minute: 15)
@@ -37,16 +37,10 @@ final class DayReminderTests: XCTestCase {
         let memory = day("memory", date(2020, 7, 20), offsets: [0], time: time)
         let plan = NotificationManager.plan(days: [event, memory], settings: config, now: date(2026, 7, 1))
 
-        XCTAssertEqual(plan.filter { $0.dayID == event.id }.map(\.date), [date(2026, 7, 21, 8, 15)])
+        XCTAssertEqual(plan.filter { $0.dayID == event.id }.map(\.date), [date(2026, 7, 20, 23, 15)])
         let memories = plan.filter { $0.dayID == memory.id }
-        XCTAssertEqual(memories.map(\.date), (2026...2030).map { date($0, 7, 21, 8, 15) })
+        XCTAssertEqual(memories.map(\.date), (2026...2030).map { date($0, 7, 20, 23, 15) })
         XCTAssertTrue(memories.allSatisfy { $0.id.hasPrefix("dr.memory.") && !$0.repeats })
-
-        config.quietHours = false
-        let unrestricted = NotificationManager.plan(days: [event, memory], settings: config, now: date(2026, 7, 1))
-        XCTAssertEqual(unrestricted.filter { $0.dayID == event.id }.map(\.date), [date(2026, 7, 20, 23, 15)])
-        XCTAssertEqual(unrestricted.filter { $0.dayID == memory.id }.map(\.date),
-                       (2026...2030).map { date($0, 7, 20, 23, 15) })
     }
 
     func testEmptyOffsetsRemainOptedOutDespiteTimeOverrideAndMemories() throws {

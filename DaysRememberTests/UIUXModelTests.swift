@@ -108,8 +108,7 @@ final class UIUXModelTests: XCTestCase {
         let now = date(2026, 7, 1)
 
         let trigger = NotificationManager.triggerDate(displayDate: display, offset: 7,
-                                                      hour: 16, minute: 30,
-                                                      quietHours: false, now: now,
+                                                      hour: 16, minute: 30, now: now,
                                                       calendar: cal)
 
         XCTAssertEqual(cal.component(.day, from: trigger!), 13)
@@ -144,35 +143,31 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertEqual(manager.offsets(for: day, settings: settings), [3, 0])
     }
 
-    func testReminderAndMemoryTimeShareQuietHoursAndClamping() {
-        for hour in [0, 7, 22, 23] {
-            let time = NotificationManager.notificationTime(hour: hour, minute: 15, quietHours: true)
-            XCTAssertEqual(time.hour, 8)
+    func testReminderTimeKeepsTheChosenHourAndClamps() {
+        for hour in [0, 7, 8, 21, 22, 23] {
+            let time = NotificationManager.notificationTime(hour: hour, minute: 15)
+            XCTAssertEqual(time.hour, hour)
             XCTAssertEqual(time.minute, 15)
         }
-        for hour in [8, 21] {
-            XCTAssertEqual(NotificationManager.notificationTime(hour: hour, minute: 15, quietHours: true).hour, hour)
-        }
-        let late = NotificationManager.notificationTime(hour: 99, minute: 99, quietHours: false)
+        let late = NotificationManager.notificationTime(hour: 99, minute: 99)
         XCTAssertEqual(late.hour, 23)
         XCTAssertEqual(late.minute, 59)
-        let early = NotificationManager.notificationTime(hour: -1, minute: -1, quietHours: false)
+        let early = NotificationManager.notificationTime(hour: -1, minute: -1)
         XCTAssertEqual(early.hour, 0)
         XCTAssertEqual(early.minute, 0)
     }
 
-    func testNotificationTriggerRespectsQuietHours() {
+    func testLateNightTriggerStaysOnTheChosenDay() {
         let cal = CNDate.calendar
         let display = date(2026, 7, 20)
         let now = date(2026, 7, 1)
 
         let trigger = NotificationManager.triggerDate(displayDate: display, offset: 1,
-                                                      hour: 23, minute: 15,
-                                                      quietHours: true, now: now,
+                                                      hour: 23, minute: 15, now: now,
                                                       calendar: cal)
 
-        XCTAssertEqual(cal.component(.day, from: trigger!), 20)
-        XCTAssertEqual(cal.component(.hour, from: trigger!), 8)
+        XCTAssertEqual(cal.component(.day, from: trigger!), 19)
+        XCTAssertEqual(cal.component(.hour, from: trigger!), 23)
         XCTAssertEqual(cal.component(.minute, from: trigger!), 15)
     }
 

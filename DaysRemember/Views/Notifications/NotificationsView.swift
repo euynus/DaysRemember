@@ -10,13 +10,12 @@ struct NotificationsView: View {
     private let manager = NotificationManager.shared
 
     /// Toggle binding that re-syncs scheduled notifications whenever flipped.
-    private func reactiveBinding(_ key: ReferenceWritableKeyPath<AppSettings, Bool>,
-                                 requestsPermission: Bool = true) -> Binding<Bool> {
+    private func reactiveBinding(_ key: ReferenceWritableKeyPath<AppSettings, Bool>) -> Binding<Bool> {
         Binding(
             get: { settings[keyPath: key] },
             set: { newValue in
                 settings[keyPath: key] = newValue
-                Task { await reschedule(requestPermission: newValue && requestsPermission) }
+                Task { await reschedule(requestPermission: newValue) }
             }
         )
     }
@@ -31,7 +30,7 @@ struct NotificationsView: View {
         Binding(
             get: {
                 let time = NotificationManager.notificationTime(hour: settings.notificationHour,
-                                                                  minute: settings.notificationMinute, quietHours: false)
+                                                                  minute: settings.notificationMinute)
                 var components = DateComponents()
                 components.calendar = CNDate.calendar
                 components.year = 2000
@@ -114,13 +113,7 @@ struct NotificationsView: View {
                         RowDivider()
                         timeRow
                     }
-                    .padding(.bottom, 22)
 
-                    SectionHeader(String(localized: "勿扰", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
-                    CardList {
-                        ToggleCell(label: String(localized: "夜间勿扰", bundle: AppLocalization.bundle, locale: AppLocalization.locale), sub: quietHoursDescription,
-                                   isOn: reactiveBinding(\.quietHours, requestsPermission: false))
-                    }
                     coverageSummary.padding(.top, 18)
                 }
                 .padding(.horizontal, 22)
@@ -188,12 +181,6 @@ struct NotificationsView: View {
     private var reminderDateFormat: Date.FormatStyle {
         Date.FormatStyle(date: .abbreviated, time: .shortened, locale: AppLocalization.locale,
                          calendar: CNDate.calendar, timeZone: CNDate.calendar.timeZone)
-    }
-
-    private var quietHoursDescription: String {
-        let minute = min(59, max(0, settings.notificationMinute))
-        let morning = minute == 0 ? "08:00" : "08:\(minute < 10 ? "0" : "")\(minute)"
-        return String(localized: "22:00 起顺延次日 \(morning)；08:00 前顺延当日 \(morning)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     /// The count stays visible; system scheduling limits sit behind a disclosure.

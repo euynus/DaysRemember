@@ -670,7 +670,6 @@ final class AppSettings {
     var notifDay0: Bool { didSet { persist(notifDay0, "notif.day0"); scheduleCloudPush() } }
     var memoryEnabled: Bool { didSet { persist(memoryEnabled, "notif.memory"); scheduleCloudPush() } }
     var momentsEnabled: Bool { didSet { persist(momentsEnabled, "notif.moments"); scheduleCloudPush() } }
-    var quietHours: Bool { didSet { persist(quietHours, "notif.quiet"); scheduleCloudPush() } }
     var notificationHour: Int { didSet { persist(notificationHour, "notif.hour"); scheduleCloudPush() } }
     var notificationMinute: Int { didSet { persist(notificationMinute, "notif.minute"); scheduleCloudPush() } }
     var greetingHour: Int { didSet { persist(greetingHour, "notif.greeting.hour"); scheduleCloudPush() } }
@@ -693,7 +692,6 @@ final class AppSettings {
         notifDay0 = d.object(forKey: "notif.day0") as? Bool ?? true
         memoryEnabled = d.object(forKey: "notif.memory") as? Bool ?? false
         momentsEnabled = d.object(forKey: "notif.moments") as? Bool ?? false
-        quietHours = d.object(forKey: "notif.quiet") as? Bool ?? true
         notificationHour = d.object(forKey: "notif.hour") as? Int ?? 9
         notificationMinute = d.object(forKey: "notif.minute") as? Int ?? 0
         greetingHour = d.object(forKey: "notif.greeting.hour") as? Int ?? 8
@@ -773,7 +771,6 @@ final class AppSettings {
         notifDay0 = snapshot.notifDay0
         memoryEnabled = snapshot.memoryEnabled
         momentsEnabled = snapshot.momentsEnabled
-        quietHours = snapshot.quietHours
         notificationHour = min(23, max(0, snapshot.notificationHour))
         notificationMinute = min(59, max(0, snapshot.notificationMinute))
         greetingHour = min(23, max(0, snapshot.greetingHour))
@@ -789,7 +786,9 @@ struct AppSettingsSnapshot: Codable, Equatable {
     var notifDay0: Bool
     var memoryEnabled: Bool
     var momentsEnabled: Bool
-    var quietHours: Bool
+    /// Quiet hours were removed: the reminder time is the user's own choice. Still encoded
+    /// as `false` so older devices decoding this snapshot deliver at that time too.
+    var quietHours = false
     var notificationHour: Int
     var notificationMinute: Int
     var greetingHour = 8
@@ -804,7 +803,6 @@ struct AppSettingsSnapshot: Codable, Equatable {
         notifDay0 = settings.notifDay0
         memoryEnabled = settings.memoryEnabled
         momentsEnabled = settings.momentsEnabled
-        quietHours = settings.quietHours
         notificationHour = settings.notificationHour
         notificationMinute = settings.notificationMinute
         greetingHour = settings.greetingHour
@@ -821,7 +819,7 @@ struct AppSettingsSnapshot: Codable, Equatable {
         notifDay0 = try values.decode(Bool.self, forKey: .notifDay0)
         memoryEnabled = try values.decode(Bool.self, forKey: .memoryEnabled)
         momentsEnabled = try values.decode(Bool.self, forKey: .momentsEnabled)
-        quietHours = try values.decode(Bool.self, forKey: .quietHours)
+        quietHours = false
         notificationHour = try values.decode(Int.self, forKey: .notificationHour)
         notificationMinute = try values.decode(Int.self, forKey: .notificationMinute)
         greetingHour = try values.decodeIfPresent(Int.self, forKey: .greetingHour) ?? 8
