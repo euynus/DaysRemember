@@ -24,7 +24,14 @@ struct SettingsView: View {
                     }
                 }
                 Section {
-                    LabeledContent("版本", value: Self.version)
+                    LabeledContent {
+                        Text(verbatim: Self.version)
+                    } label: {
+                        Label("版本", systemImage: "info.circle")
+                            .foregroundStyle(Theme.ink)
+                    }
+                    link("隐私政策", systemImage: "hand.raised", page: "privacy.html", identifier: "settings.privacy")
+                    link("帮助与反馈", systemImage: "questionmark.circle", page: "support.html", identifier: "settings.support")
                 } header: {
                     Text("关于")
                 } footer: {
@@ -68,6 +75,35 @@ struct SettingsView: View {
             .contentShape(.rect)
         }
         .accessibilityIdentifier(identifier)
+    }
+
+    /// A page of the product site (`docs/`), opened at the app language's section.
+    private func link(_ title: LocalizedStringKey, systemImage: String, page: String,
+                      identifier: String) -> some View {
+        Link(destination: Self.siteURL(page)) {
+            HStack(spacing: 12) {
+                Label(title, systemImage: systemImage)
+                    .foregroundStyle(Theme.ink)
+                Spacer(minLength: 8)
+                Image(systemName: "arrow.up.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.muted)
+                    .accessibilityHidden(true)
+            }
+            .frame(minHeight: 44)
+            .contentShape(.rect)
+        }
+        .accessibilityIdentifier(identifier)
+    }
+
+    static let siteBase = "https://euynus.github.io/DaysRemember/"
+
+    /// The privacy and support pages hold all three languages, anchored by localization.
+    static func siteURL(_ page: String, locale: Locale = AppLocalization.locale) -> URL {
+        let language = locale.language
+        let anchor = language.languageCode?.identifier == "en" ? "en"
+            : language.script?.identifier == "Hant" ? "zh-Hant" : "zh-Hans"
+        return URL(string: siteBase + page + "#" + anchor)!
     }
 
     static var version: String {
