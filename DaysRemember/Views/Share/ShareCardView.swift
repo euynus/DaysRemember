@@ -8,6 +8,7 @@ struct ShareCardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
     @State private var template: Template = .polaroid
+    @State private var ratio: Ratio = .natural
     @State private var includeNote = false
     @State private var sharedImage: SharedImage?
     @State private var savedToast: (id: UUID, text: String)?
@@ -24,6 +25,20 @@ struct ShareCardView: View {
         }
     }
 
+    enum Ratio: Hashable {
+        /// The card's own height.
+        case natural
+        /// A 3:4 portrait image, as Xiaohongshu and Moments crop to.
+        case portrait
+    }
+
+    static let cardWidth: CGFloat = 320
+    static let exportPadding: CGFloat = 24
+    /// Card aspect that makes the exported image, padding included, exactly 3:4.
+    static let portraitCardHeight = (cardWidth + exportPadding * 2) * 4 / 3 - exportPadding * 2
+    /// Exports stay sharp on 2x screens and above 1080 px wide everywhere.
+    static let minimumExportScale: CGFloat = 3
+
     private struct SharedImage: Identifiable {
         let id = UUID()
         let image: UIImage
@@ -32,28 +47,39 @@ struct ShareCardView: View {
     private var info: DayInfo { DayInfo.compute(day, today: today) }
 
     private var card: some View {
-        SharePostcard(day: day, info: info, template: template, includeNote: includeNote)
+        SharePostcard(day: day, info: info, template: template, includeNote: includeNote,
+                      fillsHeight: ratio == .portrait)
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            NavHeader(title: String(localized: "分享", bundle: AppLocalization.bundle, locale: AppLocalization.locale), onBack: { dismiss() }) {
-                FAB(systemName: "square.and.arrow.down", size: 42, action: saveToPhotos)
-                    .accessibilityLabel("保存到相册")
-            }
+            NavHeader(title: String(localized: "分享", bundle: AppLocalization.bundle, locale: AppLocalization.locale), onBack: { dismiss() })
             templatePicker
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)
-            ToggleCell(label: String(localized: "包含笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: $includeNote)
-                .accessibilityIdentifier("share.includeNote")
-                .padding(.horizontal, 6)
-                .padding(.bottom, 12)
+            HStack(spacing: 14) {
+                Text("比例").font(Theme.sans(15)).foregroundStyle(Theme.ink)
+                Spacer(minLength: 8)
+                SegPicker(options: [(Ratio.natural, String(localized: "卡片", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
+                                    (Ratio.portrait, "3:4")], selection: $ratio)
+                    .accessibilityIdentifier("share.ratio")
+            }
+            .cardRow()
+            .padding(.horizontal, 6)
+            // Days without a note have nothing to include.
+            if !day.note.isEmpty {
+                ToggleCell(label: String(localized: "包含笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: $includeNote)
+                    .accessibilityIdentifier("share.includeNote")
+                    .padding(.horizontal, 6)
+            }
             ScrollView {
                 VStack(spacing: 0) {
-                    card.frame(maxWidth: 320)
+                    card
+                        .frame(width: Self.cardWidth, height: ratio == .portrait ? Self.portraitCardHeight : nil)
                         .environment(\.dynamicTypeSize, .large)
                         .shadow(color: Theme.ink.opacity(0.06), radius: 12, y: 5)
                 }
+                .padding(.top, 12)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             }
@@ -92,13 +118,22 @@ struct ShareCardView: View {
 
     @MainActor
     private func renderCardImage() -> UIImage? {
+        Self.renderImage(card: card, ratio: ratio, scale: displayScale)
+    }
+
+    @MainActor
+    static func renderImage<Card: View>(card: Card, ratio: Ratio, scale: CGFloat) -> UIImage? {
         // Keep the printed card and its on-screen preview at the same text scale.
-        let content = card.frame(width: 320).padding(24).background(Theme.bg)
+        let width = cardWidth + exportPadding * 2
+        let content = card
+            .frame(width: cardWidth, height: ratio == .portrait ? portraitCardHeight : nil)
+            .padding(exportPadding)
+            .background(Theme.bg)
             .environment(\.dynamicTypeSize, .large)
             .environment(\.locale, AppLocalization.locale)
         let renderer = ImageRenderer(content: content)
-        renderer.scale = displayScale
-        renderer.proposedSize = .init(width: 320 + 48, height: nil)
+        renderer.scale = max(scale, minimumExportScale)
+        renderer.proposedSize = .init(width: width, height: ratio == .portrait ? width * 4 / 3 : nil)
         renderer.isOpaque = true
         return renderer.uiImage
     }
@@ -188,10 +223,12 @@ struct SharePostcard: View {
     let info: DayInfo
     let template: ShareCardView.Template
     var includeNote = false
+    /// In a fixed-height (3:4) card, covers and spacing absorb the remaining height.
+    var fillsHeight = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if template == .polaroid { cover.frame(height: 230) }
+            if template == .polaroid { flexibleCover(height: 230) }
             VStack(alignment: .leading, spacing: 20) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("时光")
@@ -212,15 +249,18 @@ struct SharePostcard: View {
                 case .note:
                     title
                     note
-                    cover.frame(height: 150)
+                    flexibleCover(height: 150)
                     countdown
                 case .minimal:
                     title
+                    if fillsHeight { Spacer(minLength: 28) }
                     countdown.padding(.vertical, 28)
                     note
+                    if fillsHeight { Spacer(minLength: 0) }
                 case .collage:
                     HStack(alignment: .top, spacing: 18) {
-                        cover.frame(width: 108, height: 210)
+                        cover.frame(width: 108)
+                            .frame(minHeight: fillsHeight ? 120 : 210, maxHeight: fillsHeight ? .infinity : 210)
                         VStack(alignment: .leading, spacing: 16) {
                             title
                             countdown
@@ -228,23 +268,37 @@ struct SharePostcard: View {
                     }
                     note
                 }
-                Rectangle().fill(Theme.hairline).frame(height: 1)
             }
             .padding(22)
+            // Text keeps its size; a flexible cover takes whatever height is left.
+            .layoutPriority(1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: fillsHeight ? .infinity : nil, alignment: .topLeading)
         .background(Theme.card)
+        .clipped()
     }
 
     private var cover: some View {
         PhotoTile(day: day, flat: true, cornerRadius: 0)
     }
 
+    /// Fixed height in a natural card; in a 3:4 card the cover takes whatever height is left.
+    @ViewBuilder
+    private func flexibleCover(height: CGFloat) -> some View {
+        if fillsHeight {
+            cover.frame(minHeight: 100, maxHeight: .infinity)
+        } else {
+            cover.frame(height: height)
+        }
+    }
+
     private var title: some View {
         Text(verbatim: day.title)
             .font(Theme.sans(23, weight: .medium))
             .foregroundStyle(Theme.ink)
-            .fixedSize(horizontal: false, vertical: true)
+            .lineLimit(fillsHeight ? 3 : nil)
+            .fixedSize(horizontal: false, vertical: !fillsHeight)
+            .layoutPriority(1)
     }
 
     private var countdown: some View {
@@ -269,6 +323,7 @@ struct SharePostcard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(countdownLabel)
+        .layoutPriority(1)
     }
 
     @ViewBuilder
@@ -278,7 +333,9 @@ struct SharePostcard: View {
                 .font(Theme.sans(14))
                 .lineSpacing(6)
                 .foregroundStyle(Theme.ink2)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(fillsHeight ? 4 : nil)
+                .fixedSize(horizontal: false, vertical: !fillsHeight)
+                .layoutPriority(1)
         }
     }
 }

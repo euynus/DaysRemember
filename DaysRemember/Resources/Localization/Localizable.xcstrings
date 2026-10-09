@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "比例" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ratio" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "比例" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "比例" } }
+      }
+    },
+    "卡片" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Card" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "卡片" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "卡片" } }
+      }
+    },
     "新建这一天的日子" : {
       "extractionState" : "manual",
       "localizations" : {

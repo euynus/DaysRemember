@@ -132,6 +132,26 @@ final class RenderingTests: XCTestCase {
         }
     }
 
+    func testShareExportsAreSharpAndPortraitIsThreeByFour() throws {
+        let day = Day(id: "share-export", title: String(repeating: "A long summer journey together ", count: 4),
+                      date: Date(timeIntervalSince1970: 1_700_000_000), recurring: true, category: .travel,
+                      photo: .japan, note: String(repeating: "Every day has a story worth remembering. ", count: 10))
+        let info = DayInfo.compute(day)
+        for template in ShareCardView.Template.allCases {
+            let portrait = SharePostcard(day: day, info: info, template: template, includeNote: true, fillsHeight: true)
+            let image = try XCTUnwrap(ShareCardView.renderImage(card: portrait, ratio: .portrait, scale: 2))
+            XCTAssertEqual(image.size.width * image.scale, 1104, "\(template)")
+            XCTAssertEqual(image.size.height / image.size.width, 4.0 / 3.0, accuracy: 0.005, "\(template)")
+            let attachment = XCTAttachment(image: image)
+            attachment.name = "Portrait share \(template)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+        let natural = SharePostcard(day: day, info: info, template: .polaroid)
+        let image = try XCTUnwrap(ShareCardView.renderImage(card: natural, ratio: .natural, scale: 2))
+        XCTAssertGreaterThanOrEqual(image.size.width * image.scale, 1080)
+    }
+
     func testDefaultIllustrationsFitWithoutCropping() throws {
         for size in [CGSize(width: 300, height: 120), CGSize(width: 62, height: 72)] {
             for style in PhotoStyle.pickerOptions {
