@@ -300,6 +300,28 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(wedding.waitForExistence(timeout: 5))
     }
 
+    func testDeletingADayOffersUndo() {
+        let app = launchApp()
+        let wedding = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "结婚纪念日")).firstMatch
+        XCTAssertTrue(wedding.waitForExistence(timeout: 10))
+        wedding.tap()
+        XCTAssertTrue(app.buttons["更多操作"].waitForExistence(timeout: 5))
+        app.buttons["更多操作"].tap()
+        app.buttons["trash"].firstMatch.tap()
+        app.buttons["删除"].firstMatch.tap()
+
+        let undo = app.buttons["undoDelete"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 5))
+        XCTAssertTrue(wedding.waitForNonExistence(timeout: 5))
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Undo banner after deletion"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        undo.tap()
+        XCTAssertTrue(wedding.waitForExistence(timeout: 5))
+        XCTAssertTrue(undo.waitForNonExistence(timeout: 5))
+    }
+
     func testTabsSearchAndCategoryEditor() {
         let app = launchApp()
         app.tabBars.buttons["分类"].tap()

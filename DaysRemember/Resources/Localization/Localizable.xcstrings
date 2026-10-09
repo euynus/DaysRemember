@@ -1,6 +1,30 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "已删除「%@」" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Deleted “%@”" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已删除「%@」" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "已刪除「%@」" } }
+      }
+    },
+    "撤销" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Undo" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "撤销" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "復原" } }
+      }
+    },
+    "删除后会取消它的待提醒；30 天内可在「最近删除」中恢复。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This also cancels its reminders. You can restore it from Recently Deleted for 30 days." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除后会取消它的待提醒；30 天内可在「最近删除」中恢复。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "刪除後會取消它的待提醒；30 天內可在「最近刪除」中還原。" } }
+      }
+    },
     "比例" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2808,29 +2832,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "刪除分類後，要將日子移到哪裡？"
-          }
-        }
-      }
-    },
-    "删除后会同时取消这个日子的待提醒。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deleting this day also cancels its scheduled reminders."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删除后会同时取消这个日子的待提醒。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "刪除後會同時取消這個日子的待提醒。"
           }
         }
       }

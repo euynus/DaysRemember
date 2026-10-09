@@ -1,3 +1,4 @@
+import Accessibility
 import SwiftUI
 
 enum AppTab: String, Hashable {
@@ -13,6 +14,7 @@ struct DayRoute: Hashable {
 struct RootTabView: View {
     @Environment(DayStore.self) private var store
     @Environment(DeepLinkRouter.self) private var router
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
@@ -57,6 +59,56 @@ struct RootTabView: View {
             // Also catch a tap that set the id before this view began observing
             // (cold launch from a notification).
             .task { routePending(router.dayID) }
+    }
+
+    /// Floats above the active tab's tab bar. An overlay rather than an inset, so screens
+    /// never shift — and move a tap target — when it appears or times out.
+    private func undoOverlay(on tab: AppTab) -> some View {
+        ZStack {
+            if self.tab == tab, let deleted = store.lastDeleted {
+                undoBanner(deleted)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
+        }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: store.lastDeleted?.id)
+    }
+
+    /// Undo for the latest deletion; it also stays recoverable in 最近删除.
+    private func undoBanner(_ deleted: DeletedDay) -> some View {
+        HStack(spacing: 12) {
+            Label(String(localized: "已删除「\(deleted.day.title)」", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                  systemImage: "trash")
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button("撤销") {
+                Haptics.success()
+                store.undoLastDeletion()
+            }
+            .fontWeight(.semibold)
+            .foregroundStyle(Theme.accent)
+            .frame(minWidth: 44, minHeight: 44)
+            .accessibilityIdentifier("undoDelete")
+        }
+        .font(.footnote)
+        .foregroundStyle(Theme.ink)
+        .padding(.leading, 16)
+        .padding(.trailing, 6)
+        .padding(.vertical, 4)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Theme.hairlineStrong, lineWidth: 1)
+        }
+        .shadow(color: Theme.ink.opacity(0.08), radius: 8, y: 2)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .task(id: deleted.id) {
+            AccessibilityNotification.Announcement(
+                String(localized: "已删除「\(deleted.day.title)」", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            ).post()
+            do { try await Task.sleep(for: .seconds(6)) } catch { return }
+            if store.lastDeleted?.id == deleted.id { store.dismissLastDeletion() }
+        }
     }
 
     /// `daysremember://day/<id>` (tapped from the widget) opens that day's detail.
@@ -107,6 +159,7 @@ struct RootTabView: View {
             .toolbar(.hidden, for: .navigationBar)
             .dayDetailDestination()
         }
+        .overlay(alignment: .bottom) { undoOverlay(on: .home) }
     }
 
     private var calendarStack: some View {
@@ -115,6 +168,7 @@ struct RootTabView: View {
                 .toolbar(.hidden, for: .navigationBar)
                 .dayDetailDestination()
         }
+        .overlay(alignment: .bottom) { undoOverlay(on: .calendar) }
     }
 
     private var categoriesStack: some View {
@@ -133,6 +187,7 @@ struct RootTabView: View {
                     }
                 }
         }
+        .overlay(alignment: .bottom) { undoOverlay(on: .categories) }
     }
 }
 

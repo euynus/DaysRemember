@@ -212,7 +212,7 @@ struct DayContextMenu: ViewModifier {
                 }
                 Button("取消", role: .cancel) {}
             } message: {
-                Text("删除后会同时取消这个日子的待提醒。")
+                Text("删除后会取消它的待提醒；30 天内可在「最近删除」中恢复。")
             }
             .sensoryFeedback(.impact(flexibility: .soft), trigger: current.pinned)
     }

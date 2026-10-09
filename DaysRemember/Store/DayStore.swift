@@ -32,6 +32,8 @@ final class DayStore {
         }
     }
     private(set) var deletedDays: [DeletedDay] = []
+    /// The most recent deletion, offered for undo until dismissed.
+    private(set) var lastDeleted: DeletedDay?
     private(set) var syncConflicts: [SyncConflict] = []
     private(set) var loadError: String?
     private(set) var saveError: String?
@@ -179,7 +181,18 @@ final class DayStore {
             return
         }
         days.removeAll { $0.id == id }
+        lastDeleted = deletedDays.first { $0.id == id }
         Task { await NotificationManager.shared.cancel(dayId: id) }
+    }
+
+    func undoLastDeletion() {
+        guard let entry = lastDeleted else { return }
+        lastDeleted = nil
+        restoreDeletedDay(id: entry.id)
+    }
+
+    func dismissLastDeletion() {
+        lastDeleted = nil
     }
 
     func restoreDeletedDay(id: String) {

@@ -20,6 +20,32 @@ final class EditorSaveTests: XCTestCase {
         }
     }
 
+    func testUndoRestoresOnlyTheLatestDeletion() throws {
+        try withDefaults { defaults in
+            let store = DayStore(defaults: defaults)
+            let first = day("first")
+            let second = day("second")
+            store.add(first)
+            store.add(second)
+            store.delete(first)
+            store.delete(second)
+            XCTAssertEqual(store.lastDeleted?.day, second)
+
+            store.undoLastDeletion()
+            XCTAssertNil(store.lastDeleted)
+            XCTAssertEqual(store.days, [second])
+            XCTAssertEqual(store.deletedDays.map(\.day), [first])
+            store.undoLastDeletion()
+            XCTAssertEqual(store.days, [second])
+
+            store.delete(second)
+            store.dismissLastDeletion()
+            store.undoLastDeletion()
+            XCTAssertTrue(store.days.isEmpty)
+            XCTAssertEqual(Set(store.deletedDays.map(\.id)), [first.id, second.id])
+        }
+    }
+
     func testCloudDeletedDayUpdateDoesNotRecreateOrChangeDeletedCopy() throws {
         try withDefaults { defaults in
             let store = DayStore(defaults: defaults)
