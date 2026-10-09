@@ -15,13 +15,13 @@
 
 ## 网址
 
-产品网站在 `docs/`，由 GitHub Pages 从 `main` 分支的 `/docs` 发布（需在仓库 Settings → Pages 开启）。隐私政策与支持页面包含三种语言，按锚点区分。
+产品网站在 `docs/`，由 Cloudflare Workers Builds 在每次推送 `main` 时按 `wrangler.jsonc` 发布到 `days.gooday.dev`（静态文件，没有构建步骤）。隐私政策与支持页面包含三种语言，按锚点区分。
 
 | 字段 | 简体中文 | 繁體中文 | English |
 |---|---|---|---|
-| 隐私政策网址（必填） | `https://euynus.github.io/DaysRemember/privacy.html#zh-Hans` | `…/privacy.html#zh-Hant` | `…/privacy.html#en` |
-| 支持网址（必填） | `https://euynus.github.io/DaysRemember/support.html#zh-Hans` | `…/support.html#zh-Hant` | `…/support.html#en` |
-| 营销网址（可选） | `https://euynus.github.io/DaysRemember/` | `…/zh-Hant/` | `…/en/` |
+| 隐私政策网址（必填） | `https://days.gooday.dev/privacy/#zh-Hans` | `…/privacy/#zh-Hant` | `…/privacy/#en` |
+| 支持网址（必填） | `https://days.gooday.dev/support/#zh-Hans` | `…/support/#zh-Hant` | `…/support/#en` |
+| 营销网址（可选） | `https://days.gooday.dev/` | `…/zh-Hant/` | `…/en/` |
 
 App 内「设置 › 关于」的「隐私政策」「帮助与反馈」打开同样的页面（`SettingsView.siteURL`）。换域名时两处一起改。
 
@@ -118,8 +118,8 @@ Everything stays on your devices and in your own iCloud. No data collection, no 
 - [ ] 开发者账号中为 App ID 与 Widget App ID 启用 App Groups（`group.com.shiguang.daysremember`），为 App ID 启用 iCloud（CloudKit 容器 `iCloud.com.shiguang.daysremember`）与推送
 - [ ] CloudKit：用真机 Development 环境完成一次同步，确认 `DaysRememberLibrary` 区域里有 `LibraryDay` / `LibraryCategory` 记录，再在 CloudKit Console 把 Schema **部署到 Production**（否则 App Store 用户的同步全部失败；模拟器不会连接 CloudKit）
 - [ ] 归档后在 Organizer 检查导出的 App 权限：`aps-environment` 应为 `production`（源文件里是 `development`，由分发签名改写）
-- [x] 隐私政策与支持页面：`docs/privacy.html`、`docs/support.html`，App 内「设置 › 关于」可打开
-- [ ] 在仓库 Settings → Pages 选择 `main` / `/docs` 开启 GitHub Pages，确认上面三个网址能打开
+- [x] 隐私政策与支持页面：`docs/privacy/`、`docs/support/`，App 内「设置 › 关于」可打开
+- [ ] Cloudflare：Workers & Pages → 创建 → 导入 GitHub 仓库 `euynus/DaysRemember`，Worker 名称填 `days-remember`（与 `wrangler.jsonc` 一致），部署命令保持 `npx wrangler deploy`；部署后在该 Worker 的「设置 › 域和路由」添加自定义域 `days.gooday.dev`，确认上面三个网址能打开。**提交审核前必须完成**，否则 App 内的隐私政策链接打不开
 - [ ] App Store Connect：填写上面的网址、年龄分级问卷、版权
 - [ ] App Store Connect：新建 App 记录时确认名称可用；为繁體中文与英文添加本地化，填入上面的草稿
 - [ ] 中国大陆上架需要 App 备案号（ICP）：在「价格与销售范围」选中国大陆时填写。备案通过接入商（如阿里云、腾讯云）办理，需要 Bundle ID 与签名证书信息，通常要一到几周。暂未备案就先不选中国大陆

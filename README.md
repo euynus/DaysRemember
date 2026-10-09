@@ -41,7 +41,7 @@ App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha 
 
 ## Website
 
-`docs/` is also the product site, published by GitHub Pages from `main` / `/docs`: <https://euynus.github.io/DaysRemember/>. It has a product page in Simplified Chinese (`index.html`), Traditional Chinese (`zh-Hant/`), and English (`en/`), plus the privacy policy (`privacy.html`) and support page (`support.html`) used as the App Store Connect URLs. Those two pages hold all three languages, each under its own anchor (`#zh-Hans`, `#zh-Hant`, `#en`), and Settings › About links to the anchor for the app language. The pages are static HTML with shared `assets/site.css` and `assets/site.js` and use system fonts only, since Google Fonts does not load in mainland China. The countdown demo counts in Beijing time, like the app.
+`docs/` is also the product site, <https://days.gooday.dev>. Cloudflare Workers Builds deploys it as static assets on each push to `main`, configured by `wrangler.jsonc` (no Worker code, no build step); preview it with `python3 -m http.server --directory docs`. It has a product page in Simplified Chinese (`index.html`), Traditional Chinese (`zh-Hant/`), and English (`en/`), plus the privacy policy (`privacy/`) and support page (`support/`) used as the App Store Connect URLs. Those two pages hold all three languages, each under its own anchor (`#zh-Hans`, `#zh-Hant`, `#en`), and Settings › About links to the anchor for the app language. The pages are static HTML with shared `assets/site.css` and `assets/site.js` and use system fonts only, since Google Fonts does not load in mainland China. The countdown demo counts in Beijing time, like the app.
 
 ## Languages
 
