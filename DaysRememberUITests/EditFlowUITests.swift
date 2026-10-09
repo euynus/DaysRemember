@@ -702,40 +702,19 @@ final class EditFlowUITests: XCTestCase {
         }
 
         openDataManagement()
+        // The name DataManagementView gives the backup. The test runs on a disposable simulator, so
+        // naming it in the picker (whose name field and keyboard differ by iOS version) isn't needed.
+        let backupName = "时光备份-" + Date.now.formatted(.iso8601.year().month().day().dateSeparator(.dash))
         app.buttons["导出备份"].tap()
         // iOS 27 identifies the picker's save button; iOS 26 only labels it.
         let save = app.buttons.matching(NSPredicate(
             format: "identifier == %@ OR label == %@", "DOCPicker.actionButton", "保存"
         )).firstMatch
         XCTAssertTrue(save.waitForExistence(timeout: 10), app.debugDescription)
-        // A unique name keeps the default export name from overwriting an older backup. When the
-        // picker's file name field doesn't show up in time, the backup goes into a new folder instead.
-        let fileName = app.textFields["DOCPicker.filenameTextField"]
-        let namesFile = fileName.waitForExistence(timeout: 10)
-        let folderTitle = app.navigationBars.descendants(matching: .any).matching(NSPredicate(
-            format: "label == %@ OR label BEGINSWITH %@", title, title + ", "
-        )).firstMatch
-        if namesFile {
-            fileName.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
-            let defaultName = fileName.value as? String ?? ""
-            // Return commits what the Chinese keyboard still holds as marked text.
-            fileName.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: defaultName.count) + title + "\n")
-            expectation(for: NSPredicate(format: "value == %@", title), evaluatedWith: fileName)
-            waitForExpectations(timeout: 5)
-        } else {
-            app.buttons["OverflowBarButtonItem"].tap()
-            let newFolder = app.buttons["新建文件夹"]
-            XCTAssertTrue(newFolder.waitForExistence(timeout: 5), app.debugDescription)
-            newFolder.tap()
-            let folderName = app.textViews["DOC.inlineRenameField"]
-            XCTAssertTrue(folderName.waitForExistence(timeout: 5), app.debugDescription)
-            let initialFolderName = folderName.value as? String ?? ""
-            folderName.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: initialFolderName.count) + title + "\n")
-            XCTAssertTrue(folderName.waitForNonExistence(timeout: 5), app.debugDescription)
-            XCTAssertTrue(folderTitle.waitForExistence(timeout: 5), app.debugDescription)
-        }
-        // Return in the name field may already have saved.
-        if save.exists { save.tap() }
+        save.tap()
+        // Only a reused simulator has a backup from the same day to replace.
+        let replace = app.buttons["替换"]
+        if replace.waitForExistence(timeout: 1) { replace.tap() }
         XCTAssertTrue(app.staticTexts["备份已导出。"].waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["好"].tap()
         app.buttons["关闭"].tap()
@@ -750,20 +729,13 @@ final class EditFlowUITests: XCTestCase {
 
         openDataManagement()
         app.buttons["从文件恢复"].tap()
-        let file = app.cells.matching(NSPredicate(
-            format: "label BEGINSWITH %@", namesFile ? title : "时光备份-"
-        )).firstMatch
-        if namesFile && !file.waitForExistence(timeout: 5) {
+        let file = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", backupName)).firstMatch
+        if !file.waitForExistence(timeout: 5) {
             // The picker can open on Recents, which lists only files opened before.
             let browse = app.tabBars.buttons["浏览"]
             if browse.exists { browse.tap() }
             let onMyiPhone = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "我的iPhone")).firstMatch
             if !file.waitForExistence(timeout: 3) && onMyiPhone.exists { onMyiPhone.tap() }
-        } else if !namesFile && !folderTitle.waitForExistence(timeout: 2) {
-            let folder = app.cells.matching(NSPredicate(format: "label == %@", title)).firstMatch
-            XCTAssertTrue(folder.waitForExistence(timeout: 10), app.debugDescription)
-            folder.images.firstMatch.tap()
-            XCTAssertTrue(folderTitle.waitForExistence(timeout: 5), app.debugDescription)
         }
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
         file.images.firstMatch.tap()
