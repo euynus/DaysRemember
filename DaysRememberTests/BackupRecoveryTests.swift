@@ -220,7 +220,12 @@ final class BackupRecoveryTests: XCTestCase {
             let legacyDays = [conflictingDay, imported, original.deletedDays[0].day]
             let legacyCategories = [conflictingCategory, newCategory]
 
+            XCTAssertFalse(store.hasUnseenLegacyData(days: [], categories: []))
+            XCTAssertFalse(store.hasUnseenLegacyData(days: [conflictingDay], categories: [conflictingCategory]))
+            XCTAssertTrue(store.hasUnseenLegacyData(days: legacyDays, categories: legacyCategories))
+            XCTAssertTrue(store.hasUnseenLegacyData(days: [], categories: [newCategory]))
             XCTAssertEqual(try store.importLegacyData(days: legacyDays, categories: legacyCategories), 1)
+            XCTAssertFalse(store.hasUnseenLegacyData(days: legacyDays, categories: legacyCategories))
             XCTAssertEqual(store.days, original.days + [imported])
             XCTAssertEqual(store.categories, original.categories + [newCategory])
             XCTAssertEqual(store.deletedDays, original.deletedDays)

@@ -574,20 +574,40 @@ final class DayStore {
     // Legacy KVS has no per-record tombstones. Import only after explicit user action.
     @discardableResult
     func importLegacyCloudData() throws -> Int {
+        let legacy = legacyCloudRecords()
+        return try importLegacyData(days: legacy.days, categories: legacy.categories)
+    }
+
+    /// Whether the legacy iCloud keys still hold a day or category this device has not seen.
+    func hasUnseenLegacyCloudData() -> Bool {
+        let legacy = legacyCloudRecords()
+        return hasUnseenLegacyData(days: legacy.days, categories: legacy.categories)
+    }
+
+    func hasUnseenLegacyData(days legacyDays: [Day], categories legacyCategories: [CategoryDefinition]) -> Bool {
+        let seen = seenLegacyIDs()
+        return legacyDays.contains { !seen.days.contains($0.id) }
+            || legacyCategories.contains { !seen.categories.contains($0.id) }
+    }
+
+    private func legacyCloudRecords() -> (days: [Day], categories: [CategoryDefinition]) {
         let legacy = ICloudSyncStore.shared
         legacy.refresh()
         let remoteDays: ICloudSyncStore.RemoteValue<[Day]>? = legacy.remoteValue(for: ICloudSyncStore.Key.days)
         let remoteCategories: ICloudSyncStore.RemoteValue<[CategoryDefinition]>? = legacy.remoteValue(for: ICloudSyncStore.Key.categories)
-        return try importLegacyData(days: remoteDays?.value ?? [], categories: remoteCategories?.value ?? [])
+        return (remoteDays?.value ?? [], remoteCategories?.value ?? [])
+    }
+
+    private func seenLegacyIDs() -> (days: Set<String>, categories: Set<String>) {
+        (Set(defaults.stringArray(forKey: legacyDayIDsKey) ?? []).union(days.map(\.id)).union(deletedDays.map(\.id)),
+         Set(defaults.stringArray(forKey: legacyCategoryIDsKey) ?? []).union(categories.map(\.id)))
     }
 
     @discardableResult
     func importLegacyData(days legacyDays: [Day], categories legacyCategories: [CategoryDefinition]) throws -> Int {
         guard loadError == nil else { throw DayBackup.BackupError.unreadable }
         try DayBackup(days: legacyDays, categories: legacyCategories, deletedDays: []).validate()
-        let seenDays = Set(defaults.stringArray(forKey: legacyDayIDsKey) ?? [])
-            .union(days.map(\.id)).union(deletedDays.map(\.id))
-        let seenCategories = Set(defaults.stringArray(forKey: legacyCategoryIDsKey) ?? []).union(categories.map(\.id))
+        let (seenDays, seenCategories) = seenLegacyIDs()
         let additions = legacyDays.filter { !seenDays.contains($0.id) }
         let categoryAdditions = legacyCategories.filter { !seenCategories.contains($0.id) }
         if !additions.isEmpty || !categoryAdditions.isEmpty {

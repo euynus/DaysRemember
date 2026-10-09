@@ -13,6 +13,7 @@ struct DataManagementView: View {
     @State private var pendingImport: DayBackup?
     @State private var confirmRecovery = false
     @State private var confirmLegacyImport = false
+    @State private var hasLegacyData = false
     @State private var confirmAccountChange = false
     @State private var message: String?
 
@@ -60,10 +61,12 @@ struct DataManagementView: View {
                             confirmAccountChange = true
                         }
                     }
-                    Button("导入旧版 iCloud 数据", systemImage: "icloud.and.arrow.down") {
-                        confirmLegacyImport = true
+                    if hasLegacyData {
+                        Button("导入旧版 iCloud 数据", systemImage: "icloud.and.arrow.down") {
+                            confirmLegacyImport = true
+                        }
+                        .disabled(store.loadError != nil)
                     }
-                    .disabled(store.loadError != nil)
                 }
                 Section {
                     Button("导出备份", systemImage: "square.and.arrow.up") {
@@ -103,6 +106,13 @@ struct DataManagementView: View {
             .background(Theme.bg)
             .navigationTitle("数据与同步")
             .navigationBarTitleDisplayMode(.inline)
+            // Only devices that used the pre-CloudKit builds have legacy records, which may
+            // still be downloading when this opens.
+            .onAppear { hasLegacyData = store.hasUnseenLegacyCloudData() }
+            .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification)
+                .receive(on: RunLoop.main)) { _ in
+                hasLegacyData = store.hasUnseenLegacyCloudData()
+            }
             .toolbar {
                 if store.loadError == nil {
                     ToolbarItem(placement: .confirmationAction) {
@@ -146,6 +156,7 @@ struct DataManagementView: View {
                         message = count > 0 ? String(localized: "已导入 \(count) 个日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                             : String(localized: "未发现可导入的新日子。旧数据可能仍在下载，请稍后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                     } catch { message = error.localizedDescription }
+                    hasLegacyData = store.hasUnseenLegacyCloudData()
                 }
                 Button("取消", role: .cancel) {}
             } message: {
