@@ -30,8 +30,8 @@ struct SettingsView: View {
                         Label("版本", systemImage: "info.circle")
                             .foregroundStyle(Theme.ink)
                     }
-                    link("隐私政策", systemImage: "hand.raised", page: "privacy.html", identifier: "settings.privacy")
-                    link("帮助与反馈", systemImage: "questionmark.circle", page: "support.html", identifier: "settings.support")
+                    link("隐私政策", systemImage: "hand.raised", page: "privacy/", identifier: "settings.privacy")
+                    link("帮助与反馈", systemImage: "questionmark.circle", page: "support/", identifier: "settings.support")
                 } header: {
                     Text("关于")
                 } footer: {
@@ -96,7 +96,7 @@ struct SettingsView: View {
         .accessibilityIdentifier(identifier)
     }
 
-    static let siteBase = "https://euynus.github.io/DaysRemember/"
+    static let siteBase = "https://days.gooday.dev/"
 
     /// The privacy and support pages hold all three languages, anchored by localization.
     static func siteURL(_ page: String, locale: Locale = AppLocalization.locale) -> URL {

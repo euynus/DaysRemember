@@ -69,8 +69,8 @@ final class LanguagePreferencesTests: XCTestCase {
         ]
         for (language, region, anchor) in cases {
             let locale = AppLocalization.locale(for: language, regionalLocale: Locale(identifier: region))
-            XCTAssertEqual(SettingsView.siteURL("privacy.html", locale: locale).absoluteString,
-                           "https://euynus.github.io/DaysRemember/privacy.html#\(anchor)")
+            XCTAssertEqual(SettingsView.siteURL("privacy/", locale: locale).absoluteString,
+                           "https://days.gooday.dev/privacy/#\(anchor)")
         }
     }
 
