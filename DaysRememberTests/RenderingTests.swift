@@ -222,12 +222,13 @@ final class RenderingTests: XCTestCase {
     func testEveryTemplateAssetIsAvailableInAppAndWidget() throws {
         let plugins = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
         let widget = try XCTUnwrap(Bundle(url: plugins.appendingPathComponent("DaysRememberWidget.appex")))
-        for bundle in [Bundle.main, widget] {
+        // The widget decodes covers at no more than 720 px, so it ships smaller copies.
+        for (bundle, minimumSide) in [(Bundle.main, CGFloat(1024)), (widget, 720)] {
             for style in PhotoStyle.pickerOptions {
                 let image = try XCTUnwrap(UIImage(named: style.assetName, in: bundle, compatibleWith: nil),
                                           "\(style.assetName) in \(bundle.bundleURL.lastPathComponent)")
-                XCTAssertGreaterThanOrEqual(image.size.width, 1024)
-                XCTAssertGreaterThanOrEqual(image.size.height, 1024)
+                XCTAssertGreaterThanOrEqual(image.size.width, minimumSide)
+                XCTAssertGreaterThanOrEqual(image.size.height, minimumSide)
                 let thumbnail = try XCTUnwrap(PhotoTile.thumbnail(image, maximumPixelSize: 512)?.cgImage)
                 XCTAssertLessThanOrEqual(max(thumbnail.width, thumbnail.height), 512)
             }
