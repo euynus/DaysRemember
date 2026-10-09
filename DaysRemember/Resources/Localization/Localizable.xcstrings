@@ -1,6 +1,46 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "设置" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "設定" } }
+      }
+    },
+    "关于" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "About" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关于" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "關於" } }
+      }
+    },
+    "版本" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Version" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "版本" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "版本" } }
+      }
+    },
+    "日子、照片和设置只保存在这台设备和你自己的 iCloud 中，不会上传给开发者。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your days, photos, and settings stay on this device and in your own iCloud. Nothing is sent to the developer." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "日子、照片和设置只保存在这台设备和你自己的 iCloud 中，不会上传给开发者。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "日子、照片和設定只儲存在這台裝置和你自己的 iCloud 中，不會上傳給開發者。" } }
+      }
+    },
+    "删除后会取消它的待提醒；30 天内可在「设置 › 数据与同步 › 最近删除」中恢复。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This also cancels its reminders. You can restore it from Settings › Data and Sync › Recently Deleted for 30 days." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除后会取消它的待提醒；30 天内可在「设置 › 数据与同步 › 最近删除」中恢复。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "刪除後會取消它的待提醒；30 天內可在「設定 › 資料與同步 › 最近刪除」中還原。" } }
+      }
+    },
     "已删除「%@」" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -15,14 +55,6 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Undo" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "撤销" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "復原" } }
-      }
-    },
-    "删除后会取消它的待提醒；30 天内可在「最近删除」中恢复。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "This also cancels its reminders. You can restore it from Recently Deleted for 30 days." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除后会取消它的待提醒；30 天内可在「最近删除」中恢复。" } },
-        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "刪除後會取消它的待提醒；30 天內可在「最近刪除」中還原。" } }
       }
     },
     "比例" : {
@@ -6065,29 +6097,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "日子清單"
-          }
-        }
-      }
-    },
-    "日子选项" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Day Options"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日子选项"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日子選項"
           }
         }
       }

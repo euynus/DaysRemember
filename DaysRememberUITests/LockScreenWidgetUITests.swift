@@ -11,8 +11,10 @@ final class LockScreenWidgetUITests: XCTestCase {
         app.launchEnvironment["DR_PIN_TODAY"] = "1"
         app.launchArguments = ["--seed-sample-data", "--tab", "home"]
         app.launch()
-        app.buttons["日子选项"].tap()
-        app.buttons["rectangle.3.group"].firstMatch.tap()
+        app.buttons["home.settings"].tap()
+        let widgets = app.buttons["settings.widgets"]
+        XCTAssertTrue(widgets.waitForExistence(timeout: 5))
+        widgets.tap()
         app.segmentedControls.buttons["锁定屏幕"].tap()
         app.buttons["widgetPreviewDayPicker"].tap()
         app.buttons["小年糕出生"].tap()

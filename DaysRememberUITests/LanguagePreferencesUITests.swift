@@ -83,7 +83,7 @@ final class LanguagePreferencesUITests: XCTestCase {
         titleField.tap()
         titleField.typeText(title)
         app.buttons["saveDayButton"].tap()
-        XCTAssertTrue(app.buttons["home.options"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["home.settings"].waitForExistence(timeout: 5))
 
         // Keep the seed argument during the live switch: rerunning bootstrap would erase both edits.
         XCTAssertTrue(app.launchArguments.contains("--seed-sample-data"))
@@ -158,11 +158,11 @@ final class LanguagePreferencesUITests: XCTestCase {
     }
 
     private func openLanguageSettings(in app: XCUIApplication, title: String? = nil) {
-        let options = app.buttons["home.options"]
+        let options = app.buttons["home.settings"]
         XCTAssertTrue(options.waitForExistence(timeout: 5))
         assertHittableInsideApp(options, in: app)
         options.tap()
-        let entry = app.buttons["home.language"]
+        let entry = app.buttons["settings.language"]
         XCTAssertTrue(entry.waitForExistence(timeout: 5))
         assertHittableInsideApp(entry, in: app)
         entry.tap()
@@ -187,7 +187,11 @@ final class LanguagePreferencesUITests: XCTestCase {
         let done = app.buttons["language.done"]
         expectation(for: NSPredicate { _, _ in !done.exists }, evaluatedWith: app)
         waitForExpectations(timeout: 5)
-        XCTAssertTrue(app.buttons["home.options"].isHittable)
+        // Changing the language rebuilds the root and closes Settings; otherwise close it here.
+        let settingsDone = app.buttons["settings.done"]
+        if settingsDone.waitForExistence(timeout: 1) { settingsDone.tap() }
+        XCTAssertTrue(app.buttons["home.settings"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["home.settings"].isHittable)
     }
 
     private func applyLanguage(_ language: String, in app: XCUIApplication) {

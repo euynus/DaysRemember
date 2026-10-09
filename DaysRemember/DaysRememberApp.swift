@@ -215,7 +215,7 @@ enum DebugLaunch {
     }
 
     enum Screen: String {
-        case onboarding, detail, add, share, widgets
+        case onboarding, detail, add, share, widgets, settings
 
         @MainActor
         @ViewBuilder
@@ -231,6 +231,8 @@ enum DebugLaunch {
                 ShareCardView(day: DebugLaunch.day(store: store))
             case .widgets:
                 WidgetsPreviewView()
+            case .settings:
+                SettingsView()
             }
         }
     }

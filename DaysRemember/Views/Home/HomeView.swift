@@ -7,9 +7,7 @@ struct HomeView: View {
     @State private var filter: Filter = .all
     @State private var isSearching = false
     @State private var searchText = ""
-    @State private var showingWidgets = false
-    @State private var showingData = false
-    @State private var showingLanguage = false
+    @State private var showingSettings = false
     @FocusState private var searchFocused: Bool
     var onOpen: (Day) -> Void = { _ in }
     var onAdd: () -> Void = {}
@@ -116,9 +114,7 @@ struct HomeView: View {
         .onChange(of: store.categories.map(\.id)) { _, ids in
             if case .category(let id) = filter, !ids.contains(id) { filter = .all }
         }
-        .sheet(isPresented: $showingWidgets) { WidgetsPreviewView() }
-        .sheet(isPresented: $showingData) { DataManagementView() }
-        .sheet(isPresented: $showingLanguage) { LanguageSettingsView() }
+        .sheet(isPresented: $showingSettings) { SettingsView() }
     }
 
     private var header: some View {
@@ -130,19 +126,14 @@ struct HomeView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 Spacer(minLength: 8)
-                Menu {
-                    Button("语言", systemImage: "globe") { showingLanguage = true }
-                        .accessibilityIdentifier("home.language")
-                    Button("小组件", systemImage: "rectangle.3.group") { showingWidgets = true }
-                    Button("数据与同步", systemImage: "externaldrive") { showingData = true }
-                } label: {
-                    Image(systemName: "ellipsis")
+                Button { showingSettings = true } label: {
+                    Image(systemName: "gearshape")
                         .font(.system(size: 18, weight: .regular))
                         .foregroundStyle(Theme.ink2)
                         .frame(width: 44, height: 44)
                 }
-                .accessibilityLabel("日子选项")
-                .accessibilityIdentifier("home.options")
+                .accessibilityLabel("设置")
+                .accessibilityIdentifier("home.settings")
                 FAB(systemName: isSearching ? "xmark" : "magnifyingglass", size: 42) {
                     withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
                         isSearching.toggle()

@@ -24,8 +24,7 @@ final class EditFlowUITests: XCTestCase {
 
     func testRestoreSingleSyncVersionKeepsItsNoteAfterRelaunch() {
         let app = launchApp(arguments: ["--seed-sample-data", "--seed-sync-conflicts"])
-        app.buttons["日子选项"].tap()
-        app.buttons["externaldrive"].firstMatch.tap()
+        openSettingsRow("settings.data", in: app)
         let versions = app.buttons["同步保留版本（1）"]
         XCTAssertTrue(versions.waitForExistence(timeout: 5))
         versions.tap()
@@ -535,8 +534,7 @@ final class EditFlowUITests: XCTestCase {
 
     func testWidgetGallerySizes() {
         let app = launchApp()
-        app.buttons["日子选项"].tap()
-        app.buttons["rectangle.3.group"].firstMatch.tap()
+        openSettingsRow("settings.widgets", in: app)
         for size in ["小", "中", "大"] {
             let button = app.segmentedControls.buttons[size]
             XCTAssertTrue(button.waitForExistence(timeout: 5))
@@ -646,10 +644,7 @@ final class EditFlowUITests: XCTestCase {
         confirm.tap()
         XCTAssertTrue(app.staticTexts["这里还没有日子"].waitForExistence(timeout: 5))
 
-        app.buttons["日子选项"].tap()
-        let dataManagement = app.buttons["externaldrive"].firstMatch
-        XCTAssertTrue(dataManagement.waitForExistence(timeout: 5))
-        dataManagement.tap()
+        openSettingsRow("settings.data", in: app)
         XCTAssertTrue(app.navigationBars["数据与同步"].waitForExistence(timeout: 5))
         let recentlyDeleted = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "最近删除（")).firstMatch
         reveal(recentlyDeleted, in: app)
@@ -699,8 +694,7 @@ final class EditFlowUITests: XCTestCase {
         let entry = createFirstDay(title, in: app)
 
         func openDataManagement() {
-            app.buttons["日子选项"].tap()
-            app.buttons["externaldrive"].firstMatch.tap()
+            openSettingsRow("settings.data", in: app)
             XCTAssertTrue(app.navigationBars["数据与同步"].waitForExistence(timeout: 5))
         }
 
@@ -726,6 +720,7 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["备份已导出。"].waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["好"].tap()
         app.buttons["关闭"].tap()
+        app.buttons["settings.done"].tap()
 
         reveal(entry, in: app)
         entry.tap()
@@ -771,6 +766,15 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(entry.waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["这里还没有日子"].exists)
         return entry
+    }
+
+    private func openSettingsRow(_ identifier: String, in app: XCUIApplication) {
+        let settings = app.buttons["home.settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.tap()
+        let row = app.buttons[identifier]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
     }
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication,
