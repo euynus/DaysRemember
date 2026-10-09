@@ -10,20 +10,20 @@
 - **Bundle ID**：`com.shiguang.daysremember`（Widget：`.widget`）
 - **版本 / 构建号**：1.0 / 1
 - **支持设备**：iPhone，竖屏，iOS 17+
-- **语言**：简体中文
+- **语言**：简体中文、繁體中文、English
 
 ## 描述（草稿，可编辑）
 
 时光是一款温暖的纪念日与倒数应用。记录结婚纪念、宝宝出生、一场旅行、考试倒数……让重要的日子从容到来。
 
 - 倒数与纪念：未来的值得期待，过去的可以回望
-- 农历支持：按公历或农历每年重复，自动显示节气与传统节日
+- 农历支持：按公历或农历每年重复，日历显示农历日期、节气与传统节日
 - 自定义分类：图标与颜色随心搭配
-- 照片封面：为日子加一张照片，或选用手绘 / 渐变封面
-- 贴心提醒：提前 7/3/1 天或当天提醒，支持夜间勿扰
-- 桌面小组件：小 / 中 / 大三种尺寸，把最近的日子放上主屏
+- 照片封面：为日子加一张照片，或选用手绘插图封面
+- 贴心提醒：提前 7/3/1 天或当天提醒，提醒时间自选
+- 小组件：主屏幕小 / 中 / 大三种尺寸，以及锁定屏幕样式
 - iCloud 同步：日子在你的设备间自动同步
-- 分享卡片：四种模板，一键保存或分享
+- 分享卡片：四种模板，可导出 3:4 竖图，一键保存或分享
 
 所有数据都保存在你的设备与你自己的 iCloud 中——不收集、不上传、无广告、无追踪。
 
@@ -35,7 +35,7 @@
 
 - **是否收集数据**：否。App 不收集任何数据。
 - **追踪**：无（`NSPrivacyTracking = false`，无追踪域名）。
-- **数据存储**：日子 / 分类 / 设置仅保存在设备 `UserDefaults`（App Group）与用户自己的 iCloud（`NSUbiquitousKeyValueStore`）；照片以用户选择的图片形式随日子本地存储。
+- **数据存储**：日子 / 分类保存在设备（App Group 的 `UserDefaults` 与照片文件）和用户自己的 iCloud 私有数据库（CloudKit，照片为 `CKAsset`）；提醒设置通过用户自己的 iCloud 键值存储（`NSUbiquitousKeyValueStore`）同步。
 - **隐私清单**：`PrivacyInfo.xcprivacy` 已声明 `NSPrivacyAccessedAPICategoryUserDefaults`（原因 `CA92.1`）。
 - **出口合规**：`ITSAppUsesNonExemptEncryption = false`。
 
@@ -49,7 +49,7 @@
 - 纯本地 App，无账号、无登录、无服务器。首次启动预置了若干示例「日子」用于展示功能。
 - 通知为本地通知（`UNUserNotificationCenter`），用于纪念日 / 倒数提醒。
 - 分享与「保存到相册」通过系统分享面板与 `PHPhotoLibrary`，无第三方 SDK。
-- iCloud 同步通过 `NSUbiquitousKeyValueStore`，仅同步用户自己的数据。
+- iCloud 同步通过 CloudKit 私有数据库（`CKSyncEngine`）与 `NSUbiquitousKeyValueStore`（仅提醒设置），只同步用户自己的数据。
 
 ## 提交前清单
 
