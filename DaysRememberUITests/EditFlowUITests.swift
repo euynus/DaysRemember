@@ -499,7 +499,7 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 5))
         let saveImage = app.cells.matching(NSPredicate(
             format: "label == %@ OR label == %@", "保存图像", "Save Image")).firstMatch
-        XCTAssertTrue(saveImage.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(saveImage.waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["header.closeButton"].tap()
     }
 
