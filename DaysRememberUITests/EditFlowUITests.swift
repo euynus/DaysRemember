@@ -519,7 +519,10 @@ final class EditFlowUITests: XCTestCase {
         edit.tap()
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         XCTAssertEqual(field.value as? String, name)
+        // A centred tap lands inside the name on narrow screens; tap again past it so
+        // the suffix goes at the end.
         field.tap()
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         field.typeText("-edited")
         app.buttons["保存"].tap()
         let edited = app.buttons["编辑" + name + "-edited"]
