@@ -9,12 +9,13 @@ struct WidgetDay: AppEntity {
     var title: String
     var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(title)") }
 
+    /// A selected day, or else the nearest upcoming day. When nothing is ahead, the most
+    /// recent past day ("已过去 N 天") keeps the widget useful instead of empty.
     static func resolve(in days: [Day], selectedID: String?, today: Date) -> Day? {
         if let selectedID { return days.first { $0.id == selectedID } }
-        return days.compactMap { day -> (Day, Int)? in
-            let info = DayInfo.compute(day, today: today)
-            return info.isPast ? nil : (day, info.days)
-        }.min { $0.1 < $1.1 }?.0
+        let candidates = days.map { ($0, DayInfo.compute($0, today: today)) }
+        let upcoming = candidates.filter { !$0.1.isPast }
+        return (upcoming.isEmpty ? candidates : upcoming).min { $0.1.days < $1.1.days }?.0
     }
 }
 

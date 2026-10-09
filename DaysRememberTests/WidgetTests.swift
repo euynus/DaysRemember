@@ -31,7 +31,8 @@ final class WidgetTests: XCTestCase {
         XCTAssertEqual(WidgetDay.resolve(in: [past, far], selectedID: nil, today: today)?.id, "far")
         XCTAssertEqual(WidgetDay.resolve(in: [past, near], selectedID: "past", today: today)?.id, "past")
         XCTAssertNil(WidgetDay.resolve(in: [near], selectedID: "deleted", today: today))
-        XCTAssertNil(WidgetDay.resolve(in: [past], selectedID: nil, today: today))
+        // With nothing upcoming, the most recent past day is shown rather than an empty widget.
+        XCTAssertEqual(WidgetDay.resolve(in: [past], selectedID: nil, today: today)?.id, "past")
         XCTAssertNil(WidgetDay.resolve(in: [], selectedID: nil, today: today))
     }
 
@@ -70,7 +71,7 @@ final class WidgetTests: XCTestCase {
         let selections = dates.map {
             WidgetDay.resolve(in: [current, upcoming], selectedID: nil, today: $0)?.id
         }
-        XCTAssertEqual(selections, ["current", "upcoming", nil])
+        XCTAssertEqual(selections, ["current", "upcoming", "upcoming"])
     }
 
     func testExplicitSelectionsStayUnchangedAcrossMidnight() {

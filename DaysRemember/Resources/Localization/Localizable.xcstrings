@@ -6460,52 +6460,6 @@
         }
       }
     },
-    "暂无即将到来的日子" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No upcoming events"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "暂无即将到来的日子"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "暫無即將到來的日子"
-          }
-        }
-      }
-    },
-    "暂无将至\n日子" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "None\nupcoming"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "暂无将至\n日子"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "暫無將至\n日子"
-          }
-        }
-      }
-    },
     "暂时无法确认通知权限" : {
       "extractionState" : "manual",
       "localizations" : {

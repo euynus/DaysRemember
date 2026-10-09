@@ -32,15 +32,12 @@ struct DaysRememberWidget: Widget {
 struct DaysEntry: TimelineEntry {
     var date: Date
     var day: Day?
-    /// True when the store holds days but none are upcoming — lets the empty view
-    /// distinguish "no days yet" from "nothing coming up".
-    var hasAnyDays: Bool = false
     var selectionMissing: Bool = false
 }
 
 struct DaysProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> DaysEntry {
-        DaysEntry(date: Date(), day: SampleData.days.first, hasAnyDays: true)
+        DaysEntry(date: Date(), day: SampleData.days.first)
     }
 
     func snapshot(for configuration: SelectWidgetDay, in context: Context) async -> DaysEntry {
@@ -62,7 +59,7 @@ struct DaysProvider: AppIntentTimelineProvider {
     private func makeEntry(configuration: SelectWidgetDay, photos: inout PhotoLoader, asOf today: Date) -> DaysEntry {
         let days = photos.library.days
         let day = WidgetDay.resolve(in: days, selectedID: configuration.day?.id, today: today)
-        return DaysEntry(date: today, day: day.map { photos.load($0) }, hasAnyDays: !days.isEmpty,
+        return DaysEntry(date: today, day: day.map { photos.load($0) },
                          selectionMissing: configuration.day != nil && day == nil)
     }
 
@@ -97,7 +94,7 @@ struct DaysWidgetEntryView: View {
         Group {
             if let accessoryStyle {
                 DayAccessoryWidget(day: entry.day, style: accessoryStyle, today: entry.date,
-                                   selectionMissing: entry.selectionMissing, hasAnyDays: entry.hasAnyDays)
+                                   selectionMissing: entry.selectionMissing)
             } else if let day = entry.day {
                 DayWidgetCard(day: day, size: cardSize, today: entry.date)
             } else {
@@ -107,8 +104,6 @@ struct DaysWidgetEntryView: View {
                         .foregroundStyle(Theme.accent)
                     Text(entry.selectionMissing
                          ? String(localized: "日子已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                         : entry.hasAnyDays
-                         ? String(localized: "暂无即将到来的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                          : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                         .font(Theme.sans(13))
                         .foregroundStyle(Theme.ink2)

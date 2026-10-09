@@ -9,7 +9,6 @@ struct DayAccessoryWidget: View {
     let style: Style
     let today: Date
     var selectionMissing: Bool = false
-    var hasAnyDays: Bool = false
 
     private var info: DayInfo? { day.map { DayInfo.compute($0, today: today) } }
 
@@ -58,7 +57,7 @@ struct DayAccessoryWidget: View {
                     Image(systemName: "calendar")
                         .font(.title3)
                     Text(selectionMissing ? String(localized: "日子\n已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                         : hasAnyDays ? String(localized: "暂无将至\n日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还没有\n日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                         : String(localized: "还没有\n日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                         .font(.caption2)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -137,7 +136,7 @@ struct DayAccessoryWidget: View {
 
     private var emptyMessage: String {
         selectionMissing ? String(localized: "日子已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : hasAnyDays ? String(localized: "暂无即将到来的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private func countdownText(_ info: DayInfo) -> String {

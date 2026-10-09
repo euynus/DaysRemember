@@ -29,16 +29,15 @@ final class AccessoryWidgetRenderingTests: XCTestCase {
         }
     }
 
-    func testEmptyDeletedAndNoUpcomingStatesAreDistinct() throws {
+    func testEmptyAndDeletedStatesAreDistinct() throws {
         for (style, size) in layouts {
             var images = Set<Data>()
-            for (name, missing, hasDays, expected) in [
-                ("Empty", false, false, "还没有日子"),
-                ("NoUpcoming", false, true, "暂无即将到来的日子"),
-                ("Deleted", true, true, "日子已删除")
+            for (name, missing, expected) in [
+                ("Empty", false, "还没有日子"),
+                ("Deleted", true, "日子已删除")
             ] {
                 let widget = DayAccessoryWidget(day: nil, style: style, today: today,
-                                                selectionMissing: missing, hasAnyDays: hasDays)
+                                                selectionMissing: missing)
                 XCTAssertEqual(widget.accessibilitySummary, expected)
                 let image = try render(widget, size: size)
                 try assertVisible(image, size: size)
@@ -47,14 +46,7 @@ final class AccessoryWidgetRenderingTests: XCTestCase {
                 XCTAssertEqual(try pixels(image), try pixels(accessible))
                 attach(image, name: "Accessory-\(style)-\(name)")
             }
-            XCTAssertEqual(images.count, 3, "\(style) must distinguish all empty states")
-            let deletedLastDay = DayAccessoryWidget(day: nil, style: style, today: today,
-                                                    selectionMissing: true)
-            XCTAssertEqual(deletedLastDay.accessibilitySummary, "日子已删除")
-            let deletedWithOtherDays = DayAccessoryWidget(day: nil, style: style, today: today,
-                                                          selectionMissing: true, hasAnyDays: true)
-            XCTAssertEqual(try pixels(render(deletedLastDay, size: size)),
-                           try pixels(render(deletedWithOtherDays, size: size)))
+            XCTAssertEqual(images.count, 2, "\(style) must distinguish all empty states")
         }
     }
 
@@ -121,7 +113,7 @@ final class AccessoryWidgetRenderingTests: XCTestCase {
         recurring.recurring = true
         for (style, size) in layouts {
             let widget = DayAccessoryWidget(day: recurring, style: style, today: today,
-                                            selectionMissing: true, hasAnyDays: true)
+                                            selectionMissing: true)
             XCTAssertEqual(widget.accessibilitySummary, "重要日子，1天后，2026年10月5日")
             var occurrence = recurring
             occurrence.recurring = false

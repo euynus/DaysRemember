@@ -49,8 +49,7 @@ struct WidgetsPreviewView: View {
                 let day = WidgetDay.resolve(in: store.days, selectedID: selectedID, today: today)
                 if lockScreen {
                     DayAccessoryWidget(day: day, style: accessoryStyle, today: today,
-                                       selectionMissing: selectedID != nil && day == nil,
-                                       hasAnyDays: !store.days.isEmpty)
+                                       selectionMissing: selectedID != nil && day == nil)
                         .frame(width: accessorySize.width, height: accessorySize.height)
                         .accessibilityIdentifier("accessoryWidgetPreview")
                         .padding(.vertical, 64)
@@ -68,7 +67,7 @@ struct WidgetsPreviewView: View {
                         }
                         .padding(.vertical, 24)
                 } else {
-                    ContentUnavailableView("暂无即将到来的日子", systemImage: "calendar")
+                    ContentUnavailableView(selectedID == nil ? "还没有日子" : "日子已删除", systemImage: "calendar")
                 }
             }
             .frame(maxWidth: .infinity)
