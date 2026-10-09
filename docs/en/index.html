@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Days Remember · Anniversaries and Countdowns</title>
+  <meta name="description" content="Days Remember counts down to and back from the days that matter, with lunar dates and solar terms, hand-drawn covers, reminders, Home and Lock Screen widgets, and iCloud sync. It collects no data.">
+  <meta name="theme-color" content="#FCFCFA">
+  <link rel="canonical" href="https://euynus.github.io/DaysRemember/en/">
+  <link rel="alternate" hreflang="zh-Hans" href="https://euynus.github.io/DaysRemember/">
+  <link rel="alternate" hreflang="zh-Hant" href="https://euynus.github.io/DaysRemember/zh-Hant/">
+  <link rel="alternate" hreflang="en" href="https://euynus.github.io/DaysRemember/en/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Days Remember · Anniversaries and Countdowns">
+  <meta property="og:description" content="Gently remember every day that matters.">
+  <meta property="og:url" content="https://euynus.github.io/DaysRemember/en/">
+  <meta property="og:image" content="https://euynus.github.io/DaysRemember/assets/icon-512.png">
+  <link rel="icon" href="../assets/icon-180.png">
+  <link rel="apple-touch-icon" href="../assets/icon-180.png">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="brand" href="./"><img src="../assets/icon-180.png" alt="" width="32" height="32">Days Remember</a>
+      <nav class="languages" aria-label="Language">
+        <a href="../" lang="zh-Hans">简体</a>
+        <a href="../zh-Hant/" lang="zh-Hant">繁體</a>
+        <a href="./" aria-current="page" lang="en">English</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-text">
+          <p class="today" data-today></p>
+          <h1>Days Remember<span>Gently remember every day that matters</span></h1>
+          <p class="lead">Keep track of a wedding anniversary, a baby’s birth, a trip, an exam countdown. Look forward to what’s ahead, and look back on what has passed.</p>
+          <div class="cta-row">
+            <!-- After release, replace with the App Store link: <a class="cta" href="https://apps.apple.com/app/id…">Download on the App Store</a> -->
+            <span class="cta is-soon">Coming soon to the App Store</span>
+            <span class="requirements">iPhone · iOS 17 or later</span>
+          </div>
+        </div>
+        <img class="phone" src="../screenshots/en/01-home.jpg" width="1320" height="2868"
+             alt="The Days Remember home screen: Mom’s Birthday is 69 days away, with other days listed below">
+      </section>
+
+      <section class="section" aria-labelledby="demo-heading">
+        <div class="section-head">
+          <p class="eyebrow">Try it</p>
+          <h2 id="demo-heading">How many days until that day?</h2>
+          <p>Enter a day and see how it looks in Days Remember.</p>
+        </div>
+        <div class="demo">
+          <form class="demo-form" data-demo>
+            <div class="field">
+              <label for="demo-title">Name</label>
+              <input id="demo-title" type="text" value="Wedding Anniversary" placeholder="Wedding Anniversary" maxlength="32" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="demo-date">Date</label>
+              <input id="demo-date" type="date" value="2019-10-12" min="1900-01-01" max="2100-12-31" required>
+            </div>
+            <label class="check" for="demo-recurring">
+              <input id="demo-recurring" type="checkbox" checked>Repeats every year
+            </label>
+            <p class="demo-note">Counted in Beijing time, as in the app. In the app, a day can also repeat by the lunar calendar.</p>
+          </form>
+          <div class="day-card" data-demo-card aria-live="polite">
+            <div class="cover"><img src="../assets/covers/celebration.jpg" alt="" width="320" height="320"></div>
+            <div class="day-card-body">
+              <div class="day-card-title">
+                <strong data-title>Wedding Anniversary</strong>
+                <span data-date>October 12, 2019</span>
+              </div>
+              <p class="figure"><b>—</b><small></small></p>
+            </div>
+            <p class="elapsed" data-elapsed></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="features-heading">
+        <div class="section-head">
+          <p class="eyebrow">Features</p>
+          <h2 id="features-heading">Keep the days that matter on your Home Screen, with gentle reminders</h2>
+        </div>
+        <ul class="rows">
+          <li class="row">
+            <img src="../assets/covers/garden.jpg" alt="" width="320" height="320" loading="lazy">
+            <div><h3>Lunar calendar and solar terms</h3><p>Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.</p></div>
+            <p class="figure"><b>24</b><small>solar terms</small></p>
+          </li>
+          <li class="row">
+            <img src="../assets/covers/flowers.jpg" alt="" width="320" height="320" loading="lazy">
+            <div><h3>Hand-drawn covers</h3><p>Give a day a photo, or pick one of the hand-drawn illustrations. A new day starts with a cover that suits its category.</p></div>
+            <p class="figure"><b>12</b><small>illustrations</small></p>
+          </li>
+          <li class="row">
+            <img src="../assets/covers/journal.jpg" alt="" width="320" height="320" loading="lazy">
+            <div><h3>Reminders</h3><p>Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose. The Daily Greeting and Memories can be turned on separately.</p></div>
+            <p class="figure"><b>7&thinsp;·&thinsp;3&thinsp;·&thinsp;1</b><small>days before</small></p>
+          </li>
+          <li class="row">
+            <img src="../assets/covers/homecoming.jpg" alt="" width="320" height="320" loading="lazy">
+            <div><h3>Widgets</h3><p>Small, medium and large on the Home Screen, plus three Lock Screen styles. Each widget can show a day of its own.</p></div>
+            <p class="figure"><b>6</b><small>styles</small></p>
+          </li>
+          <li class="row">
+            <img src="../assets/covers/voyage.jpg" alt="" width="320" height="320" loading="lazy">
+            <div><h3>Share cards</h3><p>Photo, Journal, Minimal and Split templates, with a 3:4 portrait export. Notes stay off the image unless you include them.</p></div>
+            <p class="figure"><b>4</b><small>templates</small></p>
+          </li>
+          <li class="row">
+            <img src="../assets/covers/everyday.jpg" alt="" width="320" height="320" loading="lazy">
+            <div><h3>Custom categories</h3><p>Besides Love, Family, Travel, Work and Life, create categories of your own, each with its own icon and color.</p></div>
+            <p class="figure"><b>5</b><small>colors</small></p>
+          </li>
+          <li class="row">
+            <img src="../assets/covers/companionship.jpg" alt="" width="320" height="320" loading="lazy">
+            <div><h3>iCloud sync</h3><p>Days, categories and photos sync across your devices through your own iCloud. A deleted day stays on the device for 30 days, so you can restore it.</p></div>
+            <p class="figure"><b>30</b><small>days to restore</small></p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="section" aria-labelledby="shots-heading">
+        <div class="section-head">
+          <p class="eyebrow">Screenshots</p>
+          <h2 id="shots-heading">On iPhone</h2>
+        </div>
+        <div class="shots" tabindex="0" aria-label="App screenshots, scrolls sideways">
+          <figure><img src="../screenshots/en/01-home.jpg" width="1320" height="2868" loading="lazy" alt="Home"><figcaption>Home</figcaption></figure>
+          <figure><img src="../screenshots/en/02-detail.jpg" width="1320" height="2868" loading="lazy" alt="Day detail"><figcaption>Day detail</figcaption></figure>
+          <figure><img src="../screenshots/en/03-calendar.jpg" width="1320" height="2868" loading="lazy" alt="Calendar"><figcaption>Calendar</figcaption></figure>
+          <figure><img src="../screenshots/en/04-widgets.jpg" width="1320" height="2868" loading="lazy" alt="Widgets"><figcaption>Widgets</figcaption></figure>
+          <figure><img src="../screenshots/en/05-share.jpg" width="1320" height="2868" loading="lazy" alt="Share card"><figcaption>Share card</figcaption></figure>
+          <figure><img src="../screenshots/en/06-categories.jpg" width="1320" height="2868" loading="lazy" alt="Categories"><figcaption>Categories</figcaption></figure>
+        </div>
+      </section>
+
+      <section class="section promise" aria-labelledby="privacy-heading">
+        <p class="figure"><b>0</b></p>
+        <div class="promise-text">
+          <h2 id="privacy-heading">No data collected</h2>
+          <p>Your days, photos and settings stay on your devices and in your own iCloud. Nothing is sent to the developer.</p>
+          <ul><li>No account</li><li>No ads</li><li>No tracking</li><li>No third-party SDKs</li></ul>
+          <p><a href="../privacy.html#en">Read the privacy policy</a></p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="support-heading">
+        <div class="section-head">
+          <p class="eyebrow">Support</p>
+          <h2 id="support-heading">Need help?</h2>
+          <p>Choosing a day for a widget, missing reminders, moving to a new iPhone: answers and ways to get in touch are on the <a href="../support.html#en">support page</a>.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Days Remember</p>
+      <nav aria-label="Footer">
+        <a href="../privacy.html#en">Privacy Policy</a>
+        <a href="../support.html#en">Support</a>
+        <a href="https://github.com/euynus/DaysRemember">GitHub</a>
+      </nav>
+    </footer>
+  </div>
+  <script src="../assets/site.js"></script>
+</body>
+</html>
