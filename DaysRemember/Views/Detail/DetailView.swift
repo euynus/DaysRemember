@@ -191,7 +191,8 @@ struct DetailView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(countdownLabel)
             .accessibilityIdentifier("detail.countdown")
-            if day.recurring, let elapsedDays = info.elapsedDays {
+            // On the original date the hero already reads 今天.
+            if day.recurring, let elapsedDays = info.elapsedDays, elapsedDays > 0 {
                 Text("已过 \(elapsedDays) 天")
                     .font(Theme.sans(16, weight: .medium))
                     .foregroundStyle(Theme.ink2)

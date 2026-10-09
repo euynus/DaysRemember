@@ -34,7 +34,7 @@ Then choose an available iPhone simulator (iOS 17+).
 
 ## Data and CloudKit
 
-New installations start empty; daily greetings and annual memories are opt-in. Existing local records, photos, categories, and saved preferences are retained. Recurring days show both elapsed days from the original date (starting at zero) and the next anniversary.
+New installations start empty; daily greetings and annual memories are opt-in. Existing local records, photos, categories, and saved preferences are retained. Recurring days show both elapsed days since the original date (from the day after it; the original date itself reads 今天) and the next anniversary.
 
 The app refreshes its shared calendar day at midnight, on foreground entry, and after significant system time changes. Countdown, calendar, category, share, and widget-preview views observe that date without resetting navigation or in-progress editor state.
 
