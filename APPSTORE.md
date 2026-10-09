@@ -62,7 +62,7 @@
 - [ ] CloudKit：用真机 Development 环境完成一次同步，确认 `DaysRememberLibrary` 区域里有 `LibraryDay` / `LibraryCategory` 记录，再在 CloudKit Console 把 Schema **部署到 Production**（否则 App Store 用户的同步全部失败；模拟器不会连接 CloudKit）
 - [ ] 归档后在 Organizer 检查导出的 App 权限：`aps-environment` 应为 `production`（源文件里是 `development`，由分发签名改写）
 - [ ] App Store Connect：隐私政策网址与支持网址（必填）、年龄分级问卷、版权
-- [ ] App Store 截图（6.9 英寸必需，可在模拟器截取：首页、详情、日历、分类、提醒、分享、小组件、引导页；仅浅色）
+- [x] App Store 截图：`docs/screenshots/<语言>/`，6.9 英寸 1320×2868、无 alpha 的 JPEG，简体 / 繁体 / 英文各 6 张（首页、详情、日历、小组件、分享、分类）。按文件名顺序上传到 App Store Connect 各语言的「6.9 英寸 iPhone」截图位；`bash scripts/screenshots.sh` 可重新生成
 - [ ] TestFlight 真机回归：两台设备间的 iCloud 同步、通知权限与点按跳转、主屏/锁屏小组件、触感、动态字体放大
 - [ ] App Store Connect 隐私问卷按上文填写
 
