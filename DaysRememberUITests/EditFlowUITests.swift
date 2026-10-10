@@ -738,13 +738,19 @@ final class EditFlowUITests: XCTestCase {
             if !file.waitForExistence(timeout: 3) && onMyiPhone.exists { onMyiPhone.tap() }
         }
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
-        // Just after switching to Browse the icon can still be moving into place, so wait for it to
-        // settle, then tap where it is.
+        // The picker runs in its own process, so the test can't wait out its transitions: just after
+        // switching to Browse, the icon can still be moving and a tap on it can go unanswered. Tap
+        // where it is until the picker hands the file over.
         let icon = file.images.firstMatch
-        _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: icon)],
-                           timeout: 5)
-        icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let restore = app.buttons["恢复备份"].firstMatch
+        for _ in 0..<3 where file.exists && !restore.exists {
+            _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: icon)],
+                               timeout: 5)
+            icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            let open = app.buttons["打开"]
+            if open.waitForExistence(timeout: 1) { open.tap() }
+            _ = restore.waitForExistence(timeout: 4)
+        }
         XCTAssertTrue(restore.waitForExistence(timeout: 10), app.debugDescription)
         restore.tap()
         XCTAssertTrue(app.staticTexts["数据已恢复。"].waitForExistence(timeout: 5))
