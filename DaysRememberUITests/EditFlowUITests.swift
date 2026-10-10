@@ -700,6 +700,18 @@ final class EditFlowUITests: XCTestCase {
             openSettingsRow("settings.data", in: app)
             XCTAssertTrue(app.navigationBars["数据与同步"].waitForExistence(timeout: 5))
         }
+        // The picker runs in its own process, so the test can't wait out its transitions: a tap on
+        // something still moving can go unanswered. Tap where it is until `result` appears.
+        func tapInPicker(_ element: XCUIElement, until result: XCUIElement, confirming confirm: XCUIElement? = nil) {
+            for _ in 0..<3 where element.exists && !result.exists {
+                _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: element)],
+                                   timeout: 5)
+                element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                if let confirm, confirm.waitForExistence(timeout: 1) { confirm.tap() }
+                _ = result.waitForExistence(timeout: 4)
+            }
+        }
+        let onMyiPhone = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "我的iPhone")).firstMatch
 
         openDataManagement()
         // The name DataManagementView gives the backup. The test runs on a disposable simulator, so
@@ -710,6 +722,8 @@ final class EditFlowUITests: XCTestCase {
         let save = app.buttons.matching(NSPredicate(
             format: "identifier == %@ OR label == %@", "DOCPicker.actionButton", "保存"
         )).firstMatch
+        // The picker can open on its list of locations, which has nothing to save into.
+        if !save.waitForExistence(timeout: 5) { tapInPicker(onMyiPhone, until: save) }
         XCTAssertTrue(save.waitForExistence(timeout: 10), app.debugDescription)
         save.tap()
         // Only a reused simulator has a backup from the same day to replace.
@@ -734,23 +748,12 @@ final class EditFlowUITests: XCTestCase {
             // The picker can open on Recents, which lists only files opened before.
             let browse = app.tabBars.buttons["浏览"]
             if browse.exists { browse.tap() }
-            let onMyiPhone = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "我的iPhone")).firstMatch
-            if !file.waitForExistence(timeout: 3) && onMyiPhone.exists { onMyiPhone.tap() }
+            if !file.waitForExistence(timeout: 3) { tapInPicker(onMyiPhone, until: file) }
         }
         XCTAssertTrue(file.waitForExistence(timeout: 10), app.debugDescription)
-        // The picker runs in its own process, so the test can't wait out its transitions: just after
-        // switching to Browse, the icon can still be moving and a tap on it can go unanswered. Tap
-        // where it is until the picker hands the file over.
-        let icon = file.images.firstMatch
+        // Just after switching to Browse, the file's icon can still be moving.
         let restore = app.buttons["恢复备份"].firstMatch
-        for _ in 0..<3 where file.exists && !restore.exists {
-            _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: icon)],
-                               timeout: 5)
-            icon.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            let open = app.buttons["打开"]
-            if open.waitForExistence(timeout: 1) { open.tap() }
-            _ = restore.waitForExistence(timeout: 4)
-        }
+        tapInPicker(file.images.firstMatch, until: restore, confirming: app.buttons["打开"])
         XCTAssertTrue(restore.waitForExistence(timeout: 10), app.debugDescription)
         restore.tap()
         XCTAssertTrue(app.staticTexts["数据已恢复。"].waitForExistence(timeout: 5))
