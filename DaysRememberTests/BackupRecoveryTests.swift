@@ -190,6 +190,24 @@ final class BackupRecoveryTests: XCTestCase {
         }
     }
 
+    /// Each raw copy replaces the last instead of containing it, and can be deleted.
+    func testRawCopyDoesNotNestAndCanBeDeleted() throws {
+        try withDefaults { defaults, _ in
+            for _ in 0..<2 {
+                defaults.set(Data("corrupt".utf8), forKey: "days.v1")
+                try DayStore(defaults: defaults).restoreBackup(backup())
+            }
+            let store = DayStore(defaults: defaults)
+            let raw = try JSONDecoder().decode([String: Data].self, from: store.exportUnreadableDataCopy())
+            XCTAssertEqual(raw["days.v1"], Data("corrupt".utf8))
+            XCTAssertNil(raw["unreadableData.v1"])
+
+            store.deleteUnreadableDataCopy()
+            XCTAssertFalse(store.hasUnreadableDataCopy)
+            XCTAssertNil(try JSONDecoder().decode([String: Data].self, from: store.exportOriginalData())["unreadableData.v1"])
+        }
+    }
+
     func testPendingRestoreReplaysBeforeLoadingPartialDataAndOnlyOnce() throws {
         try withDefaults { defaults, suite in
             let target = backup()

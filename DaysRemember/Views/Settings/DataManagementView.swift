@@ -12,6 +12,7 @@ struct DataManagementView: View {
     @State private var filename = String(localized: "时光备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     @State private var pendingImport: DayBackup?
     @State private var confirmRecovery = false
+    @State private var confirmRawCopyDeletion = false
     @State private var confirmLegacyImport = false
     @State private var hasLegacyData = false
     @State private var confirmAccountChange = false
@@ -25,7 +26,7 @@ struct DataManagementView: View {
                         Label(error, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(Theme.accent)
                         Button("导出原始数据", systemImage: "square.and.arrow.up") {
-                            prepareExport(name: String(localized: "时光原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportOriginalData)
+                            prepareExport(name: String(localized: "时光原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: { try store.exportOriginalData() })
                         }
                     }
                 }
@@ -68,35 +69,7 @@ struct DataManagementView: View {
                         .disabled(store.loadError != nil)
                     }
                 }
-                Section {
-                    Button("导出备份", systemImage: "square.and.arrow.up") {
-                        prepareExport(name: String(localized: "时光备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportBackup)
-                    }
-                    .disabled(store.loadError != nil)
-                    Button("从文件恢复", systemImage: "square.and.arrow.down") { importing = true }
-                        .disabled(isReading)
-                    if isReading { ProgressView("正在读取备份") }
-                    if store.hasRecoveryBackup {
-                        Button("恢复上一次本机副本", systemImage: "arrow.uturn.backward") {
-                            confirmRecovery = true
-                        }
-                    }
-                    // A library replaced while it couldn't be read is kept as raw data.
-                    if store.loadError == nil && store.hasUnreadableDataCopy {
-                        Button("导出替换前的原始数据", systemImage: "doc.badge.clock") {
-                            prepareExport(name: String(localized: "时光替换前的原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportUnreadableDataCopy)
-                        }
-                    }
-                    if store.hasMigrationBackup {
-                        Button("导出迁移前备份", systemImage: "externaldrive") {
-                            prepareExport(name: String(localized: "时光迁移前备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportMigrationBackup)
-                        }
-                    }
-                } header: {
-                    Text("备份与恢复")
-                } footer: {
-                    Text("备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。")
-                }
+                backupSection
                 Section {
                     NavigationLink {
                         RecentlyDeletedView()
@@ -155,6 +128,12 @@ struct DataManagementView: View {
             } message: {
                 Text("将替换当前日子和分类，并同步到其他设备。当前数据会留为新的本机副本。")
             }
+            .confirmationDialog("删除替换前的原始数据？", isPresented: $confirmRawCopyDeletion, titleVisibility: .visible) {
+                Button("删除", role: .destructive) { store.deleteUnreadableDataCopy() }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("这份数据包含恢复备份时被替换的日子和照片，删除后无法找回。")
+            }
             .confirmationDialog("导入旧版 iCloud 数据？", isPresented: $confirmLegacyImport, titleVisibility: .visible) {
                 Button("追加导入") {
                     do {
@@ -181,6 +160,41 @@ struct DataManagementView: View {
             } message: { Text(message ?? "") }
         }
         .tint(Theme.accent)
+    }
+
+    private var backupSection: some View {
+        Section {
+            Button("导出备份", systemImage: "square.and.arrow.up") {
+                prepareExport(name: String(localized: "时光备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportBackup)
+            }
+            .disabled(store.loadError != nil)
+            Button("从文件恢复", systemImage: "square.and.arrow.down") { importing = true }
+                .disabled(isReading)
+            if isReading { ProgressView("正在读取备份") }
+            if store.hasRecoveryBackup {
+                Button("恢复上一次本机副本", systemImage: "arrow.uturn.backward") {
+                    confirmRecovery = true
+                }
+            }
+            // A library replaced while it couldn't be read is kept as raw data.
+            if store.loadError == nil && store.hasUnreadableDataCopy {
+                Button("导出替换前的原始数据", systemImage: "doc.badge.clock") {
+                    prepareExport(name: String(localized: "时光替换前的原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportUnreadableDataCopy)
+                }
+                Button("删除替换前的原始数据", systemImage: "trash", role: .destructive) {
+                    confirmRawCopyDeletion = true
+                }
+            }
+            if store.hasMigrationBackup {
+                Button("导出迁移前备份", systemImage: "externaldrive") {
+                    prepareExport(name: String(localized: "时光迁移前备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportMigrationBackup)
+                }
+            }
+        } header: {
+            Text("备份与恢复")
+        } footer: {
+            Text("备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。")
+        }
     }
 
     private func prepareExport(name: String, data: () throws -> Data) {

@@ -1,6 +1,75 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "删除替换前的原始数据" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Raw Data from Before Restore"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除替换前的原始数据"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除替換前的原始資料"
+          }
+        }
+      }
+    },
+    "删除替换前的原始数据？" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Raw Data from Before Restore?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除替换前的原始数据？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除替換前的原始資料？"
+          }
+        }
+      }
+    },
+    "这份数据包含恢复备份时被替换的日子和照片，删除后无法找回。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This holds the days and photos a restore replaced. Once deleted, it can’t be recovered."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这份数据包含恢复备份时被替换的日子和照片，删除后无法找回。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這份資料包含回復備份時被替換的日子和照片，刪除後無法找回。"
+          }
+        }
+      }
+    },
     "导出替换前的原始数据" : {
       "extractionState" : "manual",
       "localizations" : {

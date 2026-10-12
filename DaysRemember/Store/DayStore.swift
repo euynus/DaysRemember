@@ -231,6 +231,10 @@ final class DayStore {
     var hasRecoveryBackup: Bool { defaults.data(forKey: recoveryKey) != nil }
     var hasUnreadableDataCopy: Bool { defaults.data(forKey: unreadableKey) != nil }
 
+    func deleteUnreadableDataCopy() {
+        defaults.removeObject(forKey: unreadableKey)
+    }
+
     func exportUnreadableDataCopy() throws -> Data {
         guard let data = defaults.data(forKey: unreadableKey) else { throw DayBackup.BackupError.unreadable }
         return data
@@ -251,9 +255,11 @@ final class DayStore {
         return try currentBackup.encoded()
     }
 
-    func exportOriginalData() throws -> Data {
+    /// A new raw copy leaves out the previous one, which would otherwise nest inside it, photos
+    /// and all, on every repair.
+    func exportOriginalData(includingRawCopy: Bool = true) throws -> Data {
         let keys = Set([storageKey, SharedStorage.legacyDaysKey, categoriesKey, deletedKey, conflictsKey, pendingRestoreKey,
-                    recoveryKey, migrationKey, unreadableKey])
+                    recoveryKey, migrationKey] + (includingRawCopy ? [unreadableKey] : []))
         var original = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
             defaults.data(forKey: key).map { (key, $0) }
         })
@@ -274,7 +280,7 @@ final class DayStore {
         } catch {
             // Damaged photo files must not prevent an explicit repair or lose their original bytes.
             // An older recovery backup is part of that raw copy, and isn't the library replaced now.
-            defaults.set(try exportOriginalData(), forKey: unreadableKey)
+            defaults.set(try exportOriginalData(includingRawCopy: false), forKey: unreadableKey)
             defaults.removeObject(forKey: recoveryKey)
         }
         let data = try encoded ?? localBackupData(backup, repairCorruptFiles: true)
