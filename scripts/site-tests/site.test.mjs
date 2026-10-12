@@ -142,3 +142,13 @@ test("Traditional Chinese text uses the Traditional font list", () => {
   assert.match(rule(":lang(zh-Hant)")["--font-sans"], /PingFang TC/);
   assert.equal(rule(":lang(zh-Hant)")["font-family"], "var(--font-sans)");
 });
+
+// ARIA doesn't allow a name on a generic <div>, so the focusable strip needs a role to carry it.
+test("the screenshot strip's label belongs to a region", () => {
+  for (const page of ["index.html", "zh-Hant/index.html", "en/index.html"]) {
+    const strip = /<div class="shots"[^>]*>/.exec(read(page));
+    assert.ok(strip, page);
+    assert.match(strip[0], /aria-label="[^"]+"/, page);
+    assert.match(strip[0], /role="region"/, page);
+  }
+});
