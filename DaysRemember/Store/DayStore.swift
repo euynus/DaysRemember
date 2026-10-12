@@ -45,6 +45,8 @@ final class DayStore {
     private let deletedKey = "deletedDays.v1"
     private let conflictsKey = "syncConflicts.v1"
     private let recoveryKey = "recoveryBackup.v1"
+    /// Raw stored data kept when a restore replaces a library that couldn't be read or backed up.
+    private let unreadableKey = "unreadableData.v1"
     private let migrationKey = "preCloudKitBackup.v1"
     private let migrationDecidedKey = "preCloudKitBackupDecided.v1"
     private let legacyDayIDsKey = "importedLegacyDayIDs.v1"
@@ -227,6 +229,12 @@ final class DayStore {
     }
 
     var hasRecoveryBackup: Bool { defaults.data(forKey: recoveryKey) != nil }
+    var hasUnreadableDataCopy: Bool { defaults.data(forKey: unreadableKey) != nil }
+
+    func exportUnreadableDataCopy() throws -> Data {
+        guard let data = defaults.data(forKey: unreadableKey) else { throw DayBackup.BackupError.unreadable }
+        return data
+    }
     var hasMigrationBackup: Bool { defaults.data(forKey: migrationKey) != nil }
 
     private var currentBackup: DayBackup {
@@ -245,7 +253,7 @@ final class DayStore {
 
     func exportOriginalData() throws -> Data {
         let keys = Set([storageKey, SharedStorage.legacyDaysKey, categoriesKey, deletedKey, conflictsKey, pendingRestoreKey,
-                    recoveryKey, migrationKey, "unreadableData.v1"])
+                    recoveryKey, migrationKey, unreadableKey])
         var original = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
             defaults.data(forKey: key).map { (key, $0) }
         })
@@ -260,15 +268,14 @@ final class DayStore {
     private func restoreBackup(_ backup: DayBackup, encoded: Data?) throws {
         try backup.validate()
         let wasUnreadable = loadError != nil
-        if loadError == nil {
-            do {
-                try keepRecoveryBackup()
-            } catch {
-                // Damaged photo files must not prevent an explicit repair or lose their original bytes.
-                defaults.set(try exportOriginalData(), forKey: "unreadableData.v1")
-            }
-        } else {
-            defaults.set(try exportOriginalData(), forKey: "unreadableData.v1")
+        do {
+            guard loadError == nil else { throw DayBackup.BackupError.unreadable }
+            try keepRecoveryBackup()
+        } catch {
+            // Damaged photo files must not prevent an explicit repair or lose their original bytes.
+            // An older recovery backup is part of that raw copy, and isn't the library replaced now.
+            defaults.set(try exportOriginalData(), forKey: unreadableKey)
+            defaults.removeObject(forKey: recoveryKey)
         }
         let data = try encoded ?? localBackupData(backup, repairCorruptFiles: true)
         try applyBackup(backup, encoded: data, repairCorruptFiles: true)

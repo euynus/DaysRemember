@@ -167,6 +167,29 @@ final class BackupRecoveryTests: XCTestCase {
         }
     }
 
+    /// Restoring over an unreadable library keeps its raw data rather than a recovery backup. That
+    /// copy must stay reachable after the restore clears the error, and the older recovery backup,
+    /// which the raw data contains, must not pose as the library just replaced.
+    func testRestoreOverUnreadableLibraryKeepsReachableRawCopy() throws {
+        try withDefaults { defaults, _ in
+            let store = DayStore(defaults: defaults)
+            try store.restoreBackup(backup())
+            try store.restoreBackup(backup())
+            let staleRecovery = try XCTUnwrap(defaults.data(forKey: "recoveryBackup.v1"))
+            defaults.set(Data("corrupt".utf8), forKey: "days.v1")
+            let damaged = DayStore(defaults: defaults)
+            XCTAssertNotNil(damaged.loadError)
+
+            try damaged.restoreBackup(backup())
+            XCTAssertNil(damaged.loadError)
+            XCTAssertTrue(damaged.hasUnreadableDataCopy)
+            XCTAssertFalse(damaged.hasRecoveryBackup)
+            let raw = try JSONDecoder().decode([String: Data].self, from: damaged.exportUnreadableDataCopy())
+            XCTAssertEqual(raw["days.v1"], Data("corrupt".utf8))
+            XCTAssertEqual(raw["recoveryBackup.v1"], staleRecovery)
+        }
+    }
+
     func testPendingRestoreReplaysBeforeLoadingPartialDataAndOnlyOnce() throws {
         try withDefaults { defaults, suite in
             let target = backup()

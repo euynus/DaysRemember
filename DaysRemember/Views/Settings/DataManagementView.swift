@@ -81,6 +81,12 @@ struct DataManagementView: View {
                             confirmRecovery = true
                         }
                     }
+                    // A library replaced while it couldn't be read is kept as raw data.
+                    if store.loadError == nil && store.hasUnreadableDataCopy {
+                        Button("导出替换前的原始数据", systemImage: "doc.badge.clock") {
+                            prepareExport(name: String(localized: "时光替换前的原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportUnreadableDataCopy)
+                        }
+                    }
                     if store.hasMigrationBackup {
                         Button("导出迁移前备份", systemImage: "externaldrive") {
                             prepareExport(name: String(localized: "时光迁移前备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportMigrationBackup)

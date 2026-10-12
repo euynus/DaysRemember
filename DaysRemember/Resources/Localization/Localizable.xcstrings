@@ -1,6 +1,52 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "导出替换前的原始数据" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export Raw Data from Before Restore"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出替换前的原始数据"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出替換前的原始資料"
+          }
+        }
+      }
+    },
+    "时光替换前的原始数据" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days Remember Raw Data Before Restore"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时光替换前的原始数据"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "時光替換前的原始資料"
+          }
+        }
+      }
+    },
     "每日问候" : {
       "extractionState" : "manual",
       "localizations" : {
