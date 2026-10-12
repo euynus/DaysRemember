@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import ImageIO
 import CryptoKit
+import WidgetKit
 
 /// Share pixel-bounded bitmaps across list rows, previews and widget snapshots.
 enum PhotoDecodeCache {
@@ -76,6 +77,7 @@ struct PhotoTile: View {
     /// meanwhile. Widgets and image exports must stay synchronous.
     var decodesAsynchronously = false
     @State private var loadedImage: UIImage?
+    @Environment(\.widgetRenderingMode) private var renderingMode
 
     init(style: PhotoStyle, imageData: Data? = nil, focusX: Double = 0.5, focusY: Double = 0.5,
          flat: Bool = false, cornerRadius: CGFloat = 20, maximumPixelSize: CGFloat = 1600,
@@ -119,12 +121,12 @@ struct PhotoTile: View {
                     focusedImage(pickedImage, in: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
                 } else if let image {
-                    Image(uiImage: image)
-                        .resizable()
+                    Self.tintable(Image(uiImage: image).resizable())
                         .scaledToFit()
                         .mask { Self.featheredEdges }
                         .frame(width: geometry.size.width, height: geometry.size.height)
-                        .background(Theme.coverPaper)
+                        // Drawn in one tint, the paper would be a solid block around the artwork.
+                        .background(renderingMode == .fullColor ? Theme.coverPaper : Color.clear)
                 } else {
                     style.background()
                         .frame(width: geometry.size.width, height: geometry.size.height)
@@ -185,10 +187,20 @@ struct PhotoTile: View {
         let xOffset = (container.width - size.width) * CGFloat(min(1, max(0, focusX)))
         let yOffset = (container.height - size.height) * CGFloat(min(1, max(0, focusY)))
 
-        return Image(uiImage: image)
-            .resizable()
+        return Self.tintable(Image(uiImage: image).resizable())
             .frame(width: size.width, height: size.height)
             .offset(x: xOffset, y: yOffset)
+    }
+
+    /// Tinted and clear Home Screens draw a widget in one tint by opacity, which turns an opaque
+    /// picture into a solid block; desaturated, it keeps its picture. Full colour is unaffected.
+    @ViewBuilder
+    private static func tintable(_ image: Image) -> some View {
+        if #available(iOS 18, *) {
+            image.widgetAccentedRenderingMode(.accentedDesaturated)
+        } else {
+            image
+        }
     }
 
     private func fillSize(image: CGSize, in container: CGSize) -> CGSize {

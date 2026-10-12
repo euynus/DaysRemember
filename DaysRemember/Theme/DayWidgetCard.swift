@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 /// Shared by WidgetKit and the in-app gallery so previews use the real layout.
 struct DayWidgetCard: View {
@@ -6,6 +7,7 @@ struct DayWidgetCard: View {
     let day: Day
     let size: Size
     var today: Date = Today.date
+    @Environment(\.widgetRenderingMode) private var renderingMode
 
     private var info: DayInfo { DayInfo.compute(day, today: today) }
 
@@ -43,7 +45,9 @@ struct DayWidgetCard: View {
         }
         .padding(size == .small ? 12 : 18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.card)
+        // Tinted, clear and StandBy modes remove the container background and draw the rest in one
+        // tint by opacity, so an opaque card of its own would be a solid block there.
+        .background(renderingMode == .fullColor ? Theme.card : Color.clear)
         // A widget has fixed physical bounds, unlike the surrounding app controls.
         .dynamicTypeSize(...DynamicTypeSize.large)
         .accessibilityElement(children: .ignore)
@@ -62,6 +66,7 @@ struct DayWidgetCard: View {
              : info.isPast ? String(localized: "时光记忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "即将到来", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             .font(Theme.sans(11, weight: .semibold))
             .foregroundStyle(Theme.accent)
+            .widgetAccentable()
     }
 
     private var title: some View {
@@ -78,6 +83,8 @@ struct DayWidgetCard: View {
                 .font(info.isToday ? Theme.sans(24) : Theme.number(size == .small ? 34 : 52))
                 .monospacedDigit()
                 .foregroundStyle(Theme.accent)
+                // Takes the accent tint, as it takes the accent colour in full colour.
+                .widgetAccentable()
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
             if !info.isToday {

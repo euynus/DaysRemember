@@ -1,5 +1,6 @@
 import XCTest
 import SwiftUI
+import WidgetKit
 import ImageIO
 import UniformTypeIdentifiers
 @testable import DaysRemember
@@ -360,6 +361,20 @@ final class RenderingTests: XCTestCase {
                 XCTAssertGreaterThan(image.height, 300)
                 attach(image, name: "Polished-layout-\(Int(width))-\(size)")
             }
+        }
+    }
+
+    /// Tinted and clear Home Screens remove a widget's container background and draw what's left
+    /// in one tint, by opacity; the card's own opaque background would leave a solid block.
+    @MainActor
+    func testWidgetCardLeavesItsBackgroundToTheSystemOutsideFullColor() throws {
+        let day = Day(id: "tinted", title: "Tinted", date: Today.date, category: .life, photo: .home)
+        for (mode, opaque) in [(WidgetRenderingMode.fullColor, true), (.accented, false), (.vibrant, false)] {
+            let card = DayWidgetCard(day: day, size: .medium)
+                .frame(width: 338, height: 158)
+                .environment(\.widgetRenderingMode, mode)
+            let corner = pixel(try render(card), x: 2, y: 2)
+            XCTAssertEqual(corner[3] == 255, opaque, "\(mode): \(corner)")
         }
     }
 
