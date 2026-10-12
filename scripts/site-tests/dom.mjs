@@ -33,6 +33,11 @@ export class Element {
 
   get id() { return this.attributes.id; }
   get lang() { return this.attributes.lang || ""; }
+  get src() { return this.attributes.src || ""; }
+  set src(value) { this.attributes.src = String(value); }
+  get type() { return this.attributes.type || ""; }
+  set type(value) { this.attributes.type = String(value); }
+  get className() { return this.attributes.class || ""; }
   getAttribute(name) { return name in this.attributes ? this.attributes[name] : null; }
   setAttribute(name, value) { this.attributes[name] = String(value); }
   removeAttribute(name) { delete this.attributes[name]; }

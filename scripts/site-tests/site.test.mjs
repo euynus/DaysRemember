@@ -111,3 +111,26 @@ test("printing shows every section with its final figures", () => {
   assert.match(print, /\.motion \.reveal:not\(\.in\)\s*\{[^}]*opacity:\s*1/);
   assert.match(print, /animation:\s*none/);
 });
+
+// WCAG 2.2.2: an on-page control pauses content that moves on its own for more than 5 s.
+test("the hero slideshow can be paused", () => {
+  const phone = el("div", { class: "phone" }, el("img", { src: "home.jpg", alt: "首页" }));
+  const shots = el("div", { class: "shots" }, ...["home.jpg", "detail.jpg", "calendar.jpg"]
+    .map((src) => el("figure", {}, el("img", { src }))));
+  const site = runSite({ motion: true, body: [el("section", { class: "hero" }, phone), shots] });
+  const showing = () => phone.querySelectorAll("img.is-current").map((frame) => frame.src);
+  site.advance(3200 + 900);
+  assert.deepEqual(showing(), ["detail.jpg"]);
+
+  const toggle = phone.querySelector("button");
+  assert.ok(toggle, "a pause button");
+  assert.equal(toggle.getAttribute("aria-pressed"), "false");
+  assert.equal(toggle.getAttribute("aria-label"), "暂停截图轮播");
+  toggle.click();
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
+  site.advance(20000);
+  assert.deepEqual(showing(), ["detail.jpg"], "paused");
+  toggle.click();
+  site.advance(3200 + 900);
+  assert.deepEqual(showing(), ["calendar.jpg"], "playing again");
+});

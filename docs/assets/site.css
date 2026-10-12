@@ -142,6 +142,34 @@ p { margin: 0; }
 /* The other screens site.js stacks over the first, cross-fading from one to the next. */
 .phone img + img { position: absolute; inset: 0; height: 100%; opacity: 0; transition: opacity 0.9s var(--ease-out); }
 .phone img.is-current { opacity: 1; }
+/* site.js adds it while the phone cycles: two bars to pause, a triangle to play again. */
+.phone-toggle {
+  position: absolute;
+  z-index: 3;
+  right: 1rem;
+  bottom: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  background: rgba(252, 252, 250, 0.92);
+  color: var(--ink);
+  cursor: pointer;
+}
+.phone-toggle::before {
+  content: "";
+  width: 0.75rem;
+  height: 0.875rem;
+  border-inline: 0.25rem solid currentColor;
+}
+.phone-toggle[aria-pressed="true"]::before {
+  border: 0;
+  background: currentColor;
+  clip-path: polygon(15% 0, 100% 50%, 15% 100%);
+}
 
 /* Section scaffolding */
 .section { padding-block: clamp(2.5rem, 6vw, 4.5rem); border-top: 1px solid var(--hairline); }
@@ -358,6 +386,7 @@ p { margin: 0; }
 @media print {
   .motion *, .motion *::before, .motion *::after { animation: none !important; transition: none !important; }
   .motion .reveal:not(.in) { opacity: 1; }
+  .phone-toggle { display: none; }
 }
 
 /* Where scroll-driven animations exist, the hero phone leans back and settles flat as the page scrolls. */

@@ -18,6 +18,7 @@
       anniversary: function (n) { return "第" + n + "周年"; },
       months: ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊"],
       leap: "闰",
+      pauseShots: "暂停截图轮播",
       fullDate: function (y, m, d) { return y + "年" + m + "月" + d + "日"; }
     },
     "zh-Hant": {
@@ -27,6 +28,7 @@
       anniversary: function (n) { return "第" + n + "週年"; },
       months: ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "臘"],
       leap: "閏",
+      pauseShots: "暫停截圖輪播",
       fullDate: function (y, m, d) { return y + "年" + m + "月" + d + "日"; }
     },
     en: {
@@ -34,6 +36,7 @@
       ahead: "days to go", aheadOne: "day to go", ago: "days ago", agoOne: "day ago", today: "Today",
       elapsed: function (n, raw) { return n + (raw === 1 ? " day elapsed" : " days elapsed"); },
       anniversary: function (n) { return "Anniversary " + n; },
+      pauseShots: "Pause screenshot slideshow",
       fullDate: function (y, m, d) {
         return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", year: "numeric", month: "long", day: "numeric" })
           .format(new Date(Date.UTC(y, m - 1, d)));
@@ -289,7 +292,7 @@
   }
 
   // The hero phone cross-fades through the screenshots below it, once the page has loaded and only
-  // while it is on screen.
+  // while it is on screen. It moves on its own, so a button pauses it (WCAG 2.2.2).
   function cyclePhone() {
     var phone = document.querySelector(".hero .phone");
     var shots = document.querySelectorAll(".shots img");
@@ -305,17 +308,30 @@
         return frame;
       });
       var current = 0;
-      var layer = 1;
       var visible = true;
+      var paused = false;
       frames[current].classList.add("is-current");
+      var toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.classList.add("phone-toggle");
+      toggle.setAttribute("aria-label", TEXT.pauseShots);
+      toggle.setAttribute("aria-pressed", "false");
+      toggle.addEventListener("click", function () {
+        paused = !paused;
+        toggle.setAttribute("aria-pressed", String(paused));
+      });
+      phone.appendChild(toggle);
       new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; }).observe(phone);
       setInterval(function () {
         var index = (current + 1) % frames.length;
         var next = frames[index];
-        if (!visible || document.hidden || !next.complete || !next.naturalWidth) return;
+        if (paused || !visible || document.hidden || !next.complete || !next.naturalWidth) return;
         var previous = frames[current];
         current = index;
-        next.style.zIndex = String(++layer);
+        // The next frame fades in over the one showing, and the rest wait beneath both.
+        frames.forEach(function (frame) {
+          frame.style.zIndex = frame === next ? "2" : frame === previous ? "1" : "0";
+        });
         next.classList.add("is-current");
         setTimeout(function () { previous.classList.remove("is-current"); }, 900);
       }, 3200);
