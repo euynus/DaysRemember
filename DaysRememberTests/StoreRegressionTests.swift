@@ -74,6 +74,25 @@ final class StoreRegressionTests: XCTestCase {
         }
     }
 
+    /// A category deleted on another device while its editor is open can't be changed here; the
+    /// store says so, so the editor can keep the draft instead of reporting success.
+    func testChangingACategoryDeletedElsewhereReportsFailure() throws {
+        try withSuite { defaults in
+            let store = DayStore(defaults: defaults)
+            let gone = store.addCategory(name: "Gone", icon: "tag", colorToken: .dusty)
+            var kept = store.addCategory(name: "Kept", icon: "tag", colorToken: .sage)
+            try store.applyCloudUpdate(CloudLibraryUpdate(deletedCategoryIDs: [gone.id]))
+            var renamed = gone
+            renamed.name = "Renamed"
+            XCTAssertFalse(store.updateCategory(renamed))
+            XCTAssertFalse(store.deleteCategory(id: gone.id, migrateTo: DayCategory.life.rawValue))
+
+            kept.name = "Kept and renamed"
+            XCTAssertTrue(store.updateCategory(kept))
+            XCTAssertTrue(store.deleteCategory(id: kept.id, migrateTo: DayCategory.life.rawValue))
+        }
+    }
+
     /// Copies in 最近删除 and 同步保留版本 move with the category's days, or a restored copy
     /// would point at a category that no longer exists.
     func testDeletingCategoryMovesRecoverableCopies() throws {

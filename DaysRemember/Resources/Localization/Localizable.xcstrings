@@ -1,6 +1,29 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "这个分类已在其他设备上删除，修改尚未保存。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This category was deleted on another device, so your changes weren’t saved."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个分类已在其他设备上删除，修改尚未保存。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這個分類已在其他裝置上刪除，修改尚未儲存。"
+          }
+        }
+      }
+    },
     "当前图标" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -93,8 +93,7 @@ struct CategoryEditorView: View {
                 ForEach(store.categories.filter { $0.id != category.id }) { target in
                     Button("迁移到 \(target.displayName)") {
                         Haptics.warning()
-                        store.deleteCategory(id: category.id, migrateTo: target.id)
-                        finishSaving()
+                        finishSaving(store.deleteCategory(id: category.id, migrateTo: target.id))
                     }
                 }
             }
@@ -253,16 +252,18 @@ struct CategoryEditorView: View {
             category.name = name
             category.icon = icon
             category.colorToken = colorToken
-            store.updateCategory(category)
+            finishSaving(store.updateCategory(category))
         } else {
             store.addCategory(name: name, icon: icon, colorToken: colorToken)
+            finishSaving(store.saveError == nil)
         }
-        finishSaving()
     }
 
-    private func finishSaving() {
-        if let error = store.loadError ?? store.saveError {
-            saveError = error
+    /// A change that didn't apply keeps the editor and its draft open.
+    private func finishSaving(_ saved: Bool) {
+        guard saved else {
+            saveError = store.loadError ?? store.saveError
+                ?? String(localized: "这个分类已在其他设备上删除，修改尚未保存。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             return
         }
         Haptics.success()

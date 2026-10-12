@@ -566,10 +566,13 @@ final class DayStore {
         return category
     }
 
-    func updateCategory(_ category: CategoryDefinition) {
-        guard loadError == nil else { return }
+    /// False when nothing changed: the category is gone (deleted on another device, say), is a
+    /// system category, or couldn't be saved.
+    @discardableResult
+    func updateCategory(_ category: CategoryDefinition) -> Bool {
+        guard loadError == nil else { return false }
         guard let index = categories.firstIndex(where: { $0.id == category.id }),
-              !categories[index].isSystem else { return }
+              !categories[index].isSystem else { return false }
         let cleanName = category.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanIcon = category.icon.trimmingCharacters(in: .whitespacesAndNewlines)
         var updatedCategories = categories
@@ -583,7 +586,7 @@ final class DayStore {
         let label = updatedCategories[index].name
         guard days.contains(where: { $0.categoryID == category.id && $0.categoryLabel != label }) else {
             categories = updatedCategories
-            return
+            return saveError == nil
         }
         let updatedDays = days.map { day in
             guard day.categoryID == category.id else { return day }
@@ -592,13 +595,16 @@ final class DayStore {
             return updated
         }
         commitCategoryChange(days: updatedDays, categories: updatedCategories)
+        return saveError == nil
     }
 
-    func deleteCategory(id: String, migrateTo targetID: String) {
-        guard loadError == nil else { return }
+    /// False when nothing changed, as for `updateCategory`, or the target is gone too.
+    @discardableResult
+    func deleteCategory(id: String, migrateTo targetID: String) -> Bool {
+        guard loadError == nil else { return false }
         guard let category = categories.first(where: { $0.id == id }),
               !category.isSystem,
-              categories.contains(where: { $0.id == targetID && $0.id != id }) else { return }
+              categories.contains(where: { $0.id == targetID && $0.id != id }) else { return false }
 
         let target = self.category(for: targetID)
         let updatedCategories = categories.filter { $0.id != id }
@@ -621,6 +627,7 @@ final class DayStore {
         }
         commitCategoryChange(days: days.map(migrated), categories: updatedCategories,
                              deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
+        return saveError == nil
     }
 
     private func commitCategoryChange(days: [Day], categories: [CategoryDefinition],

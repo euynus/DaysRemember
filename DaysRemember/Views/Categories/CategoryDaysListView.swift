@@ -3,6 +3,7 @@ import SwiftUI
 struct CategoryDaysListView: View {
     @Environment(\.currentDay) private var today
     @Environment(DayStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
     let title: String
     let categoryID: String?
     var onOpen: (Day) -> Void = { _ in }
@@ -25,5 +26,9 @@ struct CategoryDaysListView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbarRole(.editor)
         .toolbar(.visible, for: .navigationBar)
+        // A sync can delete the category while its list is open, as for a day's detail.
+        .onChange(of: categoryID.map { id in store.categories.contains { $0.id == id } } ?? true) { _, exists in
+            if !exists { dismiss() }
+        }
     }
 }
