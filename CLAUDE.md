@@ -24,7 +24,7 @@ xcodebuild -project DaysRemember.xcodeproj -scheme DaysRemember \
   -derivedDataPath /tmp/dr-dd build
 ```
 
-Keep simulator ad-hoc signing enabled as configured in `project.yml`; App Group and widget integration require it. Use `bash scripts/ci.sh` for the full CI suite and Release build on a disposable simulator. The `DaysRememberCI` scheme excludes only the manually configured Home Screen widget test. Single test class on a dedicated test device: `xcodebuild ... test -only-testing:DaysRememberTests/LunarTests`. UI fixtures reset their simulator's library, so never use a simulator containing user data.
+Keep simulator ad-hoc signing enabled as configured in `project.yml`; App Group and widget integration require it. Use `bash scripts/ci.sh` for the full CI suite and Release build on a disposable simulator; it keeps each run's logs, coverage and result bundle in `build/ci/` and removes its DerivedData (`scripts/ci-tests/ci.test.sh` checks this against stub tools). The `DaysRememberCI` scheme excludes only the manually configured Home Screen widget test. Single test class on a dedicated test device: `xcodebuild ... test -only-testing:DaysRememberTests/LunarTests`. UI fixtures reset their simulator's library, so never use a simulator containing user data.
 
 When SourceKit reports "Cannot find Theme / Day / DayInfo in scope" on a single file, that is **file-isolation** — there's no per-file build context outside the project. Run `xcodegen generate` and rely on `xcodebuild` for ground truth.
 

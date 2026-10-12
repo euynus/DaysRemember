@@ -24,6 +24,8 @@ cleanup() {
             status=1
         fi
     fi
+    # The logs, coverage and result bundle are kept; the build products aren't needed after the run.
+    rm -rf "$output_dir/DerivedData"
     printf 'CI artifacts: %s\n' "$output_dir"
     exit "$status"
 }

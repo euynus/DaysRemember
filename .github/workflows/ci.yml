@@ -31,6 +31,11 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      - name: Check the site and CI script
+        run: |
+          node --test scripts/site-tests/*.test.mjs
+          bash scripts/ci-tests/ci.test.sh
+
       - name: Test and build
         run: bash scripts/ci.sh
 
