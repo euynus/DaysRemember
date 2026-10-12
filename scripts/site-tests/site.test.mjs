@@ -152,3 +152,20 @@ test("the screenshot strip's label belongs to a region", () => {
     assert.match(strip[0], /role="region"/, page);
   }
 });
+
+// A deletion that syncs in puts the day in that device's 最近删除 and 同步保留版本 as well
+// (DayStore.applyCloudUpdate), so no page may say only the deleting device keeps it.
+test("the pages say every device keeps a deleted day", () => {
+  const pages = ["privacy/index.html", "support/index.html", "index.html", "zh-Hant/index.html", "en/index.html"]
+    .map(read).join("\n");
+  for (const claim of ["只保存在删除它的那台设备上", "只儲存在刪除它的那台裝置上", "kept only on the device where you deleted",
+                       "这台设备的「最近删除」会保留", "這台裝置的「最近刪除」會保留", "Recently Deleted keeps it on this device",
+                       "误删的日子在这台设备上", "誤刪的日子在這台裝置上", "A deleted day stays on the device"]) {
+    assert.ok(!pages.includes(claim), claim);
+  }
+  for (const statement of ["每台设备都会在本机的「最近删除」里保留它 30 天", "每台裝置都會在本機的「最近刪除」裡保留它 30 天",
+                           "Each device keeps it in its own Recently Deleted for 30 days",
+                           "在任何一台上都可以恢复", "在任何一台上都可以還原", "restore the day on any of them"]) {
+    assert.ok(pages.includes(statement), statement);
+  }
+});
