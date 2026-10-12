@@ -120,7 +120,7 @@ final class PersistencePerformanceTests: XCTestCase {
                     XCTAssertLessThanOrEqual(backupPayloadBytes, DayBackup.maximumBytes)
                     let backup = try autoreleasepool { try DayBackup.decode(exported.value) }
                     XCTAssertTrue(backup.days == store.days, "Export must include the edited title and photos")
-                } catch DayBackup.BackupError.tooLarge {
+                } catch DayBackup.BackupError.tooLargeToExport {
                     // Only the documented size cap is expected; all other export errors propagate.
                     // Encode without the cap once to prove this is a legitimate refusal.
                     if blockedExports == 0 {
