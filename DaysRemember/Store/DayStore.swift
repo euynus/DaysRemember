@@ -55,7 +55,7 @@ final class DayStore {
     private var cloudSyncEnabled = false
     private var cloudSyncRequested = false
     /// Debounce/serialize handle for `NotificationManager.sync`.
-    private var rescheduleTask: Task<Void, Never>?
+    private(set) var rescheduleTask: Task<Void, Never>?
     /// Set after init so we can wire the notification scheduler without a circular dependency.
     var settings: AppSettings? {
         didSet { rescheduleNotifications() }
@@ -259,6 +259,7 @@ final class DayStore {
 
     private func restoreBackup(_ backup: DayBackup, encoded: Data?) throws {
         try backup.validate()
+        let wasUnreadable = loadError != nil
         if loadError == nil {
             do {
                 try keepRecoveryBackup()
@@ -273,6 +274,8 @@ final class DayStore {
         try applyBackup(backup, encoded: data, repairCorruptFiles: true)
         loadError = nil
         saveError = nil
+        // Reminders weren't rescheduled while the library was unreadable.
+        if wasUnreadable { rescheduleNotifications() }
         if cloudSyncEnabled {
             CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
         } else if cloudSyncRequested {
@@ -400,7 +403,8 @@ final class DayStore {
     }
 
     func rescheduleNotifications() {
-        guard let settings else { return }
+        // An unreadable library loads as empty, which would cancel every pending reminder.
+        guard let settings, loadError == nil else { return }
         // Coalesce rapid edits: cancel any task waiting to run, and chain off the
         // previous one so we never dispatch overlapping syncs that would race on
         // UNUserNotificationCenter (both calls would remove-stale then add-new and

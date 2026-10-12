@@ -21,6 +21,28 @@ final class StoreRegressionTests: XCTestCase {
         try body()
     }
 
+    private func withSuite(_ body: (UserDefaults) throws -> Void) throws {
+        let suite = "StoreRegressionTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        try body(defaults)
+    }
+
+    /// An unreadable library loads as empty; syncing that would cancel every pending reminder.
+    func testUnreadableLibraryLeavesRemindersAlone() throws {
+        try withSuite { defaults in
+            defaults.set(Data("corrupt".utf8), forKey: "days.v1")
+            let store = DayStore(defaults: defaults)
+            XCTAssertNotNil(store.loadError)
+            store.settings = AppSettings()
+            store.rescheduleNotifications()
+            XCTAssertNil(store.rescheduleTask)
+
+            try store.restoreBackup(DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: []))
+            XCTAssertNotNil(store.rescheduleTask, "a restored library schedules its reminders again")
+        }
+    }
+
     func testUnknownCategorySurvivesAddAndUpdateUntilDefinitionArrives() throws {
         try withRestoredDefaults {
             let store = DayStore()
