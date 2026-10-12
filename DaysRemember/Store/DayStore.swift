@@ -184,6 +184,12 @@ final class DayStore {
             return
         }
         days.removeAll { $0.id == id }
+        // The active list couldn't be saved, so the day is still active: take back its trash entry.
+        guard !days.contains(where: { $0.id == id }) else {
+            deletedDays = previous
+            persistDeletedDays()
+            return
+        }
         lastDeleted = deletedDays.first { $0.id == id }
         Task { await NotificationManager.shared.cancel(dayId: id) }
     }

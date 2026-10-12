@@ -315,6 +315,30 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
+    /// When the active list can't be saved after the trash entry was, the day stays active only.
+    func testDeletionThatCannotSaveActiveDaysLeavesNoTrashEntry() throws {
+        try withStorage { defaults, _, directory in
+            var plain = day("Without photo")
+            plain.photoData = nil
+            let other = day("With photo")
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            store.add(plain)
+            store.add(other)
+            try FileManager.default.removeItem(at: directory)
+            try Data("blocked directory".utf8).write(to: directory)
+
+            store.delete(plain)
+            XCTAssertNotNil(store.saveError)
+            XCTAssertTrue(store.days.contains { $0.id == plain.id })
+            XCTAssertTrue(store.deletedDays.isEmpty)
+            XCTAssertNil(store.lastDeleted)
+            XCTAssertNoThrow(try DayBackup(days: store.days, categories: store.categories,
+                                           deletedDays: store.deletedDays).validate())
+            XCTAssertEqual(try JSONDecoder().decode([DeletedDay].self,
+                                                    from: XCTUnwrap(defaults.data(forKey: "deletedDays.v1"))), [])
+        }
+    }
+
     func testFailedRestoreNeverReplaysOverLaterSuccessfulEdits() throws {
         try withStorage { defaults, _, directory in
             var original = day("Original without photo")
