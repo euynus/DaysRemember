@@ -12,6 +12,16 @@ final class AccessoryWidgetRenderingTests: XCTestCase {
         (.inline, CGSize(width: 230, height: 20))
     ]
 
+    /// Like the card, the Home Screen widget's empty state keeps text within a widget's fixed bounds.
+    func testHomeWidgetEmptyStateCapsTextSize() throws {
+        let size = CGSize(width: 148, height: 148)
+        for missing in [false, true] {
+            let state = DayWidgetEmptyState(selectionMissing: missing)
+            XCTAssertEqual(try pixels(render(state, size: size)),
+                           try pixels(render(state, size: size, textSize: .accessibility5)), "selection missing: \(missing)")
+        }
+    }
+
     func testTodayPastAndFutureRenderAtExactBoundsInEveryStyle() throws {
         for (style, size) in layouts {
             var images = Set<Data>()
@@ -159,7 +169,7 @@ final class AccessoryWidgetRenderingTests: XCTestCase {
         return Day(id: "accessory-\(offset)", title: title, date: date, category: .life, photo: .home)
     }
 
-    private func render(_ widget: DayAccessoryWidget, size: CGSize, padding: CGFloat = 0,
+    private func render<Widget: View>(_ widget: Widget, size: CGSize, padding: CGFloat = 0,
                         textSize: DynamicTypeSize = .large, colorScheme: ColorScheme = .light) throws -> CGImage {
         // App rendering leaves the native accessory background empty, so alpha checks inspect the content.
         let renderer = ImageRenderer(content: widget

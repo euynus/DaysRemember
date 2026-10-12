@@ -98,17 +98,7 @@ struct DaysWidgetEntryView: View {
             } else if let day = entry.day {
                 DayWidgetCard(day: day, size: cardSize, today: entry.date)
             } else {
-                VStack(spacing: 10) {
-                    Image(systemName: "calendar")
-                        .font(.title)
-                        .foregroundStyle(Theme.accent)
-                    Text(entry.selectionMissing
-                         ? String(localized: "日子已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                         : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-                        .font(Theme.sans(13))
-                        .foregroundStyle(Theme.ink2)
-                        .multilineTextAlignment(.center)
-                }
+                DayWidgetEmptyState(selectionMissing: entry.selectionMissing)
             }
         }
         .environment(\.locale, AppLocalization.locale)
