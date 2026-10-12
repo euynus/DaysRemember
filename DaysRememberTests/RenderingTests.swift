@@ -378,6 +378,50 @@ final class RenderingTests: XCTestCase {
         }
     }
 
+    @MainActor @Observable final class Framing { var focusX = 0.5 }
+
+    /// A list row decodes off the main actor and, when its photo is already cached, draws it from
+    /// the cache. If the cache then drops it, the row must still draw its photo, not blank paper.
+    @MainActor
+    func testAsyncTileKeepsItsPhotoWhenTheCacheDropsIt() async throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let red = try XCTUnwrap(UIGraphicsImageRenderer(size: CGSize(width: 300, height: 300), format: format)
+            .image { context in
+                UIColor.red.setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 300, height: 300))
+            }.jpegData(compressionQuality: 0.9))
+        _ = PhotoDecodeCache.decoded(red, maximumPixelSize: 256)
+        let framing = Framing()
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
+        window.rootViewController = UIHostingController(rootView: AsyncTileHost(framing: framing, data: red))
+        window.isHidden = false
+        defer { window.isHidden = true }
+        try await Task.sleep(for: .milliseconds(500))
+
+        PhotoDecodeCache.removeAll()
+        framing.focusX = 0.4
+        try await Task.sleep(for: .milliseconds(500))
+        let snapshot = UIGraphicsImageRenderer(bounds: window.bounds, format: format).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        let center = pixel(try XCTUnwrap(snapshot.cgImage), x: 60, y: 60)
+        XCTAssertGreaterThan(center[0], 200, "\(center)")
+        XCTAssertLessThan(center[1], 80, "\(center)")
+    }
+
+    private struct AsyncTileHost: View {
+        let framing: Framing
+        let data: Data
+        var body: some View {
+            PhotoTile(style: .home, imageData: data, focusX: framing.focusX, flat: true, cornerRadius: 0,
+                      maximumPixelSize: 256, decodesAsynchronously: true)
+                .frame(width: 120, height: 120)
+        }
+    }
+
     private func render<V: View>(_ view: V) throws -> CGImage {
         let renderer = ImageRenderer(content: view.environment(\.dynamicTypeSize, .large))
         renderer.scale = 1

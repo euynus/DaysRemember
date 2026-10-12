@@ -41,6 +41,9 @@ enum PhotoDecodeCache {
         return image
     }
 
+    /// Drops every entry, as memory pressure may.
+    static func removeAll() { storage.removeAllObjects() }
+
     private static func store(_ image: UIImage, forKey key: NSString) {
         guard let bitmap = image.cgImage else { return }
         storage.setObject(image, forKey: key, cost: bitmap.bytesPerRow * bitmap.height)
@@ -149,8 +152,9 @@ struct PhotoTile: View {
         .accessibilityHidden(true)
         .task(id: decodesAsynchronously ? imageData : nil) {
             guard decodesAsynchronously, let data = imageData else { return }
-            loadedImage = nil
-            guard PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize) == nil else { return }
+            // Keep a reference even to a cached image: the cache may drop it while the tile is shown.
+            loadedImage = PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize)
+            guard loadedImage == nil else { return }
             let size = maximumPixelSize
             let image = await Task.detached(priority: .userInitiated) {
                 PhotoDecodeCache.decoded(data, maximumPixelSize: size)
