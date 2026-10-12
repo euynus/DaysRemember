@@ -27,3 +27,36 @@ test("the hero's lunar date matches the app", () => {
   assert.ok(heroDate("en", "2023-03-22").endsWith(" · Leap month 2, Day 1"));
   assert.ok(heroDate("en", "2027-02-06").endsWith(" · Month 1, Day 1"));
 });
+
+const css = read("assets/site.css").replace(/\/\*[\s\S]*?\*\//g, "");
+
+/// The declarations of the first rule whose selector is exactly `selector`.
+function rule(selector) {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = new RegExp("(?:^|\\n|\\})\\s*" + escaped + "\\s*\\{([^}]*)\\}").exec(css);
+  assert.ok(match, "no rule for " + selector);
+  return Object.fromEntries(match[1].split(";").map((part) => part.split(":").map((each) => each.trim()))
+    .filter(([name, value]) => name && value));
+}
+
+function color(value) {
+  const root = rule(":root");
+  const resolved = value.replace(/var\((--[\w-]+)\)/, (_, name) => root[name]);
+  const hex = /^#([0-9a-f]{6})$/i.exec(resolved);
+  assert.ok(hex, "not a hex colour: " + value);
+  return [0, 2, 4].map((index) => parseInt(hex[1].slice(index, index + 2), 16) / 255);
+}
+
+function contrast(foreground, background) {
+  const luminance = (rgb) => rgb.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+    .reduce((sum, c, index) => sum + c * [0.2126, 0.7152, 0.0722][index], 0);
+  const [light, dark] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (light + 0.05) / (dark + 0.05);
+}
+
+// 16px semibold text is not large text, so WCAG 1.4.3 asks for 4.5:1.
+test("the coming-soon badge has enough contrast", () => {
+  const badge = rule(".cta.is-soon");
+  const ratio = contrast(color(badge.color), color(badge.background));
+  assert.ok(ratio >= 4.5, "contrast " + ratio.toFixed(2) + ":1");
+});

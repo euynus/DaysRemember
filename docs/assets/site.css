@@ -10,6 +10,8 @@
   --muted: #757570;
   --accent: #BB4235;
   --accent-soft: #F4E3E0;
+  /* The accent deepened to 5.1:1 on --accent-soft; --accent itself is 4.3:1 there. */
+  --accent-deep: #A8392D;
   --hairline: rgba(21, 23, 28, 0.08);
   --hairline-strong: rgba(21, 23, 28, 0.14);
 
@@ -123,7 +125,7 @@ p { margin: 0; }
   font-weight: 600;
   text-decoration: none;
 }
-.cta.is-soon { background: var(--accent-soft); color: var(--accent); }
+.cta.is-soon { background: var(--accent-soft); color: var(--accent-deep); }
 .requirements { color: var(--muted); font-size: var(--step--1); }
 
 .phone {
