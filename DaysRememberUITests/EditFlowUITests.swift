@@ -728,7 +728,8 @@ final class EditFlowUITests: XCTestCase {
         if !save.waitForExistence(timeout: 5) { tapInPicker(onMyiPhone, until: save) }
         XCTAssertTrue(save.waitForExistence(timeout: 10), app.debugDescription)
         save.tap()
-        // Only a reused simulator has a backup from the same day to replace.
+        // Only a reused simulator has a backup from the same day to replace. On iOS 27 the picker's
+        // replace prompt isn't in the app's accessibility tree, so move that file aside first.
         let replace = app.buttons["替换"]
         if replace.waitForExistence(timeout: 1) { replace.tap() }
         XCTAssertTrue(app.staticTexts["备份已导出。"].waitForExistence(timeout: 10), app.debugDescription)
