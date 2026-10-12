@@ -1,6 +1,29 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "当前图标" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Icon"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前图标"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前圖示"
+          }
+        }
+      }
+    },
     "widget.sampleTitle" : {
       "extractionState" : "manual",
       "localizations" : {

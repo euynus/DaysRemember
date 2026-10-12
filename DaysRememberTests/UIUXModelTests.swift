@@ -30,6 +30,17 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertEqual(CategoryEditorView.iconChoices(for: "heart").first?.label, "Heart")
     }
 
+    /// A category stored with an older sticker name shows its icon selected, even one the grid
+    /// doesn't otherwise offer.
+    @MainActor
+    func testLegacyCategoryIconIsSelectedInTheEditor() {
+        for legacy in ["plane", "cake", "cap", "paw", "sun", "ring"] {
+            let choices = CategoryEditorView.iconChoices(for: legacy)
+            XCTAssertEqual(choices.filter { CategoryEditorView.isSelected($0.symbol, icon: legacy) }.count, 1, legacy)
+        }
+        XCTAssertEqual(CategoryEditorView.iconChoices(for: "heart").count, CategoryEditorView.iconChoices(for: "tag").count)
+    }
+
     func testLegacyCategoryIconsKeepTheirMeaning() {
         let icons = ["plane": "airplane", "cake": "birthday.cake",
                      "cap": "graduationcap", "paw": "pawprint",

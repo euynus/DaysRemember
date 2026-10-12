@@ -29,9 +29,17 @@ struct CategoryEditorView: View {
         return !category.isSystem && store.categories.contains { $0.id != category.id }
     }
 
-    static func iconChoices(for icon: String) -> [(symbol: String, label: String)] { choices }
+    /// The grid, led by the category's own icon when the grid doesn't offer it, so it stays chosen.
+    static func iconChoices(for icon: String) -> [(symbol: String, label: String)] {
+        let symbol = CategoryDefinition.symbolName(for: icon)
+        guard !choices.contains(where: { $0.symbol == symbol }) else { return choices }
+        return [(symbol, String(localized: "当前图标", bundle: AppLocalization.bundle, locale: AppLocalization.locale))] + choices
+    }
 
-    static func isSelected(_ symbol: String, icon: String) -> Bool { icon == symbol }
+    /// Older categories stored sticker names; they are selected as the symbols they show.
+    static func isSelected(_ symbol: String, icon: String) -> Bool {
+        CategoryDefinition.symbolName(for: icon) == symbol
+    }
 
     /// Curated SF Symbols suited to anniversaries / life events — kept so custom
     /// categories that were created before stickers still round-trip their icon.
@@ -168,7 +176,8 @@ struct CategoryEditorView: View {
             SectionHeader(String(localized: "图标", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
                       spacing: 10) {
-                ForEach(Self.iconChoices(for: icon), id: \.symbol) { choice in
+                // Offered from the stored icon, so picking another doesn't take it away.
+                ForEach(Self.iconChoices(for: category?.icon ?? icon), id: \.symbol) { choice in
                     let selected = Self.isSelected(choice.symbol, icon: icon)
                     Button {
                         icon = choice.symbol
