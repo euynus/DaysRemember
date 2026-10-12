@@ -147,6 +147,22 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    /// One saved version, or the widget's one day, is singular: "Event" and "Category", not the
+    /// tab titles "Days" and "Categories".
+    func testSingleRecordKindsAreSingular() throws {
+        let defaults = SharedStorage.defaults
+        let previous = defaults.object(forKey: AppLocalization.languageKey)
+        defer { defaults.set(previous, forKey: AppLocalization.languageKey) }
+        defaults.set("en", forKey: AppLocalization.languageKey)
+        let day = Day(id: "kind", title: "Kind", date: Date(), category: .life, photo: .home)
+        XCTAssertEqual(CloudLibraryRecord.day(day).kindName, "Event")
+        XCTAssertEqual(CloudLibraryRecord.category(CategoryDefinition.system[0]).kindName, "Category")
+
+        let plugins = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
+        let widget = try XCTUnwrap(Bundle(url: plugins.appendingPathComponent("DaysRememberWidget.appex")))
+        XCTAssertEqual(String(localized: "widget.day", bundle: try localizedBundle("en", in: widget)), "Event")
+    }
+
     func testBackupErrorsAreAvailableInEveryLanguage() throws {
         let key = "无法读取此备份，原有数据未更改。"
         for language in languages {

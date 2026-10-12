@@ -46,7 +46,7 @@ private struct SyncConflictSection: View {
                 if day.lunar {
                     LabeledContent("农历", value: Lunar.fmtFull(day.date))
                 }
-                LabeledContent("分类") {
+                LabeledContent(String(localized: "record.category", defaultValue: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
                     Text(day.categoryDisplayName)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -130,12 +130,7 @@ private struct SyncConflictSection: View {
         }
     }
 
-    private var recordKind: String {
-        switch conflict.record {
-        case .day: return String(localized: "日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        case .category: return String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        }
-    }
+    private var recordKind: String { conflict.record.kindName }
 
     private func restore() {
         do {
@@ -152,6 +147,15 @@ private struct SyncConflictSection: View {
         } catch {
             errorMessage = error.localizedDescription
             showError = true
+        }
+    }
+}
+
+extension CloudLibraryRecord {
+    var kindName: String {
+        switch self {
+        case .day: return String(localized: "record.day", defaultValue: "日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .category: return String(localized: "record.category", defaultValue: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }
 }

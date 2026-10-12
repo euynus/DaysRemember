@@ -2,7 +2,7 @@ import AppIntents
 import Foundation
 
 struct WidgetDay: AppEntity {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "日子"
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: LocalizedStringResource("widget.day", defaultValue: "日子"))
     static var defaultQuery = WidgetDayQuery()
 
     var id: String
@@ -37,6 +37,6 @@ struct SelectWidgetDay: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "选择日子"
     static var description = IntentDescription("不选择时，自动显示最近的日子。")
 
-    @Parameter(title: "日子")
+    @Parameter(title: LocalizedStringResource("widget.day", defaultValue: "日子"))
     var day: WidgetDay?
 }
