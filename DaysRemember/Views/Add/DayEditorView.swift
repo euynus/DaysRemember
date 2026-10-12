@@ -60,7 +60,13 @@ struct DayEditorView: View {
     }
 
     private var canSave: Bool {
+        Self.canSave(title: title, isLoadingPhoto: isLoadingPhoto, lunar: !solar, date: selectedDate)
+    }
+
+    /// A lunar day needs a date the lunar table covers; the date row says so otherwise.
+    static func canSave(title: String, isLoadingPhoto: Bool, lunar: Bool, date: Date) -> Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoadingPhoto
+            && (!lunar || Lunar.supportedLunarDate(for: date) != nil)
     }
 
     private var categoryID: String { selectedCategory?.id ?? initialDay.categoryID }

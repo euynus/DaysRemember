@@ -23,7 +23,7 @@ struct DayInfo {
         let cal = CNDate.calendar
         let original = cal.startOfDay(for: day.date)
         guard year >= cal.component(.year, from: original) else { return [] }
-        if !day.recurring {
+        if !recurs(day) {
             return cal.component(.year, from: day.date) == year
                 ? [cal.startOfDay(for: day.date)] : []
         }
@@ -40,6 +40,12 @@ struct DayInfo {
         guard let occurrence = cal.date(from: DateComponents(year: year, month: source.month,
                                                              day: source.day)) else { return [] }
         return occurrence >= original ? [cal.startOfDay(for: occurrence)] : []
+    }
+
+    /// A lunar day outside the lunar table has no lunar date to recur on, so it counts like a
+    /// one-off day, as its reminders do.
+    private static func recurs(_ day: Day) -> Bool {
+        day.recurring && (!day.lunar || Lunar.supportedLunarDate(for: day.date) != nil)
     }
 
     static func compute(_ d: Day, today: Date = Today.date) -> DayInfo {
@@ -60,8 +66,9 @@ struct DayInfo {
 
     private static func uncached(_ d: Day, todayStart: Date, calendar cal: Calendar) -> DayInfo {
         var displayDate = cal.startOfDay(for: d.date)
+        let recurring = recurs(d)
 
-        if d.recurring && displayDate < todayStart {
+        if recurring && displayDate < todayStart {
             let baseYear = cal.component(.year, from: todayStart)
             for year in baseYear...(baseYear + 2) {
                 if let candidate = occurrences(of: d, inGregorianYear: year).first(where: { $0 >= todayStart }) {
@@ -73,14 +80,14 @@ struct DayInfo {
 
         let diff = CNDate.daysBetween(todayStart, displayDate)
         let elapsed = CNDate.daysBetween(d.date, todayStart)
-        let years = d.recurring
+        let years = recurring
             ? (cal.component(.year, from: todayStart) - cal.component(.year, from: d.date))
             : nil
         // Years between the original date and the upcoming occurrence — the anniversary
         // number. (Distinct from yearsAgo, which is measured from today's year and
         // over-counts before the anniversary rolls to next year.)
         let anniversary: Int?
-        if !d.recurring {
+        if !recurring {
             anniversary = nil
         } else if d.lunar {
             // Count in LUNAR years: a late-lunar-month anniversary (冬月/腊月) can resolve

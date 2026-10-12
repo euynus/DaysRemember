@@ -3,6 +3,15 @@ import XCTest
 
 @MainActor
 final class EditorSaveTests: XCTestCase {
+    /// The date row already says 农历日期超出范围 for a date before 1900-01-31.
+    func testLunarDateOutsideTableCannotBeSaved() {
+        let early = CNDate.calendar.date(from: DateComponents(year: 1899, month: 8, day: 10))!
+        XCTAssertFalse(DayEditorView.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: true, date: early))
+        XCTAssertTrue(DayEditorView.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: false, date: early))
+        XCTAssertTrue(DayEditorView.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: true, date: Today.date))
+        XCTAssertFalse(DayEditorView.canSave(title: " ", isLoadingPhoto: false, lunar: false, date: Today.date))
+    }
+
     func testMissingDayUpdateReturnsFalseWithoutMutation() throws {
         try withDefaults { defaults in
             let store = DayStore(defaults: defaults)

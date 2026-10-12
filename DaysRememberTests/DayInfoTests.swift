@@ -158,6 +158,17 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(DayInfo.compute(autumn, today: date(2021, 9, 1)).displayDate, date(2021, 10, 5))
     }
 
+    /// The lunar table starts on 1900-01-31. An earlier lunar yearly day has no lunar date to recur
+    /// on, and the reminders already skip it; it must not count down to every 春节.
+    func testLunarDayBeforeTableDoesNotRecur() {
+        let day = makeDay(date: date(1899, 8, 10), recurring: true, lunar: true)
+        XCTAssertTrue(DayInfo.occurrences(of: day, inGregorianYear: 2027).isEmpty)
+        let info = DayInfo.compute(day, today: date(2026, 10, 11))
+        XCTAssertEqual(info.displayDate, date(1899, 8, 10))
+        XCTAssertTrue(info.isPast)
+        XCTAssertNil(info.anniversaryNumber)
+    }
+
     func testLunarCalendarOccurrencesStayInVisibleGregorianYear() {
         let day = makeDay(date: date(2025, 1, 7), recurring: true, lunar: true)
         XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2025), [date(2025, 1, 7)])
