@@ -43,6 +43,23 @@ final class LunarTests: XCTestCase {
         XCTAssertEqual(Lunar.dayCount(year: 1933, month: 5, isLeap: true), 30)
     }
 
+    /// Asia/Shanghai kept daylight saving in 1919, 1940–1949 and 1986–1991, so a midnight then
+    /// is 23:00 the day before in UTC+8; the conversion must still use that calendar day.
+    func testConversionUsesBeijingDaysDuringDaylightSaving() {
+        var chinese = Calendar(identifier: .chinese)
+        chinese.timeZone = TimeZone(identifier: "Asia/Shanghai")!
+        for (y, m, d) in [(1919, 6, 1), (1941, 6, 1), (1988, 6, 15), (1988, 7, 15), (1991, 9, 1)] {
+            let solar = date(y, m, d)
+            let lunar = Lunar.solarToLunar(solar)
+            let expected = chinese.dateComponents([.month, .day], from: solar)
+            XCTAssertEqual([lunar.month, lunar.day], [expected.month!, expected.day!], "\(y)-\(m)-\(d)")
+            XCTAssertEqual(Lunar.lunarToSolar(year: lunar.year, month: lunar.month, day: lunar.day,
+                                              isLeap: lunar.isLeap), solar, "\(y)-\(m)-\(d)")
+        }
+        // 端午 1988 is 1988-06-18.
+        XCTAssertEqual(SolarTerms.lunarHoliday(for: date(1988, 6, 18)), "端午")
+    }
+
     func testSampleAnniversary() {
         // 妈妈生日 — 1962-06-18 lunar 五月十七.
         let l = Lunar.solarToLunar(date(1962, 6, 18))
@@ -51,11 +68,11 @@ final class LunarTests: XCTestCase {
     }
 
     func testFullTableRoundTrip() {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 8 * 60 * 60)!
-        let base = calendar.date(from: DateComponents(year: 1900, month: 1, day: 31))!
-        let end = base.addingTimeInterval(73412 * 86400)
+        let calendar = CNDate.calendar
+        let base = date(1900, 1, 31)
+        let end = calendar.date(byAdding: .day, value: 73412, to: base)!
         XCTAssertEqual(Lunar.lunarToSolar(year: 2101, month: 1, day: 1), end)
+        XCTAssertEqual(Lunar.supportedSolarDates, base..<end)
         var solar = base
         while solar < end {
             let lunar = Lunar.solarToLunar(solar)
@@ -64,7 +81,8 @@ final class LunarTests: XCTestCase {
             XCTAssertTrue((1...30).contains(lunar.day))
             XCTAssertEqual(Lunar.lunarToSolar(year: lunar.year, month: lunar.month,
                                              day: lunar.day, isLeap: lunar.isLeap), solar)
-            solar = solar.addingTimeInterval(86400)
+            // Some daylight-saving changes skipped midnight; those days start at 01:00.
+            solar = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: solar)!)
         }
     }
 

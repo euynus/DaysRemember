@@ -52,24 +52,45 @@ enum Lunar {
             offsets.append(offsets.last! + yearDays(year))
         }
 
-    private static let calendar: Calendar = {
-        var c = Calendar(identifier: .gregorian)
-        c.timeZone = TimeZone(secondsFromGMT: 8 * 60 * 60) ?? .current
-        return c
-    }()
+    /// The app's calendar. Its midnights aren't always UTC+8 midnights: Asia/Shanghai kept daylight
+    /// saving in 1919, 1940–1949 and 1986–1991, and local mean time before 1901. So days are
+    /// counted from calendar dates rather than from elapsed seconds.
+    private static let calendar = CNDate.calendar
 
-    private static let base: Date = {
-        var c = DateComponents()
-        c.year = 1900; c.month = 1; c.day = 31
-        c.calendar = calendar
-        c.timeZone = calendar.timeZone
-        return c.date!
-    }()
+    /// 1900-01-31, 正月初一 of the table's first year, as a day number (see `dayNumber`).
+    private static let baseDay = dayNumber(year: 1900, month: 1, day: 31)
+
+    private static let base = solarDate(dayOffset: 0)
+
+    /// Days since 1970-01-01 for a Gregorian date (Howard Hinnant's `days_from_civil`).
+    private static func dayNumber(year: Int, month: Int, day: Int) -> Int {
+        let y = month <= 2 ? year - 1 : year
+        let era = (y >= 0 ? y : y - 399) / 400
+        let yearOfEra = y - era * 400
+        let dayOfYear = (153 * ((month + 9) % 12) + 2) / 5 + day - 1
+        let dayOfEra = yearOfEra * 365 + yearOfEra / 4 - yearOfEra / 100 + dayOfYear
+        return era * 146097 + dayOfEra - 719468
+    }
+
+    /// The start of the day `offset` days after 1900-01-31 (the inverse, `civil_from_days`). It's
+    /// found from noon, because some daylight-saving changes skipped midnight.
+    private static func solarDate(dayOffset offset: Int) -> Date {
+        let z = baseDay + offset + 719468
+        let era = (z >= 0 ? z : z - 146096) / 146097
+        let dayOfEra = z - era * 146097
+        let yearOfEra = (dayOfEra - dayOfEra / 1460 + dayOfEra / 36524 - dayOfEra / 146096) / 365
+        let dayOfYear = dayOfEra - (365 * yearOfEra + yearOfEra / 4 - yearOfEra / 100)
+        let mp = (5 * dayOfYear + 2) / 153
+        let day = dayOfYear - (153 * mp + 2) / 5 + 1
+        let month = mp < 10 ? mp + 3 : mp - 9
+        let year = yearOfEra + era * 400 + (month <= 2 ? 1 : 0)
+        return calendar.startOfDay(for: calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12))!)
+    }
 
     /// Convert Gregorian Date → LunarDate.
     static func solarToLunar(_ date: Date) -> LunarDate {
-        let dayStart = calendar.startOfDay(for: date)
-        var offset = Int((dayStart.timeIntervalSince1970 - base.timeIntervalSince1970) / 86400.0)
+        let solar = calendar.dateComponents([.year, .month, .day], from: date)
+        var offset = dayNumber(year: solar.year!, month: solar.month!, day: solar.day!) - baseDay
         // Dates before the table's first Spring Festival (1900-01-31) fall in lunar
         // year 1899, which the 1900–2100 table can't represent. Clamp to the first
         // lunar day so callers never get an out-of-range month/day — which would trap
@@ -115,15 +136,13 @@ enum Lunar {
         if leap > 0 && month > leap { offset += leapDays(year) }
         if isLeap && month == leap { offset += monthDays(year, month) }
         offset += day - 1
-        return base.addingTimeInterval(TimeInterval(offset) * 86400)
+        return solarDate(dayOffset: offset)
     }
 
     // MARK: - Safe picker helpers
 
     /// Half-open range including every day of the final supported lunar year.
-    static let supportedSolarDates: Range<Date> = base..<base.addingTimeInterval(
-        TimeInterval(yearOffsets[LunarTable.info.count]) * 86400
-    )
+    static let supportedSolarDates: Range<Date> = base..<solarDate(dayOffset: yearOffsets[LunarTable.info.count])
 
     static func months(in year: Int) -> [Month] {
         guard supportedYears.contains(year) else { return [] }
@@ -164,7 +183,7 @@ enum Lunar {
         if let lunar = supportedLunarDate(for: date) { return lunar }
         let boundary = date < supportedSolarDates.lowerBound
             ? supportedSolarDates.lowerBound
-            : supportedSolarDates.upperBound.addingTimeInterval(-86400)
+            : solarDate(dayOffset: yearOffsets[LunarTable.info.count] - 1)
         return solarToLunar(boundary)
     }
 

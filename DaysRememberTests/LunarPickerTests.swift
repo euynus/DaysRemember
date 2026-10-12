@@ -3,9 +3,7 @@ import XCTest
 
 final class LunarPickerTests: XCTestCase {
     private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 8 * 60 * 60)!
-        return calendar.date(from: DateComponents(year: year, month: month, day: day))!
+        CNDate.calendar.date(from: DateComponents(year: year, month: month, day: day))!
     }
 
     func testMonthOptionsIncludeOnlyTheYearsLeapMonthInOrder() {
