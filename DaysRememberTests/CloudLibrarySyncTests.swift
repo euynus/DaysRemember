@@ -268,6 +268,34 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// A deleted zone pauses sync until the user asks to upload this device's library again.
+    func testDeletedZoneCanBeUploadedAgain() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let local = day()
+        var state = CloudLibraryState()
+        XCTAssertTrue(state.acceptAccount("account"))
+        try state.receive(record(local, directory: directory))
+        state.acknowledgeRemoteUpdate()
+        state.hasFetched = true
+        state.zoneExists = true
+        state.zoneWasDeleted = true
+        let url = directory.appendingPathComponent("state.json")
+        try state.write(to: url)
+
+        let sync = CloudLibrarySync(stateURL: url)
+        XCTAssertEqual(sync.status, .zoneDeleted)
+        sync.start(days: [local], categories: []) { _ in }
+        await sync.reuploadAfterZoneDeletion()
+        let persisted = try CloudLibraryState.read(from: url)
+        XCTAssertFalse(persisted.zoneWasDeleted)
+        XCTAssertFalse(persisted.zoneExists)
+        let entry = persisted.records[CloudLibraryRecord.day(local).recordName]
+        XCTAssertEqual(entry?.dirty, true)
+        XCTAssertNil(entry?.systemFields)
+    }
+
     func testFailedRemoteApplyRetainsDurablePendingAndRetryReplaysBeforeLocalSnapshot() throws {
         enum ApplyError: Error { case diskFull }
         try withDirectory { directory in

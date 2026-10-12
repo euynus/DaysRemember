@@ -10,7 +10,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     enum Status: String {
         case idle, checkingAccount, syncing, pending, synced
-        case accountUnavailable, accountChanged, configurationError, failed
+        case accountUnavailable, accountChanged, zoneDeleted, configurationError, failed
     }
 
     private enum ConfigurationError: LocalizedError {
@@ -37,6 +37,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         case .synced: return String(localized: "已完成本次 iCloud 同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .accountUnavailable: return String(localized: "iCloud 账户暂不可用", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .accountChanged: return String(localized: "iCloud 账户已变更，同步已暂停", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .zoneDeleted: return String(localized: "云端资料区已删除，同步已暂停", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .configurationError: return String(localized: "iCloud 配置未完成", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .failed: return String(localized: "同步未完成，本机数据已保留", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
@@ -54,6 +55,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     @ObservationIgnored private var localSnapshotKnown = false
     @ObservationIgnored private var canSend = false
     @ObservationIgnored private var manualSyncRunning = false
+    @ObservationIgnored private var syncAgainAfterThisSync = false
     @ObservationIgnored private var fetching = false
     @ObservationIgnored private var sending = false
     @ObservationIgnored private var startTask: Task<Void, Never>?
@@ -123,7 +125,14 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         guard !state.accountChangePending else { showAccountChange(); return }
         guard !state.zoneWasDeleted else { showDeletedZone(); return }
         manualSyncRunning = true
-        defer { manualSyncRunning = false; refreshStatus() }
+        defer {
+            manualSyncRunning = false
+            refreshStatus()
+            if syncAgainAfterThisSync {
+                syncAgainAfterThisSync = false
+                Task { [weak self] in await self?.syncNow() }
+            }
+        }
         errorMessage = nil
         status = .checkingAccount
         do {
@@ -168,6 +177,16 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             guard persist() else { return }
             await syncNow()
         } catch { fail(error) }
+    }
+
+    /// Only call after the user explicitly asks to upload this library into a new zone, after the
+    /// old one was deleted from iCloud.
+    func reuploadAfterZoneDeletion() async {
+        guard started, !storageFailed, state.zoneWasDeleted, !manualSyncRunning else { return }
+        state.forgetServer()
+        errorMessage = nil
+        guard persist() else { return }
+        await syncNow()
     }
 
     private func cloudContainer() throws -> CKContainer {
@@ -283,8 +302,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
 
     private func showDeletedZone() {
-        status = .failed
-        errorMessage = String(localized: "云端资料区已删除，同步已暂停，未自动重新上传。请先导出本机备份。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        status = .zoneDeleted
+        errorMessage = String(localized: "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private func fail(_ error: Error, stop: Bool = false) {
@@ -389,7 +408,16 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 stopEngine()
                 showAccountChange()
             case .fetchedDatabaseChanges(let event):
-                if event.deletions.contains(where: { $0.zoneID == CloudLibraryRecord.zoneID }) {
+                if let deletion = event.deletions.first(where: { $0.zoneID == CloudLibraryRecord.zoneID }) {
+                    // After an encrypted-data reset, iCloud expects the data to be uploaded again.
+                    if deletion.reason == .encryptedDataReset {
+                        state.forgetServer()
+                        _ = persist()
+                        stopEngine()
+                        if manualSyncRunning { syncAgainAfterThisSync = true }
+                        else { Task { [weak self] in await self?.syncNow() } }
+                        return
+                    }
                     state.zoneWasDeleted = true
                     _ = persist()
                     stopEngine()

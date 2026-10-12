@@ -16,6 +16,7 @@ struct DataManagementView: View {
     @State private var confirmLegacyImport = false
     @State private var hasLegacyData = false
     @State private var confirmAccountChange = false
+    @State private var confirmReupload = false
     @State private var message: String?
 
     var body: some View {
@@ -60,6 +61,11 @@ struct DataManagementView: View {
                     if cloud.status == .accountChanged {
                         Button("确认使用当前 iCloud 账户", systemImage: "person.crop.circle.badge.checkmark") {
                             confirmAccountChange = true
+                        }
+                    }
+                    if cloud.status == .zoneDeleted {
+                        Button("重新上传到 iCloud", systemImage: "icloud.and.arrow.up") {
+                            confirmReupload = true
                         }
                     }
                     if hasLegacyData {
@@ -152,6 +158,12 @@ struct DataManagementView: View {
                 Button("取消", role: .cancel) {}
             } message: {
                 Text("本机日子及照片将上传到系统当前登录的 iCloud 账户，请先确认账户归属。")
+            }
+            .confirmationDialog("重新上传本机日子？", isPresented: $confirmReupload, titleVisibility: .visible) {
+                Button("重新上传") { Task { await cloud.reuploadAfterZoneDeletion() } }
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("iCloud 中时光的资料已被删除。本机日子及照片会重新上传，并同步到你的其他设备。")
             }
             .alert("数据与同步", isPresented: Binding(
                 get: { message != nil }, set: { if !$0 { message = nil } }

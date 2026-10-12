@@ -1,6 +1,144 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "云端资料区已删除，同步已暂停" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud Data Deleted; Sync Paused"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云端资料区已删除，同步已暂停"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雲端資料區已刪除，同步已暫停"
+          }
+        }
+      }
+    },
+    "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The cloud data zone was deleted. Sync is paused and nothing was uploaded again. You can export a local backup first, then choose to upload again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雲端資料區已刪除，同步已暫停，未自動重新上傳。可以先匯出本機備份，再選擇重新上傳。"
+          }
+        }
+      }
+    },
+    "重新上传到 iCloud" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload to iCloud Again"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新上传到 iCloud"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新上傳到 iCloud"
+          }
+        }
+      }
+    },
+    "重新上传本机日子？" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload This Device’s Days Again?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新上传本机日子？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新上傳本機日子？"
+          }
+        }
+      }
+    },
+    "重新上传" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload Again"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新上传"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新上傳"
+          }
+        }
+      }
+    },
+    "iCloud 中时光的资料已被删除。本机日子及照片会重新上传，并同步到你的其他设备。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days Remember’s data in iCloud was deleted. The days and photos on this device will be uploaded again and sync to your other devices."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 中时光的资料已被删除。本机日子及照片会重新上传，并同步到你的其他设备。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 中時光的資料已被刪除。本機日子及照片會重新上傳，並同步到你的其他裝置。"
+          }
+        }
+      }
+    },
     "删除替换前的原始数据" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1648,29 +1786,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "二"
-          }
-        }
-      }
-    },
-    "云端资料区已删除，同步已暂停，未自动重新上传。请先导出本机备份。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The cloud data zone was deleted. Sync is paused and data has not been re-uploaded. Export a local backup first."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "云端资料区已删除，同步已暂停，未自动重新上传。请先导出本机备份。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "雲端資料區已刪除，同步已暫停，未自動重新上傳。請先匯出本機備份。"
           }
         }
       }
