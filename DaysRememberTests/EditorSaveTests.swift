@@ -3,6 +3,16 @@ import XCTest
 
 @MainActor
 final class EditorSaveTests: XCTestCase {
+    /// The reminder sheet hands back offsets sorted and without repeats; a stored day from a backup
+    /// or sync may hold the same reminders in another order.
+    func testSameRemindersInAnotherOrderAreNoChange() {
+        XCTAssertFalse(DayEditorView.remindersDiffer([7, 3, 0], from: [0, 3, 7]))
+        XCTAssertFalse(DayEditorView.remindersDiffer([7], from: [7, 7]))
+        XCTAssertFalse(DayEditorView.remindersDiffer(nil, from: nil))
+        XCTAssertTrue(DayEditorView.remindersDiffer([], from: nil))
+        XCTAssertTrue(DayEditorView.remindersDiffer([3], from: [7]))
+    }
+
     /// A new day starts in 生活, so it starts with 生活's cover, as picking that category gives.
     func testNewDayStartsWithItsCategorysCover() {
         let draft = DayEditorView.newDraft(date: Today.date)

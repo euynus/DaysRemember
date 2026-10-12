@@ -74,6 +74,12 @@ struct DayEditorView: View {
             && (!lunar || Lunar.supportedLunarDate(for: date) != nil)
     }
 
+    /// The reminder sheet hands back offsets sorted and without repeats, so order and repeats in a
+    /// stored day's offsets aren't a change.
+    static func remindersDiffer(_ offsets: [Int]?, from stored: [Int]?) -> Bool {
+        offsets.map(Set.init) != stored.map(Set.init)
+    }
+
     private var categoryID: String { selectedCategory?.id ?? initialDay.categoryID }
 
     private var hasUnsavedChanges: Bool {
@@ -83,7 +89,7 @@ struct DayEditorView: View {
             || !CNDate.calendar.isDate(selectedDate, inSameDayAs: initialDay.date)
             || note != initialDay.note || location != initialDay.location
             || coverFocusX != initialDay.coverFocusX || coverFocusY != initialDay.coverFocusY
-            || reminderOffsets != initialDay.reminderOffsets
+            || Self.remindersDiffer(reminderOffsets, from: initialDay.reminderOffsets)
             || reminderTime != initialDay.reminderTime
     }
 
