@@ -60,3 +60,54 @@ test("the coming-soon badge has enough contrast", () => {
   const ratio = contrast(color(badge.color), color(badge.background));
   assert.ok(ratio >= 4.5, "contrast " + ratio.toFixed(2) + ":1");
 });
+
+/// The body of the `@media <query>` block.
+function media(query) {
+  const start = css.indexOf("@media " + query + " {");
+  assert.ok(start >= 0, "no @media " + query);
+  let depth = 0;
+  for (let index = css.indexOf("{", start); index < css.length; index++) {
+    if (css[index] === "{") depth++;
+    if (css[index] === "}" && --depth === 0) return css.slice(css.indexOf("{", start) + 1, index);
+  }
+  assert.fail("unclosed @media " + query);
+}
+
+function features() {
+  return el("ul", { class: "rows" },
+    el("li", { class: "row reveal" }, el("p", { class: "figure" }, el("b", {}, "24"), el("small", {}, "个节气"))),
+    el("li", { class: "row reveal" }, el("p", { class: "figure" }, el("b", {}, "30"), el("small", {}, "天内可恢复"))));
+}
+
+function demo() {
+  return [
+    el("form", { class: "demo-form reveal", "data-demo": "" },
+      el("input", { id: "demo-title", value: "结婚纪念日", placeholder: "结婚纪念日" }),
+      el("input", { id: "demo-date", value: "2019-10-12" }),
+      el("input", { id: "demo-recurring", checked: "" })),
+    el("article", { class: "day-card reveal", "data-demo-card": "" },
+      el("h3", { "data-title": "" }), el("p", { "data-date": "" }),
+      el("p", { class: "figure" }, el("b", {}, "0"), el("small", {})), el("p", { "data-elapsed": "" }))
+  ];
+}
+
+// Print never scrolls anything into view, and a reveal that just started is still transparent.
+test("printing shows every section with its final figures", () => {
+  const site = runSite({ motion: true, now: beijingNoon("2026-10-12"), body: [features(), ...demo()] });
+  const figures = site.$$(".row .figure b");
+  assert.deepEqual(figures.map((figure) => figure.textContent), ["0", "0"], "figures wait for their rows");
+  const card = site.$("[data-demo-card]");
+  site.intersect(card);
+  site.flushFrames();
+  const days = card.querySelector(".figure b").textContent;
+
+  const counting = runSite({ motion: true, now: beijingNoon("2026-10-12"), body: [features(), ...demo()] });
+  counting.intersect(counting.$("[data-demo-card]"));
+  counting.window.dispatchEvent({ type: "beforeprint" });
+  assert.deepEqual(counting.$$(".row .figure b").map((figure) => figure.textContent), ["24", "30"]);
+  assert.equal(counting.$("[data-demo-card] .figure b").textContent, days, "the demo shows its final count");
+
+  const print = media("print");
+  assert.match(print, /\.motion \.reveal:not\(\.in\)\s*\{[^}]*opacity:\s*1/);
+  assert.match(print, /animation:\s*none/);
+});

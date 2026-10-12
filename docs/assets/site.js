@@ -168,6 +168,7 @@
     var elapsedOut = card.querySelector("[data-elapsed]");
     var revealed = false;
     var stop = function () {};
+    var target = null;
 
     function shownCount() {
       var digits = valueOut.textContent.replace(/\D/g, "");
@@ -177,6 +178,7 @@
     // Counts on from the number already shown. The card is a live region, so it stays busy while
     // counting and only the final number is announced.
     function show(count, from) {
+      target = count;
       stop();
       card.removeAttribute("aria-busy");
       if (!motion || !revealed || from === null || from === count) {
@@ -215,6 +217,7 @@
       elapsedOut.textContent = elapsed;
       figure.classList.toggle("is-today", diff === 0);
       if (diff === 0) {
+        target = null;
         stop();
         card.removeAttribute("aria-busy");
         valueOut.textContent = TEXT.today;
@@ -236,6 +239,11 @@
       var count = shownCount();
       if (count !== null) show(count, 0);
     });
+    window.addEventListener("beforeprint", function () {
+      stop();
+      card.removeAttribute("aria-busy");
+      if (target !== null) valueOut.textContent = number.format(target);
+    });
     update();
   }
 
@@ -250,8 +258,15 @@
       // Holding the final width keeps the row from reflowing while the digits change.
       figure.style.minWidth = figure.getBoundingClientRect().width + "px";
       figure.textContent = number.format(0);
+      var stop = function () {};
       row.addEventListener("reveal", function () {
-        countTo(figure, 0, to, 900, function () { figure.style.minWidth = ""; });
+        stop = countTo(figure, 0, to, 900, function () { figure.style.minWidth = ""; });
+      });
+      // Print shows every row at once (site.css), with nothing left to count.
+      window.addEventListener("beforeprint", function () {
+        stop();
+        figure.textContent = number.format(to);
+        figure.style.minWidth = "";
       });
     });
   }
