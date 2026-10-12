@@ -12,6 +12,14 @@ final class AccessoryWidgetRenderingTests: XCTestCase {
         (.inline, CGSize(width: 230, height: 20))
     ]
 
+    /// The gallery draws each Lock Screen style at the bounds the widget really gets; in a smaller
+    /// frame the layout drops the title or the date.
+    func testGalleryPreviewUsesTheWidgetsBounds() {
+        for (style, size) in layouts {
+            XCTAssertEqual(WidgetsPreviewView.accessorySize(for: style), size, "\(style)")
+        }
+    }
+
     /// Like the card, the Home Screen widget's empty state keeps text within a widget's fixed bounds.
     func testHomeWidgetEmptyStateCapsTextSize() throws {
         let size = CGSize(width: 148, height: 148)

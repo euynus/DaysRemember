@@ -86,10 +86,14 @@ struct WidgetsPreviewView: View {
         .background(Theme.bg)
     }
 
-    private var accessorySize: CGSize {
-        switch accessoryStyle {
-        case .circular: return CGSize(width: 56, height: 56)
-        case .rectangular: return CGSize(width: 160, height: 56)
+    private var accessorySize: CGSize { Self.accessorySize(for: accessoryStyle) }
+
+    /// The bounds a Lock Screen widget gets. In a smaller frame the layout drops the title or the
+    /// date, so the preview would show a different widget from the one added.
+    static func accessorySize(for style: DayAccessoryWidget.Style) -> CGSize {
+        switch style {
+        case .circular: return CGSize(width: 72, height: 72)
+        case .rectangular: return CGSize(width: 160, height: 72)
         case .inline: return CGSize(width: 230, height: 20)
         }
     }
