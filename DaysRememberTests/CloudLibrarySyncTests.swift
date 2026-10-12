@@ -296,6 +296,33 @@ final class CloudLibrarySyncTests: XCTestCase {
         XCTAssertNil(entry?.systemFields)
     }
 
+    private func withLanguage(_ language: String, _ body: () throws -> Void) rethrows {
+        let defaults = SharedStorage.defaults
+        let previous = defaults.object(forKey: AppLocalization.languageKey)
+        defaults.set(language, forKey: AppLocalization.languageKey)
+        defer { defaults.set(previous, forKey: AppLocalization.languageKey) }
+        try body()
+    }
+
+    /// The status, the CloudKit error and its code are joined with the language's punctuation.
+    func testCloudKitErrorUsesTheLanguagesPunctuation() throws {
+        try withDirectory { directory in
+            let sync = CloudLibrarySync(stateURL: directory.appendingPathComponent("state.json"))
+            try withLanguage("en") {
+                sync.fail(CKError(.networkFailure))
+                let message = try XCTUnwrap(sync.errorMessage)
+                XCTAssertTrue(message.hasPrefix("Sync incomplete; local data preserved: "), message)
+                XCTAssertTrue(message.hasSuffix(" (\(CKError.Code.networkFailure.rawValue))"), message)
+            }
+            try withLanguage("zh-Hans") {
+                sync.fail(CKError(.networkFailure))
+                let message = try XCTUnwrap(sync.errorMessage)
+                XCTAssertTrue(message.hasPrefix("同步未完成，本机数据已保留："), message)
+                XCTAssertTrue(message.hasSuffix("（\(CKError.Code.networkFailure.rawValue)）"), message)
+            }
+        }
+    }
+
     func testFailedRemoteApplyRetainsDurablePendingAndRetryReplaysBeforeLocalSnapshot() throws {
         enum ApplyError: Error { case diskFull }
         try withDirectory { directory in

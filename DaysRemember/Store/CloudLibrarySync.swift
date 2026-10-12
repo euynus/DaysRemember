@@ -306,7 +306,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         errorMessage = String(localized: "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
-    private func fail(_ error: Error, stop: Bool = false) {
+    func fail(_ error: Error, stop: Bool = false) {
         if stop { stopEngine() }
         if state.accountChangePending { showAccountChange(); return }
         if error is ConfigurationError {
@@ -322,7 +322,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 stopEngine()
             default: status = .failed
             }
-            errorMessage = "\(statusMessage)：\(error.localizedDescription)（\(error.errorCode)）"
+            errorMessage = String(localized: "\(statusMessage)：\(error.localizedDescription)（\(error.errorCode)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         } else {
             status = .failed
             errorMessage = error.localizedDescription
