@@ -240,6 +240,34 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// Signing out and back into the same account keeps edits and deletions made in between:
+    /// the server copies fetched again must not replace them.
+    func testReconfirmingTheSameAccountKeepsOfflineChanges() throws {
+        try withDirectory { directory in
+            let kept = day("kept")
+            let removed = day("removed")
+            var state = CloudLibraryState()
+            XCTAssertTrue(state.acceptAccount("account"))
+            try state.receive(record(kept, directory: directory))
+            try state.receive(record(removed, directory: directory))
+            state.acknowledgeRemoteUpdate()
+            state.hasFetched = true
+            var edited = kept
+            edited.title = "Edited offline"
+            try state.updateLocal(days: [edited], categories: [], inferDeletions: true)
+            state.accountChangePending = true
+
+            XCTAssertTrue(state.acceptAccount("account", confirmed: true))
+            try state.receive(record(kept, directory: directory))
+            try state.receive(record(removed, directory: directory))
+            XCTAssertTrue(state.pendingRemoteUpdate.isEmpty)
+            XCTAssertEqual(state.records[CloudLibraryRecord.day(edited).recordName]?.value, .day(edited))
+            let deletion = state.records[CloudLibraryRecord.day(removed).recordName]
+            XCTAssertNil(deletion?.value)
+            XCTAssertEqual(deletion?.dirty, true)
+        }
+    }
+
     func testFailedRemoteApplyRetainsDurablePendingAndRetryReplaysBeforeLocalSnapshot() throws {
         enum ApplyError: Error { case diskFull }
         try withDirectory { directory in

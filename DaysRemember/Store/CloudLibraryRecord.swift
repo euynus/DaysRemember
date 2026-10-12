@@ -359,26 +359,35 @@ struct CloudLibraryState: Codable {
             accountChangePending = true
             return false
         }
-        if confirmed && (accountChangePending || accountRecordName != recordName) {
+        if confirmed && accountRecordName != recordName {
+            forgetServer()
+        } else if confirmed && accountChangePending {
+            // The same account again: each record keeps the server version it was based on, so an
+            // edit or deletion made meanwhile still wins over that version when it is fetched again.
             engineState = nil
-            hasFetched = false
-            zoneExists = false
-            zoneWasDeleted = false
-            lastFetchedAt = nil
-            lastSentAt = nil
-            for name in records.keys {
-                records[name]?.systemFields = nil
-                records[name]?.serverFingerprint = nil
-                records[name]?.sentRevision = nil
-                records[name]?.sentFingerprint = nil
-                let hasLocalValue = records[name]?.value != nil
-                records[name]?.dirty = hasLocalValue
-                records[name]?.revision = UUID().uuidString
-            }
         }
         accountRecordName = recordName
         accountChangePending = false
         return true
+    }
+
+    /// Treats the server as holding nothing of this device's: every local record is uploaded again.
+    mutating func forgetServer() {
+        engineState = nil
+        hasFetched = false
+        zoneExists = false
+        zoneWasDeleted = false
+        lastFetchedAt = nil
+        lastSentAt = nil
+        for name in records.keys {
+            records[name]?.systemFields = nil
+            records[name]?.serverFingerprint = nil
+            records[name]?.sentRevision = nil
+            records[name]?.sentFingerprint = nil
+            let hasLocalValue = records[name]?.value != nil
+            records[name]?.dirty = hasLocalValue
+            records[name]?.revision = UUID().uuidString
+        }
     }
 
     func write(to url: URL, photoFiles: PhotoFileStore? = nil) throws {
