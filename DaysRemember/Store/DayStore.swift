@@ -228,6 +228,14 @@ final class DayStore {
         entries.filter { now.timeIntervalSince($0.createdAt) < retention }
     }
 
+    /// A restored backup's entries keep their dates, so older ones have already expired.
+    private static func unexpired(_ backup: DayBackup) -> DayBackup {
+        var current = backup
+        current.deletedDays = unexpired(backup.deletedDays)
+        current.syncConflicts = unexpired(backup.syncConflicts)
+        return current
+    }
+
     var hasRecoveryBackup: Bool { defaults.data(forKey: recoveryKey) != nil }
     var hasUnreadableDataCopy: Bool { defaults.data(forKey: unreadableKey) != nil }
 
@@ -268,7 +276,10 @@ final class DayStore {
     }
 
     func restoreBackup(_ backup: DayBackup) throws {
-        try restoreBackup(backup, encoded: backup.encoded())
+        // An invalid backup is refused as a whole, even where only expired entries are wrong.
+        try backup.validate()
+        let current = Self.unexpired(backup)
+        try restoreBackup(current, encoded: current.encoded())
     }
 
     private func restoreBackup(_ backup: DayBackup, encoded: Data?) throws {
@@ -298,7 +309,7 @@ final class DayStore {
 
     func restorePreviousBackup() throws {
         guard let data = defaults.data(forKey: recoveryKey) else { throw DayBackup.BackupError.unreadable }
-        try restoreBackup(decodeLocalBackup(data), encoded: nil)
+        try restoreBackup(Self.unexpired(decodeLocalBackup(data)), encoded: nil)
     }
 
     private func keepRecoveryBackup() throws {

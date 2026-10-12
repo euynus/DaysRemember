@@ -208,6 +208,25 @@ final class BackupRecoveryTests: XCTestCase {
         }
     }
 
+    /// 最近删除 and 同步保留版本 keep entries for 30 days; a restored backup's older entries expire.
+    func testRestoreDropsEntriesPastRetention() throws {
+        try withDefaults { defaults, _ in
+            let expired = Date.now.addingTimeInterval(-40 * 24 * 60 * 60)
+            var source = backup()
+            let recent = source.deletedDays
+            source.deletedDays.append(DeletedDay(day: day("Deleted long ago"), deletedAt: expired))
+            source.syncConflicts = [SyncConflict(createdAt: expired, record: .day(day("Replaced long ago")))]
+            let store = DayStore(defaults: defaults)
+            try store.restoreBackup(source)
+            XCTAssertEqual(store.deletedDays, recent)
+            XCTAssertTrue(store.syncConflicts.isEmpty)
+
+            try store.restoreBackup(backup())
+            try store.restorePreviousBackup()
+            XCTAssertEqual(store.deletedDays, recent)
+        }
+    }
+
     func testPendingRestoreReplaysBeforeLoadingPartialDataAndOnlyOnce() throws {
         try withDefaults { defaults, suite in
             let target = backup()
