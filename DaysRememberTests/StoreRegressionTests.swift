@@ -4,7 +4,6 @@ import XCTest
 @MainActor
 final class StoreRegressionTests: XCTestCase {
     private func withRestoredDefaults(_ body: () throws -> Void) rethrows {
-        let shared = SharedStorage.defaults
         let standard = UserDefaults.standard
         let sharedKeys = ["days.v1", "days.v2", "categories.v1", "deletedDays.v1", "syncConflicts.v1",
                           "pendingRestore.v1", "icloud.localTimestamp.icloud.days.v1",
@@ -12,10 +11,10 @@ final class StoreRegressionTests: XCTestCase {
         let settingsKeys = ["hasOnboarded", "notif.pre7", "notif.pre3", "notif.pre1", "notif.day0",
                             "notif.memory", "notif.moments", "notif.quiet", "notif.hour", "notif.minute",
                             "notif.greeting.hour", "notif.greeting.minute"]
-        let savedShared = sharedKeys.map { ($0, shared.object(forKey: $0)) }
+        let savedShared = SharedLibrarySnapshot(keys: sharedKeys)
         let savedSettings = settingsKeys.map { ($0, standard.object(forKey: $0)) }
         defer {
-            for (key, value) in savedShared { shared.set(value, forKey: key) }
+            savedShared.restore()
             for (key, value) in savedSettings { standard.set(value, forKey: key) }
         }
         try body()

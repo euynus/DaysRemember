@@ -89,11 +89,8 @@ final class WidgetTests: XCTestCase {
 
     @MainActor
     func testQueryReadsAppWritesAndRemovesDeletedDays() async throws {
-        let keys = ["days.v1", "days.v2", "deletedDays.v1"]
-        let original = keys.map { ($0, SharedStorage.defaults.object(forKey: $0)) }
-        defer {
-            for (key, value) in original { SharedStorage.defaults.set(value, forKey: key) }
-        }
+        let original = SharedLibrarySnapshot(keys: ["days.v1", "days.v2", "deletedDays.v1"])
+        defer { original.restore() }
         let store = DayStore()
         store.days = []
         let day = Day(id: "widget-test", title: "桌面日子", date: Date(), category: .life, photo: .home)
