@@ -2,6 +2,15 @@ import XCTest
 @testable import DaysRemember
 
 final class CalendarSelectionTests: XCTestCase {
+    /// A festival on a solar term's day is shown first, and both are spoken.
+    func testFestivalSharingASolarTermDayIsKept() throws {
+        XCTAssertEqual(SolarTerms.marks(for: try date(2027, 8, 8)), ["七夕", "立秋"])
+        XCTAssertEqual(SolarTerms.marks(for: try date(2034, 2, 18)), ["除夕", "雨水"])
+        XCTAssertEqual(SolarTerms.marks(for: try date(2027, 8, 23)), ["处暑"])
+        XCTAssertEqual(SolarTerms.marks(for: try date(2027, 2, 6)), ["春节"])
+        XCTAssertEqual(SolarTerms.marks(for: try date(2027, 2, 7)), [])
+    }
+
     func testSelectionIdentityUsesTheShanghaiCalendarDay() throws {
         let midnight = try date(2026, 4, 23)
         let morning = CalendarDaySelection(date: midnight.addingTimeInterval(3600))

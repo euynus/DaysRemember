@@ -218,7 +218,8 @@ struct CalendarMonthView: View {
         let dotColor = events.first.map { store.category(for: $0).colorToken.color } ?? Theme.muted
         let cal = CNDate.calendar
         let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? today
-        let term = SolarTerms.name(for: cellDate) ?? SolarTerms.lunarHoliday(for: cellDate)
+        let marks = SolarTerms.marks(for: cellDate)
+        let term = marks.first
         // Chinese layouts show the lunar day (the month name on 初一); English shows terms only.
         let lunar = AppLocalization.isEnglish ? nil : Lunar.supportedLunarDate(for: cellDate).map { l in
             l.day == 1 ? Lunar.monthCN(l.month, isLeap: l.isLeap) : Lunar.dayCN(l.day)
@@ -226,7 +227,7 @@ struct CalendarMonthView: View {
         let dateLabel = isToday ? String(localized: "今天，\(CNDate.full(cellDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : CNDate.full(cellDate)
         let lunarLabel = AppLocalization.isEnglish ? dateLabel
             : String(localized: "\(dateLabel)，\(Lunar.fmt(cellDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        let cellLabel = term.map { String(localized: "\(lunarLabel)，\($0)", bundle: AppLocalization.bundle, locale: AppLocalization.locale) } ?? lunarLabel
+        let cellLabel = marks.reduce(lunarLabel) { String(localized: "\($0)，\($1)", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
 
         let cell = VStack(spacing: 1) {
             Text(verbatim: String(d))

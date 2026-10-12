@@ -123,6 +123,11 @@ enum SolarTerms {
         "12-8":"腊八", "12-23":"小年",
     ]
 
+    /// A day's festival, then its solar term; a calendar cell shows the first and speaks both.
+    static func marks(for date: Date) -> [String] {
+        [lunarHoliday(for: date), name(for: date)].compactMap { $0 }
+    }
+
     /// Traditional Chinese holiday by lunar date (春节, 元宵, 端午, 中秋, 除夕, …).
     /// Leap months repeat a month number but never its festivals.
     static func lunarHoliday(for date: Date) -> String? {
