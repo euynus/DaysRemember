@@ -123,7 +123,8 @@ enum Lunar {
         return LunarDate(year: y, month: m, day: offset + 1, isLeap: isLeap)
     }
 
-    /// Convert lunar date → Gregorian.
+    /// Convert lunar date → Gregorian. A 三十 in a year whose month has 29 days falls on its last
+    /// day, as 除夕 does, rather than on the next month's 初一.
     static func lunarToSolar(year: Int, month: Int, day: Int, isLeap: Bool = false) -> Date {
         var offset = 0
         if yearOffsets.indices.contains(year - 1900) {
@@ -134,8 +135,9 @@ enum Lunar {
         let leap = leapMonth(year)
         for m in 1..<month { offset += monthDays(year, m) }
         if leap > 0 && month > leap { offset += leapDays(year) }
-        if isLeap && month == leap { offset += monthDays(year, month) }
-        offset += day - 1
+        let inLeapMonth = isLeap && month == leap
+        if inLeapMonth { offset += monthDays(year, month) }
+        offset += min(day, inLeapMonth ? leapDays(year) : monthDays(year, month)) - 1
         return solarDate(dayOffset: offset)
     }
 

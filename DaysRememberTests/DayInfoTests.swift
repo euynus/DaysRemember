@@ -141,6 +141,23 @@ final class DayInfoTests: XCTestCase {
         XCTAssertTrue(DayInfo.compute(day, today: date(2026, 1, 26)).isToday)
     }
 
+    /// A 三十 recurs on the last day of a 29-day month, as 除夕 does, instead of rolling into the
+    /// next month: lunar 2023 腊月 has 30 days and lunar 2024 腊月 has 29.
+    func testLunarThirtiethFallsOnLastDayOfShortMonth() {
+        let eve = makeDay(date: date(2024, 2, 9), recurring: true, lunar: true)
+        XCTAssertEqual(Lunar.solarToLunar(eve.date), Lunar.LunarDate(year: 2023, month: 12, day: 30, isLeap: false))
+
+        XCTAssertEqual(DayInfo.occurrences(of: eve, inGregorianYear: 2025), [date(2025, 1, 28)])
+        let info = DayInfo.compute(eve, today: date(2024, 6, 1))
+        XCTAssertEqual(info.displayDate, date(2025, 1, 28))
+        XCTAssertEqual(info.anniversaryNumber, 1)
+
+        // 八月三十 2020 (2020-10-16); lunar 2021 八月 has 29 days, ending on 2021-10-05.
+        let autumn = makeDay(date: date(2020, 10, 16), recurring: true, lunar: true)
+        XCTAssertEqual(Lunar.solarToLunar(autumn.date).day, 30)
+        XCTAssertEqual(DayInfo.compute(autumn, today: date(2021, 9, 1)).displayDate, date(2021, 10, 5))
+    }
+
     func testLunarCalendarOccurrencesStayInVisibleGregorianYear() {
         let day = makeDay(date: date(2025, 1, 7), recurring: true, lunar: true)
         XCTAssertEqual(DayInfo.occurrences(of: day, inGregorianYear: 2025), [date(2025, 1, 7)])

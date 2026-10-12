@@ -100,7 +100,7 @@ Unknown category IDs and label snapshots survive normalization because cloud day
 
 - Non-recurring days → countdown to original date.
 - Recurring (Gregorian) → next anniversary in current/next year.
-- Recurring **lunar** → search Gregorian years for the first occurrence `≥ today`. `DayInfo.occurrences(of:inGregorianYear:)` is shared with the calendar and checks both adjacent lunar years, preserving January anniversaries and years containing two occurrences. Gregorian February 29 normalizes to March 1 in non-leap years in both views.
+- Recurring **lunar** → search Gregorian years for the first occurrence `≥ today`. `DayInfo.occurrences(of:inGregorianYear:)` is shared with the calendar and checks both adjacent lunar years, preserving January anniversaries and years containing two occurrences. A 三十 recurs on the last day of a 29-day month, as 除夕 does. Gregorian February 29 normalizes to March 1 in non-leap years in both views.
 
 `Today.date` is `Date()` in production. In DEBUG, it reads the `DR_PIN_TODAY` env var: `"1"` pins to `2026-04-23` (the prototype's reference today), or any `yyyy-MM-dd` string pins to that date — useful for date-sensitive test runs. All countdown computations go through `Today.date`, never `Date()` directly.
 
