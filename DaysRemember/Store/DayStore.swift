@@ -206,8 +206,15 @@ final class DayStore {
 
     func permanentlyDeleteDay(id: String) {
         guard loadError == nil else { return }
+        let previous = deletedDays
         deletedDays.removeAll { $0.id == id }
-        persistDeletedDays()
+        // The entry stays listed while it is still on disk.
+        guard persistDeletedDays() else {
+            deletedDays = previous
+            saveError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
+                               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            return
+        }
     }
 
     @discardableResult

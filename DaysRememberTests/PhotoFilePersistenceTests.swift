@@ -294,6 +294,27 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
+    /// A trash entry whose removal couldn't be saved stays listed, as it stays on disk.
+    func testFailedPermanentDeletionKeepsEntry() throws {
+        try withStorage { defaults, _, directory in
+            let first = day("First")
+            let second = day("Second", photo: Data([4, 5, 6]))
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            store.add(first)
+            store.add(second)
+            store.delete(first)
+            store.delete(second)
+            let trash = try XCTUnwrap(defaults.data(forKey: "deletedDays.v1"))
+            try FileManager.default.removeItem(at: directory)
+            try Data("blocked directory".utf8).write(to: directory)
+
+            store.permanentlyDeleteDay(id: first.id)
+            XCTAssertNotNil(store.saveError)
+            XCTAssertEqual(Set(store.deletedDays.map(\.id)), [first.id, second.id])
+            XCTAssertEqual(defaults.data(forKey: "deletedDays.v1"), trash)
+        }
+    }
+
     func testFailedRestoreNeverReplaysOverLaterSuccessfulEdits() throws {
         try withStorage { defaults, _, directory in
             var original = day("Original without photo")
