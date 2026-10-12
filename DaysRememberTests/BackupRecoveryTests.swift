@@ -227,6 +227,18 @@ final class BackupRecoveryTests: XCTestCase {
         }
     }
 
+    /// An export over the import limit is refused as an export, with a way to make it smaller,
+    /// not reported as a backup that can't be read.
+    func testOversizedExportSaysTheExportWasRefused() throws {
+        var large = backup()
+        large.days[0].photoData = Data(count: 76 * 1024 * 1024)
+        XCTAssertThrowsError(try large.encoded()) { error in
+            XCTAssertEqual(error.localizedDescription,
+                           "备份超过 100 MB，未能导出。清理「最近删除」和「同步保留版本」，或减少照片封面后再试。")
+        }
+        XCTAssertEqual(DayBackup.BackupError.tooLarge.localizedDescription, "备份超过 100 MB，无法读取。")
+    }
+
     func testPendingRestoreReplaysBeforeLoadingPartialDataAndOnlyOnce() throws {
         try withDefaults { defaults, suite in
             let target = backup()

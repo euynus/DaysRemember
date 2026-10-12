@@ -643,7 +643,7 @@ final class PhotoFilePersistenceTests: XCTestCase {
             XCTAssertEqual(reloaded.days, expected)
             XCTAssertEqual(reloaded.syncConflicts.map(\.record), [.day(original[0])])
             XCTAssertThrowsError(try reloaded.exportBackup()) { error in
-                guard case DayBackup.BackupError.tooLarge = error else {
+                guard case DayBackup.BackupError.tooLargeToExport = error else {
                     return XCTFail("Portable exports must retain their size limit: \(error)")
                 }
             }

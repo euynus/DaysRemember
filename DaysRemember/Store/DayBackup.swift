@@ -53,11 +53,13 @@ struct DayBackup: Codable {
     }
 
     enum BackupError: LocalizedError {
-        case tooLarge, unsupportedVersion, invalidRecords, unreadable
+        case tooLarge, tooLargeToExport, unsupportedVersion, invalidRecords, unreadable
 
         var errorDescription: String? {
             switch self {
             case .tooLarge: return String(localized: "备份超过 100 MB，无法读取。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            // Each entry in 最近删除 and 同步保留版本 carries its own copy of its photo.
+            case .tooLargeToExport: return String(localized: "备份超过 100 MB，未能导出。清理「最近删除」和「同步保留版本」，或减少照片封面后再试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             case .unsupportedVersion: return String(localized: "此备份来自更新版本的时光，请先更新 App。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             case .invalidRecords: return String(localized: "备份包含无效或重复的记录，原有数据未更改。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             case .unreadable: return String(localized: "无法读取此备份，原有数据未更改。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
@@ -70,7 +72,8 @@ struct DayBackup: Codable {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes, .sortedKeys]
         let data = try encoder.encode(self)
-        guard data.count <= Self.maximumBytes else { throw BackupError.tooLarge }
+        // A larger file couldn't be restored, so it isn't written.
+        guard data.count <= Self.maximumBytes else { throw BackupError.tooLargeToExport }
         return data
     }
 

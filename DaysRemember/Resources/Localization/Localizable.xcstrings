@@ -1,6 +1,29 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "备份超过 100 MB，未能导出。清理「最近删除」和「同步保留版本」，或减少照片封面后再试。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The backup is over 100 MB, so it wasn’t exported. Clear Recently Deleted and Saved Sync Versions, or use fewer photo covers, then try again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备份超过 100 MB，未能导出。清理「最近删除」和「同步保留版本」，或减少照片封面后再试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "備份超過 100 MB，未能匯出。清理「最近刪除」和「同步保留版本」，或減少照片封面後再試。"
+          }
+        }
+      }
+    },
     "「%@」的文字过长，无法上传到 iCloud；其他日子照常同步。缩短它的笔记后会再上传。" : {
       "extractionState" : "manual",
       "localizations" : {
