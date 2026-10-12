@@ -27,9 +27,17 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         case accountChanged, zoneDeleted, accountUnavailable
         case cloudKit(CKError)
         case other(Error)
+        /// A notice rather than a stop: the rest of the library still syncs.
+        case tooLarge(CloudLibraryRecord)
     }
 
     private var problem: Problem?
+
+    /// Whether the problem, rather than sync activity, decides the status.
+    private var problemHoldsStatus: Bool {
+        if case .tooLarge = problem { return false }
+        return problem != nil
+    }
 
     var errorMessage: String? {
         switch problem {
@@ -45,6 +53,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             return String(localized: "\(statusMessage)：\(error.localizedDescription)（\(error.errorCode)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .other(let error):
             return error.localizedDescription
+        case .tooLarge(.day(let day)):
+            return String(localized: "「\(day.title)」的文字过长，无法上传到 iCloud；其他日子照常同步。缩短它的笔记后会再上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .tooLarge(.category(let category)):
+            return String(localized: "分类「\(category.name)」的数据过大，无法上传到 iCloud；其他内容照常同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }
     private(set) var lastFetchedAt: Date?
@@ -178,7 +190,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 // First use of this account: no records can be overwritten in an absent zone.
             }
             guard self.engine === engine, !state.accountChangePending, !state.zoneWasDeleted,
-                  !storageFailed, problem == nil else { return }
+                  !storageFailed, !problemHoldsStatus else { return }
             canSend = true
             state.hasFetched = true
             state.lastFetchedAt = Date()
@@ -313,7 +325,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     private func refreshStatus() {
         if state.accountChangePending { showAccountChange(); return }
         if state.zoneWasDeleted { showDeletedZone(); return }
-        guard problem == nil else { return }
+        guard !problemHoldsStatus else { return }
         if fetching || sending || manualSyncRunning { status = .syncing }
         else if state.hasPendingChanges { status = .pending }
         else if lastFetchedAt != nil && canSend { status = .synced }
@@ -350,6 +362,15 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         } else {
             status = .failed
             problem = .other(error)
+        }
+    }
+
+    /// Names the first record a batch had to leave out, until it fits or is gone.
+    func reportTooLarge(_ records: [CloudLibraryRecord]) {
+        if let record = records.first {
+            problem = .tooLarge(record)
+        } else if case .tooLarge(let record) = problem, state.records[record.recordName]?.value != record {
+            problem = nil
         }
     }
 
@@ -394,31 +415,12 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 showAccountChange()
                 return nil
             }
-            var saves: [CKRecord] = []
-            var deletions: [CKRecord.ID] = []
             let changes = syncEngine.state.pendingRecordZoneChanges.filter { context.options.scope.contains($0) }.prefix(100)
-            for change in changes {
-                switch change {
-                case .saveRecord(let id):
-                    guard var entry = state.records[id.recordName], entry.dirty, let value = entry.value else { continue }
-                    let record = try value.makeRecord(systemFields: entry.systemFields, revision: entry.revision,
-                                                      assetDirectory: assetDirectory)
-                    entry.sentRevision = entry.revision
-                    entry.sentFingerprint = try value.fingerprint()
-                    state.records[id.recordName] = entry
-                    saves.append(record)
-                case .deleteRecord(let id):
-                    guard var entry = state.records[id.recordName], entry.dirty, entry.value == nil else { continue }
-                    entry.sentRevision = entry.revision
-                    entry.sentFingerprint = nil
-                    state.records[id.recordName] = entry
-                    deletions.append(id)
-                @unknown default: break
-                }
-            }
-            guard persist(), !saves.isEmpty || !deletions.isEmpty else { return nil }
-            inFlightAssets[ObjectIdentifier(syncEngine), default: []].formUnion(saves.compactMap { ($0["photo"] as? CKAsset)?.fileURL })
-            return CKSyncEngine.RecordZoneChangeBatch(recordsToSave: saves, recordIDsToDelete: deletions, atomicByZone: false)
+            let batch = try state.prepareBatch(Array(changes), assetDirectory: assetDirectory)
+            reportTooLarge(batch.tooLarge)
+            guard persist(), !batch.saves.isEmpty || !batch.deletions.isEmpty else { return nil }
+            inFlightAssets[ObjectIdentifier(syncEngine), default: []].formUnion(batch.saves.compactMap { ($0["photo"] as? CKAsset)?.fileURL })
+            return CKSyncEngine.RecordZoneChangeBatch(recordsToSave: batch.saves, recordIDsToDelete: batch.deletions, atomicByZone: false)
         } catch {
             fail(error, stop: !(error is CKError))
             return nil
@@ -521,7 +523,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 _ = persist()
             case .willFetchChanges:
                 fetching = true
-                if problem == nil { status = .syncing }
+                if !problemHoldsStatus { status = .syncing }
             case .didFetchRecordZoneChanges(let event):
                 guard event.zoneID == CloudLibraryRecord.zoneID else { return }
                 zoneFetchFinished(error: event.error)
@@ -530,7 +532,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 refreshStatus()
             case .willSendChanges:
                 sending = true
-                if problem == nil { status = .syncing }
+                if !problemHoldsStatus { status = .syncing }
             case .didSendChanges:
                 sending = false
                 refreshStatus()

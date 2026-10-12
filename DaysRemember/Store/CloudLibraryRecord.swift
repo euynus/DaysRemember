@@ -353,6 +353,41 @@ struct CloudLibraryState: Codable {
         pendingRemoteUpdate = CloudLibraryUpdate()
     }
 
+    /// The records to send for `changes`, each marked with what was sent. One with more text than a
+    /// CloudKit record holds stays pending and comes back in `tooLarge`, so it can't hold back the rest.
+    mutating func prepareBatch(_ changes: [CKSyncEngine.PendingRecordZoneChange], assetDirectory: URL) throws
+        -> (saves: [CKRecord], deletions: [CKRecord.ID], tooLarge: [CloudLibraryRecord]) {
+        var saves: [CKRecord] = []
+        var deletions: [CKRecord.ID] = []
+        var tooLarge: [CloudLibraryRecord] = []
+        for change in changes {
+            switch change {
+            case .saveRecord(let id):
+                guard var entry = records[id.recordName], entry.dirty, let value = entry.value else { continue }
+                let record: CKRecord
+                do {
+                    record = try value.makeRecord(systemFields: entry.systemFields, revision: entry.revision,
+                                                  assetDirectory: assetDirectory)
+                } catch CloudLibraryRecord.RecordError.metadataTooLarge {
+                    tooLarge.append(value)
+                    continue
+                }
+                entry.sentRevision = entry.revision
+                entry.sentFingerprint = try value.fingerprint()
+                records[id.recordName] = entry
+                saves.append(record)
+            case .deleteRecord(let id):
+                guard var entry = records[id.recordName], entry.dirty, entry.value == nil else { continue }
+                entry.sentRevision = entry.revision
+                entry.sentFingerprint = nil
+                records[id.recordName] = entry
+                deletions.append(id)
+            @unknown default: break
+            }
+        }
+        return (saves, deletions, tooLarge)
+    }
+
     /// A sign-out is sticky even if the next launch sees an available account again.
     mutating func acceptAccount(_ recordName: String, confirmed: Bool = false) -> Bool {
         if !confirmed && (accountChangePending || (accountRecordName != nil && accountRecordName != recordName)) {

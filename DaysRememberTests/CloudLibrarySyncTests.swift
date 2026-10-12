@@ -352,6 +352,30 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// A day with more text than a CloudKit record holds stays pending without holding back the rest.
+    func testOversizedRecordDoesNotHoldBackOthers() throws {
+        try withDirectory { directory in
+            var big = day("big", title: "Long notes")
+            big.note = String(repeating: "长", count: 310_000)
+            let small = day("small")
+            var state = CloudLibraryState()
+            try state.updateLocal(days: [big, small], categories: [], inferDeletions: false)
+            let changes = [big, small].map { CKSyncEngine.PendingRecordZoneChange.saveRecord(CloudLibraryRecord.day($0).recordID) }
+
+            let batch = try state.prepareBatch(changes, assetDirectory: directory)
+            XCTAssertEqual(batch.saves.map(\.recordID), [CloudLibraryRecord.day(small).recordID])
+            XCTAssertEqual(batch.tooLarge, [.day(big)])
+            let pending = try XCTUnwrap(state.records[CloudLibraryRecord.day(big).recordName])
+            XCTAssertTrue(pending.dirty)
+            XCTAssertNil(pending.sentRevision)
+
+            let sync = CloudLibrarySync(stateURL: directory.appendingPathComponent("state.json"))
+            sync.reportTooLarge(batch.tooLarge)
+            let message = try XCTUnwrap(sync.errorMessage)
+            XCTAssertTrue(message.contains("Long notes"), message)
+        }
+    }
+
     func testFailedRemoteApplyRetainsDurablePendingAndRetryReplaysBeforeLocalSnapshot() throws {
         enum ApplyError: Error { case diskFull }
         try withDirectory { directory in

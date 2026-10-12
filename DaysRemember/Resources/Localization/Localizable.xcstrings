@@ -1,6 +1,52 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "「%@」的文字过长，无法上传到 iCloud；其他日子照常同步。缩短它的笔记后会再上传。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” has too much text to upload to iCloud; other days still sync. It will upload once its note is shorter."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」的文字过长，无法上传到 iCloud；其他日子照常同步。缩短它的笔记后会再上传。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」的文字過長，無法上傳到 iCloud；其他日子照常同步。縮短它的筆記後會再上傳。"
+          }
+        }
+      }
+    },
+    "分类「%@」的数据过大，无法上传到 iCloud；其他内容照常同步。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The category “%@” is too large to upload to iCloud; everything else still syncs."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分类「%@」的数据过大，无法上传到 iCloud；其他内容照常同步。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分類「%@」的資料過大，無法上傳到 iCloud；其他內容照常同步。"
+          }
+        }
+      }
+    },
     "%@：%@（%lld）" : {
       "extractionState" : "manual",
       "localizations" : {
