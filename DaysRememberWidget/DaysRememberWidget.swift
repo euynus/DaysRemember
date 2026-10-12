@@ -37,7 +37,7 @@ struct DaysEntry: TimelineEntry {
 
 struct DaysProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> DaysEntry {
-        DaysEntry(date: Date(), day: SampleData.days.first)
+        DaysEntry(date: Date(), day: WidgetDay.gallerySample)
     }
 
     func snapshot(for configuration: SelectWidgetDay, in context: Context) async -> DaysEntry {

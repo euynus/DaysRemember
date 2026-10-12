@@ -87,6 +87,19 @@ final class WidgetTests: XCTestCase {
         }
     }
 
+    /// The widget gallery shows a sample before any day is added; its title is the app's own
+    /// text, so it follows the language like the card's labels.
+    func testGallerySampleIsInTheAppLanguage() {
+        let defaults = SharedStorage.defaults
+        let previous = defaults.object(forKey: AppLocalization.languageKey)
+        defer { defaults.set(previous, forKey: AppLocalization.languageKey) }
+        let expected = ["en": "Wedding Anniversary", "zh-Hant": "結婚紀念日", "zh-Hans": "结婚纪念日"]
+        for (language, title) in expected {
+            defaults.set(language, forKey: AppLocalization.languageKey)
+            XCTAssertEqual(WidgetDay.gallerySample.title, title, language)
+        }
+    }
+
     @MainActor
     func testQueryReadsAppWritesAndRemovesDeletedDays() async throws {
         let original = SharedLibrarySnapshot(keys: ["days.v1", "days.v2", "deletedDays.v1"])

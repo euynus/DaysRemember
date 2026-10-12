@@ -9,6 +9,15 @@ struct WidgetDay: AppEntity {
     var title: String
     var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(title)") }
 
+    /// The widget gallery's example before any day exists. Its title is the app's own text, so it
+    /// is translated like the card around it.
+    static var gallerySample: Day {
+        var day = SampleData.days[0]
+        day.title = String(localized: "widget.sampleTitle", defaultValue: "结婚纪念日",
+                           bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return day
+    }
+
     /// A selected day, or else the nearest upcoming day. When nothing is ahead, the most
     /// recent past day ("已过去 N 天") keeps the widget useful instead of empty.
     static func resolve(in days: [Day], selectedID: String?, today: Date) -> Day? {
