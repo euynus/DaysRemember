@@ -33,9 +33,12 @@
   color-scheme: light;
 }
 
+/* Set again here, not only inherited from body: /privacy/ and /support/ hold the Traditional text
+   in <article lang="zh-Hant"> on a zh-Hans page. */
 :lang(zh-Hant) {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang TC",
     "Heiti TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+  font-family: var(--font-sans);
 }
 
 *, *::before, *::after { box-sizing: border-box; }

@@ -134,3 +134,11 @@ test("the hero slideshow can be paused", () => {
   site.advance(3200 + 900);
   assert.deepEqual(showing(), ["calendar.jpg"], "playing again");
 });
+
+// On /privacy/ and /support/ the Traditional text sits in <article lang="zh-Hant"> under a
+// zh-Hans page; a font list resolved once on body would keep the Simplified fonts there.
+test("Traditional Chinese text uses the Traditional font list", () => {
+  assert.match(read("privacy/index.html"), /<html lang="zh-Hans">[\s\S]*<article id="zh-Hant" lang="zh-Hant">/);
+  assert.match(rule(":lang(zh-Hant)")["--font-sans"], /PingFang TC/);
+  assert.equal(rule(":lang(zh-Hant)")["font-family"], "var(--font-sans)");
+});
