@@ -22,6 +22,27 @@ final class LunarTests: XCTestCase {
         }
     }
 
+    /// Month boundaries from the Hong Kong Observatory's 公曆與農曆日期對照表 for the years whose
+    /// table words were wrong; the round-trip tests only check the table against itself.
+    func testTableMatchesHongKongObservatory() {
+        let cases: [(solar: (Int, Int, Int), month: Int, day: Int, isLeap: Bool)] = [
+            ((1933, 7, 22), 5, 30, true), ((1933, 7, 23), 6, 1, false),
+            ((1933, 8, 20), 6, 29, false), ((1933, 8, 21), 7, 1, false),
+            ((1996, 7, 15), 5, 30, false), ((1996, 7, 16), 6, 1, false),
+            ((1996, 9, 12), 7, 30, false), ((1996, 9, 27), 8, 15, false),
+            ((1996, 10, 11), 8, 29, false), ((1996, 10, 12), 9, 1, false),
+            ((2057, 9, 28), 9, 1, false), ((2057, 10, 27), 9, 30, false),
+            ((2060, 4, 30), 4, 1, false), ((2060, 5, 29), 4, 30, false),
+        ]
+        for c in cases {
+            let lunar = Lunar.solarToLunar(date(c.solar.0, c.solar.1, c.solar.2))
+            XCTAssertEqual([lunar.month, lunar.day], [c.month, c.day], "\(c.solar)")
+            XCTAssertEqual(lunar.isLeap, c.isLeap, "\(c.solar)")
+        }
+        XCTAssertEqual(Lunar.dayCount(year: 1996, month: 5), 30)
+        XCTAssertEqual(Lunar.dayCount(year: 1933, month: 5, isLeap: true), 30)
+    }
+
     func testSampleAnniversary() {
         // 妈妈生日 — 1962-06-18 lunar 五月十七.
         let l = Lunar.solarToLunar(date(1962, 6, 18))
