@@ -294,6 +294,53 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
+    /// A photo file goes once no stored record uses it: a replaced cover, a permanently deleted or
+    /// expired day. Files shared with another record, or a recovery backup, stay.
+    func testUnusedPhotoFilesAreDeleted() throws {
+        try withStorage { defaults, _, directory in
+            func files() throws -> Set<String> {
+                Set(try FileManager.default.contentsOfDirectory(atPath: directory.path).filter { $0.hasSuffix(".photo") })
+            }
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            var covered = day("Cover changes", photo: Data([1, 1]))
+            let twin = day("Same photo", photo: Data([2, 2]))
+            var sharing = day("Shares the photo", photo: Data([2, 2]))
+            store.add(covered)
+            store.add(twin)
+            store.add(sharing)
+            XCTAssertEqual(try files().count, 2)
+
+            covered.photoData = Data([3, 3])
+            store.update(covered)
+            XCTAssertEqual(try files().count, 2, "the replaced cover is gone")
+
+            sharing.photoData = nil
+            store.update(sharing)
+            store.delete(twin)
+            XCTAssertEqual(try files().count, 2, "a photo in 最近删除 stays")
+            store.permanentlyDeleteDay(id: twin.id)
+            XCTAssertEqual(try files().count, 1)
+
+            store.delete(covered)
+            var trash = try XCTUnwrap(JSONSerialization.jsonObject(
+                with: XCTUnwrap(defaults.data(forKey: "deletedDays.v1"))) as? [[String: Any]])
+            trash[0]["deletedAt"] = Date.now.addingTimeInterval(-31 * 24 * 60 * 60).timeIntervalSinceReferenceDate
+            defaults.set(try JSONSerialization.data(withJSONObject: trash), forKey: "deletedDays.v1")
+            let relaunched = DayStore(defaults: defaults, photoDirectory: directory)
+            XCTAssertTrue(relaunched.deletedDays.isEmpty)
+            XCTAssertEqual(try files(), [], "an expired day's photo is gone")
+            XCTAssertEqual(try JSONSerialization.jsonObject(
+                with: XCTUnwrap(defaults.data(forKey: "deletedDays.v1"))) as? [Any] as NSArray?, [])
+
+            let kept = day("Kept by the recovery backup", photo: Data([4, 4]))
+            relaunched.add(kept)
+            try relaunched.restoreBackup(DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: []))
+            XCTAssertEqual(try files().count, 1, "the recovery backup still uses it")
+            try relaunched.restorePreviousBackup()
+            XCTAssertEqual(relaunched.days.compactMap(\.photoData), [Data([4, 4])])
+        }
+    }
+
     /// A trash entry whose removal couldn't be saved stays listed, as it stays on disk.
     func testFailedPermanentDeletionKeepsEntry() throws {
         try withStorage { defaults, _, directory in

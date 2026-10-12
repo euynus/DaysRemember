@@ -71,6 +71,25 @@ final class CloudLibrarySyncTests: XCTestCase {
         XCTAssertFalse(try FileManager.default.contentsOfDirectory(atPath: directory.appendingPathComponent("Photos").path).isEmpty)
     }
 
+    /// The checkpoint is the only record of the photos beside it; one it no longer uses is deleted.
+    func testCheckpointDeletesPhotosItNoLongerUses() throws {
+        try withDirectory { directory in
+            let url = directory.appendingPathComponent("state.json")
+            let photos = directory.appendingPathComponent("Photos")
+            var state = CloudLibraryState()
+            try state.updateLocal(days: [day(photo: Data([1, 2, 3]))], categories: [], inferDeletions: false)
+            try state.write(to: url)
+            try state.updateLocal(days: [day(photo: Data([4, 5, 6]))], categories: [], inferDeletions: false)
+            try state.write(to: url)
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: photos.path).count, 1)
+            XCTAssertEqual(try CloudLibraryState.read(from: url).records.values.first?.value, .day(day(photo: Data([4, 5, 6]))))
+
+            try state.updateLocal(days: [], categories: [], inferDeletions: true)
+            try state.write(to: url)
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: photos.path), [])
+        }
+    }
+
     func testMissingPhotoInvalidIdentityAndFutureSchemaAreRejected() throws {
         try withDirectory { directory in
             let encoded = try record(day(photo: Data([1, 2, 3])), directory: directory)

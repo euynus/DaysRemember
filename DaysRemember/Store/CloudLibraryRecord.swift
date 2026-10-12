@@ -386,7 +386,10 @@ struct CloudLibraryState: Codable {
         let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appendingPathComponent("Photos"))
         var checkpoint = self
         checkpoint.version = 2
-        try files.encoder().encode(checkpoint).write(to: url, options: .atomic)
+        let data = try files.encoder().encode(checkpoint)
+        try data.write(to: url, options: .atomic)
+        // The checkpoint is the only record of the photos beside it.
+        try? files.removeFiles(unreferencedBy: [data])
     }
 
     static func read(from url: URL, photoFiles: PhotoFileStore? = nil) throws -> CloudLibraryState {

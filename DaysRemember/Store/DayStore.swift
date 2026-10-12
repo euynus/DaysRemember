@@ -16,6 +16,7 @@ final class DayStore {
                 isRestoring = false
                 return
             }
+            removeUnusedPhotos()
             rescheduleNotifications()
             reloadWidgetTimelines()
         }
@@ -97,17 +98,25 @@ final class DayStore {
                 self.categories = Self.normalizedCategories(decoded)
             }
             // Older builds stored these photos inline; both formats decode.
+            var storedDeleted: [DeletedDay] = []
+            var storedConflicts: [SyncConflict] = []
             if let data = defaults.data(forKey: deletedKey) {
-                self.deletedDays = Self.unexpired(try (photoFiles?.decoder() ?? JSONDecoder())
-                    .decode([DeletedDay].self, from: data)
-                    .filter { entry in !days.contains(where: { $0.id == entry.id }) })
+                storedDeleted = try (photoFiles?.decoder() ?? JSONDecoder()).decode([DeletedDay].self, from: data)
+                self.deletedDays = Self.unexpired(storedDeleted.filter { entry in !days.contains(where: { $0.id == entry.id }) })
             }
             if let data = defaults.data(forKey: conflictsKey) {
-                self.syncConflicts = Self.unexpired(try (photoFiles?.decoder() ?? JSONDecoder())
-                    .decode([SyncConflict].self, from: data))
+                storedConflicts = try (photoFiles?.decoder() ?? JSONDecoder()).decode([SyncConflict].self, from: data)
+                self.syncConflicts = Self.unexpired(storedConflicts)
             }
             try DayBackup(days: days, categories: categories, deletedDays: deletedDays,
                           syncConflicts: syncConflicts).validate()
+            // Expired entries leave storage too, and their photos with them.
+            if deletedDays != storedDeleted { persistDeletedDays() }
+            if syncConflicts != storedConflicts,
+               let data = try? (photoFiles?.encoder() ?? JSONEncoder()).encode(syncConflicts) {
+                defaults.set(data, forKey: conflictsKey)
+            }
+            removeUnusedPhotos()
         } catch {
             loadError = String(localized: "本机数据未能完整读取，原始数据已保留。请先导出原始数据，或从备份恢复。",
                                bundle: AppLocalization.bundle, locale: AppLocalization.locale)
@@ -227,7 +236,17 @@ final class DayStore {
     private func persistDeletedDays() -> Bool {
         guard let data = try? (photoFiles?.encoder() ?? JSONEncoder()).encode(deletedDays) else { return false }
         defaults.set(data, forKey: deletedKey)
+        removeUnusedPhotos()
         return true
+    }
+
+    /// Photo files are shared by content, so one is deleted only once no stored record uses it:
+    /// active, deleted and replaced days, and the recovery, migration and restore journals.
+    private func removeUnusedPhotos() {
+        guard let photoFiles, loadError == nil else { return }
+        let documents = [storageKey, deletedKey, conflictsKey, recoveryKey, migrationKey, pendingRestoreKey]
+            .compactMap { defaults.data(forKey: $0) }
+        try? photoFiles.removeFiles(unreferencedBy: documents)
     }
 
     /// Recently deleted days and replaced sync versions stay recoverable for 30 days.
@@ -369,6 +388,7 @@ final class DayStore {
         isRestoring = false
         defaults.removeObject(forKey: pendingRestoreKey)
         saveError = nil
+        removeUnusedPhotos()
         rescheduleNotifications()
         reloadWidgetTimelines()
     }
@@ -416,6 +436,7 @@ final class DayStore {
         let remaining = syncConflicts.filter { $0.id != id }
         defaults.set(try (photoFiles?.encoder() ?? JSONEncoder()).encode(remaining), forKey: conflictsKey)
         syncConflicts = remaining
+        removeUnusedPhotos()
     }
 
     /// Nearest upcoming (future or today) within `within` days.

@@ -109,6 +109,33 @@ final class PhotoFileStore {
         return data
     }
 
+    /// Deletes the photo files that none of `documents`, records encoded with this store, refers
+    /// to. A document that can't be parsed stops the sweep before anything is deleted.
+    func removeFiles(unreferencedBy documents: [Data]) throws {
+        var referenced = Set<String>()
+        for document in documents {
+            Self.collectReferences(in: try JSONSerialization.jsonObject(with: document, options: .fragmentsAllowed),
+                                   into: &referenced)
+        }
+        guard FileManager.default.fileExists(atPath: directory.path) else { return }
+        for url in try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) {
+            let reference = url.lastPathComponent
+            guard Self.isValidReference(reference), !referenced.contains(reference) else { continue }
+            try FileManager.default.removeItem(at: url)
+            // A cached entry for a missing file reads as damage when the photo is saved again.
+            cached = cached.filter { $0.value.reference != reference }
+        }
+    }
+
+    private static func collectReferences(in object: Any, into references: inout Set<String>) {
+        if let dictionary = object as? [String: Any] {
+            if let reference = dictionary["photoFile"] as? String { references.insert(reference) }
+            for value in dictionary.values { collectReferences(in: value, into: &references) }
+        } else if let array = object as? [Any] {
+            for value in array { collectReferences(in: value, into: &references) }
+        }
+    }
+
     func originalFiles() throws -> [String: Data] {
         guard FileManager.default.fileExists(atPath: directory.path) else { return [:] }
         let files = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
