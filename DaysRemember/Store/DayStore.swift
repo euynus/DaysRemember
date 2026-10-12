@@ -523,7 +523,7 @@ final class DayStore {
 
         let target = self.category(for: targetID)
         let updatedCategories = categories.filter { $0.id != id }
-        let updatedDays = days.map { day in
+        func migrated(_ day: Day) -> Day {
             guard day.categoryID == id else { return day }
             var updated = day
             updated.categoryID = target.id
@@ -531,13 +531,24 @@ final class DayStore {
             updated.category = DayCategory(rawValue: target.id) ?? .life
             return updated
         }
-        commitCategoryChange(days: updatedDays, categories: updatedCategories)
+        // Copies in 最近删除 and 同步保留版本 move too, or restoring one would bring back a day
+        // whose category no longer exists.
+        let updatedDeleted = deletedDays.map { DeletedDay(day: migrated($0.day), deletedAt: $0.deletedAt) }
+        let updatedConflicts = syncConflicts.map { conflict in
+            guard case .day(let day) = conflict.record else { return conflict }
+            var updated = conflict
+            updated.record = .day(migrated(day))
+            return updated
+        }
+        commitCategoryChange(days: days.map(migrated), categories: updatedCategories,
+                             deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
     }
 
-    private func commitCategoryChange(days: [Day], categories: [CategoryDefinition]) {
+    private func commitCategoryChange(days: [Day], categories: [CategoryDefinition],
+                                      deletedDays: [DeletedDay]? = nil, syncConflicts: [SyncConflict]? = nil) {
         do {
-            let backup = DayBackup(days: days, categories: categories, deletedDays: deletedDays,
-                                   syncConflicts: syncConflicts)
+            let backup = DayBackup(days: days, categories: categories, deletedDays: deletedDays ?? self.deletedDays,
+                                   syncConflicts: syncConflicts ?? self.syncConflicts)
             let encoded = try localBackupData(backup)
             try applyBackup(backup, encoded: encoded)
             saveError = nil

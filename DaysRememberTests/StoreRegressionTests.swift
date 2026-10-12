@@ -75,6 +75,32 @@ final class StoreRegressionTests: XCTestCase {
         }
     }
 
+    /// Copies in 最近删除 and 同步保留版本 move with the category's days, or a restored copy
+    /// would point at a category that no longer exists.
+    func testDeletingCategoryMovesRecoverableCopies() throws {
+        try withSuite { defaults in
+            let store = DayStore(defaults: defaults)
+            let category = store.addCategory(name: "Trips", icon: "tag", colorToken: .dusty)
+            let trashed = Day(id: "trashed", title: "Trashed", date: Date(), category: .life,
+                              photo: .home, categoryID: category.id)
+            let replaced = Day(id: "replaced", title: "Replaced", date: Date(), category: .life,
+                               photo: .home, categoryID: category.id)
+            try store.restoreBackup(DayBackup(days: [], categories: store.categories,
+                                              deletedDays: [DeletedDay(day: trashed, deletedAt: .now)],
+                                              syncConflicts: [SyncConflict(record: .day(replaced))]))
+
+            store.deleteCategory(id: category.id, migrateTo: DayCategory.travel.rawValue)
+            XCTAssertEqual(store.deletedDays.map(\.day.categoryID), [DayCategory.travel.rawValue])
+            guard case .day(let kept) = store.syncConflicts.first?.record else { return XCTFail("conflict kept") }
+            XCTAssertEqual(kept.categoryID, DayCategory.travel.rawValue)
+            XCTAssertEqual(kept.category, .travel)
+
+            store.restoreDeletedDay(id: "trashed")
+            XCTAssertEqual(store.days(in: DayCategory.travel.rawValue).map(\.id), ["trashed"])
+            XCTAssertEqual(DayStore(defaults: defaults).deletedDays, store.deletedDays)
+        }
+    }
+
     func testCategoryAppearanceDoesNotPersistDaysButRenameDoes() {
         withRestoredDefaults {
             let store = DayStore()
