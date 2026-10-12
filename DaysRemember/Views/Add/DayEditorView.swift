@@ -40,8 +40,7 @@ struct DayEditorView: View {
     /// `date` prefills a new day, e.g. from an empty calendar cell.
     init(day: Day? = nil, date: Date? = nil) {
         editingDay = day
-        let initial = day ?? Day(id: "", title: "", date: date ?? Today.date, recurring: true,
-                                 category: .life, photo: .systemDefault)
+        let initial = day ?? Self.newDraft(date: date ?? Today.date)
         _initialDay = State(initialValue: initial)
         _title = State(initialValue: initial.title)
         _photo = State(initialValue: initial.photo)
@@ -57,6 +56,12 @@ struct DayEditorView: View {
         _reminderOffsets = State(initialValue: initial.reminderOffsets)
         _reminderTime = State(initialValue: initial.reminderTime)
         _coverChosen = State(initialValue: day != nil)
+    }
+
+    /// A new day starts in 生活, with the cover choosing 生活 would give it.
+    static func newDraft(date: Date) -> Day {
+        Day(id: "", title: "", date: date, recurring: true, category: .life,
+            photo: PhotoStyle.defaultCover(forCategoryID: DayCategory.life.rawValue) ?? .systemDefault)
     }
 
     private var canSave: Bool {

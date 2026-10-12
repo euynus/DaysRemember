@@ -3,6 +3,13 @@ import XCTest
 
 @MainActor
 final class EditorSaveTests: XCTestCase {
+    /// A new day starts in 生活, so it starts with 生活's cover, as picking that category gives.
+    func testNewDayStartsWithItsCategorysCover() {
+        let draft = DayEditorView.newDraft(date: Today.date)
+        XCTAssertEqual(draft.categoryID, DayCategory.life.rawValue)
+        XCTAssertEqual(draft.photo, PhotoStyle.defaultCover(forCategoryID: draft.categoryID))
+    }
+
     /// The date row already says 农历日期超出范围 for a date before 1900-01-31.
     func testLunarDateOutsideTableCannotBeSaved() {
         let early = CNDate.calendar.date(from: DateComponents(year: 1899, month: 8, day: 10))!
