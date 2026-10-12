@@ -386,6 +386,29 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
+    /// Store errors are kept as values, not as text, so a language change reaches them too.
+    func testStoreErrorsFollowTheAppLanguage() throws {
+        let defaults = SharedStorage.defaults
+        let previous = defaults.object(forKey: AppLocalization.languageKey)
+        defer { defaults.set(previous, forKey: AppLocalization.languageKey) }
+        try withStorage { storage, _, directory in
+            storage.set(Data("corrupt".utf8), forKey: "days.v2")
+            defaults.set("zh-Hans", forKey: AppLocalization.languageKey)
+            let unreadable = DayStore(defaults: storage, photoDirectory: directory)
+            storage.removeObject(forKey: "days.v2")
+            let store = DayStore(defaults: storage, photoDirectory: directory)
+            try Data("blocked directory".utf8).write(to: directory)
+            store.add(day("Blocked"))
+            XCTAssertEqual(store.saveError, "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。")
+
+            defaults.set("en", forKey: AppLocalization.languageKey)
+            XCTAssertEqual(store.saveError,
+                           "Local data could not be saved. Your previous data is preserved. Check available storage or restore a backup.")
+            XCTAssertEqual(unreadable.loadError,
+                           "Some local data could not be read. The original data is preserved. Export the original data or restore a backup first.")
+        }
+    }
+
     func testFailedRestoreNeverReplaysOverLaterSuccessfulEdits() throws {
         try withStorage { defaults, _, directory in
             var original = day("Original without photo")

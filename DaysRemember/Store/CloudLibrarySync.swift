@@ -22,7 +22,31 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
 
     private(set) var status: Status = .idle
-    private(set) var errorMessage: String?
+    /// What went wrong, kept as a value rather than text so its message follows a language change.
+    private enum Problem {
+        case accountChanged, zoneDeleted, accountUnavailable
+        case cloudKit(CKError)
+        case other(Error)
+    }
+
+    private var problem: Problem?
+
+    var errorMessage: String? {
+        switch problem {
+        case nil:
+            return nil
+        case .accountChanged:
+            return String(localized: "iCloud 账户已退出或变更。本机数据未删除；确认当前账户后才能继续同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .zoneDeleted:
+            return String(localized: "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .accountUnavailable:
+            return String(localized: "请检查系统中的 iCloud 登录、账户限制和网络，再重试同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .cloudKit(let error):
+            return String(localized: "\(statusMessage)：\(error.localizedDescription)（\(error.errorCode)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .other(let error):
+            return error.localizedDescription
+        }
+    }
     private(set) var lastFetchedAt: Date?
     private(set) var lastSentAt: Date?
 
@@ -82,7 +106,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         } catch {
             storageFailed = true
             status = .failed
-            errorMessage = CloudLibraryRecord.RecordError.corruptState.localizedDescription
+            problem = .other(CloudLibraryRecord.RecordError.corruptState)
         }
     }
 
@@ -133,7 +157,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 Task { [weak self] in await self?.syncNow() }
             }
         }
-        errorMessage = nil
+        problem = nil
         status = .checkingAccount
         do {
             guard deliverRemoteUpdate() else { return }
@@ -154,7 +178,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 // First use of this account: no records can be overwritten in an absent zone.
             }
             guard self.engine === engine, !state.accountChangePending, !state.zoneWasDeleted,
-                  !storageFailed, errorMessage == nil else { return }
+                  !storageFailed, problem == nil else { return }
             canSend = true
             state.hasFetched = true
             state.lastFetchedAt = Date()
@@ -173,7 +197,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             stopEngine()
             await previous?.cancelOperations()
             _ = state.acceptAccount(account, confirmed: true)
-            errorMessage = nil
+            problem = nil
             guard persist() else { return }
             await syncNow()
         } catch { fail(error) }
@@ -184,7 +208,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     func reuploadAfterZoneDeletion() async {
         guard started, !storageFailed, state.zoneWasDeleted, !manualSyncRunning else { return }
         state.forgetServer()
-        errorMessage = nil
+        problem = nil
         guard persist() else { return }
         await syncNow()
     }
@@ -210,7 +234,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 showAccountChange()
             } else {
                 status = .accountUnavailable
-                errorMessage = String(localized: "请检查系统中的 iCloud 登录、账户限制和网络，再重试同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                problem = .accountUnavailable
             }
             return nil
         }
@@ -289,7 +313,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     private func refreshStatus() {
         if state.accountChangePending { showAccountChange(); return }
         if state.zoneWasDeleted { showDeletedZone(); return }
-        guard errorMessage == nil else { return }
+        guard problem == nil else { return }
         if fetching || sending || manualSyncRunning { status = .syncing }
         else if state.hasPendingChanges { status = .pending }
         else if lastFetchedAt != nil && canSend { status = .synced }
@@ -298,12 +322,12 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     private func showAccountChange() {
         status = .accountChanged
-        errorMessage = String(localized: "iCloud 账户已退出或变更。本机数据未删除；确认当前账户后才能继续同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        problem = .accountChanged
     }
 
     private func showDeletedZone() {
         status = .zoneDeleted
-        errorMessage = String(localized: "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        problem = .zoneDeleted
     }
 
     func fail(_ error: Error, stop: Bool = false) {
@@ -311,7 +335,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         if state.accountChangePending { showAccountChange(); return }
         if error is ConfigurationError {
             status = .configurationError
-            errorMessage = error.localizedDescription
+            problem = .other(error)
             stopEngine()
         } else if let error = error as? CKError {
             switch error.code {
@@ -322,10 +346,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 stopEngine()
             default: status = .failed
             }
-            errorMessage = String(localized: "\(statusMessage)：\(error.localizedDescription)（\(error.errorCode)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            problem = .cloudKit(error)
         } else {
             status = .failed
-            errorMessage = error.localizedDescription
+            problem = .other(error)
         }
     }
 
@@ -471,7 +495,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 _ = persist()
             case .willFetchChanges:
                 fetching = true
-                if errorMessage == nil { status = .syncing }
+                if problem == nil { status = .syncing }
             case .didFetchRecordZoneChanges(let event):
                 guard event.zoneID == CloudLibraryRecord.zoneID else { return }
                 if let error = event.error {
@@ -489,7 +513,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 refreshStatus()
             case .willSendChanges:
                 sending = true
-                if errorMessage == nil { status = .syncing }
+                if problem == nil { status = .syncing }
             case .didSendChanges:
                 sending = false
                 refreshStatus()

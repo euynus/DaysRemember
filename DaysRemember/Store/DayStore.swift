@@ -36,9 +36,35 @@ final class DayStore {
     /// The most recent deletion, offered for undo until dismissed.
     private(set) var lastDeleted: DeletedDay?
     private(set) var syncConflicts: [SyncConflict] = []
-    private(set) var loadError: String?
-    private(set) var saveError: String?
-    private(set) var syncPreparationError: String?
+    // Failures are kept as values rather than text, so their messages follow a language change.
+    private var loadFailed = false
+    private enum SaveFailure { case library, categories }
+    private var saveFailure: SaveFailure?
+    private var syncPreparationFailure: Error?
+
+    var loadError: String? {
+        loadFailed ? String(localized: "本机数据未能完整读取，原始数据已保留。请先导出原始数据，或从备份恢复。",
+                            bundle: AppLocalization.bundle, locale: AppLocalization.locale) : nil
+    }
+
+    var saveError: String? {
+        switch saveFailure {
+        case nil: return nil
+        case .library:
+            return String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
+                          bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .categories:
+            return String(localized: "分类更改未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
+                          bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        }
+    }
+
+    var syncPreparationError: String? {
+        syncPreparationFailure.map { error in
+            String(localized: "迁移前备份未完成，同步尚未开启；本机日子仍可使用。\(error.localizedDescription)",
+                   bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        }
+    }
 
     private let storageKey: String
     private let photoFiles: PhotoFileStore?
@@ -118,8 +144,7 @@ final class DayStore {
             }
             removeUnusedPhotos()
         } catch {
-            loadError = String(localized: "本机数据未能完整读取，原始数据已保留。请先导出原始数据，或从备份恢复。",
-                               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            loadFailed = true
         }
     }
 
@@ -138,20 +163,19 @@ final class DayStore {
         do {
             let data = try (photoFiles?.encoder() ?? JSONEncoder()).encode(value)
             defaults.set(data, forKey: storageKey)
-            saveError = nil
+            saveFailure = nil
             if cloudSyncEnabled {
                 CloudLibrarySync.shared.updateLocal(days: days, categories: categories)
             }
             return true
         } catch {
-            saveError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
-                               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            saveFailure = .library
             return false
         }
     }
 
     func dismissSaveError() {
-        saveError = nil
+        saveFailure = nil
     }
 
     private func reloadWidgetTimelines() {
@@ -162,7 +186,7 @@ final class DayStore {
 
     @discardableResult
     func add(_ day: Day) -> Bool {
-        saveError = nil
+        saveFailure = nil
         guard loadError == nil, !days.contains(where: { $0.id == day.id }) else { return false }
         // Restore the active copy before removing its recoverable deleted copy.
         days.insert(normalized(day), at: 0)
@@ -173,7 +197,7 @@ final class DayStore {
     }
     @discardableResult
     func update(_ day: Day) -> Bool {
-        saveError = nil
+        saveFailure = nil
         guard loadError == nil, let i = days.firstIndex(where: { $0.id == day.id }) else { return false }
         days[i] = normalized(day)
         return saveError == nil
@@ -188,8 +212,7 @@ final class DayStore {
         // Keep the day active unless its recoverable copy was saved first.
         guard persistDeletedDays() else {
             deletedDays = previous
-            saveError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
-                               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            saveFailure = .library
             return
         }
         days.removeAll { $0.id == id }
@@ -226,8 +249,7 @@ final class DayStore {
         // The entry stays listed while it is still on disk.
         guard persistDeletedDays() else {
             deletedDays = previous
-            saveError = String(localized: "本机数据未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
-                               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            saveFailure = .library
             return
         }
     }
@@ -328,8 +350,8 @@ final class DayStore {
         }
         let data = try encoded ?? localBackupData(backup, repairCorruptFiles: true)
         try applyBackup(backup, encoded: data, repairCorruptFiles: true)
-        loadError = nil
-        saveError = nil
+        loadFailed = false
+        saveFailure = nil
         // Reminders weren't rescheduled while the library was unreadable.
         if wasUnreadable { rescheduleNotifications() }
         if cloudSyncEnabled {
@@ -387,7 +409,7 @@ final class DayStore {
         syncConflicts = backup.syncConflicts
         isRestoring = false
         defaults.removeObject(forKey: pendingRestoreKey)
-        saveError = nil
+        saveFailure = nil
         removeUnusedPhotos()
         rescheduleNotifications()
         reloadWidgetTimelines()
@@ -483,15 +505,14 @@ final class DayStore {
         guard !cloudSyncEnabled, loadError == nil else { return }
         do {
             try keepMigrationBackup()
-            syncPreparationError = nil
+            syncPreparationFailure = nil
             cloudSyncEnabled = true
             CloudLibrarySync.shared.start(days: days, categories: categories) { [weak self] update in
                 guard let self else { throw DayBackup.BackupError.unreadable }
                 try self.applyCloudUpdate(update)
             }
         } catch {
-            syncPreparationError = String(localized: "迁移前备份未完成，同步尚未开启；本机日子仍可使用。\(error.localizedDescription)",
-                                          bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            syncPreparationFailure = error
         }
     }
 
@@ -609,11 +630,10 @@ final class DayStore {
                                    syncConflicts: syncConflicts ?? self.syncConflicts)
             let encoded = try localBackupData(backup)
             try applyBackup(backup, encoded: encoded)
-            saveError = nil
+            saveFailure = nil
             if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
         } catch {
-            saveError = String(localized: "分类更改未能保存，之前的数据已保留。请检查可用空间，或从备份恢复。",
-                               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            saveFailure = .categories
         }
     }
 

@@ -323,6 +323,18 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// An error is kept as a value, not as text, so a language change reaches its message too.
+    func testErrorMessageFollowsTheAppLanguage() throws {
+        try withDirectory { directory in
+            let sync = CloudLibrarySync(stateURL: directory.appendingPathComponent("state.json"))
+            withLanguage("zh-Hans") { sync.fail(CKError(.networkFailure)) }
+            try withLanguage("en") {
+                let message = try XCTUnwrap(sync.errorMessage)
+                XCTAssertTrue(message.hasPrefix("Sync incomplete; local data preserved: "), message)
+            }
+        }
+    }
+
     func testFailedRemoteApplyRetainsDurablePendingAndRetryReplaysBeforeLocalSnapshot() throws {
         enum ApplyError: Error { case diskFull }
         try withDirectory { directory in
