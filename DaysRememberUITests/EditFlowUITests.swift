@@ -714,9 +714,11 @@ final class EditFlowUITests: XCTestCase {
         let onMyiPhone = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "我的iPhone")).firstMatch
 
         openDataManagement()
-        // The name DataManagementView gives the backup. The test runs on a disposable simulator, so
-        // naming it in the picker (whose name field and keyboard differ by iOS version) isn't needed.
-        let backupName = "时光备份-" + Date.now.formatted(.iso8601.year().month().day().dateSeparator(.dash))
+        // The name DataManagementView gives the backup, dated in Beijing time. The test runs on a
+        // disposable simulator, so naming it in the picker (whose name field and keyboard differ by
+        // iOS version) isn't needed.
+        let beijing = Date.ISO8601FormatStyle(timeZone: TimeZone(identifier: "Asia/Shanghai")!)
+        let backupName = "时光备份-" + Date.now.formatted(beijing.year().month().day().dateSeparator(.dash))
         app.buttons["导出备份"].tap()
         // iOS 27 identifies the picker's save button; iOS 26 only labels it.
         let save = app.buttons.matching(NSPredicate(
