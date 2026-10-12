@@ -614,8 +614,28 @@ final class DayStore {
     }
 
     private func seenLegacyIDs() -> (days: Set<String>, categories: Set<String>) {
-        (Set(defaults.stringArray(forKey: legacyDayIDsKey) ?? []).union(days.map(\.id)).union(deletedDays.map(\.id)),
-         Set(defaults.stringArray(forKey: legacyCategoryIDsKey) ?? []).union(categories.map(\.id)))
+        let premigration = migrationBackupIDs()
+        return (Set(defaults.stringArray(forKey: legacyDayIDsKey) ?? []).union(days.map(\.id))
+                    .union(deletedDays.map(\.id)).union(premigration.days),
+                Set(defaults.stringArray(forKey: legacyCategoryIDsKey) ?? []).union(categories.map(\.id))
+                    .union(premigration.categories))
+    }
+
+    /// The library before CloudKit already held the legacy records, without an import recording
+    /// them, so its IDs stay seen after those records are deleted.
+    private func migrationBackupIDs() -> (days: [String], categories: [String]) {
+        guard let data = defaults.data(forKey: migrationKey),
+              let library = try? JSONDecoder().decode(LibraryIDs.self, from: data) else { return ([], []) }
+        return (library.days.map(\.id) + library.deletedDays.map(\.day.id), library.categories.map(\.id))
+    }
+
+    /// Reads only record IDs, so photos aren't loaded.
+    private struct LibraryIDs: Decodable {
+        struct Record: Decodable { let id: String }
+        struct Deleted: Decodable { let day: Record }
+        let days: [Record]
+        let deletedDays: [Deleted]
+        let categories: [Record]
     }
 
     @discardableResult

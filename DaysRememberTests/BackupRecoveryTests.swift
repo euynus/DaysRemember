@@ -256,6 +256,39 @@ final class BackupRecoveryTests: XCTestCase {
         }
     }
 
+    /// A pre-CloudKit library already held every legacy record without importing them; one
+    /// deleted after the move to CloudKit must not look unseen to 导入旧版 iCloud 数据.
+    func testLegacyRecordsDeletedAfterMigrationAreNotOfferedAgain() throws {
+        try withDefaults { defaults, _ in
+            let category = CategoryDefinition(id: "custom.legacy", name: "Legacy category", icon: "tag",
+                                              colorToken: .dusty, isSystem: false)
+            let removed = day("Permanently deleted")
+            let expiring = day("Expired from trash")
+            let legacyDays = [removed, expiring]
+            let legacyCategories = CategoryDefinition.system + [category]
+            let store = DayStore(defaults: defaults)
+            try store.restoreBackup(DayBackup(days: legacyDays, categories: legacyCategories, deletedDays: []))
+            try store.keepMigrationBackup()
+            XCTAssertFalse(store.hasUnseenLegacyData(days: legacyDays, categories: legacyCategories))
+
+            store.delete(removed)
+            store.permanentlyDeleteDay(id: removed.id)
+            store.delete(expiring)
+            store.deleteCategory(id: category.id, migrateTo: DayCategory.life.rawValue)
+            var trash = try JSONDecoder().decode([DeletedDay].self,
+                                                 from: XCTUnwrap(defaults.data(forKey: "deletedDays.v1")))
+            for index in trash.indices { trash[index].deletedAt = .now.addingTimeInterval(-31 * 24 * 60 * 60) }
+            defaults.set(try JSONEncoder().encode(trash), forKey: "deletedDays.v1")
+
+            let relaunched = DayStore(defaults: defaults)
+            XCTAssertTrue(relaunched.deletedDays.isEmpty)
+            XCTAssertFalse(relaunched.hasUnseenLegacyData(days: legacyDays, categories: legacyCategories))
+            XCTAssertEqual(try relaunched.importLegacyData(days: legacyDays, categories: legacyCategories), 0)
+            XCTAssertTrue(relaunched.days.isEmpty)
+            XCTAssertFalse(relaunched.categories.contains(category))
+        }
+    }
+
     func testInvalidOrDuplicateLegacyImportsDoNotCreateBackupsOrChangeLocalValues() throws {
         try withDefaults { defaults, suite in
             let original = backup()
