@@ -35,6 +35,7 @@ struct RootTabView: View {
 
     var body: some View {
         content
+            .dayEditorHost()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .tint(Theme.accent)
             .safeAreaInset(edge: .top, spacing: 0) {

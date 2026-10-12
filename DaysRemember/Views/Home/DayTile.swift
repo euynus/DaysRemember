@@ -174,10 +174,11 @@ struct PressableTileStyle: ButtonStyle {
 /// the live `Day` back from the store so the actions reflect the latest edit.
 struct DayContextMenu: ViewModifier {
     @Environment(DayStore.self) private var store
+    @Environment(\.editDay) private var editDay
     let day: Day
-    @State private var showEditor = false
-    @State private var showShare = false
-    @State private var showDeleteConfirm = false
+    // Each action keeps the day it was chosen for: after midnight the hero card shows another day.
+    @State private var sharing: Day?
+    @State private var deleting: Day?
 
     private var current: Day { store.days.first { $0.id == day.id } ?? day }
 
@@ -192,27 +193,27 @@ struct DayContextMenu: ViewModifier {
                     Label(current.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                           systemImage: current.pinned ? "star.slash" : "star")
                 }
-                Button { showEditor = true } label: {
+                Button { editDay(current) } label: {
                     Label("编辑", systemImage: "pencil")
                 }
-                Button { showShare = true } label: {
+                Button { sharing = current } label: {
                     Label("分享", systemImage: "square.and.arrow.up")
                 }
                 Divider()
-                Button(role: .destructive) { showDeleteConfirm = true } label: {
+                Button(role: .destructive) { deleting = current } label: {
                     Label("删除", systemImage: "trash")
                 }
             }
-            .sheet(isPresented: $showEditor) { DayEditorView(day: current).environment(store) }
-            .sheet(isPresented: $showShare) { ShareCardView(day: current) }
-            .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm,
-                                titleVisibility: .visible) {
+            .sheet(item: $sharing) { ShareCardView(day: $0) }
+            .confirmationDialog("删除这个日子？", isPresented: Binding(
+                get: { deleting != nil }, set: { if !$0 { deleting = nil } }
+            ), titleVisibility: .visible, presenting: deleting) { day in
                 Button("删除", role: .destructive) {
                     Haptics.warning()
-                    store.delete(current)
+                    store.delete(day)
                 }
                 Button("取消", role: .cancel) {}
-            } message: {
+            } message: { _ in
                 Text("删除后会取消它的待提醒；30 天内可在「设置 › 数据与同步 › 最近删除」中恢复。")
             }
             .sensoryFeedback(.impact(flexibility: .soft), trigger: current.pinned)
