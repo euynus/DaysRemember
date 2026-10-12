@@ -36,6 +36,11 @@ final class EditorPresentationUITests: XCTestCase {
         return title
     }
 
+    /// Opens the link as the widget does; `XCUIApplication.open` would relaunch the app.
+    private func open(_ link: String) {
+        XCUIDevice.shared.system.open(URL(string: link)!)
+    }
+
     private func wait(until deadline: Date, in app: XCUIApplication) {
         expectation(for: NSPredicate { _, _ in Date() >= deadline }, evaluatedWith: app)
         waitForExpectations(timeout: deadline.timeIntervalSinceNow + 10)
@@ -58,5 +63,48 @@ final class EditorPresentationUITests: XCTestCase {
         let japan = day("dayRow.japan", in: app)
         for _ in 0..<4 where !japan.isHittable { app.swipeUp() }
         XCTAssertTrue(japan.label.contains("北海道旅行 edited"), japan.label)
+    }
+
+    func testRowEditorKeepsItsDraftWhenTheRowBecomesTheHero() {
+        let (app, launched) = launchAcrossMidnight(after: 20)
+        let row = day("dayRow.work", in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        for _ in 0..<4 where !row.isHittable { app.swipeUp() }
+        let title = edit(row, in: app, appending: " draft")
+        wait(until: launched.addingTimeInterval(23), in: app)
+        XCTAssertTrue(title.exists, "the editor closed when its row left the feed")
+        XCTAssertEqual(title.value as? String, "入职周年 draft")
+
+        save(title, in: app)
+        XCTAssertTrue(day("upcomingDay.work", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(day("upcomingDay.work", in: app).label.contains("入职周年 draft"), day("upcomingDay.work", in: app).label)
+    }
+
+    func testDetailEditorKeepsItsDraftWhenALinkOpensAnotherDay() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchArguments = ["--tab", "home", "--seed-sample-data"]
+        app.launch()
+        let wedding = day("dayRow.wedding", in: app)
+        XCTAssertTrue(wedding.waitForExistence(timeout: 10))
+        for _ in 0..<4 where !wedding.isHittable { app.swipeUp() }
+        wedding.tap()
+        let more = app.buttons["detail.moreActions"]
+        XCTAssertTrue(more.waitForExistence(timeout: 5))
+        more.tap()
+        app.buttons["编辑"].firstMatch.tap()
+        let title = app.textFields["日子名称"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        title.typeText(" draft")
+
+        open("daysremember://day/baby")
+        XCTAssertTrue(title.waitForExistence(timeout: 5), "the editor closed when its detail was replaced")
+        XCTAssertEqual(title.value as? String, "结婚纪念日 draft")
+        save(title, in: app)
+        XCTAssertTrue(app.staticTexts["小年糕出生"].waitForExistence(timeout: 5), "the link's day is open")
+        app.buttons["返回"].firstMatch.tap()
+        XCTAssertTrue(day("dayRow.wedding", in: app).label.contains("结婚纪念日 draft") ||
+                      day("upcomingDay.wedding", in: app).label.contains("结婚纪念日 draft"))
     }
 }

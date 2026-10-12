@@ -5,11 +5,11 @@ struct DetailView: View {
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.editDay) private var editDay
     let dayID: String
     /// The last value shown, so a pop animation after deletion never renders an empty screen.
     @State private var snapshot: Day?
     @State private var showShare = false
-    @State private var showEditor = false
     @State private var showDeleteConfirm = false
     @State private var deletedHere = false
 
@@ -88,9 +88,6 @@ struct DetailView: View {
         .sheet(isPresented: $showShare) {
             ShareCardView(day: currentDay)
         }
-        .sheet(isPresented: $showEditor) {
-            DayEditorView(day: currentDay).environment(store)
-        }
         .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("删除", role: .destructive) {
                 Haptics.warning()
@@ -116,7 +113,7 @@ struct DetailView: View {
             }
             .accessibilityAddTraits(day.pinned ? .isSelected : [])
             Menu {
-                Button("编辑", systemImage: "pencil") { showEditor = true }
+                Button("编辑", systemImage: "pencil") { editDay(currentDay) }
                 Button("分享", systemImage: "square.and.arrow.up") { showShare = true }
                 Button("删除", systemImage: "trash", role: .destructive) { showDeleteConfirm = true }
             } label: {
