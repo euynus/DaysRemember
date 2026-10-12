@@ -335,6 +335,23 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// The engine retries CloudKit errors itself; a fetch that then succeeds clears the old error.
+    /// Problems that need the user stay.
+    func testSuccessfulFetchClearsAnEarlierCloudKitError() throws {
+        try withDirectory { directory in
+            let sync = CloudLibrarySync(stateURL: directory.appendingPathComponent("state.json"))
+            sync.fail(CKError(.networkFailure))
+            XCTAssertEqual(sync.status, .failed)
+            sync.zoneFetchFinished(error: nil)
+            XCTAssertNil(sync.errorMessage)
+            XCTAssertNotEqual(sync.status, .failed)
+
+            sync.fail(CloudLibraryRecord.RecordError.metadataTooLarge)
+            sync.zoneFetchFinished(error: nil)
+            XCTAssertNotNil(sync.errorMessage)
+        }
+    }
+
     func testFailedRemoteApplyRetainsDurablePendingAndRetryReplaysBeforeLocalSnapshot() throws {
         enum ApplyError: Error { case diskFull }
         try withDirectory { directory in

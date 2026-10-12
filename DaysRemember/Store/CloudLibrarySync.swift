@@ -353,6 +353,29 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         }
     }
 
+    /// The engine finished fetching this app's zone.
+    func zoneFetchFinished(error: CKError?) {
+        if let error {
+            if !(error.code == .zoneNotFound && !state.zoneExists && !state.hasFetched) { fail(error) }
+            return
+        }
+        state.hasFetched = true
+        state.zoneExists = true
+        state.lastFetchedAt = Date()
+        canSend = true
+        clearRetriedError()
+        guard persist() else { return }
+        enqueuePendingChanges()
+    }
+
+    /// CloudKit errors from automatic activity are retried by the engine, so an exchange that then
+    /// succeeds clears them. Problems that need the user, or a local record, stay.
+    private func clearRetriedError() {
+        guard case .cloudKit = problem else { return }
+        problem = nil
+        refreshStatus()
+    }
+
     func nextFetchChangesOptions(_ context: CKSyncEngine.FetchChangesContext,
                                  syncEngine: CKSyncEngine) async -> CKSyncEngine.FetchChangesOptions {
         .init(scope: .zoneIDs([CloudLibraryRecord.zoneID]))
@@ -471,6 +494,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 for record in event.savedRecords { try state.acknowledgeSave(record) }
                 for id in event.deletedRecordIDs { state.acknowledgeDeletion(id) }
                 if !event.savedRecords.isEmpty || !event.deletedRecordIDs.isEmpty { state.lastSentAt = Date() }
+                var failed = false
                 for failure in event.failedRecordSaves {
                     if failure.error.code == .serverRecordChanged, let server = failure.error.serverRecord {
                         try state.receive(server, forceServer: true)
@@ -478,12 +502,14 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                         state.receiveDeletion(failure.record.recordID)
                     } else {
                         fail(failure.error)
+                        failed = true
                     }
                 }
                 for (id, error) in event.failedRecordDeletes {
                     if error.code == .unknownItem { state.acknowledgeDeletion(id) }
-                    else { fail(error) }
+                    else { fail(error); failed = true }
                 }
+                if !failed && (!event.savedRecords.isEmpty || !event.deletedRecordIDs.isEmpty) { clearRetriedError() }
                 guard persist() else { return }
                 cleanAssets()
                 guard deliverRemoteUpdate() else { return }
@@ -498,16 +524,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 if problem == nil { status = .syncing }
             case .didFetchRecordZoneChanges(let event):
                 guard event.zoneID == CloudLibraryRecord.zoneID else { return }
-                if let error = event.error {
-                    if !(error.code == .zoneNotFound && !state.zoneExists && !state.hasFetched) { fail(error) }
-                } else {
-                    state.hasFetched = true
-                    state.zoneExists = true
-                    state.lastFetchedAt = Date()
-                    canSend = true
-                    guard persist() else { return }
-                    enqueuePendingChanges()
-                }
+                zoneFetchFinished(error: event.error)
             case .didFetchChanges:
                 fetching = false
                 refreshStatus()
