@@ -11,10 +11,18 @@ struct DaysRememberApp: App {
     @State private var store = DayStore()
     #endif
     @State private var settings = AppSettings()
-    @State private var router = DeepLinkRouter()
+    @State private var router: DeepLinkRouter
     @State private var currentDay = CNDate.calendar.startOfDay(for: Today.date)
     @AppStorage(AppLocalization.languageKey, store: SharedStorage.defaults)
     private var language = AppLanguage.system
+
+    init() {
+        let router = DeepLinkRouter()
+        _router = State(initialValue: router)
+        // Before launch finishes, as the system requires, so the tap on a reminder that launched
+        // the app reaches the router.
+        NotificationManager.shared.configureDelegate(router: router)
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -28,7 +36,6 @@ struct DaysRememberApp: App {
                 .tint(Theme.accent)
                 .task {
                     store.settings = settings
-                    NotificationManager.shared.configureDelegate(router: router)
                     var automated = false
                     #if DEBUG
                     automated = DebugLaunch.isAutomated || DebugLaunch.isUnitTesting

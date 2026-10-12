@@ -1,9 +1,22 @@
+import UserNotifications
 import XCTest
 @testable import DaysRemember
 
 final class UIUXModelTests: XCTestCase {
     private var suite = ""
     private var defaults: UserDefaults!
+
+    /// The delegate must be in place before launch finishes, or the tap on a reminder that launched
+    /// the app can arrive with nobody to route it, and the app opens on Home.
+    @MainActor
+    func testAppInstallsTheNotificationDelegateAsItIsCreated() {
+        let center = UNUserNotificationCenter.current()
+        let installed = center.delegate
+        defer { center.delegate = installed }
+        center.delegate = nil
+        _ = DaysRememberApp()
+        XCTAssertTrue(center.delegate is NotificationDelegate)
+    }
 
     func testLegacyCategoryIconsKeepTheirMeaning() {
         let icons = ["plane": "airplane", "cake": "birthday.cake",
