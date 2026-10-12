@@ -6,7 +6,9 @@ import Observation
 final class AppSettings {
     // Stored, UserDefaults-backed (replaces @AppStorage, which @Observable can't
     // observe). Same keys & standard store as before so existing settings carry over.
-    var hasOnboarded: Bool { didSet { persist(hasOnboarded, "hasOnboarded"); scheduleCloudPush() } }
+    /// Synced with the other settings, but finishing onboarding isn't an edit of them: on a new
+    /// device it would mark the defaults newer than the account's settings, still downloading.
+    var hasOnboarded: Bool { didSet { persist(hasOnboarded, "hasOnboarded") } }
     var notifPre7: Bool { didSet { persist(notifPre7, "notif.pre7"); scheduleCloudPush() } }
     var notifPre3: Bool { didSet { persist(notifPre3, "notif.pre3"); scheduleCloudPush() } }
     var notifPre1: Bool { didSet { persist(notifPre1, "notif.pre1"); scheduleCloudPush() } }
@@ -107,7 +109,8 @@ final class AppSettings {
     }
 
     private func apply(_ snapshot: AppSettingsSnapshot) {
-        hasOnboarded = snapshot.hasOnboarded
+        // A device that has finished onboarding never goes back to it.
+        hasOnboarded = hasOnboarded || snapshot.hasOnboarded
         notifPre7 = snapshot.notifPre7
         notifPre3 = snapshot.notifPre3
         notifPre1 = snapshot.notifPre1

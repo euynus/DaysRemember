@@ -154,6 +154,26 @@ final class StoreRegressionTests: XCTestCase {
         }
     }
 
+    /// Finishing onboarding is not a settings edit. On a new device it would stamp the defaults as
+    /// newer than the account's own settings, which haven't downloaded yet, and push them.
+    func testFinishingOnboardingLeavesTheSettingsTimestampAlone() {
+        withRestoredDefaults {
+            let cloud = ICloudSyncStore.shared
+            cloud.noteLocalWrite(for: ICloudSyncStore.Key.settings, updatedAt: 0)
+            UserDefaults.standard.removeObject(forKey: "hasOnboarded")
+            let settings = AppSettings()
+            settings.hasOnboarded = true
+            XCTAssertEqual(cloud.localTimestamp(for: ICloudSyncStore.Key.settings), 0)
+
+            var account = AppSettingsSnapshot(settings: settings)
+            account.notificationHour = 21
+            account.hasOnboarded = false
+            XCTAssertTrue(settings.applyRemoteSettingsIfNewer(.init(value: account, updatedAt: 1000, deviceID: "other")))
+            XCTAssertEqual(settings.notificationHour, 21)
+            XCTAssertTrue(settings.hasOnboarded, "a synced snapshot never brings onboarding back")
+        }
+    }
+
     func testLocalSettingIsTimestampedImmediatelyAndRejectsOlderRemote() {
         withRestoredDefaults {
             let settings = AppSettings()
