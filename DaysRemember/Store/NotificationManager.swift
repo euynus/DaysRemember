@@ -9,6 +9,9 @@ import OSLog
 @Observable
 final class DeepLinkRouter {
     var dayID: String?
+    /// Counts days opened from a link or reminder. Sheets that hold no draft close each time,
+    /// so the day doesn't open out of sight beneath them.
+    var linkOpenCount = 0
 }
 
 /// UNUserNotificationCenter delegate — routes a tapped reminder to its day, and lets

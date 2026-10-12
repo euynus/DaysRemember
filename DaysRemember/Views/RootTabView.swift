@@ -125,9 +125,11 @@ struct RootTabView: View {
     }
 
     /// Open a day's detail on the Home stack. No-ops safely if the id no longer exists.
-    /// Shared by the widget URL and tapped-reminder routing.
+    /// Shared by the widget URL and tapped-reminder routing. Editors keep their drafts on top;
+    /// the detail opens beneath them.
     private func openDay(id: String) {
         guard let day = store.days.first(where: { $0.id == id }) else { return }
+        router.linkOpenCount += 1
         tab = .home
         homePath = NavigationPath()
         homePath.append(DayRoute(id: day.id))

@@ -174,6 +174,7 @@ struct PressableTileStyle: ButtonStyle {
 /// the live `Day` back from the store so the actions reflect the latest edit.
 struct DayContextMenu: ViewModifier {
     @Environment(DayStore.self) private var store
+    @Environment(DeepLinkRouter.self) private var router
     @Environment(\.editDay) private var editDay
     let day: Day
     // Each action keeps the day it was chosen for: after midnight the hero card shows another day.
@@ -215,6 +216,10 @@ struct DayContextMenu: ViewModifier {
                 Button("取消", role: .cancel) {}
             } message: { _ in
                 Text("删除后会取消它的待提醒；30 天内可在「设置 › 数据与同步 › 最近删除」中恢复。")
+            }
+            .onChange(of: router.linkOpenCount) {
+                sharing = nil
+                deleting = nil
             }
             .sensoryFeedback(.impact(flexibility: .soft), trigger: current.pinned)
     }

@@ -4,6 +4,7 @@ struct CalendarMonthView: View {
     @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(DeepLinkRouter.self) private var router
     @State private var month: Int
     @State private var year: Int
     @State private var selectedDay: CalendarDaySelection?
@@ -115,6 +116,8 @@ struct CalendarMonthView: View {
         .sheet(item: $newDayDate) { selection in
             DayEditorView(date: selection.date).environment(store)
         }
+        // A new day's draft stays open; the day picker would cover the linked day.
+        .onChange(of: router.linkOpenCount) { selectedDay = nil }
     }
 
     // MARK: - Month header

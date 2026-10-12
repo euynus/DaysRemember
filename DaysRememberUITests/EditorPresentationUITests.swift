@@ -107,4 +107,22 @@ final class EditorPresentationUITests: XCTestCase {
         XCTAssertTrue(day("dayRow.wedding", in: app).label.contains("结婚纪念日 draft") ||
                       day("upcomingDay.wedding", in: app).label.contains("结婚纪念日 draft"))
     }
+
+    func testLinkClosesSettingsToShowItsDay() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchArguments = ["--tab", "home", "--seed-sample-data"]
+        app.launch()
+        let settings = app.buttons["home.settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 10))
+        settings.tap()
+        let data = app.buttons["settings.data"]
+        XCTAssertTrue(data.waitForExistence(timeout: 5))
+
+        open("daysremember://day/baby")
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: data)
+        waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.buttons["detail.moreActions"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["小年糕出生"].exists)
+    }
 }

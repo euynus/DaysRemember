@@ -5,6 +5,7 @@ struct DetailView: View {
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(DeepLinkRouter.self) private var router
     @Environment(\.editDay) private var editDay
     let dayID: String
     /// The last value shown, so a pop animation after deletion never renders an empty screen.
@@ -87,6 +88,10 @@ struct DetailView: View {
         .sensoryFeedback(.impact(flexibility: .soft), trigger: day.pinned)
         .sheet(isPresented: $showShare) {
             ShareCardView(day: currentDay)
+        }
+        .onChange(of: router.linkOpenCount) {
+            showShare = false
+            showDeleteConfirm = false
         }
         .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("删除", role: .destructive) {

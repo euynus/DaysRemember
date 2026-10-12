@@ -4,6 +4,7 @@ struct HomeView: View {
     @Environment(DayStore.self) var store
     @Environment(\.currentDay) private var today
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(DeepLinkRouter.self) private var router
     @State private var filter: Filter = .all
     @State private var isSearching = false
     @State private var searchText = ""
@@ -115,6 +116,7 @@ struct HomeView: View {
             if case .category(let id) = filter, !ids.contains(id) { filter = .all }
         }
         .sheet(isPresented: $showingSettings) { SettingsView() }
+        .onChange(of: router.linkOpenCount) { showingSettings = false }
     }
 
     private var header: some View {
