@@ -29,9 +29,14 @@ struct CategoryEditorView: View {
         return !category.isSystem && store.categories.contains { $0.id != category.id }
     }
 
+    static func iconChoices(for icon: String) -> [(symbol: String, label: String)] { choices }
+
+    static func isSelected(_ symbol: String, icon: String) -> Bool { icon == symbol }
+
     /// Curated SF Symbols suited to anniversaries / life events — kept so custom
     /// categories that were created before stickers still round-trip their icon.
-    private static let iconChoices: [(symbol: String, label: String)] = [
+    /// Built on each use: the app changes language without relaunching.
+    private static var choices: [(symbol: String, label: String)] { [
         ("heart", String(localized: "爱心", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
         ("house", String(localized: "房屋", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
         ("airplane", String(localized: "飞机", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
@@ -50,7 +55,7 @@ struct CategoryEditorView: View {
         ("flag", String(localized: "旗帜", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
         ("bell", String(localized: "铃铛", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
         ("tag", String(localized: "标签", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
-    ]
+    ] }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -163,8 +168,8 @@ struct CategoryEditorView: View {
             SectionHeader(String(localized: "图标", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
                       spacing: 10) {
-                ForEach(Self.iconChoices, id: \.symbol) { choice in
-                    let selected = icon == choice.symbol
+                ForEach(Self.iconChoices(for: icon), id: \.symbol) { choice in
+                    let selected = Self.isSelected(choice.symbol, icon: icon)
                     Button {
                         icon = choice.symbol
                     } label: {

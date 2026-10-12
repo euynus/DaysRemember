@@ -18,6 +18,18 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertTrue(center.delegate is NotificationDelegate)
     }
 
+    /// The app changes language without relaunching, so the icon names must not be resolved once.
+    @MainActor
+    func testCategoryIconNamesFollowTheAppLanguage() {
+        let defaults = SharedStorage.defaults
+        let previous = defaults.object(forKey: AppLocalization.languageKey)
+        defer { defaults.set(previous, forKey: AppLocalization.languageKey) }
+        defaults.set("zh-Hans", forKey: AppLocalization.languageKey)
+        XCTAssertEqual(CategoryEditorView.iconChoices(for: "heart").first?.label, "爱心")
+        defaults.set("en", forKey: AppLocalization.languageKey)
+        XCTAssertEqual(CategoryEditorView.iconChoices(for: "heart").first?.label, "Heart")
+    }
+
     func testLegacyCategoryIconsKeepTheirMeaning() {
         let icons = ["plane": "airplane", "cake": "birthday.cake",
                      "cap": "graduationcap", "paw": "pawprint",
