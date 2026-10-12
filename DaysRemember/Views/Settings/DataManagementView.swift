@@ -209,10 +209,16 @@ struct DataManagementView: View {
         }
     }
 
+    /// Dated on the app's calendar; the ISO 8601 style alone would use UTC.
+    static func filename(_ name: String, on date: Date) -> String {
+        let day = Date.ISO8601FormatStyle(timeZone: CNDate.calendar.timeZone).year().month().day().dateSeparator(.dash)
+        return name + "-" + date.formatted(day)
+    }
+
     private func prepareExport(name: String, data: () throws -> Data) {
         do {
             document = BackupDocument(data: try data())
-            filename = name + "-" + Date.now.formatted(.iso8601.year().month().day().dateSeparator(.dash))
+            filename = Self.filename(name, on: .now)
             exporting = true
         } catch { message = error.localizedDescription }
     }

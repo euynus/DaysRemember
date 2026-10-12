@@ -239,6 +239,12 @@ final class BackupRecoveryTests: XCTestCase {
         XCTAssertEqual(DayBackup.BackupError.tooLarge.localizedDescription, "备份超过 100 MB，无法读取。")
     }
 
+    /// Before 08:00 in Beijing it is still the day before in UTC.
+    func testBackupFilenameUsesTheBeijingDate() throws {
+        let morning = try XCTUnwrap(CNDate.calendar.date(from: DateComponents(year: 2026, month: 10, day: 12, hour: 7, minute: 30)))
+        XCTAssertEqual(DataManagementView.filename("时光备份", on: morning), "时光备份-2026-10-12")
+    }
+
     func testPendingRestoreReplaysBeforeLoadingPartialDataAndOnlyOnce() throws {
         try withDefaults { defaults, suite in
             let target = backup()
