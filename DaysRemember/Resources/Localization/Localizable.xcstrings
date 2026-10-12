@@ -1,6 +1,98 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "水平 %lld%%，垂直 %lld%%" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Horizontal %1$lld%%, vertical %2$lld%%"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "水平 %lld%%，垂直 %lld%%"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "水平 %1$lld%%，垂直 %2$lld%%"
+          }
+        }
+      }
+    },
+    "上下轻扫调整照片的垂直位置，用操作调整水平位置" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe up or down to move the photo vertically, and use the actions to move it horizontally."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上下轻扫调整照片的垂直位置，用操作调整水平位置"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上下輕掃調整照片的垂直位置，用操作調整水平位置"
+          }
+        }
+      }
+    },
+    "取景向左" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Framing Left"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取景向左"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取景向左"
+          }
+        }
+      }
+    },
+    "取景向右" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Framing Right"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取景向右"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取景向右"
+          }
+        }
+      }
+    },
     "备份超过 100 MB，未能导出。清理「最近删除」和「同步保留版本」，或减少照片封面后再试。" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1556,29 +1648,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "三"
-          }
-        }
-      }
-    },
-    "上下轻扫调整照片裁剪位置" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe up or down to adjust the photo crop"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上下轻扫调整照片裁剪位置"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上下輕掃調整照片裁切位置"
           }
         }
       }

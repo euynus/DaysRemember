@@ -6,6 +6,28 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// VoiceOver hears where a photo is framed; a template cover has no framing to speak of.
+    func testCoverFramingSpeaksItsPositionOnlyForAPhoto() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchArguments = ["--seed-sample-data", "--seed-widget-photo", "--screen", "detail", "--day", "wedding"]
+        app.launch()
+        app.buttons["更多操作"].tap()
+        app.buttons["pencil"].firstMatch.tap()
+        let framing = app.descendants(matching: .any).matching(identifier: "coverFraming").firstMatch
+        XCTAssertTrue(framing.waitForExistence(timeout: 5))
+        XCTAssertEqual(framing.value as? String, "水平 50%，垂直 50%")
+        attach(app, name: "Photo cover with its list crop")
+
+        app.terminate()
+        app.launchArguments = ["--seed-sample-data", "--screen", "add"]
+        app.launch()
+        let template = app.descendants(matching: .any).matching(identifier: "coverFraming").firstMatch
+        for _ in 0..<3 where !template.exists { app.swipeUp() }
+        XCTAssertTrue(template.waitForExistence(timeout: 5))
+        XCTAssertEqual(template.value as? String ?? "", "")
+    }
+
     func testHomeFiltersKeepMinimumTargetsAndResetScrolledResults() {
         let app = launchPolishFixture()
         let all = app.buttons["全部"]

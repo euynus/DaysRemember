@@ -194,21 +194,27 @@ struct DayEditorView: View {
                   focusX: coverFocusX, focusY: coverFocusY,
                   flat: true, cornerRadius: 3)
             .frame(height: 200)
-            // Only a photo can be reframed; otherwise the preview must not swallow scrolling.
-            .gesture(focusDrag, including: photoData != nil ? .all : .subviews)
-            .accessibilityElement()
-            .accessibilityLabel("封面取景")
-            .accessibilityHint(photoData != nil
-                ? String(localized: "上下轻扫调整照片裁剪位置", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                : String(localized: "封面预览", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-            .accessibilityAdjustableAction { direction in
-                guard photoData != nil else { return }
-                switch direction {
-                case .increment: coverFocusY = clamp(coverFocusY - 0.1)
-                case .decrement: coverFocusY = clamp(coverFocusY + 0.1)
-                @unknown default: break
+            // Lists and square widgets crop a photo narrower than this preview does, so a sideways
+            // drag can change only them; the inset shows that crop.
+            .overlay(alignment: .bottomTrailing) {
+                if photoData != nil {
+                    PhotoTile(style: photo, imageData: photoData, focusX: coverFocusX, focusY: coverFocusY,
+                              flat: true, cornerRadius: 3, maximumPixelSize: 256)
+                        .frame(width: 44, height: 51)
+                        .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Color.white, lineWidth: 2) }
+                        .padding(10)
+                        .allowsHitTesting(false)
                 }
             }
+            // Only a photo can be reframed; otherwise the preview must not swallow scrolling.
+            .gesture(focusDrag, including: photoData != nil ? .all : .subviews)
+            .modifier(CoverFramingAccessibility(hasPhoto: photoData != nil, x: $coverFocusX, y: $coverFocusY))
+    }
+
+    /// The framing as VoiceOver reads it.
+    static func framingDescription(x: Double, y: Double) -> String {
+        String(localized: "水平 \(Int((x * 100).rounded()))%，垂直 \(Int((y * 100).rounded()))%",
+               bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     private var focusDrag: some Gesture {
@@ -795,4 +801,41 @@ struct DayEditorView: View {
         min(1, max(0, value))
     }
 
+}
+
+/// VoiceOver's version of the reframing drag: swipe up or down for the vertical position and use
+/// the actions for the horizontal one. A template cover can't be reframed, so it isn't adjustable.
+private struct CoverFramingAccessibility: ViewModifier {
+    let hasPhoto: Bool
+    @Binding var x: Double
+    @Binding var y: Double
+
+    private func step(_ value: Double, by delta: Double) -> Double { min(1, max(0, value + delta)) }
+
+    func body(content: Content) -> some View {
+        let element = content
+            .accessibilityElement()
+            .accessibilityLabel("封面取景")
+            .accessibilityIdentifier("coverFraming")
+        if hasPhoto {
+            element
+                .accessibilityValue(DayEditorView.framingDescription(x: x, y: y))
+                .accessibilityHint(String(localized: "上下轻扫调整照片的垂直位置，用操作调整水平位置", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment: y = step(y, by: -0.1)
+                    case .decrement: y = step(y, by: 0.1)
+                    @unknown default: break
+                    }
+                }
+                .accessibilityAction(named: Text(String(localized: "取景向左", bundle: AppLocalization.bundle, locale: AppLocalization.locale))) {
+                    x = step(x, by: -0.1)
+                }
+                .accessibilityAction(named: Text(String(localized: "取景向右", bundle: AppLocalization.bundle, locale: AppLocalization.locale))) {
+                    x = step(x, by: 0.1)
+                }
+        } else {
+            element.accessibilityHint(String(localized: "封面预览", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        }
+    }
 }
