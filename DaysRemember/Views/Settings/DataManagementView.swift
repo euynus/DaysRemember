@@ -21,72 +21,7 @@ struct DataManagementView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                if let error = store.loadError ?? store.saveError {
-                    Section {
-                        Label(error, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(Theme.accent)
-                        Button("导出原始数据", systemImage: "square.and.arrow.up") {
-                            prepareExport(name: String(localized: "时光原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: { try store.exportOriginalData() })
-                        }
-                    }
-                }
-                Section("iCloud") {
-                    Label(cloud.statusMessage, systemImage: "icloud")
-                    if let error = store.syncPreparationError {
-                        Text(error).foregroundStyle(Theme.accent)
-                    }
-                    if let error = cloud.errorMessage {
-                        Text(error).foregroundStyle(Theme.accent)
-                    }
-                    if let date = cloud.lastSentAt {
-                        LabeledContent("最近发送") { Text(date, format: .dateTime.month().day().hour().minute()) }
-                    }
-                    if let date = cloud.lastFetchedAt {
-                        LabeledContent("最近接收") { Text(date, format: .dateTime.month().day().hour().minute()) }
-                    }
-                    Button {
-                        store.enableCloudSync()
-                        Task { await cloud.syncNow() }
-                    } label: {
-                        Label("同步", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                    .disabled(cloud.isSyncing || store.loadError != nil)
-                    NavigationLink {
-                        SyncConflictsView()
-                    } label: {
-                        Label("同步保留版本（\(store.syncConflicts.count)）", systemImage: "clock.arrow.circlepath")
-                    }
-                    .disabled(store.loadError != nil)
-                    if cloud.status == .accountChanged {
-                        Button("确认使用当前 iCloud 账户", systemImage: "person.crop.circle.badge.checkmark") {
-                            confirmAccountChange = true
-                        }
-                    }
-                    if cloud.status == .zoneDeleted {
-                        Button("重新上传到 iCloud", systemImage: "icloud.and.arrow.up") {
-                            confirmReupload = true
-                        }
-                    }
-                    if hasLegacyData {
-                        Button("导入旧版 iCloud 数据", systemImage: "icloud.and.arrow.down") {
-                            confirmLegacyImport = true
-                        }
-                        .disabled(store.loadError != nil)
-                    }
-                }
-                backupSection
-                Section {
-                    NavigationLink {
-                        RecentlyDeletedView()
-                    } label: {
-                        Label("最近删除（\(store.deletedDays.count)）", systemImage: "trash")
-                    }
-                    .disabled(store.loadError != nil)
-                } footer: {
-                    Text("最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。")
-                }
-            }
+            dataForm
             .scrollContentBackground(.hidden)
             .background(Theme.bg)
             .navigationTitle("数据与同步")
@@ -172,6 +107,75 @@ struct DataManagementView: View {
             } message: { Text(message ?? "") }
         }
         .tint(Theme.accent)
+    }
+
+    private var dataForm: some View {
+        Form {
+            if let error = store.loadError ?? store.saveError {
+                Section {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(Theme.accent)
+                    Button("导出原始数据", systemImage: "square.and.arrow.up") {
+                        prepareExport(name: String(localized: "时光原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: { try store.exportOriginalData() })
+                    }
+                }
+            }
+            Section("iCloud") {
+                Label(cloud.statusMessage, systemImage: "icloud")
+                if let error = store.syncPreparationError {
+                    Text(error).foregroundStyle(Theme.accent)
+                }
+                if let error = cloud.errorMessage {
+                    Text(error).foregroundStyle(Theme.accent)
+                }
+                if let date = cloud.lastSentAt {
+                    LabeledContent("最近发送") { Text(date, format: .dateTime.month().day().hour().minute()) }
+                }
+                if let date = cloud.lastFetchedAt {
+                    LabeledContent("最近接收") { Text(date, format: .dateTime.month().day().hour().minute()) }
+                }
+                Button {
+                    store.enableCloudSync()
+                    Task { await cloud.syncNow() }
+                } label: {
+                    Label("同步", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(cloud.isSyncing || store.loadError != nil)
+                NavigationLink {
+                    SyncConflictsView()
+                } label: {
+                    Label("同步保留版本（\(store.syncConflicts.count)）", systemImage: "clock.arrow.circlepath")
+                }
+                .disabled(store.loadError != nil)
+                if cloud.status == .accountChanged {
+                    Button("确认使用当前 iCloud 账户", systemImage: "person.crop.circle.badge.checkmark") {
+                        confirmAccountChange = true
+                    }
+                }
+                if cloud.status == .zoneDeleted {
+                    Button("重新上传到 iCloud", systemImage: "icloud.and.arrow.up") {
+                        confirmReupload = true
+                    }
+                }
+                if hasLegacyData {
+                    Button("导入旧版 iCloud 数据", systemImage: "icloud.and.arrow.down") {
+                        confirmLegacyImport = true
+                    }
+                    .disabled(store.loadError != nil)
+                }
+            }
+            backupSection
+            Section {
+                NavigationLink {
+                    RecentlyDeletedView()
+                } label: {
+                    Label("最近删除（\(store.deletedDays.count)）", systemImage: "trash")
+                }
+                .disabled(store.loadError != nil)
+            } footer: {
+                Text("最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。")
+            }
+        }
     }
 
     private var backupSection: some View {
