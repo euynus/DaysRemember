@@ -155,10 +155,12 @@ final class DayStore {
 
     @discardableResult
     func saveCategories() -> Bool {
-        persist(categories, storageKey: categoriesKey)
+        persist(categories, storageKey: categoriesKey, failure: .categories)
     }
 
-    private func persist<Value: Encodable>(_ value: Value, storageKey: String) -> Bool {
+    /// `failure` picks the message shown when the write fails.
+    private func persist<Value: Encodable>(_ value: Value, storageKey: String,
+                                           failure: SaveFailure = .library) -> Bool {
         guard loadError == nil else { return false }
         do {
             let data = try (photoFiles?.encoder() ?? JSONEncoder()).encode(value)
@@ -169,7 +171,7 @@ final class DayStore {
             }
             return true
         } catch {
-            saveFailure = .library
+            saveFailure = failure
             return false
         }
     }
