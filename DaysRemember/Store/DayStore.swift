@@ -584,17 +584,31 @@ final class DayStore {
             isSystem: false
         )
         let label = updatedCategories[index].name
-        guard days.contains(where: { $0.categoryID == category.id && $0.categoryLabel != label }) else {
-            categories = updatedCategories
-            return saveError == nil
-        }
-        let updatedDays = days.map { day in
-            guard day.categoryID == category.id else { return day }
+        func stale(_ day: Day) -> Bool { day.categoryID == category.id && day.categoryLabel != label }
+        func relabeled(_ day: Day) -> Day {
+            guard stale(day) else { return day }
             var updated = day
             updated.categoryLabel = label
             return updated
         }
-        commitCategoryChange(days: updatedDays, categories: updatedCategories)
+        let staleConflict = syncConflicts.contains { conflict in
+            if case .day(let day) = conflict.record { return stale(day) }
+            return false
+        }
+        guard days.contains(where: stale) || deletedDays.contains(where: { stale($0.day) }) || staleConflict else {
+            categories = updatedCategories
+            return saveError == nil
+        }
+        // Copies in 最近删除 and 同步保留版本 take the new name too, as deleteCategory moves them.
+        let updatedDeleted = deletedDays.map { DeletedDay(day: relabeled($0.day), deletedAt: $0.deletedAt) }
+        let updatedConflicts = syncConflicts.map { conflict in
+            guard case .day(let day) = conflict.record else { return conflict }
+            var updated = conflict
+            updated.record = .day(relabeled(day))
+            return updated
+        }
+        commitCategoryChange(days: days.map(relabeled), categories: updatedCategories,
+                             deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
         return saveError == nil
     }
 

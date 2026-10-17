@@ -475,7 +475,14 @@ final class BackupRecoveryTests: XCTestCase {
             try store.restorePreviousBackup()
             XCTAssertEqual(store.days, [newerDay])
             XCTAssertEqual(store.category(for: newerCategory.id), newerCategory)
-            XCTAssertEqual(store.deletedDays, original.deletedDays)
+            // The local rename also renamed the category's day in 最近删除.
+            let renamedTrash = original.deletedDays.map { entry in
+                var day = entry.day
+                if day.categoryID == newerCategory.id { day.categoryLabel = newerCategory.name }
+                return DeletedDay(day: day, deletedAt: entry.deletedAt)
+            }
+            XCTAssertNotEqual(renamedTrash, original.deletedDays)
+            XCTAssertEqual(store.deletedDays, renamedTrash)
         }
     }
 

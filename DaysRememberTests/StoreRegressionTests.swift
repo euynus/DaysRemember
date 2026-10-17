@@ -119,6 +119,32 @@ final class StoreRegressionTests: XCTestCase {
         }
     }
 
+    /// Renaming a category renames it on the copies in 最近删除 and 同步保留版本 too, so a
+    /// restored copy comes back under the current name.
+    func testRenamingCategoryRelabelsRecoverableCopies() throws {
+        try withSuite { defaults in
+            let store = DayStore(defaults: defaults)
+            var category = store.addCategory(name: "Trips", icon: "tag", colorToken: .dusty)
+            let trashed = Day(id: "trashed", title: "Trashed", date: Date(), category: .life,
+                              photo: .home, categoryID: category.id, categoryLabel: "Trips")
+            let replaced = Day(id: "replaced", title: "Replaced", date: Date(), category: .life,
+                               photo: .home, categoryID: category.id, categoryLabel: "Trips")
+            try store.restoreBackup(DayBackup(days: [], categories: store.categories,
+                                              deletedDays: [DeletedDay(day: trashed, deletedAt: .now)],
+                                              syncConflicts: [SyncConflict(record: .day(replaced))]))
+
+            category.name = "Trip plans"
+            XCTAssertTrue(store.updateCategory(category))
+            XCTAssertEqual(store.deletedDays.map(\.day.categoryLabel), ["Trip plans"])
+            guard case .day(let kept) = store.syncConflicts.first?.record else { return XCTFail("conflict kept") }
+            XCTAssertEqual(kept.categoryLabel, "Trip plans")
+            XCTAssertEqual(DayStore(defaults: defaults).deletedDays, store.deletedDays)
+
+            try store.restoreSyncConflict(id: try XCTUnwrap(store.syncConflicts.first).id)
+            XCTAssertEqual(store.days.first(where: { $0.id == "replaced" })?.categoryLabel, "Trip plans")
+        }
+    }
+
     func testCategoryAppearanceDoesNotPersistDaysButRenameDoes() {
         withRestoredDefaults {
             let store = DayStore()
