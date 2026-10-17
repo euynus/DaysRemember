@@ -4,7 +4,7 @@ A multilingual anniversary and countdown app built with SwiftUI, iOS 17+. Native
 
 ## Screenshots
 
-App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha channel) live in `docs/screenshots/<language>/`: home, day detail, calendar, widget preview, share card, and categories. `bash scripts/screenshots.sh` regenerates all three languages on a disposable iPhone 17 Pro Max, with translated sample days and today pinned to 2026-04-23 (the calendar to 2026-07-08, so the month has days in it). The detail, widget, and share screens are opened directly and therefore show no tab bar.
+App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha channel) live in `docs/screenshots/<language>/`: home (Ahead), day detail, calendar, widget preview, share card, Me, and home's Past face. `bash scripts/screenshots.sh` regenerates all three languages on a disposable iPhone 17 Pro Max, with translated sample days and today pinned to 2026-04-23 (the calendar to 2026-07-08, so the month has days in it). The detail, widget, and share screens are opened directly and therefore show no tab bar.
 
 `bash scripts/promo-video.sh` draws a promotional video from the Simplified Chinese screenshots and the cover illustrations: 9:16 (1080 × 1920), 30 fps, about 28 seconds, silent, with Chinese captions. It writes `build/promo/days-remember-promo-zh-Hans.mp4` and a contact sheet with one frame per second; add music in an editor before posting.
 
@@ -16,7 +16,8 @@ App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha 
 <img src="docs/screenshots/zh-Hans/03-calendar.jpg" width="130" alt="Calendar">
 <img src="docs/screenshots/zh-Hans/04-widgets.jpg" width="130" alt="Widget preview">
 <img src="docs/screenshots/zh-Hans/05-share.jpg" width="130" alt="Share card">
-<img src="docs/screenshots/zh-Hans/06-categories.jpg" width="130" alt="Categories">
+<img src="docs/screenshots/zh-Hans/06-me.jpg" width="130" alt="Me">
+<img src="docs/screenshots/zh-Hans/07-past.jpg" width="130" alt="Past">
 </p>
 
 **繁體中文**
@@ -27,7 +28,8 @@ App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha 
 <img src="docs/screenshots/zh-Hant/03-calendar.jpg" width="130" alt="Calendar">
 <img src="docs/screenshots/zh-Hant/04-widgets.jpg" width="130" alt="Widget preview">
 <img src="docs/screenshots/zh-Hant/05-share.jpg" width="130" alt="Share card">
-<img src="docs/screenshots/zh-Hant/06-categories.jpg" width="130" alt="Categories">
+<img src="docs/screenshots/zh-Hant/06-me.jpg" width="130" alt="Me">
+<img src="docs/screenshots/zh-Hant/07-past.jpg" width="130" alt="Past">
 </p>
 
 **English**
@@ -38,7 +40,8 @@ App Store screenshots for the 6.9-inch iPhone slot (1320 × 2868 JPEG, no alpha 
 <img src="docs/screenshots/en/03-calendar.jpg" width="130" alt="Calendar">
 <img src="docs/screenshots/en/04-widgets.jpg" width="130" alt="Widget preview">
 <img src="docs/screenshots/en/05-share.jpg" width="130" alt="Share card">
-<img src="docs/screenshots/en/06-categories.jpg" width="130" alt="Categories">
+<img src="docs/screenshots/en/06-me.jpg" width="130" alt="Me">
+<img src="docs/screenshots/en/07-past.jpg" width="130" alt="Past">
 </p>
 
 ## Website

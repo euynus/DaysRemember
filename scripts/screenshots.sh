@@ -83,7 +83,8 @@ for entry in zh-Hans:zh_CN zh-Hant:zh_TW en:en_US; do
     capture "$language" "$locale" 2026-07-08 03-calendar --tab calendar
     capture "$language" "$locale" 1 04-widgets --screen widgets --widget-size large
     capture "$language" "$locale" 1 05-share --screen share --day japan
-    capture "$language" "$locale" 1 06-categories --tab categories
+    capture "$language" "$locale" 1 06-me --tab me
+    capture "$language" "$locale" 1 07-past --tab home --face past
 done
 
 sips -g pixelWidth -g pixelHeight -g hasAlpha "$docs_dir/zh-Hans/01-home.jpg" | tail -3
