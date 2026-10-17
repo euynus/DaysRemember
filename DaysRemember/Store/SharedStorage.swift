@@ -9,6 +9,7 @@ enum SharedStorage {
     static let appGroupID = "group.com.shiguang.daysremember"
     static let daysKey = "days.v2"
     static let legacyDaysKey = "days.v1"
+    static let categoriesKey = "categories.v1"
 
     static let defaults: UserDefaults = {
         UserDefaults(suiteName: appGroupID) ?? .standard
@@ -24,6 +25,13 @@ enum SharedStorage {
                          photoDirectory: URL = SharedStorage.photoDirectory) -> [Day] {
         guard let data = defaults.data(forKey: daysKey) ?? defaults.data(forKey: legacyDaysKey) else { return [] }
         return (try? PhotoFileStore(directory: photoDirectory).decoder().decode([Day].self, from: data)) ?? []
+    }
+
+    /// The stored category definitions, which give custom categories their colours.
+    /// Missing or unreadable data yields none; days then fall back as they do in the app.
+    static func loadCategories(defaults: UserDefaults = SharedStorage.defaults) -> [CategoryDefinition] {
+        guard let data = defaults.data(forKey: categoriesKey) else { return [] }
+        return (try? JSONDecoder().decode([CategoryDefinition].self, from: data)) ?? []
     }
 
     /// Day metadata without file-backed photo bytes. Widget extensions have a small memory

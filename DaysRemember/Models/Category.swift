@@ -139,4 +139,11 @@ struct CategoryDefinition: Identifiable, Codable, Hashable {
         case .life: return .terracotta
         }
     }
+
+    /// The colour of a day's category among `categories`, as `DayStore.category(for:)` resolves
+    /// it: a system category keeps its own colour even when the list lacks it, and a category
+    /// that hasn't arrived yet falls back to 生活.
+    static func colorToken(for day: Day, in categories: [CategoryDefinition]) -> CategoryColorToken {
+        (categories + system).first(where: { $0.id == day.categoryID })?.colorToken ?? .terracotta
+    }
 }

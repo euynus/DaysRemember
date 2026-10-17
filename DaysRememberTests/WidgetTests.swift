@@ -20,6 +20,28 @@ final class WidgetTests: XCTestCase {
         XCTAssertLessThanOrEqual(max(thumbnail.width, thumbnail.height), 720)
     }
 
+    /// The widget paints a custom category's own colour, read from the shared App Group the
+    /// store writes, not the 生活 colour the editor stores on such a day's `category`.
+    @MainActor
+    func testCustomCategoryColoursReachTheWidget() throws {
+        let suite = "WidgetTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = DayStore(defaults: defaults)
+        let custom = store.addCategory(name: "雾", icon: "cloud", colorToken: .dusty)
+        let day = Day(id: "custom", title: "雾", date: Date(), category: .life, photo: .home,
+                      categoryID: custom.id, categoryLabel: custom.name)
+        let shared = SharedStorage.loadCategories(defaults: defaults)
+
+        XCTAssertEqual(CategoryDefinition.colorToken(for: day, in: shared), .dusty)
+        XCTAssertEqual(CategoryDefinition.colorToken(for: day, in: shared), store.category(for: day).colorToken)
+        // Before the definition arrives the day falls back to 生活, as in the app.
+        XCTAssertEqual(CategoryDefinition.colorToken(for: day, in: []), store.category(for: "custom.pending").colorToken)
+        let travel = Day(id: "travel", title: "旅", date: Date(), category: .travel, photo: .home)
+        XCTAssertEqual(CategoryDefinition.colorToken(for: travel, in: []), .dusty)
+        XCTAssertTrue(SharedStorage.loadCategories(defaults: UserDefaults(suiteName: "\(suite).empty")!).isEmpty)
+    }
+
     func testAutomaticAndExplicitSelection() {
         let today = CNDate.calendar.date(from: DateComponents(year: 2026, month: 10, day: 2))!
         let past = Day(id: "past", title: "过去", date: today.addingTimeInterval(-86400),

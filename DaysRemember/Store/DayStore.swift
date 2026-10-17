@@ -68,7 +68,7 @@ final class DayStore {
 
     private let storageKey: String
     private let photoFiles: PhotoFileStore?
-    private let categoriesKey = "categories.v1"
+    private let categoriesKey = SharedStorage.categoriesKey
     private let deletedKey = "deletedDays.v1"
     private let conflictsKey = "syncConflicts.v1"
     private let recoveryKey = "recoveryBackup.v1"

@@ -33,6 +33,8 @@ struct DaysEntry: TimelineEntry {
     var date: Date
     var day: Day?
     var selectionMissing: Bool = false
+    /// The day's category colour, custom categories included.
+    var colorToken: CategoryColorToken? = nil
 }
 
 struct DaysProvider: AppIntentTimelineProvider {
@@ -42,7 +44,8 @@ struct DaysProvider: AppIntentTimelineProvider {
 
     func snapshot(for configuration: SelectWidgetDay, in context: Context) async -> DaysEntry {
         var photos = PhotoLoader(library: SharedStorage.loadLibrary(), family: context.family)
-        let entry = makeEntry(configuration: configuration, photos: &photos, asOf: Date())
+        let entry = makeEntry(configuration: configuration, photos: &photos,
+                              categories: SharedStorage.loadCategories(), asOf: Date())
         return context.isPreview && configuration.day == nil && entry.day == nil
             ? placeholder(in: context) : entry
     }
@@ -50,17 +53,20 @@ struct DaysProvider: AppIntentTimelineProvider {
     func timeline(for configuration: SelectWidgetDay, in context: Context) async -> Timeline<DaysEntry> {
         let now = Date()
         var photos = PhotoLoader(library: SharedStorage.loadLibrary(), family: context.family)
+        let categories = SharedStorage.loadCategories()
         let entries = ([now] + CNDate.dayStarts(after: now, count: 7)).map {
-            makeEntry(configuration: configuration, photos: &photos, asOf: $0)
+            makeEntry(configuration: configuration, photos: &photos, categories: categories, asOf: $0)
         }
         return Timeline(entries: entries, policy: .atEnd)
     }
 
-    private func makeEntry(configuration: SelectWidgetDay, photos: inout PhotoLoader, asOf today: Date) -> DaysEntry {
+    private func makeEntry(configuration: SelectWidgetDay, photos: inout PhotoLoader,
+                           categories: [CategoryDefinition], asOf today: Date) -> DaysEntry {
         let days = photos.library.days
         let day = WidgetDay.resolve(in: days, selectedID: configuration.day?.id, today: today)
         return DaysEntry(date: today, day: day.map { photos.load($0) },
-                         selectionMissing: configuration.day != nil && day == nil)
+                         selectionMissing: configuration.day != nil && day == nil,
+                         colorToken: day.map { CategoryDefinition.colorToken(for: $0, in: categories) })
     }
 
     /// Reads each displayed photo once per timeline; Lock Screen layouts never show photos.
@@ -96,7 +102,7 @@ struct DaysWidgetEntryView: View {
                 DayAccessoryWidget(day: entry.day, style: accessoryStyle, today: entry.date,
                                    selectionMissing: entry.selectionMissing)
             } else if let day = entry.day {
-                DayWidgetCard(day: day, size: cardSize, today: entry.date)
+                DayWidgetCard(day: day, size: cardSize, today: entry.date, colorToken: entry.colorToken)
             } else {
                 DayWidgetEmptyState(selectionMissing: entry.selectionMissing)
             }

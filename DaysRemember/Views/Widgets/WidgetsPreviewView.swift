@@ -68,7 +68,8 @@ struct WidgetsPreviewView: View {
                         .background(Color.black)
                         .environment(\.colorScheme, .dark)
                 } else if let day {
-                    DayWidgetCard(day: day, size: size, today: today)
+                    DayWidgetCard(day: day, size: size, today: today,
+                                  colorToken: store.category(for: day).colorToken)
                         .frame(width: size == .small ? 160 : 320,
                                height: size == .large ? 340 : 160)
                         .clipShape(RoundedRectangle(cornerRadius: 24))

@@ -7,6 +7,8 @@ struct DayWidgetCard: View {
     let day: Day
     let size: Size
     var today: Date = Today.date
+    /// The day's category colour; nil resolves it from the system categories alone.
+    var colorToken: CategoryColorToken? = nil
     @Environment(\.widgetRenderingMode) private var renderingMode
 
     private var info: DayInfo { DayInfo.compute(day, today: today) }
@@ -63,8 +65,8 @@ struct DayWidgetCard: View {
     /// The card's pastel and the colour drawn on it; count-up days are lavender.
     private var palette: (tint: Color, ink: Color) {
         if info.isPast { return (Theme.memory, Theme.memoryInk) }
-        let category = DayCategory(rawValue: day.categoryID) ?? day.category
-        return (category.soft, category.color)
+        let token = colorToken ?? CategoryDefinition.colorToken(for: day, in: CategoryDefinition.system)
+        return (token.soft, token.color)
     }
 
     /// A photo keeps its own tile; a preset is the flat illustration on the pastel.
