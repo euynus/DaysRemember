@@ -74,9 +74,9 @@ function media(query) {
 }
 
 function features() {
-  return el("ul", { class: "rows" },
-    el("li", { class: "row reveal" }, el("p", { class: "figure" }, el("b", {}, "24"), el("small", {}, "个节气"))),
-    el("li", { class: "row reveal" }, el("p", { class: "figure" }, el("b", {}, "30"), el("small", {}, "天内可恢复"))));
+  return el("ul", { class: "bento" },
+    el("li", { class: "tile tone-mint reveal" }, el("p", { class: "figure" }, el("b", {}, "24"), el("small", {}, "个节气"))),
+    el("li", { class: "tile tone-mint reveal" }, el("p", { class: "figure" }, el("b", {}, "30"), el("small", {}, "天内可恢复"))));
 }
 
 function demo() {
@@ -94,7 +94,7 @@ function demo() {
 // Print never scrolls anything into view, and a reveal that just started is still transparent.
 test("printing shows every section with its final figures", () => {
   const site = runSite({ motion: true, now: beijingNoon("2026-10-12"), body: [features(), ...demo()] });
-  const figures = site.$$(".row .figure b");
+  const figures = site.$$(".tile .figure b");
   assert.deepEqual(figures.map((figure) => figure.textContent), ["0", "0"], "figures wait for their rows");
   const card = site.$("[data-demo-card]");
   site.intersect(card);
@@ -104,12 +104,52 @@ test("printing shows every section with its final figures", () => {
   const counting = runSite({ motion: true, now: beijingNoon("2026-10-12"), body: [features(), ...demo()] });
   counting.intersect(counting.$("[data-demo-card]"));
   counting.window.dispatchEvent({ type: "beforeprint" });
-  assert.deepEqual(counting.$$(".row .figure b").map((figure) => figure.textContent), ["24", "30"]);
+  assert.deepEqual(counting.$$(".tile .figure b").map((figure) => figure.textContent), ["24", "30"]);
   assert.equal(counting.$("[data-demo-card] .figure b").textContent, days, "the demo shows its final count");
 
   const print = media("print");
   assert.match(print, /\.motion \.reveal:not\(\.in\)\s*\{[^}]*opacity:\s*1/);
   assert.match(print, /animation:\s*none/);
+});
+
+// As on the app's 已过 face, a one-time day that has passed counts up on lavender, toward its next
+// round number (Milestone.swift), in the app's words for each language.
+test("the demo counts a past one-time day up toward its next round number", () => {
+  const words = {
+    "zh-Hans": { ahead: "还有", since: "已经", unit: "天", days: "169 天后满 2,500 天", years: "3 天后满 6 年" },
+    "zh-Hant": { ahead: "還有", since: "已經", unit: "天", days: "169 天後滿 2,500 天", years: "3 天後滿 6 年" },
+    en: { ahead: "In", since: "For", unit: "days", days: "2,500 days in 169 days", years: "6 years in 3 days" }
+  };
+  for (const [lang, expected] of Object.entries(words)) {
+    const body = demo();
+    const figure = body[1].querySelector(".figure");
+    figure.insertBefore(el("span", { "data-lead": "" }), figure.querySelector("b"));
+    const site = runSite({ lang, now: beijingNoon("2026-10-17"), body });
+    const form = site.$("[data-demo]");
+    const card = site.$("[data-demo-card]");
+    const enter = (date, recurring) => {
+      site.$("#demo-date").value = date;
+      site.$("#demo-recurring").checked = recurring;
+      form.dispatchEvent({ type: "input" });
+    };
+
+    enter("2020-05-30", false);
+    assert.ok(card.classList.contains("is-past"), lang);
+    assert.equal(card.querySelector("[data-lead]").textContent, expected.since, lang);
+    assert.equal(card.querySelector(".figure b").textContent, "2,331", lang);
+    assert.equal(card.querySelector(".figure small").textContent, expected.unit, lang);
+    assert.equal(card.querySelector("[data-elapsed]").textContent, expected.days, lang);
+
+    // A whole year comes before the next 500 days.
+    enter("2020-10-20", false);
+    assert.equal(card.querySelector("[data-elapsed]").textContent, expected.years, lang);
+
+    // Repeating every year, it counts down to the next anniversary again.
+    enter("2020-05-30", true);
+    assert.ok(!card.classList.contains("is-past"), lang);
+    assert.equal(card.querySelector("[data-lead]").textContent, expected.ahead, lang);
+    assert.equal(card.querySelector(".figure b").textContent, "225", lang);
+  }
 });
 
 // WCAG 2.2.2: an on-page control pauses content that moves on its own for more than 5 s.

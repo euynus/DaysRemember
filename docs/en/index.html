@@ -87,7 +87,7 @@
 <body>
   <div class="wrap">
     <header class="site-header">
-      <a class="brand" href="./"><img src="../assets/icon-180.png" alt="" width="32" height="32">Days Remember</a>
+      <a class="brand" href="./"><img src="../assets/icon-180.png" alt="" width="36" height="36">Days Remember</a>
       <nav class="languages" aria-label="Language">
         <a href="../" lang="zh-Hans">简体</a>
         <a href="../zh-Hant/" lang="zh-Hant">繁體</a>
@@ -107,7 +107,9 @@
             <span class="requirements">Free · iPhone · iOS 17 or later</span>
           </div>
         </div>
-        <div class="phone"><img src="../screenshots/en/01-home.jpg" width="1320" height="2868" alt="The Days tab in Days Remember, on Ahead: Mom’s Birthday is in 69 days, with the other days as colored cards below"></div>
+        <div class="hero-art">
+          <div class="phone"><img src="../screenshots/en/01-home.jpg" width="1320" height="2868" alt="The Days tab in Days Remember, on Ahead: Mom’s Birthday is in 69 days, with the other days as colored cards below"></div>
+        </div>
       </section>
 
       <section class="section" aria-labelledby="demo-heading">
@@ -131,15 +133,13 @@
             </label>
             <p class="demo-note">Counted in Beijing time, as in the app. In the app, a day can also repeat by the lunar calendar.</p>
           </form>
-          <div class="day-card reveal" data-demo-card aria-live="polite">
-            <div class="cover"><img src="../assets/covers/celebration.svg" alt="" width="200" height="200"></div>
-            <div class="day-card-body">
-              <div class="day-card-title">
-                <strong data-title>Wedding Anniversary</strong>
-                <span data-date>October 12, 2019</span>
-              </div>
-              <p class="figure"><b>—</b><small></small></p>
+          <div class="day-card tone-rose reveal" data-demo-card aria-live="polite">
+            <img class="cover" src="../assets/covers/flowers.svg" alt="A vase of flowers" width="200" height="200">
+            <div class="day-card-title">
+              <strong data-title>Wedding Anniversary</strong>
+              <span data-date>October 12, 2019</span>
             </div>
+            <p class="figure"><span data-lead></span><b>—</b><small></small></p>
             <p class="elapsed" data-elapsed></p>
           </div>
         </div>
@@ -150,50 +150,100 @@
           <p class="eyebrow">Features</p>
           <h2 id="features-heading">Keep the days that matter on your Home Screen, with gentle reminders</h2>
         </div>
-        <ul class="rows">
-          <li class="row reveal">
-            <img src="../assets/covers/mountains.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Ahead and Past</h3><p>The Days tab has two sides. Ahead counts down to the days still to come, with the five nearest at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.</p></div>
+        <ul class="bento">
+          <li class="tile tone-apricot is-wide reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/celebration.svg" alt="A birthday cake with a candle" width="200" height="200" loading="lazy">
+              <h3>Ahead and Past</h3>
+              <p>The Days tab has two sides. Ahead counts down to the days still to come, with the five nearest at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.</p>
+            </div>
             <p class="figure"><b>2</b><small>views</small></p>
           </li>
-          <li class="row reveal">
-            <img src="../assets/covers/garden.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Lunar calendar and solar terms</h3><p>Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.</p></div>
+          <li class="tile tone-lavender reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/companionship.svg" alt="A puppy and a kitten under a heart" width="200" height="200" loading="lazy">
+              <h3>Round numbers</h3>
+              <p>Days under Past show their next round number: every 100 days up to 1,000, every 500 after that, or a whole year.</p>
+            </div>
+            <p class="figure"><b>100</b><small>days, 500 days or a year</small></p>
+          </li>
+          <li class="tile tone-mint reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/garden.svg" alt="A watering can and a potted plant" width="200" height="200" loading="lazy">
+              <h3>Lunar calendar and solar terms</h3>
+              <p>Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.</p>
+            </div>
             <p class="figure"><b>24</b><small>solar terms</small></p>
           </li>
-          <li class="row reveal">
-            <img src="../assets/covers/coast.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Tap to change units</h3><p>In a day’s detail, tap the number to switch between days, weeks, months and hours. Below it are the day’s marks: the last and next anniversaries of a yearly day, or the next round number of a past day (every 100 days up to 1,000, every 500 after that, or a whole year).</p></div>
+          <li class="tile tone-sky reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/cafe.svg" alt="A steaming coffee and a croissant" width="200" height="200" loading="lazy">
+              <h3>Tap to change units</h3>
+              <p>In a day’s detail, tap the number to switch between days, weeks, months and hours. Below it are the day’s marks: the last and next anniversaries of a yearly day, or the next round number of a past day.</p>
+              <ul class="chips" aria-hidden="true"><li>Days</li><li>Weeks</li><li>Months</li><li>Hours</li></ul>
+            </div>
             <p class="figure"><b>4</b><small>units</small></p>
           </li>
-          <li class="row reveal">
-            <img src="../assets/covers/flowers.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Cover illustrations</h3><p>Every day is a card in its category’s color. Give it a photo of your own, or pick one of the flat illustrations. A new day starts with a cover that suits its category.</p></div>
-            <p class="figure"><b>12</b><small>illustrations</small></p>
-          </li>
-          <li class="row reveal">
-            <img src="../assets/covers/journal.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Reminders</h3><p>Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose. The Daily Greeting and Memories can be turned on separately.</p></div>
+          <li class="tile tone-lemon reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/journal.svg" alt="An open journal and a pencil" width="200" height="200" loading="lazy">
+              <h3>Reminders</h3>
+              <p>Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose. The Daily Greeting and Memories can be turned on separately.</p>
+            </div>
             <p class="figure"><b>7&thinsp;·&thinsp;3&thinsp;·&thinsp;1</b><small>days before</small></p>
           </li>
-          <li class="row reveal">
-            <img src="../assets/covers/homecoming.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Widgets</h3><p>Small, medium and large on the Home Screen, in the same colored cards as the app, plus three Lock Screen styles. Each widget can show a day of its own.</p></div>
+          <li class="tile tone-rose is-wide has-covers reveal">
+            <div class="tile-text">
+              <h3>Cover illustrations</h3>
+              <p>Every day is a card in its category’s color. Give it a photo of your own, or pick one of the flat illustrations. A new day starts with a cover that suits its category.</p>
+              <ul class="covers">
+                <li><img src="../assets/covers/flowers.svg" alt="A vase of flowers" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/celebration.svg" alt="A birthday cake with a candle" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/garden.svg" alt="A watering can and a potted plant" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/homecoming.svg" alt="A small house with a red roof" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/journal.svg" alt="An open journal and a pencil" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/voyage.svg" alt="A suitcase with stickers" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/companionship.svg" alt="A puppy and a kitten under a heart" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/everyday.svg" alt="A potted plant and a teapot" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/coast.svg" alt="A sailboat and an island house on the sea" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/mountains.svg" alt="Snowy mountains under the sun" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/cafe.svg" alt="A steaming coffee and a croissant" width="200" height="200" loading="lazy"></li>
+                <li><img src="../assets/covers/camping.svg" alt="A tent among pine trees under a crescent moon" width="200" height="200" loading="lazy"></li>
+              </ul>
+            </div>
+            <p class="figure"><b>12</b><small>illustrations</small></p>
+          </li>
+          <li class="tile tone-sky reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/homecoming.svg" alt="A small house with a red roof" width="200" height="200" loading="lazy">
+              <h3>Widgets</h3>
+              <p>Small, medium and large on the Home Screen, in the same colored cards as the app, plus three Lock Screen styles. Each widget can show a day of its own.</p>
+            </div>
             <p class="figure"><b>6</b><small>styles</small></p>
           </li>
-          <li class="row reveal">
-            <img src="../assets/covers/voyage.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Share cards</h3><p>Photo, Journal, Minimal and Split templates, with a 3:4 portrait export. Notes stay off the image unless you include them.</p></div>
+          <li class="tile tone-apricot reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/voyage.svg" alt="A suitcase with stickers" width="200" height="200" loading="lazy">
+              <h3>Share cards</h3>
+              <p>Photo, Journal, Minimal and Split templates, with a 3:4 portrait export. Notes stay off the image unless you include them.</p>
+            </div>
             <p class="figure"><b>4</b><small>templates</small></p>
           </li>
-          <li class="row reveal">
-            <img src="../assets/covers/everyday.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>Custom categories</h3><p>In Me, besides Love, Family, Travel, Work and Life, create categories of your own, each with its own icon and color.</p></div>
+          <li class="tile tone-white reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/everyday.svg" alt="A potted plant and a teapot" width="200" height="200" loading="lazy">
+              <h3>Custom categories</h3>
+              <p>In Me, besides Love, Family, Travel, Work and Life, create categories of your own, each with its own icon and color.</p>
+              <ul class="swatches" aria-hidden="true"><li class="tone-rose"></li><li class="tone-apricot"></li><li class="tone-sky"></li><li class="tone-mint"></li><li class="tone-lemon"></li></ul>
+            </div>
             <p class="figure"><b>5</b><small>colors</small></p>
           </li>
-          <li class="row reveal">
-            <img src="../assets/covers/companionship.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>iCloud sync</h3><p>Days, categories and photos sync across your devices through your own iCloud. A deleted day stays on each of your devices for 30 days, so you can restore it.</p></div>
+          <li class="tile tone-mint reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="../assets/covers/mountains.svg" alt="Snowy mountains under the sun" width="200" height="200" loading="lazy">
+              <h3>iCloud sync</h3>
+              <p>Days, categories and photos sync across your devices through your own iCloud. A deleted day stays on each of your devices for 30 days, so you can restore it.</p>
+            </div>
             <p class="figure"><b>30</b><small>days to restore</small></p>
           </li>
         </ul>
@@ -215,18 +265,20 @@
         </div>
       </section>
 
-      <section class="section promise" aria-labelledby="privacy-heading">
-        <p class="figure reveal"><b>0</b></p>
-        <div class="promise-text reveal">
-          <h2 id="privacy-heading">No data collected</h2>
-          <p>Your days, photos and settings stay on your devices and in your own iCloud. Nothing is sent to the developer.</p>
-          <ul><li>No account</li><li>No ads</li><li>No tracking</li><li>No third-party SDKs</li></ul>
-          <p><a href="../privacy/#en">Read the privacy policy</a></p>
+      <section class="section" aria-labelledby="privacy-heading">
+        <div class="promise reveal">
+          <p class="figure"><b>0</b></p>
+          <div class="promise-text">
+            <h2 id="privacy-heading">No data collected</h2>
+            <p>Your days, photos and settings stay on your devices and in your own iCloud. Nothing is sent to the developer.</p>
+            <ul><li>No account</li><li>No ads</li><li>No tracking</li><li>No third-party SDKs</li></ul>
+            <p><a href="../privacy/#en">Read the privacy policy</a></p>
+          </div>
         </div>
       </section>
 
       <section class="section" aria-labelledby="support-heading">
-        <div class="section-head reveal">
+        <div class="help reveal">
           <p class="eyebrow">Support</p>
           <h2 id="support-heading">Need help?</h2>
           <p>Choosing a day for a widget, missing reminders, moving to a new iPhone: answers and ways to get in touch are on the <a href="../support/#en">support page</a>.</p>

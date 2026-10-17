@@ -13,9 +13,12 @@
   var TEXT = {
     "zh-Hans": {
       locale: "zh-CN",
-      ahead: "天后", ago: "天前", today: "今天",
+      ahead: "还有", since: "已经", days: "天", today: "今天",
       elapsed: function (n) { return "已过 " + n + " 天"; },
       anniversary: function (n) { return "第" + n + "周年"; },
+      milestone: function (until, count, years) {
+        return (until === 0 ? "今天" : until + " 天后") + "满 " + count + (years ? " 年" : " 天");
+      },
       months: ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊"],
       leap: "闰",
       pauseShots: "暂停截图轮播",
@@ -23,9 +26,12 @@
     },
     "zh-Hant": {
       locale: "zh-TW",
-      ahead: "天後", ago: "天前", today: "今天",
+      ahead: "還有", since: "已經", days: "天", today: "今天",
       elapsed: function (n) { return "已過 " + n + " 天"; },
       anniversary: function (n) { return "第" + n + "週年"; },
+      milestone: function (until, count, years) {
+        return (until === 0 ? "今天" : until + " 天後") + "滿 " + count + (years ? " 年" : " 天");
+      },
       months: ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "臘"],
       leap: "閏",
       pauseShots: "暫停截圖輪播",
@@ -33,9 +39,13 @@
     },
     en: {
       locale: "en-US",
-      ahead: "days to go", aheadOne: "day to go", ago: "days ago", agoOne: "day ago", today: "Today",
+      ahead: "In", since: "For", days: "days", day: "day", today: "Today",
       elapsed: function (n, raw) { return n + (raw === 1 ? " day elapsed" : " days elapsed"); },
-      anniversary: function (n) { return "Anniversary " + n; },
+      anniversary: function (n) { return n + "-year anniversary"; },
+      milestone: function (until, count, years, rawUntil, rawCount) {
+        var mark = years ? count + (rawCount === 1 ? " year" : " years") : count + " days";
+        return until === 0 ? mark + " today" : mark + " in " + until + (rawUntil === 1 ? " day" : " days");
+      },
       pauseShots: "Pause screenshot slideshow",
       fullDate: function (y, m, d) {
         return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", year: "numeric", month: "long", day: "numeric" })
@@ -77,6 +87,28 @@
   function anniversaryIn(year, m, d) {
     if (m === 2 && d === 29 && !isLeapYear(year)) return dayNumber(year, 3, 1);
     return dayNumber(year, m, d);
+  }
+
+  // The next round number a day that has passed reaches (Milestone.swift): every 100 days up to
+  // 1,000, every 500 after that, or a whole year, whichever comes first. February 29 falls on
+  // February 28 in common years here, as Calendar's adding of years does.
+  function milestone(y, m, d, t) {
+    var elapsed = t - dayNumber(y, m, d);
+    if (elapsed < 0) return null;
+    var step = elapsed < 1000 ? 100 : 500;
+    var target = Math.max(step, Math.ceil(elapsed / step) * step);
+    var byDays = { count: target, until: dayNumber(y, m, d) + target - t, years: false };
+    function yearsLater(n) {
+      var year = y + n;
+      return m === 2 && d === 29 && !isLeapYear(year) ? dayNumber(year, 2, 28) : dayNumber(year, m, d);
+    }
+    var today = new Date(t * DAY);
+    var years = today.getUTCFullYear() - y;
+    if (yearsLater(years) > t) years -= 1;
+    years = Math.max(1, years);
+    if (yearsLater(years) < t) years += 1;
+    var byYears = { count: years, until: yearsLater(years) - t, years: true };
+    return byYears.until < byDays.until ? byYears : byDays;
   }
 
   function lunarDay(d) {
@@ -168,6 +200,7 @@
     var figure = card.querySelector(".figure");
     var valueOut = figure.querySelector("b");
     var unitOut = figure.querySelector("small");
+    var leadOut = figure.querySelector("[data-lead]");
     var elapsedOut = card.querySelector("[data-elapsed]");
     var revealed = false;
     var stop = function () {};
@@ -216,9 +249,16 @@
       }
 
       var diff = target - t;
+      // A one-time day that has passed counts up, on lavender, toward its next round number.
+      if (diff < 0) {
+        var next = milestone(y, m, d, t);
+        if (next) elapsed = TEXT.milestone(number.format(next.until), number.format(next.count), next.years, next.until, next.count);
+      }
       dateOut.textContent = label;
       elapsedOut.textContent = elapsed;
+      card.classList.toggle("is-past", diff < 0);
       figure.classList.toggle("is-today", diff === 0);
+      if (leadOut) leadOut.textContent = diff === 0 ? "" : diff > 0 ? TEXT.ahead : TEXT.since;
       if (diff === 0) {
         target = null;
         stop();
@@ -228,9 +268,7 @@
       } else {
         var count = Math.abs(diff);
         show(count, shownCount());
-        unitOut.textContent = diff > 0
-          ? (count === 1 && TEXT.aheadOne) || TEXT.ahead
-          : (count === 1 && TEXT.agoOne) || TEXT.ago;
+        unitOut.textContent = (count === 1 && TEXT.day) || TEXT.days;
       }
     }
 
@@ -250,10 +288,10 @@
     update();
   }
 
-  // Feature figures count up as their rows come into view; 7·3·1 stays as it is.
+  // Feature figures count up as their tiles come into view; 7·3·1 stays as it is.
   function countUpFigures() {
     if (!motion) return;
-    var rows = document.querySelectorAll(".row.reveal");
+    var rows = document.querySelectorAll(".tile.reveal");
     Array.prototype.forEach.call(rows, function (row) {
       var figure = row.querySelector(".figure b");
       if (!figure || !/^\d+$/.test(figure.textContent)) return;

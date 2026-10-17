@@ -1,34 +1,50 @@
-/* Layout: one journal column, like the app's home feed: a header, a live countdown,
-   feature rows with a cover thumbnail and a Baskerville figure, then a screenshot strip.
-   Light only, like the app. System fonts only: Google Fonts is unreachable in mainland China. */
+/* The app's 柔彩便当 look (DaysRemember/Theme/Tokens.swift): a light neutral ground, white cards,
+   each fact on a pastel tile in a category colour with a flat illustration, ink headings and pills,
+   heavy rounded numerals. Light only, like the app. System fonts only: Google Fonts is unreachable
+   in mainland China. */
 :root {
-  --paper: #FCFCFA;
-  --paper-2: #F0F0EE;
-  --cover: #F7F8F5;
-  --ink: #242424;
-  --ink-2: #646460;
-  --muted: #757570;
-  --accent: #BB4235;
-  --accent-soft: #F4E3E0;
-  /* The accent deepened to 5.1:1 on --accent-soft; --accent itself is 4.3:1 there. */
-  --accent-deep: #A8392D;
+  --bg: #F6F6F3;
+  --bg-2: #EFEEEA;
+  --card: #FFFFFF;
+  --ink: #24222B;
+  --ink-2: #5E5A66;
+  --muted: #6E6A75;
   --hairline: rgba(21, 23, 28, 0.08);
   --hairline-strong: rgba(21, 23, 28, 0.14);
+  --shadow: 0 10px 30px rgba(36, 34, 43, 0.1);
+
+  /* Category pastels and the text colour that goes on each; lavender is for count-up days. */
+  --rose: #FBE0E8;
+  --rose-ink: #9C2F55;
+  --apricot: #FCE5CB;
+  --apricot-ink: #8A4B12;
+  --sky: #DDEBFA;
+  --sky-ink: #23608F;
+  --mint: #D7EFE0;
+  --mint-ink: #2F6A47;
+  --lemon: #FBF0C4;
+  --lemon-ink: #7A5A0E;
+  --lavender: #E8E4F8;
+  --lavender-ink: #4B3F8F;
 
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  --font-number: Baskerville, "Libre Baskerville", "Baskerville Old Face", Georgia, "Times New Roman", serif;
+  --font-number: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", "Arial Rounded MT Bold",
+    -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
   --step--1: 0.8125rem;
   --step-0: 1rem;
   --step-1: 1.1875rem;
-  --step-2: 1.5rem;
-  --step-3: clamp(2.25rem, 1.6rem + 2.6vw, 3.5rem);
+  --step-2: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);
+  --step-3: clamp(2.75rem, 1.9rem + 3.6vw, 4.75rem);
+
+  --radius: 1.75rem;
+  --radius-small: 1.125rem;
 
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --page: 68rem;
+  --page: 72rem;
   --gutter: clamp(1rem, 4vw, 2.5rem);
   color-scheme: light;
 }
@@ -41,13 +57,22 @@
   font-family: var(--font-sans);
 }
 
+/* A pastel tile and the colour of its figures. White tiles carry ink. */
+.tone-rose { --tone: #FBE0E8; --tone-ink: #9C2F55; }
+.tone-apricot { --tone: #FCE5CB; --tone-ink: #8A4B12; }
+.tone-sky { --tone: #DDEBFA; --tone-ink: #23608F; }
+.tone-mint { --tone: #D7EFE0; --tone-ink: #2F6A47; }
+.tone-lemon { --tone: #FBF0C4; --tone-ink: #7A5A0E; }
+.tone-lavender { --tone: #E8E4F8; --tone-ink: #4B3F8F; }
+.tone-white { --tone: #FFFFFF; --tone-ink: #24222B; }
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: 1rem; }
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
   font-size: var(--step-0);
@@ -57,9 +82,9 @@ body {
 
 img { max-width: 100%; height: auto; display: block; }
 
-a { color: var(--accent); text-underline-offset: 0.2em; }
-a:hover { text-decoration-thickness: 2px; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+a { color: var(--ink); text-decoration-color: var(--hairline-strong); text-underline-offset: 0.2em; }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
 
 h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
 p { margin: 0; }
@@ -71,14 +96,14 @@ p { margin: 0; }
   padding-inline: var(--gutter);
 }
 
-/* Header */
+/* Header: the brand, and the languages as the app's segmented capsule. */
 .site-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem 1rem;
   padding-block: 1.25rem;
-  border-bottom: 1px solid var(--hairline);
 }
 .brand {
   display: flex;
@@ -86,59 +111,83 @@ p { margin: 0; }
   gap: 0.625rem;
   color: var(--ink);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 800;
+  font-size: var(--step-1);
 }
-.brand img { width: 2rem; height: 2rem; border-radius: 0.5rem; }
-.languages { display: flex; gap: 0.25rem; font-size: var(--step--1); }
-.languages a {
+.brand img { width: 2.25rem; height: 2.25rem; border-radius: 0.6rem; }
+.languages, .doc-languages {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: var(--bg-2);
+  font-size: var(--step--1);
+}
+.languages a, .doc-languages a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
   color: var(--ink-2);
   text-decoration: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
+  font-weight: 600;
 }
-.languages a[aria-current="page"] { color: var(--ink); background: var(--paper-2); font-weight: 600; }
+.languages a[aria-current="page"] { color: var(--ink); background: var(--card); font-weight: 800; box-shadow: 0 1px 4px rgba(36, 34, 43, 0.08); }
+.languages a:hover, .doc-languages a:hover { color: var(--ink); }
 
-/* Hero */
+/* Hero: the headline beside the home screen. */
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
   gap: clamp(2rem, 6vw, 5rem);
   align-items: center;
-  padding-block: clamp(2.5rem, 7vw, 5rem);
+  padding-block: clamp(1.5rem, 5vw, 4rem) clamp(2.5rem, 6vw, 4.5rem);
 }
 .hero-text { display: grid; gap: 1.25rem; min-width: 0; }
 .today {
   color: var(--muted);
   font-size: var(--step--1);
+  font-weight: 700;
   letter-spacing: 0.02em;
   min-height: 1.6em;
 }
-.hero h1 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.01em; }
-.hero h1 span { display: block; font-size: var(--step-2); font-weight: 500; color: var(--ink-2); margin-top: 0.75rem; letter-spacing: 0; }
-.lead { color: var(--ink-2); font-size: var(--step-1); max-width: 32em; }
+.hero h1 { font-size: var(--step-3); font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; }
+.hero h1 span { display: block; font-size: var(--step-2); font-weight: 800; color: var(--ink); margin-top: 0.75rem; letter-spacing: 0; line-height: 1.3; }
+.lead { color: var(--ink-2); font-size: var(--step-1); max-width: 30em; }
 .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; margin-top: 0.5rem; }
 .cta {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.8rem 1.4rem;
+  min-height: 3rem;
+  padding: 0 1.5rem;
   border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
+  background: var(--ink);
+  color: var(--card);
+  font-weight: 800;
   text-decoration: none;
 }
-.cta.is-soon { background: var(--accent-soft); color: var(--accent-deep); }
-.requirements { color: var(--muted); font-size: var(--step--1); }
+/* Not a link until release, so it isn't drawn as the app's ink action. */
+.cta.is-soon { background: var(--card); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--hairline-strong); }
+.requirements { color: var(--muted); font-size: var(--step--1); font-weight: 600; }
 
+/* The home screen on an apricot card, as a day sits on its category colour. */
+.hero-art {
+  display: grid;
+  place-items: center;
+  padding: clamp(1.25rem, 4vw, 2.75rem);
+  border-radius: 2.5rem;
+  background: var(--apricot);
+}
 .phone {
   position: relative;
-  justify-self: end;
   width: 100%;
-  max-width: 22rem;
+  max-width: 19rem;
   border-radius: 2.75rem;
-  border: 1px solid var(--hairline-strong);
-  background: var(--paper);
+  border: 0.375rem solid var(--card);
+  background: var(--card);
+  box-shadow: var(--shadow);
   overflow: hidden;
 }
 .phone img { width: 100%; }
@@ -156,10 +205,10 @@ p { margin: 0; }
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
-  border: 1px solid var(--hairline-strong);
+  border: 0;
   border-radius: 999px;
-  background: rgba(252, 252, 250, 0.92);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--card);
   cursor: pointer;
 }
 .phone-toggle::before {
@@ -175,125 +224,191 @@ p { margin: 0; }
 }
 
 /* Section scaffolding */
-.section { padding-block: clamp(2.5rem, 6vw, 4.5rem); border-top: 1px solid var(--hairline); }
+.section { padding-block: clamp(2rem, 5vw, 3.5rem); }
 .eyebrow {
-  color: var(--accent);
+  justify-self: start;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink-2);
   font-size: var(--step--1);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
-.section-head { display: grid; gap: 0.75rem; margin-bottom: 2rem; max-width: 40rem; }
-.section-head h2 { font-size: var(--step-2); font-weight: 700; }
+.section-head { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; max-width: 40rem; }
+.section-head h2 { font-size: var(--step-2); font-weight: 900; }
 .section-head p:not(.eyebrow) { color: var(--ink-2); }
 
-/* Countdown demo, shaped like the app's 即将到来 card */
+/* Countdown demo: a form on a white card beside a day, drawn as the app's hero card. */
 .demo {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: clamp(1.5rem, 5vw, 4rem);
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: clamp(1rem, 3vw, 1.5rem);
+  align-items: stretch;
 }
-.demo-form { display: grid; gap: 1rem; min-width: 0; }
+.demo-form {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: var(--radius);
+  background: var(--card);
+}
 .field { display: grid; gap: 0.375rem; }
-.field label, .check { color: var(--ink-2); font-size: var(--step--1); }
+.field label, .check { color: var(--ink-2); font-size: var(--step--1); font-weight: 700; }
 .field input {
   font: inherit;
   color: var(--ink);
-  background: #fff;
-  border: 1px solid var(--hairline-strong);
-  border-radius: 0.75rem;
-  padding: 0.7rem 0.9rem;
-  min-height: 2.75rem;
+  background: var(--bg);
+  border: 0;
+  border-radius: var(--radius-small);
+  padding: 0.7rem 1rem;
+  min-height: 3rem;
   width: 100%;
 }
 .field input:focus-visible { outline-offset: 1px; }
-.check { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
-.check input { width: 1.125rem; height: 1.125rem; accent-color: var(--accent); }
+.check { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; cursor: pointer; }
+.check input { width: 1.25rem; height: 1.25rem; accent-color: var(--ink); }
 .demo-note { color: var(--muted); font-size: var(--step--1); }
 
-.day-card { min-width: 0; }
-.day-card .cover {
-  background: var(--cover);
-  aspect-ratio: 16 / 10;
-  display: grid;
-  place-items: center;
-  max-width: 100%;
-}
-.day-card .cover img { width: 46%; }
-.day-card-body {
+.day-card {
+  position: relative;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-block: 1.25rem 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 19rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: var(--radius);
+  background: var(--tone);
+  overflow: hidden;
+  transition: background-color 0.3s var(--ease-out);
 }
-.day-card-title { min-width: 0; display: grid; gap: 0.25rem; }
-.day-card-title strong { font-size: var(--step-2); font-weight: 700; overflow-wrap: anywhere; }
+/* A one-time day that has passed counts up, on the app's lavender. */
+.day-card.is-past { --tone: #E8E4F8; --tone-ink: #4B3F8F; }
+.day-card .cover { position: absolute; right: -0.5rem; bottom: -0.5rem; width: min(48%, 14rem); }
+.day-card-title { position: relative; display: grid; gap: 0.25rem; max-width: 100%; }
+.day-card-title strong { font-size: var(--step-2); font-weight: 900; line-height: 1.25; overflow-wrap: anywhere; }
 .day-card-title span { color: var(--ink-2); font-size: var(--step--1); }
-.figure { display: flex; align-items: baseline; gap: 0.35rem; white-space: nowrap; color: var(--accent); }
+.day-card .figure { position: relative; margin-top: auto; padding-top: 1.5rem; color: var(--ink); }
+.day-card .figure b { font-size: clamp(4rem, 2.5rem + 6vw, 6.5rem); }
+.day-card .figure small { color: var(--ink); font-size: var(--step-1); font-weight: 800; }
+.elapsed { position: relative; color: var(--ink-2); font-weight: 600; padding-top: 0.5rem; min-height: 2.1em; max-width: 60%; }
+
+.figure { display: flex; align-items: baseline; gap: 0.35rem; white-space: nowrap; color: var(--tone-ink, var(--ink)); }
 .figure b {
   font-family: var(--font-number);
-  font-weight: 400;
-  font-size: clamp(3.5rem, 2.5rem + 4vw, 5.5rem);
+  font-weight: 900;
+  font-size: 3rem;
   line-height: 0.9;
-  font-variant-numeric: lining-nums;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums lining-nums;
 }
-.figure small { font-size: var(--step--1); }
-.figure.is-today b { font-family: var(--font-sans); font-weight: 700; font-size: clamp(2.25rem, 1.8rem + 2vw, 3rem); }
-.elapsed { color: var(--ink-2); padding-top: 0.75rem; min-height: 2.35em; }
+.figure small, .figure span { font-size: var(--step--1); font-weight: 800; }
+.figure.is-today b { font-family: var(--font-sans); font-size: clamp(2.5rem, 2rem + 2vw, 3.5rem); letter-spacing: 0; }
 
-/* Feature rows, shaped like the app's 其他日子 list */
-.rows { list-style: none; margin: 0; padding: 0; }
-.row {
+/* Features: a bento grid of pastel tiles, each with a flat illustration and one fact. */
+.bento {
   display: grid;
-  grid-template-columns: 5.5rem minmax(0, 1fr) auto;
-  gap: 1.25rem;
-  align-items: center;
-  padding-block: 1.25rem;
-  border-bottom: 1px solid var(--hairline);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.75rem, 2vw, 1rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.row:first-child { border-top: 1px solid var(--hairline); }
-.row img { width: 5.5rem; height: 5.5rem; object-fit: contain; background: var(--cover); }
-.row h3 { font-size: var(--step-1); font-weight: 700; }
-.row p { color: var(--ink-2); max-width: 36em; margin-top: 0.25rem; }
-.row .figure { color: var(--ink); flex-direction: column; align-items: flex-end; gap: 0.25rem; text-align: right; }
-.row .figure b { font-size: clamp(2.25rem, 1.8rem + 1.6vw, 3.25rem); }
-.row .figure small { color: var(--ink-2); }
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 15.5rem;
+  padding: 1.375rem 1.375rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--tone);
+  overflow: hidden;
+}
+.tile.is-wide { grid-column: span 2; }
+/* The text wraps around the illustration in the corner. */
+.tile-text { display: flow-root; }
+.tile-art { float: right; width: 6.5rem; height: 6.5rem; margin: -0.75rem -0.75rem 0.25rem 0.75rem; }
+.tile h3 { font-size: var(--step-1); font-weight: 900; margin-top: 0.25rem; }
+.tile-text p { color: var(--ink-2); margin-top: 0.5rem; max-width: 34em; }
+.tile .figure { margin-top: auto; padding-top: 0.75rem; }
+.tile .figure small { color: var(--ink-2); }
+
+/* The units the detail cycles through, and the five category colours: drawn, not read out. */
+.chips { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.875rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  font-weight: 800;
+}
+.chips li:first-child { background: var(--ink); color: var(--card); }
+.swatches { display: flex; gap: 0.5rem; margin: 0.75rem 0 0; padding: 0; list-style: none; }
+.swatches li { width: 1.75rem; height: 1.75rem; border-radius: 999px; background: var(--tone); box-shadow: inset 0 0 0 1.5px var(--tone-ink); }
+
+/* The twelve covers, each on a pastel square. */
+.covers { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.5rem; margin: 0.875rem 0 0; padding: 0; list-style: none; }
+.covers li { border-radius: var(--radius-small); background: var(--card); }
+.covers img { width: 100%; aspect-ratio: 1; }
 
 /* Screenshots */
 .shots {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(11rem, 15rem);
-  gap: 1.25rem;
+  grid-auto-columns: minmax(11rem, 14rem);
+  gap: 1rem;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  padding-bottom: 1rem;
-  margin: 0;
+  padding: 0.25rem 0.25rem 1.25rem;
+  margin: 0 -0.25rem;
 }
 .shots figure { margin: 0; scroll-snap-align: start; display: grid; gap: 0.625rem; }
-.shots img { border-radius: 1.5rem; border: 1px solid var(--hairline-strong); background: var(--paper); }
-.shots figcaption { color: var(--ink-2); font-size: var(--step--1); }
+.shots img { border-radius: 1.75rem; border: 0.25rem solid var(--card); background: var(--card); box-shadow: 0 4px 16px rgba(36, 34, 43, 0.08); }
+.shots figcaption { color: var(--ink-2); font-size: var(--step--1); font-weight: 700; padding-inline: 0.25rem; }
 
-/* Privacy band */
+/* Privacy: an ink card, the one dark surface, as the app's ink pill. */
 .promise {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: clamp(1.5rem, 5vw, 3.5rem);
+  gap: clamp(1rem, 4vw, 3rem);
   align-items: center;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--card);
 }
+.promise .figure { color: var(--card); }
 .promise .figure b { font-size: clamp(6rem, 4rem + 8vw, 10rem); }
 .promise-text { display: grid; gap: 0.75rem; max-width: 36rem; }
-.promise-text h2 { font-size: var(--step-2); }
-.promise-text p { color: var(--ink-2); }
+.promise-text h2 { font-size: var(--step-2); font-weight: 900; }
+.promise-text p { color: #E3E1E8; }
+.promise-text a { color: var(--card); font-weight: 800; text-decoration-color: rgba(255, 255, 255, 0.5); }
 .promise-text ul { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; padding: 0; margin: 0.25rem 0 0; }
-.promise-text li { background: var(--paper-2); border-radius: 999px; padding: 0.25rem 0.75rem; font-size: var(--step--1); }
+.promise-text li { background: rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 0.25rem 0.85rem; font-size: var(--step--1); font-weight: 700; }
+
+/* Support: a white card pointing to the questions. */
+.help {
+  display: grid;
+  gap: 0.75rem;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+.help .eyebrow { background: var(--bg-2); }
+.help h2 { font-size: var(--step-2); font-weight: 900; }
+.help p { color: var(--ink-2); max-width: 40rem; }
+.help a { font-weight: 800; }
 
 /* Footer */
 .site-footer {
-  border-top: 1px solid var(--hairline);
   padding-block: 2rem 3rem;
   color: var(--muted);
   font-size: var(--step--1);
@@ -302,55 +417,67 @@ p { margin: 0; }
   justify-content: space-between;
   gap: 1rem;
 }
-.site-footer nav { display: flex; flex-wrap: wrap; gap: 1.25rem; }
-.site-footer a { color: var(--ink-2); }
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
+.site-footer a { color: var(--ink-2); font-weight: 600; }
 
-/* Document pages: privacy policy and support */
-.doc { padding-block: clamp(2rem, 6vw, 4rem); display: grid; gap: 3rem; }
-.doc-head { display: grid; gap: 0.75rem; }
-.doc-head h1 { font-size: var(--step-3); }
+/* Document pages: privacy policy and support, each language on its own white card. */
+.doc { padding-block: clamp(1rem, 4vw, 2.5rem) clamp(2rem, 6vw, 4rem); display: grid; gap: 1.25rem; }
+.doc-head { display: grid; gap: 0.75rem; padding-bottom: 0.75rem; }
+.doc-head h1 { font-size: var(--step-3); font-weight: 900; letter-spacing: -0.02em; }
 .doc-head p { color: var(--ink-2); }
-.doc-languages { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.doc-languages a {
-  text-decoration: none;
-  color: var(--ink);
-  background: var(--paper-2);
-  border-radius: 999px;
-  padding: 0.3rem 0.85rem;
-  font-size: var(--step--1);
+.doc-languages { justify-self: start; flex-wrap: wrap; }
+.doc article {
+  display: grid;
+  gap: 1rem;
+  max-width: 46rem;
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+  border-radius: var(--radius);
+  background: var(--card);
 }
-.doc article { display: grid; gap: 1rem; max-width: 42rem; padding-top: 2.5rem; border-top: 1px solid var(--hairline); }
-.doc article h2 { font-size: var(--step-2); }
-.doc article h3 { font-size: var(--step-1); margin-top: 1rem; }
+.doc article h2 { font-size: var(--step-2); font-weight: 900; }
+.doc article h3 { font-size: var(--step-1); font-weight: 800; margin-top: 1rem; }
 .doc article p, .doc article li { color: var(--ink-2); }
 .doc article ul { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.5rem; }
+.doc article strong { color: var(--ink); }
 .doc .meta { color: var(--muted); font-size: var(--step--1); }
 .faq { display: grid; gap: 0; }
 .faq .qa { border-bottom: 1px solid var(--hairline); padding-block: 1rem; }
-.faq .qa:first-child { border-top: 1px solid var(--hairline); }
+.faq .qa:first-child { padding-top: 0; }
+.faq .qa:last-child { border-bottom: 0; }
 .doc .faq h3 { font-size: var(--step-0); margin-top: 0; }
 .faq .qa p { margin-top: 0.375rem; }
 .contact {
-  background: var(--paper-2);
-  border-radius: 1rem;
+  background: #E8E4F8;
+  border-radius: var(--radius-small);
   padding: 1.25rem 1.5rem;
   display: grid;
   gap: 0.375rem;
 }
-.contact p { color: var(--ink-2); }
-.contact a { font-weight: 600; overflow-wrap: anywhere; }
+.doc .contact p { color: var(--ink-2); }
+.contact a { font-weight: 800; overflow-wrap: anywhere; }
+
+@media (max-width: 60rem) {
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .covers { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 
 @media (max-width: 52rem) {
   .hero, .demo { grid-template-columns: minmax(0, 1fr); }
-  .phone { justify-self: start; max-width: 18rem; }
+  .phone { max-width: 17rem; }
 }
 
 @media (max-width: 36rem) {
-  .row { grid-template-columns: 4rem minmax(0, 1fr); gap: 0.25rem 1rem; align-items: start; }
-  .row img { width: 4rem; height: 4rem; grid-row: span 2; }
-  .row .figure { grid-column: 2; flex-direction: row; align-items: baseline; justify-content: flex-start; order: 3; }
+  .bento { grid-template-columns: minmax(0, 1fr); }
+  .tile.is-wide { grid-column: auto; }
+  .tile { min-height: 0; }
+  .tile-art { width: 5rem; height: 5rem; }
+  .covers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Narrow cards keep the count clear of the cover: it moves up beside the title. */
+  .day-card { min-height: 16rem; }
+  .day-card .cover { top: 0.5rem; right: 0.25rem; bottom: auto; width: 34%; }
+  .day-card-title { padding-right: 34%; }
+  .elapsed { max-width: none; }
   .promise { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
-  .site-header { flex-wrap: wrap; }
 }
 
 /* Motion. Only under html.motion, which each page's head script sets before the first paint unless
@@ -369,21 +496,23 @@ p { margin: 0; }
 
 .motion .reveal:not(.in) { opacity: 0; }
 .motion .reveal.in { animation: rise 0.9s var(--ease-out) var(--d, 0s) backwards; }
-.motion .day-card.in, .motion .promise-text.in { --d: 0.12s; }
+.motion .day-card.in, .motion .promise.in { --d: 0.12s; }
+.motion .tile:nth-child(3n + 2) { --d: 0.06s; }
+.motion .tile:nth-child(3n) { --d: 0.12s; }
 .motion .shots figure:nth-child(2) { --d: 0.06s; }
 .motion .shots figure:nth-child(3) { --d: 0.12s; }
 .motion .shots figure:nth-child(4) { --d: 0.18s; }
 .motion .shots figure:nth-child(5) { --d: 0.24s; }
 .motion .shots figure:nth-child(6) { --d: 0.3s; }
 .motion .shots figure:nth-child(7) { --d: 0.36s; }
-.motion .promise .figure.in { animation-name: pop; animation-timing-function: var(--spring); }
+.motion .promise.in .figure { animation: pop 0.9s var(--spring) 0.2s backwards; }
 
-/* Covers land like stickers on a journal page, and lift a little under the pointer. */
-.motion .row.in img { animation: place 0.8s var(--spring) 0.1s backwards; }
-.motion .row img { transition: rotate 0.3s var(--ease-out), scale 0.3s var(--ease-out); }
-.motion .row:hover img { rotate: -4deg; scale: 1.06; }
-.motion .day-card .cover img { transition: scale 0.4s var(--spring); }
-.motion .day-card[aria-busy="true"] .cover img { scale: 1.06; }
+/* Covers land like stickers on a card, and lift a little under the pointer. */
+.motion .tile.in .tile-art { animation: place 0.8s var(--spring) 0.15s backwards; }
+.motion .tile-art { transition: rotate 0.3s var(--ease-out), scale 0.3s var(--ease-out); }
+.motion .tile:hover .tile-art { rotate: -4deg; scale: 1.06; }
+.motion .day-card .cover { transition: scale 0.4s var(--spring); }
+.motion .day-card[aria-busy="true"] .cover { scale: 1.06; }
 
 /* Print shows everything at once: nothing scrolls into view there, and a reveal that has only just
    started is still transparent. site.js puts the final figures back. */

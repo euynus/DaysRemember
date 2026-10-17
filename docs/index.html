@@ -87,7 +87,7 @@
 <body>
   <div class="wrap">
     <header class="site-header">
-      <a class="brand" href="./"><img src="assets/icon-180.png" alt="" width="32" height="32">时光</a>
+      <a class="brand" href="./"><img src="assets/icon-180.png" alt="" width="36" height="36">时光</a>
       <nav class="languages" aria-label="语言">
         <a href="./" aria-current="page" lang="zh-Hans">简体</a>
         <a href="zh-Hant/" lang="zh-Hant">繁體</a>
@@ -107,7 +107,9 @@
             <span class="requirements">免费 · iPhone · iOS 17 及以上</span>
           </div>
         </div>
-        <div class="phone"><img src="screenshots/zh-Hans/01-home.jpg" width="1320" height="2868" alt="时光首页的「将至」：妈妈生日还有 69 天，下面是其他日子的彩色卡片"></div>
+        <div class="hero-art">
+          <div class="phone"><img src="screenshots/zh-Hans/01-home.jpg" width="1320" height="2868" alt="时光首页的「将至」：妈妈生日还有 69 天，下面是其他日子的彩色卡片"></div>
+        </div>
       </section>
 
       <section class="section" aria-labelledby="demo-heading">
@@ -131,15 +133,13 @@
             </label>
             <p class="demo-note">按北京时间计算，和 App 里一样。App 里还能按农历每年重复。</p>
           </form>
-          <div class="day-card reveal" data-demo-card aria-live="polite">
-            <div class="cover"><img src="assets/covers/celebration.svg" alt="" width="200" height="200"></div>
-            <div class="day-card-body">
-              <div class="day-card-title">
-                <strong data-title>结婚纪念日</strong>
-                <span data-date>2019年10月12日</span>
-              </div>
-              <p class="figure"><b>—</b><small></small></p>
+          <div class="day-card tone-rose reveal" data-demo-card aria-live="polite">
+            <img class="cover" src="assets/covers/flowers.svg" alt="一瓶鲜花" width="200" height="200">
+            <div class="day-card-title">
+              <strong data-title>结婚纪念日</strong>
+              <span data-date>2019年10月12日</span>
             </div>
+            <p class="figure"><span data-lead></span><b>—</b><small></small></p>
             <p class="elapsed" data-elapsed></p>
           </div>
         </div>
@@ -150,50 +150,100 @@
           <p class="eyebrow">功能</p>
           <h2 id="features-heading">把重要的日子放在主屏，温柔提醒，从容相聚</h2>
         </div>
-        <ul class="rows">
-          <li class="row reveal">
-            <img src="assets/covers/mountains.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>将至与已过</h3><p>首页分成两面：「将至」为还没到的日子倒数，最近的五个排在最前；每年的日子刚过去的一周里，首页还会留着它，方便你写下这一天。不重复的日子过去以后，在「已过」里一天天正数。</p></div>
+        <ul class="bento">
+          <li class="tile tone-apricot is-wide reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/celebration.svg" alt="插着蜡烛的生日蛋糕" width="200" height="200" loading="lazy">
+              <h3>将至与已过</h3>
+              <p>首页分成两面：「将至」为还没到的日子倒数，最近的五个排在最前；每年的日子刚过去的一周里，首页还会留着它，方便你写下这一天。不重复的日子过去以后，在「已过」里一天天正数。</p>
+            </div>
             <p class="figure"><b>2</b><small>面</small></p>
           </li>
-          <li class="row reveal">
-            <img src="assets/covers/garden.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>农历与节气</h3><p>按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。</p></div>
+          <li class="tile tone-lavender reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/companionship.svg" alt="小狗和小猫，头上一颗爱心" width="200" height="200" loading="lazy">
+              <h3>整数纪念</h3>
+              <p>「已过」里的日子会预告下一个整数纪念：1000 天以内每满 100 天，之后每满 500 天，或者满一整年。</p>
+            </div>
+            <p class="figure"><b>100</b><small>天、500 天或一整年</small></p>
+          </li>
+          <li class="tile tone-mint reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/garden.svg" alt="喷壶和盆栽" width="200" height="200" loading="lazy">
+              <h3>农历与节气</h3>
+              <p>按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。</p>
+            </div>
             <p class="figure"><b>24</b><small>个节气</small></p>
           </li>
-          <li class="row reveal">
-            <img src="assets/covers/coast.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>轻点切换单位</h3><p>在日子详情里轻点数字，就在天、周、月、小时之间切换。下面列出这个日子的节点：每年的日子有上一次和下一次周年；已过的日子有下一个整数纪念，1000 天以内每满 100 天，之后每满 500 天，或者满一整年。</p></div>
+          <li class="tile tone-sky reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/cafe.svg" alt="冒着热气的咖啡和牛角包" width="200" height="200" loading="lazy">
+              <h3>轻点切换单位</h3>
+              <p>在日子详情里轻点数字，就在天、周、月、小时之间切换。下面列出这个日子的节点：每年的日子有上一次和下一次周年，已过的日子有下一个整数纪念。</p>
+              <ul class="chips" aria-hidden="true"><li>天</li><li>周</li><li>月</li><li>小时</li></ul>
+            </div>
             <p class="figure"><b>4</b><small>种单位</small></p>
           </li>
-          <li class="row reveal">
-            <img src="assets/covers/flowers.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>封面插图</h3><p>每个日子都是一张分类颜色的卡片。配一张自己的照片，或从扁平插图里挑一张；新建的日子会按分类先配好封面。</p></div>
-            <p class="figure"><b>12</b><small>张插图</small></p>
-          </li>
-          <li class="row reveal">
-            <img src="assets/covers/journal.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>贴心提醒</h3><p>提前 7 天、3 天、1 天或当天提醒，时间自选。每日问候和时光回忆可以分别打开。</p></div>
+          <li class="tile tone-lemon reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/journal.svg" alt="摊开的手账和铅笔" width="200" height="200" loading="lazy">
+              <h3>贴心提醒</h3>
+              <p>提前 7 天、3 天、1 天或当天提醒，时间自选。每日问候和时光回忆可以分别打开。</p>
+            </div>
             <p class="figure"><b>7&thinsp;·&thinsp;3&thinsp;·&thinsp;1</b><small>天前提醒</small></p>
           </li>
-          <li class="row reveal">
-            <img src="assets/covers/homecoming.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>小组件</h3><p>主屏幕小、中、大三种尺寸用和 App 里一样的彩色卡片，锁定屏幕另有三种样式。每个小组件都可以单独选一个日子。</p></div>
+          <li class="tile tone-rose is-wide has-covers reveal">
+            <div class="tile-text">
+              <h3>封面插图</h3>
+              <p>每个日子都是一张分类颜色的卡片。配一张自己的照片，或从扁平插图里挑一张；新建的日子会按分类先配好封面。</p>
+              <ul class="covers">
+                <li><img src="assets/covers/flowers.svg" alt="一瓶鲜花" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/celebration.svg" alt="插着蜡烛的生日蛋糕" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/garden.svg" alt="喷壶和盆栽" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/homecoming.svg" alt="红屋顶的小房子" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/journal.svg" alt="摊开的手账和铅笔" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/voyage.svg" alt="贴着贴纸的旅行箱" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/companionship.svg" alt="小狗和小猫，头上一颗爱心" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/everyday.svg" alt="盆栽和茶壶" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/coast.svg" alt="海上的小帆船和岛上的小屋" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/mountains.svg" alt="太阳下的雪山" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/cafe.svg" alt="冒着热气的咖啡和牛角包" width="200" height="200" loading="lazy"></li>
+                <li><img src="assets/covers/camping.svg" alt="松树间的帐篷和一弯新月" width="200" height="200" loading="lazy"></li>
+              </ul>
+            </div>
+            <p class="figure"><b>12</b><small>张插图</small></p>
+          </li>
+          <li class="tile tone-sky reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/homecoming.svg" alt="红屋顶的小房子" width="200" height="200" loading="lazy">
+              <h3>小组件</h3>
+              <p>主屏幕小、中、大三种尺寸用和 App 里一样的彩色卡片，锁定屏幕另有三种样式。每个小组件都可以单独选一个日子。</p>
+            </div>
             <p class="figure"><b>6</b><small>种样式</small></p>
           </li>
-          <li class="row reveal">
-            <img src="assets/covers/voyage.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>分享卡片</h3><p>照片、手记、极简、双栏四种模板，可以导出 3:4 竖图。笔记默认不出现在图片上。</p></div>
+          <li class="tile tone-apricot reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/voyage.svg" alt="贴着贴纸的旅行箱" width="200" height="200" loading="lazy">
+              <h3>分享卡片</h3>
+              <p>照片、手记、极简、双栏四种模板，可以导出 3:4 竖图。笔记默认不出现在图片上。</p>
+            </div>
             <p class="figure"><b>4</b><small>种模板</small></p>
           </li>
-          <li class="row reveal">
-            <img src="assets/covers/everyday.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>自定义分类</h3><p>在「我的」里，除了爱情、家人、旅行、工作、生活，还能新建自己的分类，图标和颜色自己挑。</p></div>
+          <li class="tile tone-white reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/everyday.svg" alt="盆栽和茶壶" width="200" height="200" loading="lazy">
+              <h3>自定义分类</h3>
+              <p>在「我的」里，除了爱情、家人、旅行、工作、生活，还能新建自己的分类，图标和颜色自己挑。</p>
+              <ul class="swatches" aria-hidden="true"><li class="tone-rose"></li><li class="tone-apricot"></li><li class="tone-sky"></li><li class="tone-mint"></li><li class="tone-lemon"></li></ul>
+            </div>
             <p class="figure"><b>5</b><small>种颜色</small></p>
           </li>
-          <li class="row reveal">
-            <img src="assets/covers/companionship.svg" alt="" width="200" height="200" loading="lazy">
-            <div><h3>iCloud 同步</h3><p>日子、分类和照片通过你自己的 iCloud 在设备间同步。误删的日子在你的每台设备上保留 30 天，可以恢复。</p></div>
+          <li class="tile tone-mint reveal">
+            <div class="tile-text">
+              <img class="tile-art" src="assets/covers/mountains.svg" alt="太阳下的雪山" width="200" height="200" loading="lazy">
+              <h3>iCloud 同步</h3>
+              <p>日子、分类和照片通过你自己的 iCloud 在设备间同步。误删的日子在你的每台设备上保留 30 天，可以恢复。</p>
+            </div>
             <p class="figure"><b>30</b><small>天内可恢复</small></p>
           </li>
         </ul>
@@ -215,18 +265,20 @@
         </div>
       </section>
 
-      <section class="section promise" aria-labelledby="privacy-heading">
-        <p class="figure reveal"><b>0</b></p>
-        <div class="promise-text reveal">
-          <h2 id="privacy-heading">不收集任何数据</h2>
-          <p>日子、照片和设置只保存在你的设备和你自己的 iCloud 中，不会上传给开发者。</p>
-          <ul><li>无需账号</li><li>无广告</li><li>无追踪</li><li>无第三方 SDK</li></ul>
-          <p><a href="privacy/#zh-Hans">阅读隐私政策</a></p>
+      <section class="section" aria-labelledby="privacy-heading">
+        <div class="promise reveal">
+          <p class="figure"><b>0</b></p>
+          <div class="promise-text">
+            <h2 id="privacy-heading">不收集任何数据</h2>
+            <p>日子、照片和设置只保存在你的设备和你自己的 iCloud 中，不会上传给开发者。</p>
+            <ul><li>无需账号</li><li>无广告</li><li>无追踪</li><li>无第三方 SDK</li></ul>
+            <p><a href="privacy/#zh-Hans">阅读隐私政策</a></p>
+          </div>
         </div>
       </section>
 
       <section class="section" aria-labelledby="support-heading">
-        <div class="section-head reveal">
+        <div class="help reveal">
           <p class="eyebrow">支持</p>
           <h2 id="support-heading">遇到问题？</h2>
           <p>小组件怎么选日子、收不到提醒、换手机怎么办……常见问题和反馈方式都在<a href="support/#zh-Hans">支持页面</a>。</p>
