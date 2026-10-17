@@ -375,6 +375,7 @@ p { margin: 0; }
 .motion .shots figure:nth-child(4) { --d: 0.18s; }
 .motion .shots figure:nth-child(5) { --d: 0.24s; }
 .motion .shots figure:nth-child(6) { --d: 0.3s; }
+.motion .shots figure:nth-child(7) { --d: 0.36s; }
 .motion .promise .figure.in { animation-name: pop; animation-timing-function: var(--spring); }
 
 /* Covers land like stickers on a journal page, and lift a little under the pointer. */

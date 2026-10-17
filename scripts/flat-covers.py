@@ -1,4 +1,5 @@
-"""Generates the flat cover illustrations in the app's and the widget's asset catalogs.
+"""Generates the flat cover illustrations in the app's and the widget's asset catalogs,
+and the copies the product site (docs/) shows.
 
 Each cover is white shapes, one or two accents, and translucent ink tones that
 pick up whatever pastel card they sit on. Run after changing a drawing:
@@ -12,6 +13,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 CATALOGS = [os.path.join(ROOT, "DaysRemember", "Resources", "Assets.xcassets"),
             os.path.join(ROOT, "DaysRememberWidget", "Assets.xcassets")]
+SITE = os.path.join(ROOT, "docs", "assets", "covers")
 ONLY = set(sys.argv[1:])
 
 W = "#FFFFFF"
@@ -250,3 +252,6 @@ for name, body in COVERS.items():
         with open(os.path.join(folder, "Contents.json"), "w") as fh:
             fh.write(CONTENTS % name)
         print(os.path.relpath(folder))
+    os.makedirs(SITE, exist_ok=True)
+    with open(os.path.join(SITE, f"{name}.svg"), "w") as fh:
+        fh.write(svg)
