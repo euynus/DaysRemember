@@ -413,6 +413,57 @@ final class RenderingTests: XCTestCase {
         XCTAssertLessThan(center[1], 80, "\(center)")
     }
 
+    /// A photo that can't be decoded falls back to the preset in a list row, as it does in the
+    /// detail and share images, rather than staying on blank paper.
+    @MainActor
+    func testAsyncTileShowsThePresetWhenThePhotoIsUnreadable() async throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 360, height: 120)
+        window.rootViewController = UIHostingController(rootView: UnreadablePhotoHost())
+        window.isHidden = false
+        defer { window.isHidden = true }
+        try await Task.sleep(for: .milliseconds(500))
+
+        let snapshot = try XCTUnwrap(UIGraphicsImageRenderer(bounds: window.bounds, format: format).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }.cgImage)
+        // Left: decoded asynchronously; middle: synchronously; right: blank paper.
+        func apart(_ a: [UInt8], _ b: [UInt8]) -> Bool { zip(a, b).contains { abs(Int($0) - Int($1)) > 24 } }
+        var drawn = 0
+        var differing = 0
+        for x in stride(from: 4, to: 120, by: 8) {
+            for y in stride(from: 4, to: 120, by: 8) {
+                let async = pixel(snapshot, x: x, y: y)
+                let sync = pixel(snapshot, x: x + 120, y: y)
+                guard apart(sync, pixel(snapshot, x: x + 240, y: y)) else { continue }
+                drawn += 1
+                if apart(async, sync) { differing += 1 }
+            }
+        }
+        // Blank paper would differ wherever the preset draws; anti-aliased edges may differ slightly.
+        XCTAssertGreaterThanOrEqual(drawn, 10, "the preset draws more than paper")
+        XCTAssertLessThanOrEqual(differing * 10, drawn, "\(differing) of \(drawn) drawn points differ")
+    }
+
+    private struct UnreadablePhotoHost: View {
+        let unreadable = Data("not an image".utf8)
+        var body: some View {
+            HStack(spacing: 0) {
+                PhotoTile(style: .home, imageData: unreadable, flat: true, cornerRadius: 0,
+                          maximumPixelSize: 256, decodesAsynchronously: true)
+                    .frame(width: 120, height: 120)
+                PhotoTile(style: .home, imageData: unreadable, flat: true, cornerRadius: 0,
+                          maximumPixelSize: 256)
+                    .frame(width: 120, height: 120)
+                Theme.coverPaper
+                    .frame(width: 120, height: 120)
+            }
+        }
+    }
+
     private struct AsyncTileHost: View {
         let framing: Framing
         let data: Data

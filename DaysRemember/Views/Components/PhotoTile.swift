@@ -80,6 +80,8 @@ struct PhotoTile: View {
     /// meanwhile. Widgets and image exports must stay synchronous.
     var decodesAsynchronously = false
     @State private var loadedImage: UIImage?
+    /// Set when the photo can't be decoded, so the preset takes over as it does synchronously.
+    @State private var decodeFailed = false
     @Environment(\.widgetRenderingMode) private var renderingMode
 
     init(style: PhotoStyle, imageData: Data? = nil, focusX: Double = 0.5, focusY: Double = 0.5,
@@ -110,7 +112,7 @@ struct PhotoTile: View {
                 ? PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize) ?? loadedImage
                 : PhotoDecodeCache.decoded(data, maximumPixelSize: maximumPixelSize)
         }
-        let awaitingPhoto = imageData != nil && pickedImage == nil && decodesAsynchronously
+        let awaitingPhoto = imageData != nil && pickedImage == nil && decodesAsynchronously && !decodeFailed
         let image = pickedImage ?? PhotoDecodeCache.bundled(style.assetName, maximumPixelSize: maximumPixelSize)
         // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
@@ -151,6 +153,7 @@ struct PhotoTile: View {
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .accessibilityHidden(true)
         .task(id: decodesAsynchronously ? imageData : nil) {
+            decodeFailed = false
             guard decodesAsynchronously, let data = imageData else { return }
             // Keep a reference even to a cached image: the cache may drop it while the tile is shown.
             loadedImage = PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize)
@@ -159,7 +162,9 @@ struct PhotoTile: View {
             let image = await Task.detached(priority: .userInitiated) {
                 PhotoDecodeCache.decoded(data, maximumPixelSize: size)
             }.value
-            if !Task.isCancelled { loadedImage = image }
+            guard !Task.isCancelled else { return }
+            loadedImage = image
+            decodeFailed = image == nil
         }
     }
 
