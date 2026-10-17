@@ -175,6 +175,27 @@ final class LunarTests: XCTestCase {
         XCTAssertNil(SolarTerms.lunarHoliday(for: date(2026, 2, 15)))
     }
 
+    /// The calendar can page past the table. Before it the conversion clamps to its first day,
+    /// which once made every day 春节; after it, it ran on into festivals that don't exist.
+    func testNoLunarHolidaysOutsideTheTable() {
+        let cal = CNDate.calendar
+        let table = Lunar.supportedSolarDates
+        // Lunar 2100 runs into early 2101, so the table ends at its 除夕, not on 2100-12-31.
+        let outside = [(cal.date(byAdding: .day, value: -60, to: table.lowerBound)!, table.lowerBound),
+                       (table.upperBound, cal.date(byAdding: .day, value: 90, to: table.upperBound)!)]
+        for (start, end) in outside {
+            var day = start
+            while day < end {
+                XCTAssertNil(SolarTerms.lunarHoliday(for: day), "\(day)")
+                day = cal.date(byAdding: .day, value: 1, to: day)!
+            }
+        }
+        XCTAssertEqual(SolarTerms.lunarHoliday(for: table.lowerBound), "春节")
+        XCTAssertEqual(SolarTerms.lunarHoliday(for: cal.date(byAdding: .day, value: -1, to: table.upperBound)!), "除夕")
+        let after = Lunar.solarToLunar(cal.date(byAdding: .day, value: 90, to: table.upperBound)!)
+        XCTAssertTrue((1...12).contains(after.month) && (1...30).contains(after.day), "\(after)")
+    }
+
     func testFormatting() {
         let s = Lunar.fmt(date(2026, 4, 23))
         XCTAssertFalse(s.isEmpty)

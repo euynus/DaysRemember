@@ -129,10 +129,10 @@ enum SolarTerms {
     }
 
     /// Traditional Chinese holiday by lunar date (春节, 元宵, 端午, 中秋, 除夕, …).
-    /// Leap months repeat a month number but never its festivals.
+    /// Leap months repeat a month number but never its festivals, and dates outside the
+    /// 1900–2100 table have none (the conversion clamps them to its first or last day).
     static func lunarHoliday(for date: Date) -> String? {
-        let l = Lunar.solarToLunar(date)
-        guard !l.isLeap else { return nil }
+        guard let l = Lunar.supportedLunarDate(for: date), !l.isLeap else { return nil }
         // 除夕 is the last day of the twelfth month, which has either 29 or 30 days.
         let name = l.month == 12 && l.day == Lunar.dayCount(year: l.year, month: 12)
             ? "除夕" : holidays["\(l.month)-\(l.day)"]

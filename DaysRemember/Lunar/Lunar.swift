@@ -96,6 +96,8 @@ enum Lunar {
         // lunar day so callers never get an out-of-range month/day — which would trap
         // the array-indexing formatters (CN_MONTH / CN_DAY_PREFIX / CN_NUM).
         if offset < 0 { return LunarDate(year: 1900, month: 1, day: 1, isLeap: false) }
+        // Likewise after the table's last day, which would otherwise run on into month 13.
+        offset = min(offset, yearOffsets[LunarTable.info.count] - 1)
         let yearIndex = yearOffsets.lastIndex(where: { $0 <= offset })!
         let y = 1900 + yearIndex
         offset -= yearOffsets[yearIndex]
