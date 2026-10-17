@@ -1,15 +1,11 @@
 import SwiftUI
 
+/// A list of days as pastel cards, used by the category lists.
 struct DayList: View {
     let days: [Day]
     var onOpen: (Day) -> Void = { _ in }
 
     var body: some View {
-        LazyVStack(spacing: 0) {
-            ForEach(days) { day in
-                DayRow(day: day, onOpen: onOpen)
-                    .dayContextMenu(day: day)
-            }
-        }
+        DayGrid(days: days, onOpen: onOpen)
     }
 }

@@ -323,7 +323,7 @@ final class EditFlowUITests: XCTestCase {
 
     func testTabsSearchAndCategoryEditor() {
         let app = launchApp()
-        app.tabBars.buttons["分类"].tap()
+        app.tabBars.buttons["我的"].tap()
         let addCategory = app.buttons["新建分类"]
         XCTAssertTrue(addCategory.waitForExistence(timeout: 5))
         addCategory.tap()
@@ -335,7 +335,7 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(loveCategory.waitForExistence(timeout: 5), app.debugDescription)
         loveCategory.tap()
         let loveDay = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "结婚纪念日")).firstMatch
-        XCTAssertTrue(loveDay.waitForExistence(timeout: 5))
+        XCTAssertTrue(loveDay.waitForExistence(timeout: 5), app.debugDescription)
         loveDay.tap()
         XCTAssertTrue(app.buttons["更多操作"].waitForExistence(timeout: 5))
         // The system back button is labelled with the previous screen's title (爱情).
@@ -343,8 +343,11 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(loveDay.waitForExistence(timeout: 5))
         app.navigationBars.buttons.firstMatch.tap()
 
-        app.tabBars.buttons["提醒"].tap()
+        let reminders = app.buttons["me.reminders"]
+        for _ in 0..<3 where !reminders.isHittable { app.swipeUp() }
+        reminders.tap()
         XCTAssertTrue(app.switches.firstMatch.waitForExistence(timeout: 5))
+        app.navigationBars.buttons.firstMatch.tap()
         app.tabBars.buttons["日历"].tap()
         XCTAssertTrue(app.buttons["下个月"].waitForExistence(timeout: 5))
         app.buttons["下个月"].tap()
@@ -506,7 +509,7 @@ final class EditFlowUITests: XCTestCase {
     func testCustomCategoryEditAndDelete() {
         let app = launchApp()
         let name = "UITest-Category-" + UUID().uuidString.prefix(6)
-        app.tabBars.buttons["分类"].tap()
+        app.tabBars.buttons["我的"].tap()
         app.buttons["新建分类"].tap()
         let field = app.textFields["例如：朋友"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
@@ -555,7 +558,7 @@ final class EditFlowUITests: XCTestCase {
         app.launchArguments = ["--seed-sample-data", "--tab", "home", "-UIPreferredContentSizeCategoryName",
                                "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
-        for tab in ["日子", "日历", "分类", "提醒"] {
+        for tab in ["日子", "日历", "我的"] {
             app.tabBars.buttons[tab].tap()
             let attachment = XCTAttachment(screenshot: app.screenshot())
             attachment.name = "Accessibility XXXL " + tab
@@ -735,7 +738,7 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["备份已导出。"].waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["好"].tap()
         app.buttons["关闭"].tap()
-        app.buttons["settings.done"].tap()
+        app.tabBars.buttons["日子"].tap()
 
         reveal(entry, in: app)
         entry.tap()
@@ -790,11 +793,12 @@ final class EditFlowUITests: XCTestCase {
     }
 
     private func openSettingsRow(_ identifier: String, in app: XCUIApplication) {
-        let settings = app.buttons["home.settings"]
-        XCTAssertTrue(settings.waitForExistence(timeout: 5))
-        settings.tap()
+        let me = app.tabBars.buttons["我的"]
+        XCTAssertTrue(me.waitForExistence(timeout: 5))
+        me.tap()
         let row = app.buttons[identifier]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
+        for _ in 0..<4 where !row.isHittable { app.swipeUp() }
         row.tap()
     }
 

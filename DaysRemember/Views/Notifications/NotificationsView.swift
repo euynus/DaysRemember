@@ -8,6 +8,8 @@ struct NotificationsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private let manager = NotificationManager.shared
+    /// False when pushed from 我的, which shows the system navigation bar instead.
+    var showsHeader = true
 
     /// Toggle binding that re-syncs scheduled notifications whenever flipped.
     private func reactiveBinding(_ key: ReferenceWritableKeyPath<AppSettings, Bool>) -> Binding<Bool> {
@@ -69,7 +71,9 @@ struct NotificationsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            NavHeader(title: String(localized: "提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            if showsHeader {
+                NavHeader(title: String(localized: "提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            }
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     if manager.authorizationStatus == .denied { permissionBanner.padding(.bottom, 18) }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerates the widget's cover catalog from the app's covers. Widgets decode covers at
+# Regenerates the widget's cover catalog from the app's covers and flat card illustrations. Widgets decode covers at
 # no more than 720 px (`DayWidgetCard` → `PhotoTile.maximumPixelSize`), so the full-size
 # artwork would only add weight to the extension. Run after adding or changing a cover.
 set -euo pipefail
@@ -19,6 +19,11 @@ for imageset in "$source"/Cover*.imageset; do
     --out "$target/$name/cover.jpg" > /dev/null
   printf '{\n  "images" : [{ "filename" : "cover.jpg", "idiom" : "universal" }],\n  "info" : { "author" : "xcode", "version" : 1 }\n}\n' \
     > "$target/$name/Contents.json"
+done
+
+# The flat card illustrations are small vectors; the widget uses them as they are.
+for imageset in "$source"/Flat*.imageset; do
+  cp -R "$imageset" "$target/"
 done
 
 echo "Wrote $(find "$target" -name '*.imageset' | wc -l | tr -d ' ') covers to $target"

@@ -21,9 +21,9 @@ struct CalendarEventRow: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if !dynamicTypeSize.isAccessibilitySize {
-                    PhotoTile(day: day, flat: true, cornerRadius: 6, maximumPixelSize: 192,
-                              decodesAsynchronously: true)
+                    CoverArt(day: day, photoCornerRadius: 10, maximumPixelSize: 192, decodesAsynchronously: true)
                         .frame(width: 44, height: 44)
+                        .background(store.category(for: day).tint, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .accessibilityHidden(true)
                 }
             }

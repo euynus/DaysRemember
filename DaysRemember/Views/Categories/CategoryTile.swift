@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// A category as a pastel tile in 我的: its flat illustration, name and day count.
 struct CategoryTile: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let category: CategoryDefinition
@@ -7,42 +8,42 @@ struct CategoryTile: View {
     let count: Int
     var onEdit: () -> Void
 
+    /// The newest day's preset cover, or the category's default template.
+    private var coverStyle: PhotoStyle {
+        if let coverDay, coverDay.photoData == nil { return coverDay.photo }
+        return PhotoStyle.defaultCover(forCategoryID: category.id) ?? coverDay?.photo ?? .systemDefault
+    }
+
     var body: some View {
         NavigationLink(value: CategoryRoute.category(category.id)) {
-            VStack(alignment: .leading, spacing: 12) {
-                Rectangle()
-                    .fill(category.colorToken.soft)
-                    .aspectRatio(4.0 / 3.0, contentMode: .fit)
-                    .overlay {
-                        if let coverDay {
-                            // A ~170 pt tile never needs the 1600 px full cover.
-                            PhotoTile(day: coverDay, flat: true, cornerRadius: 3, maximumPixelSize: 512,
-                                      decodesAsynchronously: true)
-                        } else {
-                            Image(systemName: category.symbolName)
-                                .font(.system(size: 30, weight: .light))
-                                .foregroundStyle(category.colorToken.color)
-                        }
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 6) {
-                    Label(category.displayName, systemImage: category.symbolName)
-                        .font(Theme.sans(15, weight: .medium))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 3)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text("\(count)")
-                        .font(Theme.number(22))
-                        .monospacedDigit()
-                        .foregroundStyle(Theme.ink2)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
+            VStack(alignment: .leading, spacing: 1) {
+                Spacer(minLength: dynamicTypeSize.isAccessibilitySize ? 0 : 36)
+                Label {
+                    Text(category.displayName)
+                } icon: {
+                    Image(systemName: category.symbolName)
+                        .foregroundStyle(category.tintInk)
+                }
+                .font(Theme.sans(16, weight: .heavy))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                .multilineTextAlignment(.leading)
+                Text(String(localized: "\(count) 个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                    .font(Theme.sans(12))
+                    .foregroundStyle(Theme.onPastel)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, minHeight: 92, alignment: .bottomLeading)
+            .background(alignment: .topTrailing) {
+                if !dynamicTypeSize.isAccessibilitySize {
+                    FlatCover(style: coverStyle)
+                        .frame(width: 66, height: 66)
+                        .padding(8)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+            .background(category.tint, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)
@@ -53,24 +54,22 @@ struct CategoryTile: View {
                 Button("编辑分类", systemImage: "pencil", action: onEdit)
             }
         }
-        .overlay(alignment: .topTrailing) {
+        .overlay(alignment: .topLeading) {
             if !category.isSystem {
                 Button(action: onEdit) {
                     Label("编辑分类", systemImage: "pencil")
                         .labelStyle(.iconOnly)
-                        .font(.body.weight(.medium))
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(category.tintInk)
+                        .frame(width: 30, height: 30)
+                        .background(Color.white.opacity(0.75), in: Circle())
                         .frame(minWidth: 44, minHeight: 44)
-                        .foregroundStyle(Theme.ink)
-                        .background(Theme.bg, in: Circle())
-                        .overlay {
-                            Circle().strokeBorder(Theme.hairlineStrong, lineWidth: 1)
-                        }
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("编辑\(category.displayName)")
                 .accessibilityIdentifier("editCategory-\(category.id)")
                 .help("编辑分类")
-                .padding(6)
             }
         }
     }

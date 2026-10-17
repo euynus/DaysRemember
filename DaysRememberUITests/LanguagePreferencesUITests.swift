@@ -59,7 +59,7 @@ final class LanguagePreferencesUITests: XCTestCase {
         let app = launchFixture()
         let title = "L10n-100% My Day"
         let categoryName = "Calendar 100%"
-        app.tabBars.buttons["Categories"].tap()
+        app.tabBars.buttons["Me"].tap()
         let addCategory = app.buttons["addCategoryButton"]
         XCTAssertTrue(addCategory.waitForExistence(timeout: 5))
         addCategory.tap()
@@ -83,7 +83,7 @@ final class LanguagePreferencesUITests: XCTestCase {
         titleField.tap()
         titleField.typeText(title)
         app.buttons["saveDayButton"].tap()
-        XCTAssertTrue(app.buttons["home.settings"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["home.addDay"].waitForExistence(timeout: 5))
 
         // Keep the seed argument during the live switch: rerunning bootstrap would erase both edits.
         XCTAssertTrue(app.launchArguments.contains("--seed-sample-data"))
@@ -158,12 +158,14 @@ final class LanguagePreferencesUITests: XCTestCase {
     }
 
     private func openLanguageSettings(in app: XCUIApplication, title: String? = nil) {
-        let options = app.buttons["home.settings"]
-        XCTAssertTrue(options.waitForExistence(timeout: 5))
-        assertHittableInsideApp(options, in: app)
-        options.tap()
+        // 我的 is the last tab in every language.
+        let me = app.tabBars.buttons.element(boundBy: 2)
+        XCTAssertTrue(me.waitForExistence(timeout: 5))
+        assertHittableInsideApp(me, in: app)
+        me.tap()
         let entry = app.buttons["settings.language"]
         XCTAssertTrue(entry.waitForExistence(timeout: 5))
+        for _ in 0..<4 where !entry.isHittable { app.swipeUp() }
         assertHittableInsideApp(entry, in: app)
         entry.tap()
         XCTAssertTrue(app.buttons["language.done"].waitForExistence(timeout: 5))
@@ -187,11 +189,11 @@ final class LanguagePreferencesUITests: XCTestCase {
         let done = app.buttons["language.done"]
         expectation(for: NSPredicate { _, _ in !done.exists }, evaluatedWith: app)
         waitForExpectations(timeout: 5)
-        // Changing the language rebuilds the root and closes Settings; otherwise close it here.
-        let settingsDone = app.buttons["settings.done"]
-        if settingsDone.waitForExistence(timeout: 1) { settingsDone.tap() }
-        XCTAssertTrue(app.buttons["home.settings"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["home.settings"].isHittable)
+        // Changing the language rebuilds the root on 日子; otherwise go back there.
+        let search = app.buttons["home.search"]
+        if !search.waitForExistence(timeout: 1) { app.tabBars.buttons.element(boundBy: 0).tap() }
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        XCTAssertTrue(search.isHittable)
     }
 
     private func applyLanguage(_ language: String, in app: XCUIApplication) {
@@ -216,7 +218,9 @@ final class LanguagePreferencesUITests: XCTestCase {
     private func assertCreatedContent(title: String, categoryName: String,
                                       categoryIdentifier: String, in app: XCUIApplication) {
         XCTAssertTrue(dayButton(title, in: app).waitForExistence(timeout: 5))
-        app.tabBars.buttons["分類"].tap()
+        app.tabBars.buttons["我的"].tap()
+        // 我的 keeps its scroll position from the language row, below the categories.
+        for _ in 0..<3 { app.scrollViews.firstMatch.swipeDown() }
         let edit = app.buttons[categoryIdentifier]
         reveal(edit, in: app)
         XCTAssertEqual(edit.label, "編輯" + categoryName)
@@ -229,8 +233,8 @@ final class LanguagePreferencesUITests: XCTestCase {
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
         for _ in 0..<6 where !element.isHittable { app.scrollViews.firstMatch.swipeUp() }
-        XCTAssertTrue(element.waitForExistence(timeout: 5))
-        XCTAssertTrue(element.isHittable)
+        XCTAssertTrue(element.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(element.isHittable, app.debugDescription)
     }
 
     private func assertHittableInsideApp(_ element: XCUIElement, in app: XCUIApplication) {

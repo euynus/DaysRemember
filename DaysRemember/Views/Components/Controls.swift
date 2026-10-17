@@ -56,7 +56,7 @@ struct PillButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
-                Text(title).font(Theme.sans(15, weight: .medium))
+                Text(title).font(Theme.sans(15, weight: .heavy))
                 if let t = trailingSystemName {
                     Image(systemName: t).font(.system(size: 16, weight: .bold))
                 }
@@ -65,7 +65,7 @@ struct PillButton: View {
             .frame(maxWidth: fill ? .infinity : nil)
             .frame(minHeight: height)
             .padding(.horizontal, 22)
-            .background(RoundedRectangle(cornerRadius: 6).fill(background))
+            .background(Capsule().fill(background))
         }
         .buttonStyle(PressScale())
     }
@@ -99,15 +99,11 @@ struct Chip: View {
                 if let leading { leading }
                 Text(title).font(Theme.sans(14, weight: .medium))
             }
-            .foregroundStyle(selected ? Theme.accent : Theme.ink2)
+            .foregroundStyle(selected ? Color.white : Theme.ink2)
             .padding(.vertical, 8)
             .frame(minHeight: 44)
             .padding(.horizontal, 15)
-            .background(RoundedRectangle(cornerRadius: 6).fill(selected ? Theme.notePink : Theme.bg2))
-            .overlay {
-                RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(selected ? Theme.accent.opacity(0.4) : .clear, lineWidth: 1)
-            }
+            .background(Capsule().fill(selected ? Theme.ink : Theme.card))
         }
         .buttonStyle(PressScale(scale: 0.95))
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -166,9 +162,10 @@ struct SectionHeader: View {
     init(_ title: String) { self.title = title }
     var body: some View {
         Text(title)
-            .font(Theme.sans(14, weight: .medium))
-            .foregroundStyle(Theme.ink2)
+            .font(Theme.sans(16, weight: .heavy, relativeTo: .headline))
+            .foregroundStyle(Theme.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -214,8 +211,7 @@ struct CardList<Content: View>: View {
     var body: some View {
         VStack(spacing: 0) { content() }
             .background(Theme.card)
-            .overlay(alignment: .top) { RowDivider() }
-            .overlay(alignment: .bottom) { RowDivider() }
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
 

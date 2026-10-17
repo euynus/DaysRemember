@@ -60,7 +60,11 @@ final class EditorPresentationUITests: XCTestCase {
 
         save(title, in: app)
         XCTAssertTrue(day("upcomingDay.work", in: app).label.contains("入职周年"), day("upcomingDay.work", in: app).label)
-        let japan = day("dayRow.japan", in: app)
+        // Past midnight the trip has gone by, so it counts up on 已过.
+        app.buttons["home.face.past"].tap()
+        let japan = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier IN %@", ["dayRow.japan", "pastHero.japan"])).firstMatch
+        XCTAssertTrue(japan.waitForExistence(timeout: 5), app.debugDescription)
         for _ in 0..<4 where !japan.isHittable { app.swipeUp() }
         XCTAssertTrue(japan.label.contains("北海道旅行 edited"), japan.label)
     }
@@ -111,16 +115,17 @@ final class EditorPresentationUITests: XCTestCase {
     func testLinkClosesSettingsToShowItsDay() {
         let app = XCUIApplication()
         app.launchEnvironment["DR_PIN_TODAY"] = "1"
-        app.launchArguments = ["--tab", "home", "--seed-sample-data"]
+        app.launchArguments = ["--tab", "me", "--seed-sample-data"]
         app.launch()
-        let settings = app.buttons["home.settings"]
-        XCTAssertTrue(settings.waitForExistence(timeout: 10))
-        settings.tap()
         let data = app.buttons["settings.data"]
-        XCTAssertTrue(data.waitForExistence(timeout: 5))
+        XCTAssertTrue(data.waitForExistence(timeout: 10))
+        for _ in 0..<4 where !data.isHittable { app.swipeUp() }
+        data.tap()
+        let sheet = app.navigationBars["数据与同步"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
 
         open("daysremember://day/baby")
-        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: data)
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: sheet)
         waitForExpectations(timeout: 5)
         XCTAssertTrue(app.buttons["detail.moreActions"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["小年糕出生"].exists)

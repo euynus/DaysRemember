@@ -242,7 +242,7 @@ enum DebugLaunch {
             case .widgets:
                 WidgetsPreviewView()
             case .settings:
-                SettingsView()
+                NavigationStack { MeView().toolbar(.hidden, for: .navigationBar) }
             }
         }
     }

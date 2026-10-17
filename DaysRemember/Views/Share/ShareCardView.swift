@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ShareCardView: View {
     @Environment(\.currentDay) private var today
+    @Environment(DayStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.displayScale) private var displayScale
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -47,8 +48,11 @@ struct ShareCardView: View {
     private var info: DayInfo { DayInfo.compute(day, today: today) }
 
     private var card: some View {
-        SharePostcard(day: day, info: info, template: template, includeNote: includeNote,
-                      fillsHeight: ratio == .portrait)
+        let category = store.category(for: day)
+        return SharePostcard(day: day, info: info, template: template, includeNote: includeNote,
+                             fillsHeight: ratio == .portrait,
+                             tint: info.isPast ? Theme.memory : category.tint,
+                             ink: info.isPast ? Theme.memoryInk : category.tintInk)
     }
 
     var body: some View {
@@ -77,7 +81,7 @@ struct ShareCardView: View {
                     card
                         .frame(width: Self.cardWidth, height: ratio == .portrait ? Self.portraitCardHeight : nil)
                         .environment(\.dynamicTypeSize, .large)
-                        .shadow(color: Theme.ink.opacity(0.06), radius: 12, y: 5)
+                        .shadow(color: Theme.ink.opacity(0.10), radius: 18, y: 8)
                 }
                 .padding(.top, 12)
                 .padding(.horizontal, 24)
@@ -199,21 +203,26 @@ struct ShareCardView: View {
             ? AnyLayout(VStackLayout(spacing: 10))
             : AnyLayout(HStackLayout(spacing: 16))
         return layout {
-            Button(action: presentShareSheet) {
-                Label("分享图片", systemImage: "square.and.arrow.up")
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
             Button(action: saveToPhotos) {
                 Label("保存", systemImage: "square.and.arrow.down")
+                    .font(Theme.sans(16, weight: .heavy))
+                    .foregroundStyle(Theme.ink)
                     .lineLimit(1)
-                    .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, minHeight: 44)
+                    .padding(.horizontal, 20)
+                    .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, minHeight: 52)
+                    .background(Theme.card, in: Capsule())
             }
-            .buttonStyle(.bordered)
-            .tint(Theme.accent)
+            .buttonStyle(PressScale(scale: 0.97))
+            Button(action: presentShareSheet) {
+                Label("分享图片", systemImage: "square.and.arrow.up")
+                    .font(Theme.sans(16, weight: .heavy))
+                    .foregroundStyle(Color.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(Theme.ink, in: Capsule())
+            }
+            .buttonStyle(PressScale(scale: 0.97))
         }
     }
 }
@@ -225,6 +234,9 @@ struct SharePostcard: View {
     var includeNote = false
     /// In a fixed-height (3:4) card, covers and spacing absorb the remaining height.
     var fillsHeight = false
+    /// The day's pastel and its text colour; plain values, since an image render has no store.
+    var tint: Color = Theme.noteBlue
+    var ink: Color = Theme.ink
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -232,7 +244,8 @@ struct SharePostcard: View {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("时光")
-                        .foregroundStyle(Theme.accent)
+                        .font(Theme.sans(11, weight: .heavy))
+                        .foregroundStyle(ink)
                         .fixedSize(horizontal: true, vertical: false)
                     Spacer(minLength: 0)
                     Text(CNDate.full(info.displayDate))
@@ -274,12 +287,21 @@ struct SharePostcard: View {
             .layoutPriority(1)
         }
         .frame(maxWidth: .infinity, maxHeight: fillsHeight ? .infinity : nil, alignment: .topLeading)
-        .background(Theme.card)
-        .clipped()
+        .background(template == .polaroid ? tint : Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
+    /// A photo fills its frame; a preset is the flat illustration on the day's pastel.
+    @ViewBuilder
     private var cover: some View {
-        PhotoTile(day: day, flat: true, cornerRadius: 0)
+        if day.photoData != nil {
+            PhotoTile(day: day, flat: true, cornerRadius: 0)
+        } else {
+            FlatCover(style: day.photo)
+                .padding(16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(tint)
+        }
     }
 
     /// Fixed height in a natural card; in a 3:4 card the cover takes whatever height is left.
@@ -294,7 +316,7 @@ struct SharePostcard: View {
 
     private var title: some View {
         Text(verbatim: day.title)
-            .font(Theme.sans(23, weight: .medium))
+            .font(Theme.sans(24, weight: .heavy))
             .foregroundStyle(Theme.ink)
             .lineLimit(fillsHeight ? 3 : nil)
             .fixedSize(horizontal: false, vertical: !fillsHeight)
@@ -310,8 +332,8 @@ struct SharePostcard: View {
             : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 6))
         return layout {
             Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
-                .font(info.isToday ? Theme.sans(34) : Theme.number(template == .minimal ? 112 : 66))
-                .foregroundStyle(Theme.accent)
+                .font(info.isToday ? Theme.number(34) : Theme.number(template == .minimal ? 112 : 66))
+                .foregroundStyle(Theme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
             if !info.isToday {

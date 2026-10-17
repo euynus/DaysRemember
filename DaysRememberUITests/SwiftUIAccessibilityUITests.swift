@@ -28,24 +28,27 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         XCTAssertEqual(template.value as? String ?? "", "")
     }
 
-    func testHomeFiltersKeepMinimumTargetsAndResetScrolledResults() {
+    func testHomeFacesKeepMinimumTargetsAndResetScrolledResults() {
         let app = launchPolishFixture()
-        let all = app.buttons["全部"]
-        XCTAssertTrue(all.waitForExistence(timeout: 5))
-        attach(app, name: "Home filter touch targets")
-        XCTAssertGreaterThanOrEqual(all.frame.width, 44)
-        XCTAssertGreaterThanOrEqual(all.frame.height, 44)
+        let upcoming = app.buttons["home.face.upcoming"]
+        let past = app.buttons["home.face.past"]
+        XCTAssertTrue(upcoming.waitForExistence(timeout: 5))
+        attach(app, name: "Home face touch targets")
+        for face in [upcoming, past] {
+            XCTAssertGreaterThanOrEqual(face.frame.width, 44)
+            XCTAssertGreaterThanOrEqual(face.frame.height, 44)
+        }
 
         let feed = app.scrollViews["home.feed"]
         feed.swipeUp()
         feed.swipeUp()
-        app.buttons["已置顶"].tap()
-        let firstPinned = app.descendants(matching: .any).matching(identifier: "dayRow.wedding").firstMatch
-        XCTAssertTrue(firstPinned.waitForExistence(timeout: 5))
-        XCTAssertTrue(firstPinned.isHittable)
-        XCTAssertGreaterThanOrEqual(firstPinned.frame.minY, all.frame.maxY - 1)
+        past.tap()
+        let pastHero = app.descendants(matching: .any).matching(identifier: "pastHero.ui-polish-long").firstMatch
+        XCTAssertTrue(pastHero.waitForExistence(timeout: 5))
+        XCTAssertTrue(pastHero.isHittable)
+        XCTAssertGreaterThanOrEqual(pastHero.frame.minY, past.frame.maxY - 1)
 
-        all.tap()
+        upcoming.tap()
         app.buttons["home.search"].tap()
         let search = app.textFields["home.searchField"]
         XCTAssertTrue(search.waitForExistence(timeout: 5))
@@ -58,7 +61,7 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         app.buttons["home.search"].tap()
         XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "upcomingDay.ui-polish-featured")
             .firstMatch.waitForExistence(timeout: 5))
-        attach(app, name: "Home search and filter recovery")
+        attach(app, name: "Home search and face recovery")
     }
 
     func testDetailLongTitleRemainsExpandedAtAccessibilitySize() {

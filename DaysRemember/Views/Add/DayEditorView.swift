@@ -98,21 +98,22 @@ struct DayEditorView: View {
             navBar
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    titleField.padding(.top, 12).padding(.bottom, 22)
+                    livePreview
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 8)
+                        .padding(.bottom, 12)
+                    titleField.padding(.bottom, 12)
                     formCard.padding(.bottom, 22)
 
                     SectionHeader(String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     categoryPills.padding(.bottom, 22)
 
-                    livePreview
-                        .frame(maxWidth: .infinity)
-                        .padding(.bottom, 12)
                     coverPicker.padding(.bottom, 28)
 
                     SectionHeader(String(localized: "心情笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     notesCard
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 16)
                 .padding(.bottom, 40)
             }
             .scrollDismissesKeyboard(.interactively)
@@ -195,11 +196,55 @@ struct DayEditorView: View {
 
     // MARK: - Cover preview
 
+    private var previewTint: Color {
+        store.categories.first(where: { $0.id == categoryID })?.tint ?? Theme.bg2
+    }
+
+    /// The day as it would look on the feed, from the current draft.
+    private var previewSummary: some View {
+        let draft = Day(id: "editor-preview", title: title, date: selectedDate, recurring: recurring,
+                        lunar: !solar, category: .life, photo: photo)
+        let info = DayInfo.compute(draft, today: Today.date)
+        let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name.isEmpty ? String(localized: "给这一天起个名字", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : name)
+                    .font(Theme.sans(18, weight: .heavy))
+                    .foregroundStyle(name.isEmpty ? Theme.onPastel : Theme.ink)
+                    .lineLimit(2)
+                Text(recurring ? String(localized: "\(CNDate.short(info.displayDate)) · 每年", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                     : CNDate.full(info.displayDate))
+                    .font(Theme.sans(12))
+                    .foregroundStyle(Theme.onPastel)
+                Spacer(minLength: 8)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    if !info.isToday { CountLabel(info: info) }
+                    CountValue(info: info, size: 48)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if !dynamicTypeSize.isAccessibilitySize {
+                FlatCover(style: photo)
+                    .frame(width: 112, height: 112)
+            }
+        }
+        .padding(16)
+        .accessibilityElement(children: .combine)
+    }
+
     private var livePreview: some View {
-        PhotoTile(style: photo, imageData: photoData,
-                  focusX: coverFocusX, focusY: coverFocusY,
-                  flat: true, cornerRadius: 3)
-            .frame(height: 200)
+        Group {
+            if photoData == nil {
+                previewSummary
+            } else {
+                PhotoTile(style: photo, imageData: photoData,
+                          focusX: coverFocusX, focusY: coverFocusY,
+                          flat: true, cornerRadius: 26)
+                    .frame(height: 200)
+            }
+        }
+            .frame(minHeight: photoData == nil ? 150 : 200)
+            .background(previewTint, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
             // Lists and square widgets crop a photo narrower than this preview does, so a sideways
             // drag can change only them; the inset shows that crop.
             .overlay(alignment: .bottomTrailing) {
@@ -208,7 +253,7 @@ struct DayEditorView: View {
                               flat: true, cornerRadius: 3, maximumPixelSize: 256)
                         .frame(width: 44, height: 51)
                         .overlay { RoundedRectangle(cornerRadius: 3).strokeBorder(Color.white, lineWidth: 2) }
-                        .padding(10)
+                        .padding(14)
                         .allowsHitTesting(false)
                 }
             }
@@ -247,12 +292,13 @@ struct DayEditorView: View {
     private var titleField: some View {
         TextField("", text: $title,
                   prompt: Text("给这一天起个名字").foregroundStyle(Theme.muted))
-            .font(Theme.sans(25, weight: .medium))
+            .font(Theme.sans(22, weight: .heavy))
             .foregroundStyle(Theme.ink)
             .tint(Theme.ink)
             .submitLabel(.done)
             .padding(.vertical, 14)
-            .overlay(alignment: .bottom) { RowDivider() }
+            .padding(.horizontal, 16)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .accessibilityLabel("日子名称")
             .accessibilityIdentifier("dayTitleField")
     }
@@ -292,12 +338,12 @@ struct DayEditorView: View {
                             } label: {
                                 VStack(spacing: 7) {
                                     miniPolaroid(selected: selected) {
-                                        PhotoTile(style: preset, flat: true, cornerRadius: 4, maximumPixelSize: 192)
+                                        FlatCover(style: preset)
                                             .frame(width: 64, height: 64)
                                     }
                                     Text(preset.displayName)
                                         .font(Theme.sans(12, weight: .medium, relativeTo: .caption))
-                                        .foregroundStyle(selected ? Theme.accent : Theme.ink2)
+                                        .foregroundStyle(selected ? Theme.ink : Theme.ink2)
                                         .multilineTextAlignment(.center)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -382,12 +428,13 @@ struct DayEditorView: View {
             showTemplateGallery = false
         } label: {
             VStack(alignment: .leading, spacing: 10) {
-                PhotoTile(style: preset, flat: true, cornerRadius: 6, maximumPixelSize: 1024)
+                Color.clear
                     .aspectRatio(4.0 / 3.0, contentMode: .fit)
+                    .overlay { FlatCover(style: preset).padding(14) }
+                    .background(previewTint, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .strokeBorder(selected ? Theme.accent : Theme.hairline,
-                                          lineWidth: selected ? 2 : 1)
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(selected ? Theme.ink : .clear, lineWidth: 2.5)
                     }
                 HStack(alignment: .top, spacing: 8) {
                     Text(preset.displayName)
@@ -427,19 +474,19 @@ struct DayEditorView: View {
     private func miniPolaroid<Content: View>(selected: Bool,
                                              @ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(4)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.white))
+            .padding(5)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(previewTint))
             .overlay {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .strokeBorder(selected ? Theme.accent : Theme.hairline, lineWidth: selected ? 2 : 1)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(selected ? Theme.ink : .clear, lineWidth: 2.5)
             }
             .overlay(alignment: .bottomTrailing) {
                 if selected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 16, weight: .semibold))
                         .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, Theme.accent)
-                        .padding(2)
+                        .foregroundStyle(.white, Theme.ink)
+                        .padding(3)
                         .accessibilityHidden(true)
                 }
             }
@@ -655,10 +702,9 @@ struct DayEditorView: View {
                 .accessibilityIdentifier("dayNoteEditor")
         }
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(Theme.card)
         )
-        .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline, lineWidth: 1) }
     }
 
     // MARK: - Date picker sheet

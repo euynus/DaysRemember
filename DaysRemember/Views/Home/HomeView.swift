@@ -1,106 +1,66 @@
 import SwiftUI
 
+/// The two faces of the feed: days ahead count down, days behind count up.
+enum HomeFace: String, Hashable {
+    case upcoming, past
+
+    /// Allows `xcrun simctl launch ... --face past` for screenshotting.
+    static func initial() -> HomeFace {
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "--face"), i + 1 < args.count,
+           let face = HomeFace(rawValue: args[i + 1]) { return face }
+        return .upcoming
+    }
+}
+
 struct HomeView: View {
     @Environment(DayStore.self) var store
     @Environment(\.currentDay) private var today
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(DeepLinkRouter.self) private var router
-    @State private var filter: Filter = .all
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var face: HomeFace = HomeFace.initial()
+    @State private var heroPage: String?
     @State private var isSearching = false
     @State private var searchText = ""
-    @State private var showingSettings = false
     @FocusState private var searchFocused: Bool
+    @ScaledMetric(relativeTo: .title2) private var heroHeight: CGFloat = 214
     var onOpen: (Day) -> Void = { _ in }
     var onAdd: () -> Void = {}
 
-    enum Filter: Hashable {
-        case all, pinned, category(String)
-    }
-
-    private var filters: [Filter] {
-        [.all, .pinned] + store.categories.map { .category($0.id) }
-    }
-
-    private var filteredDays: [Day] {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Filter first, then sort: a typed search or category filter can prune most of
-        // the array, and sortedDays does an O(N log N) sort on whatever it receives.
-        let matched = store.days.filter { d in
-            switch filter {
-            case .all:
-                break
-            case .pinned:
-                guard d.pinned else { return false }
-            case .category(let id):
-                guard d.categoryID == id else { return false }
-            }
-            guard !query.isEmpty else { return true }
-            let categoryName = store.category(for: d).displayName
-            return [d.title, d.location, d.note, categoryName]
-                .contains { $0.localizedStandardContains(query) }
-        }
-        return store.sortedDays(matched, today: today)
+    private var query: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
-        let days = filteredDays
-        let hero = filter == .all && searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? store.nearestUpcoming(within: .max, today: today) : nil
-        let feedDays = days.filter { $0.id != hero?.id }
+        let sorted = store.sortedDays(store.days, today: today)
+        let upcoming = sorted.filter { !DayInfo.compute($0, today: today).isPast }
+        let past = sorted.filter { DayInfo.compute($0, today: today).isPast }
         VStack(spacing: 0) {
             header
             if isSearching { searchField }
-            chips
             ScrollViewReader { proxy in
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        if days.isEmpty {
-                            let empty = emptyStateCopy()
-                            ContentUnavailableView(empty.title,
-                                                   systemImage: empty.symbol,
-                                                   description: Text(empty.detail))
-                                .foregroundStyle(Theme.muted)
-                                .padding(.top, 56)
-                                .padding(.horizontal, 24)
-                            if filter == .all && searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                Button("记录第一个日子", systemImage: "plus", action: onAdd)
-                                    .buttonStyle(.borderedProminent)
-                                    .tint(Theme.accent)
-                                    .padding(.top, 12)
-                            }
+                    VStack(alignment: .leading, spacing: 12) {
+                        if store.days.isEmpty {
+                            emptyLibrary
+                        } else if !query.isEmpty {
+                            searchResults(sorted)
                         } else {
-                            VStack(spacing: 0) {
-                                if let hero {
-                                    UpcomingDayView(day: hero, onOpen: onOpen)
-                                        .dayContextMenu(day: hero)
-                                        .padding(.bottom, feedDays.isEmpty ? 0 : 26)
-                                }
-                                if !feedDays.isEmpty {
-                                    HStack {
-                                        SectionHeader(hero != nil
-                                                      ? String(localized: "其他日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                                                      : filter == .all
-                                                      ? String(localized: "日子清单", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                                                      : label(for: filter))
-                                        Text("\(feedDays.count)")
-                                            .font(Theme.sans(12))
-                                            .foregroundStyle(Theme.muted)
-                                    }
-                                    .padding(.top, 8)
-                                    .padding(.bottom, 10)
-                                    DayList(days: feedDays, onOpen: onOpen)
-                                }
+                            facePicker(upcoming: upcoming.count, past: past.count)
+                            switch face {
+                            case .upcoming: upcomingFace(upcoming)
+                            case .past: pastFace(past)
                             }
-                            .padding(.horizontal, 24)
-                            .padding(.top, 4)
-                            .padding(.bottom, 24)
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .padding(.bottom, 24)
                     .id("home.feed.top")
                 }
                 .accessibilityIdentifier("home.feed")
                 .scrollDismissesKeyboard(.interactively)
-                .onChange(of: filter) {
+                .onChange(of: face) {
                     searchFocused = false
                     withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
                         proxy.scrollTo("home.feed.top", anchor: .top)
@@ -111,59 +71,45 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
-        .sensoryFeedback(.selection, trigger: filter)
-        .onChange(of: store.categories.map(\.id)) { _, ids in
-            if case .category(let id) = filter, !ids.contains(id) { filter = .all }
-        }
-        .sheet(isPresented: $showingSettings) { SettingsView() }
-        .onChange(of: router.linkOpenCount) { showingSettings = false }
+        .sensoryFeedback(.selection, trigger: face)
     }
 
+    // MARK: Header
+
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center) {
-                Text("时光")
-                    .font(Theme.sans(30, weight: .medium, relativeTo: .largeTitle))
+        HStack(alignment: .bottom, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                MetaRow(metaItems)
+                Text(String(localized: "\(CNDate.short(today)) \(CNDate.weekday(today))", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                    .font(Theme.sans(30, weight: .heavy, relativeTo: .largeTitle))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                Spacer(minLength: 8)
-                Button { showingSettings = true } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundStyle(Theme.ink2)
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("设置")
-                .accessibilityIdentifier("home.settings")
-                FAB(systemName: isSearching ? "xmark" : "magnifyingglass", size: 42) {
-                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
-                        isSearching.toggle()
-                        if !isSearching { searchText = ""; searchFocused = false }
-                    }
-                }
-                .accessibilityLabel(isSearching
-                    ? String(localized: "关闭搜索", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                    : String(localized: "搜索日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-                .accessibilityIdentifier("home.search")
-                FAB(systemName: "plus", size: 42, dark: true, action: onAdd)
-                    .accessibilityLabel("添加日子")
-                    .accessibilityIdentifier("home.addDay")
+                    .accessibilityAddTraits(.isHeader)
             }
-            MetaRow(metaItems)
+            Spacer(minLength: 8)
+            FAB(systemName: isSearching ? "xmark" : "magnifyingglass", size: 44) {
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
+                    isSearching.toggle()
+                    if !isSearching { searchText = ""; searchFocused = false }
+                }
+            }
+            .accessibilityLabel(isSearching
+                ? String(localized: "关闭搜索", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                : String(localized: "搜索日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            .accessibilityIdentifier("home.search")
+            FAB(systemName: "plus", size: 44, dark: true, action: onAdd)
+                .accessibilityLabel("添加日子")
+                .accessibilityIdentifier("home.addDay")
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 16)
-        .padding(.bottom, 12)
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
     }
 
-    /// Today's date · lunar day · solar term (colored) — the JSX header `.meta` line.
+    /// Lunar day and solar term above the date.
     private var metaItems: [MetaItem] {
-        var items: [MetaItem] = [
-            MetaItem(text: String(localized: "\(CNDate.short(today)) \(CNDate.weekday(today))",
-                                  bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
-            MetaItem(text: Lunar.fmt(today)),
-        ]
+        var items: [MetaItem] = [MetaItem(text: Lunar.fmt(today), color: Theme.muted, bold: true)]
         if let term = SolarTerms.name(for: today) {
             items.append(MetaItem(text: term, color: Theme.solarTerm, bold: true))
         }
@@ -175,7 +121,7 @@ struct HomeView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Theme.muted)
             TextField("搜索标题、地点、备注、分类", text: $searchText)
-                .font(Theme.sans(14, weight: .medium))
+                .font(Theme.sans(15, weight: .medium))
                 .textInputAutocapitalization(.never)
                 .submitLabel(.search)
                 .focused($searchFocused)
@@ -191,82 +137,209 @@ struct HomeView: View {
                     .accessibilityIdentifier("home.clearSearch")
             }
         }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 44)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Theme.hairline, lineWidth: 0.5)
-        }
-        .padding(.horizontal, 22)
-        .padding(.top, 8)
-        // Focus + raise the keyboard as soon as the field is inserted, so opening
-        // search is a single tap instead of tap-to-reveal then tap-to-type. Defer
-        // one runloop: setting @FocusState synchronously in the .onAppear of a
-        // just-inserted field races the responder chain and often no-ops on iOS 17.
+        .padding(.horizontal, 16)
+        .frame(minHeight: 48)
+        .background(Theme.card, in: Capsule())
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+        // Focus as soon as the field is inserted, one runloop later so the responder chain
+        // has the field: opening search stays a single tap.
         .onAppear { Task { @MainActor in searchFocused = true } }
     }
 
-    private var chips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
-                ForEach(filters, id: \.self) { f in
-                    Button { filter = f } label: {
-                        Text(verbatim: label(for: f))
-                            .font(Theme.sans(14, weight: f == filter ? .semibold : .regular))
-                            .foregroundStyle(f == filter ? Theme.ink : Theme.muted)
-                            .lineLimit(1)
-                            .frame(maxWidth: 220)
-                            .fixedSize(horizontal: true, vertical: false)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(Rectangle())
-                            .overlay(alignment: .bottom) {
-                                if f == filter {
-                                    Rectangle().fill(Theme.accent).frame(height: 2)
-                                }
-                            }
+    // MARK: Faces
+
+    private func facePicker(upcoming: Int, past: Int) -> some View {
+        HStack(spacing: 4) {
+            faceButton(.upcoming, title: String(localized: "将至 · \(upcoming)", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                       identifier: "home.face.upcoming")
+            faceButton(.past, title: String(localized: "已过 · \(past)", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                       identifier: "home.face.past")
+        }
+        .padding(3)
+        .background(Theme.bg2, in: Capsule())
+    }
+
+    private func faceButton(_ value: HomeFace, title: String, identifier: String) -> some View {
+        let selected = face == value
+        return Button {
+            withAnimation(reduceMotion ? nil : .snappy(duration: 0.2)) { face = value }
+        } label: {
+            Text(title)
+                .font(Theme.sans(14, weight: selected ? .heavy : .medium))
+                .foregroundStyle(selected ? Theme.ink : Theme.ink2)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background {
+                    if selected {
+                        Capsule().fill(Theme.card)
+                            .shadow(color: Theme.ink.opacity(0.08), radius: 3, y: 1)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(f == filter ? .isSelected : [])
+                }
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier(identifier)
+    }
+
+    @ViewBuilder
+    private func upcomingFace(_ days: [Day]) -> some View {
+        if days.isEmpty {
+            emptyFace(title: String(localized: "没有将至的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                      symbol: "sun.max",
+                      detail: String(localized: "每年重复的日子和未来的日子会出现在这里。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        } else {
+            let heroes = Array(days.sorted { DayInfo.compute($0, today: today).days < DayInfo.compute($1, today: today).days }.prefix(5))
+            heroPager(heroes)
+            if let recent = recentOccurrence {
+                RecentOccurrenceBanner(day: recent.day, occurrence: recent.occurrence, onOpen: onOpen)
+                    .dayContextMenu(day: recent.day)
+            }
+            let rest = days.filter { $0.id != heroes.first?.id }
+            if !rest.isEmpty {
+                sectionTitle(String(localized: "接下来", bundle: AppLocalization.bundle, locale: AppLocalization.locale), count: rest.count)
+                DayGrid(days: rest, onOpen: onOpen)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func heroPager(_ heroes: [Day]) -> some View {
+        if dynamicTypeSize.isAccessibilitySize || heroes.count == 1 {
+            if let first = heroes.first {
+                HeroDayCard(day: first, onOpen: onOpen)
+                    .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? nil : heroHeight)
+                    .dayContextMenu(day: first)
+            }
+        } else {
+            TabView(selection: Binding(get: { heroPage ?? heroes.first?.id }, set: { heroPage = $0 })) {
+                ForEach(Array(heroes.enumerated()), id: \.element.id) { index, day in
+                    HeroDayCard(day: day, position: (index, heroes.count), onOpen: onOpen)
+                        .dayContextMenu(day: day)
+                        .tag(Optional(day.id))
                 }
             }
-            .padding(.horizontal, 24)
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: heroHeight)
+            .onChange(of: heroes.map(\.id)) { _, ids in
+                if let page = heroPage, !ids.contains(page) { heroPage = nil }
+            }
+        }
+    }
+
+    /// The most recent recurring day that passed within the last week.
+    private var recentOccurrence: (day: Day, occurrence: RecentOccurrence)? {
+        store.days
+            .compactMap { day in RecentOccurrence.of(day, today: today).map { (day, $0) } }
+            .min { $0.1.daysAgo < $1.1.daysAgo }
+    }
+
+    @ViewBuilder
+    private func pastFace(_ days: [Day]) -> some View {
+        if days.isEmpty {
+            emptyFace(title: String(localized: "还没有走过的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                      symbol: "moon",
+                      detail: String(localized: "不重复的日子过去以后，会在这里一天天记着。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        } else {
+            let milestones = days.compactMap { day in Milestone.next(after: day.date, today: today).map { (day, $0) } }
+                .sorted { $0.1.daysUntil < $1.1.daysUntil }
+            if let hero = milestones.first {
+                HeroDayCard(day: hero.0, milestone: hero.1, onOpen: onOpen)
+                    .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? nil : heroHeight)
+                    .dayContextMenu(day: hero.0)
+            }
+            if milestones.count > 1 {
+                milestoneStrip(Array(milestones.dropFirst().prefix(5)))
+            }
+            let rest = days.filter { $0.id != milestones.first?.0.id }
+            if !rest.isEmpty {
+                sectionTitle(String(localized: "走过的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale), count: rest.count)
+                DayGrid(days: rest, onOpen: onOpen)
+            }
+        }
+    }
+
+    private func milestoneStrip(_ items: [(Day, Milestone)]) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(items, id: \.0.id) { day, milestone in
+                    Button { onOpen(day) } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                                Text(milestone.daysUntil.formatted())
+                                    .numberFont(26)
+                                    .foregroundStyle(store.category(for: day).tintInk)
+                                Text("天后")
+                                    .font(Theme.sans(12))
+                                    .foregroundStyle(Theme.muted)
+                            }
+                            Text(verbatim: "\(day.title) \(milestone.title)")
+                                .font(Theme.sans(13, weight: .bold))
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .frame(width: 160, alignment: .leading)
+                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(PressableTileStyle())
+                }
+            }
         }
         .scrollClipDisabled()
-        .overlay(alignment: .bottom) { RowDivider() }
-        .padding(.bottom, 4)
     }
 
-    private func label(for filter: Filter) -> String {
-        switch filter {
-        case .all: return String(localized: "全部", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        case .pinned: return String(localized: "已置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        case .category(let id): return store.category(for: id).displayName
+    private func sectionTitle(_ title: String, count: Int) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 8)
+            Text("\(count)")
+                .font(Theme.sans(12))
+                .foregroundStyle(Theme.muted)
         }
+        .padding(.horizontal, 4)
+        .padding(.top, 6)
     }
 
-    /// Copy for the empty-state placeholder, tailored to whichever filter or search
-    /// is currently active so the message matches what the user is seeing.
-    private func emptyStateCopy() -> (title: String, symbol: String, detail: String) {
-        if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return (String(localized: "没有找到日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                    "magnifyingglass",
-                    String(localized: "换个关键词试试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+    // MARK: Empty and search
+
+    private var emptyLibrary: some View {
+        VStack(spacing: 12) {
+            ContentUnavailableView(String(localized: "这里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                                   systemImage: "calendar.badge.plus",
+                                   description: Text(String(localized: "值得记住的，从这一天开始。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)))
+                .foregroundStyle(Theme.muted)
+            Button("记录第一个日子", systemImage: "plus", action: onAdd)
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
         }
-        switch filter {
-        case .pinned:
-            return (String(localized: "还没有置顶的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                    "star",
-                    String(localized: "在日子上长按可以置顶它。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-        case .category(let id):
-            return (String(localized: "这个分类里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                    store.category(for: id).symbolName,
-                    String(localized: "切换分类，或在加号里给它添个新日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-        case .all:
-            return (String(localized: "这里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                    "calendar.badge.plus",
-                    String(localized: "值得记住的，从这一天开始。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        .padding(.top, 56)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func emptyFace(title: String, symbol: String, detail: String) -> some View {
+        ContentUnavailableView(title, systemImage: symbol, description: Text(detail))
+            .foregroundStyle(Theme.muted)
+            .padding(.top, 40)
+    }
+
+    @ViewBuilder
+    private func searchResults(_ sorted: [Day]) -> some View {
+        let matched = sorted.filter { day in
+            let categoryName = store.category(for: day).displayName
+            return [day.title, day.location, day.note, categoryName]
+                .contains { $0.localizedStandardContains(query) }
+        }
+        if matched.isEmpty {
+            emptyFace(title: String(localized: "没有找到日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                      symbol: "magnifyingglass",
+                      detail: String(localized: "换个关键词试试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        } else {
+            DayGrid(days: matched, onOpen: onOpen)
         }
     }
 }

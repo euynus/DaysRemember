@@ -72,19 +72,25 @@ struct CalendarMonthView: View {
     var body: some View {
         let eventsByDay = computeEventsByDay()
         return VStack(spacing: 0) {
-            NavHeader(title: String(localized: "日历", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            monthHeader
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 18) {
-                    monthHeader
+                LazyVStack(alignment: .leading, spacing: 12) {
                     calendarCard(eventsByDay: eventsByDay)
                         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    SectionHeader(String(localized: "本月日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                    Text("本月日子")
+                        .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 4)
+                        .padding(.top, 8)
+                        .accessibilityAddTraits(.isHeader)
                     if eventsByDay.isEmpty {
                         Text("本月没有记录的日子")
                             .font(Theme.sans(15))
                             .foregroundStyle(Theme.muted)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
+                            .frame(maxWidth: .infinity, minHeight: 60)
+                            .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     } else {
                         ForEach(eventsByDay.keys.sorted(), id: \.self) { dayNumber in
                             ForEach(eventsByDay[dayNumber] ?? []) { day in
@@ -93,8 +99,8 @@ struct CalendarMonthView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 22)
-                .padding(.top, 18)
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
                 .padding(.bottom, 24)
             }
             .scrollIndicators(.hidden)
@@ -129,10 +135,10 @@ struct CalendarMonthView: View {
             Button(action: showCurrentMonth) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(CNDate.year(monthDate))
-                        .font(Theme.sans(12))
+                        .font(Theme.sans(13, weight: .bold))
                         .foregroundStyle(Theme.muted)
                     Text(CNDate.month(monthDate))
-                        .font(Theme.sans(32, weight: .medium))
+                        .font(Theme.sans(30, weight: .heavy, relativeTo: .largeTitle))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
@@ -143,23 +149,27 @@ struct CalendarMonthView: View {
             .accessibilityLabel(String(localized: "\(CNDate.year(monthDate)) \(CNDate.month(monthDate))，回到本月", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             Spacer(minLength: 8)
             HStack(spacing: 8) {
-                if !isShowingCurrentMonth {
-                    Button("今天", action: showCurrentMonth)
-                        .font(Theme.sans(14, weight: .medium))
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                        .tint(Theme.accent)
-                        .accessibilityIdentifier("calendar.today")
-                }
-                FAB(systemName: "chevron.left", size: 38, iconSize: 15) { showMonth(offset: -1) }
+                FAB(systemName: "chevron.left", size: 40, iconSize: 15) { showMonth(offset: -1) }
                     .accessibilityLabel("上个月")
-                FAB(systemName: "chevron.right", size: 38, iconSize: 15) { showMonth(offset: 1) }
+                if !isShowingCurrentMonth {
+                    Button(action: showCurrentMonth) {
+                        Text("今天")
+                            .font(Theme.sans(14, weight: .heavy))
+                            .foregroundStyle(Color.white)
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 40)
+                            .background(Theme.ink, in: Capsule())
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(PressScale(scale: 0.94))
+                    .accessibilityIdentifier("calendar.today")
+                }
+                FAB(systemName: "chevron.right", size: 40, iconSize: 15) { showMonth(offset: 1) }
                     .accessibilityLabel("下个月")
             }
             .fixedSize(horizontal: true, vertical: false)
         }
-        .padding(.top, 6)
-        .padding(.bottom, 12)
+        .padding(.bottom, 10)
     }
 
     // MARK: - Calendar card
@@ -188,7 +198,7 @@ struct CalendarMonthView: View {
                         .padding(.bottom, 8)
                 }
             }
-            LazyVGrid(columns: cols, spacing: 1) {
+            LazyVGrid(columns: cols, spacing: 4) {
                 ForEach(0..<42, id: \.self) { i in
                     let inMonth = i >= firstWeekday && i < firstWeekday + dayCount
                     let d = i - firstWeekday + 1
@@ -201,9 +211,9 @@ struct CalendarMonthView: View {
                 }
             }
         }
+        .padding(.horizontal, 8)
         .padding(.vertical, 14)
-        .overlay(alignment: .top) { RowDivider() }
-        .overlay(alignment: .bottom) { RowDivider() }
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .contentShape(Rectangle())
         // Horizontal swipes change month; vertical drags still scroll the page.
         .simultaneousGesture(
@@ -218,7 +228,8 @@ struct CalendarMonthView: View {
     @ViewBuilder
     private func cellView(d: Int, events: [Day], isToday: Bool) -> some View {
         let hasEvents = !events.isEmpty
-        let dotColor = events.first.map { store.category(for: $0).colorToken.color } ?? Theme.muted
+        let eventCategory = events.first.map { store.category(for: $0) }
+        let dotColor = eventCategory?.tintInk ?? Theme.muted
         let cal = CNDate.calendar
         let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? today
         let marks = SolarTerms.marks(for: cellDate)
@@ -234,7 +245,7 @@ struct CalendarMonthView: View {
 
         let cell = VStack(spacing: 1) {
             Text(verbatim: String(d))
-                .font(Theme.sans(15, weight: isToday ? .semibold : .regular))
+                .numberFont(17, weight: .bold)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -258,8 +269,9 @@ struct CalendarMonthView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .aspectRatio(0.85, contentMode: .fit)
         .background {
-            Circle()
-                .fill(isToday ? Theme.accent : (hasEvents ? Theme.bg2 : .clear))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(isToday ? Theme.ink : (eventCategory?.tint ?? .clear))
+                .padding(.horizontal, 2)
         }
         // The whole cell is the target, not just its digits.
         .contentShape(Rectangle())
@@ -287,30 +299,32 @@ struct CalendarMonthView: View {
     private func monthRow(_ day: Day, dayNumber: Int) -> some View {
         let metadata = subtitle(for: day, label: store.category(for: day).displayName)
         let date = CNDate.calendar.date(from: DateComponents(year: year, month: month + 1, day: dayNumber)) ?? today
+        let category = store.category(for: day)
         return Button { onOpen(day) } label: {
-            HStack(alignment: .top, spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .center, spacing: 12) {
+                if !dynamicTypeSize.isAccessibilitySize {
+                    CoverArt(day: day, photoCornerRadius: 12, maximumPixelSize: 192, decodesAsynchronously: true)
+                        .frame(width: 52, height: 52)
+                        .accessibilityHidden(true)
+                }
+                VStack(alignment: .leading, spacing: 2) {
                     Text(CNDate.short(date))
-                        .font(Theme.sans(12, weight: .medium))
-                        .foregroundStyle(Theme.accent)
+                        .font(Theme.sans(12, weight: .heavy))
+                        .foregroundStyle(category.tintInk)
                     Text(verbatim: day.title)
-                        .font(Theme.sans(16, weight: .medium))
+                        .font(Theme.sans(16, weight: .heavy))
                         .foregroundStyle(Theme.ink)
                     Text(verbatim: metadata)
                         .font(Theme.sans(12))
-                        .foregroundStyle(Theme.ink2)
+                        .foregroundStyle(Theme.onPastel)
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                if !dynamicTypeSize.isAccessibilitySize {
-                    PhotoTile(day: day, flat: true, cornerRadius: 8, maximumPixelSize: 256,
-                              decodesAsynchronously: true)
-                        .frame(width: 56, height: 62)
-                        .accessibilityHidden(true)
-                }
             }
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
+            .background(category.tint, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
         .buttonStyle(PressableTileStyle())
         .accessibilityElement(children: .ignore)

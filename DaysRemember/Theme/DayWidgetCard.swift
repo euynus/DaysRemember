@@ -15,15 +15,20 @@ struct DayWidgetCard: View {
         Group {
             switch size {
             case .small:
-                VStack(alignment: .leading, spacing: 8) {
-                    photo
-                        .frame(height: 46)
-                    title
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .top, spacing: 4) {
+                        date
+                        Spacer(minLength: 0)
+                        cover
+                            .frame(width: 58, height: 58)
+                    }
+                    Spacer(minLength: 2)
                     countdown
+                    title
                 }
             case .medium:
-                HStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
                         eyebrow
                         title
                         Spacer(minLength: 0)
@@ -31,32 +36,53 @@ struct DayWidgetCard: View {
                         date
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    photo
-                        .frame(width: 106)
+                    cover
+                        .frame(width: 112)
                 }
             case .large:
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack { eyebrow; Spacer(); date }
-                    photo
+                    cover
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     title
                     countdown
                 }
             }
         }
-        .padding(size == .small ? 12 : 18)
+        .padding(size == .small ? 14 : 18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         // Tinted, clear and StandBy modes remove the container background and draw the rest in one
         // tint by opacity, so an opaque card of its own would be a solid block there.
-        .background(renderingMode == .fullColor ? Theme.card : Color.clear)
+        .background(renderingMode == .fullColor ? palette.tint : Color.clear)
         // A widget has fixed physical bounds, unlike the surrounding app controls.
         .dynamicTypeSize(...DynamicTypeSize.large)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilitySummary)
     }
 
+    /// The card's pastel and the colour drawn on it; count-up days are lavender.
+    private var palette: (tint: Color, ink: Color) {
+        if info.isPast { return (Theme.memory, Theme.memoryInk) }
+        let category = DayCategory(rawValue: day.categoryID) ?? day.category
+        return (category.soft, category.color)
+    }
+
+    /// A photo keeps its own tile; a preset is the flat illustration on the pastel.
+    @ViewBuilder
+    private var cover: some View {
+        if day.photoData != nil {
+            photo
+        } else {
+            Image(day.photo.flatAssetName)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
     private var photo: some View {
         // WidgetKit archives the source bitmap, not just the displayed frame.
-        var tile = PhotoTile(day: day, flat: true, cornerRadius: 2)
+        var tile = PhotoTile(day: day, flat: true, cornerRadius: 14)
         tile.maximumPixelSize = size == .small ? 512 : 720
         return tile
     }
@@ -64,14 +90,14 @@ struct DayWidgetCard: View {
     private var eyebrow: some View {
         Text(info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
              : info.isPast ? String(localized: "时光记忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "即将到来", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-            .font(Theme.sans(11, weight: .semibold))
-            .foregroundStyle(Theme.accent)
+            .font(Theme.sans(11, weight: .heavy))
+            .foregroundStyle(palette.ink)
             .widgetAccentable()
     }
 
     private var title: some View {
         Text(day.title)
-            .font(Theme.sans(size == .small ? 13 : 17, weight: .medium))
+            .font(Theme.sans(size == .small ? 14 : 17, weight: .heavy))
             .foregroundStyle(Theme.ink)
             .lineLimit(size == .medium ? 2 : 1)
             .minimumScaleFactor(0.7)
@@ -79,10 +105,10 @@ struct DayWidgetCard: View {
 
     private var countdown: some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : "\(info.days)")
-                .font(info.isToday ? Theme.sans(24) : Theme.number(size == .small ? 34 : 52))
+            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
+                .font(Theme.number(info.isToday ? 26 : size == .small ? 42 : 52))
                 .monospacedDigit()
-                .foregroundStyle(Theme.accent)
+                .foregroundStyle(Theme.ink)
                 // Takes the accent tint, as it takes the accent colour in full colour.
                 .widgetAccentable()
                 .lineLimit(1)
@@ -100,9 +126,9 @@ struct DayWidgetCard: View {
     }
 
     private var date: some View {
-        Text(CNDate.short(info.displayDate))
-            .font(Theme.sans(11))
-            .foregroundStyle(Theme.ink2)
+        Text(CNDate.short(info.isPast ? day.date : info.displayDate))
+            .font(Theme.sans(11, weight: .bold))
+            .foregroundStyle(palette.ink)
     }
 
     private var accessibilitySummary: String {
@@ -121,7 +147,7 @@ struct DayWidgetEmptyState: View {
         VStack(spacing: 10) {
             Image(systemName: "calendar")
                 .font(.title)
-                .foregroundStyle(Theme.accent)
+                .foregroundStyle(Theme.ink2)
             Text(selectionMissing
                  ? String(localized: "日子已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                  : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))

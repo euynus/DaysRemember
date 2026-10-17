@@ -347,8 +347,9 @@ final class RenderingTests: XCTestCase {
         for width in [272.0, 342.0, 382.0] {
             for size in [DynamicTypeSize.large, .accessibility5] {
                 let content = VStack(alignment: .leading, spacing: 24) {
-                    UpcomingDayView(day: upcoming)
-                    DayRow(day: day)
+                    HeroDayCard(day: upcoming)
+                    HeroDayCard(day: day, milestone: Milestone.next(after: day.date, today: today))
+                    BentoDayCard(day: day)
                     CategoryTile(category: category, coverDay: day, count: 12_345, onEdit: {})
                 }
                 .environment(store)

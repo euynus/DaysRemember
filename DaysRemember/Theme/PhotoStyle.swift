@@ -65,6 +65,12 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
         }
     }
 
+    /// The flat illustration drawn straight onto a pastel card. These vector assets live in
+    /// the app catalog only; widgets keep the bitmap `assetName` covers.
+    var flatAssetName: String {
+        "Flat" + assetName.dropFirst("Cover".count)
+    }
+
     func background() -> some View {
         Image(assetName)
             .resizable()

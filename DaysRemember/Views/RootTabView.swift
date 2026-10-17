@@ -2,7 +2,15 @@ import Accessibility
 import SwiftUI
 
 enum AppTab: String, Hashable {
-    case home, calendar, categories, notifications
+    case home, calendar, me
+
+    /// `--tab` values, including the old categories and reminders tabs, which now live in 我的.
+    init?(argument: String) {
+        switch argument {
+        case "categories", "notifications", "settings": self = .me
+        default: self.init(rawValue: argument)
+        }
+    }
 }
 
 /// Navigation value for a day's detail. Routing by ID keeps photo bytes out of the
@@ -18,7 +26,7 @@ struct RootTabView: View {
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
-    @State private var categoryPath = NavigationPath()
+    @State private var mePath = NavigationPath()
     @State private var addingDay = false
 
     init(startWithNewDay: Bool = false) {
@@ -29,7 +37,7 @@ struct RootTabView: View {
     private static func initialTab() -> AppTab {
         let args = ProcessInfo.processInfo.arguments
         if let i = args.firstIndex(of: "--tab"), i + 1 < args.count,
-           let t = AppTab(rawValue: args[i + 1]) { return t }
+           let t = AppTab(argument: args[i + 1]) { return t }
         return .home
     }
 
@@ -139,17 +147,14 @@ struct RootTabView: View {
     private var content: some View {
         TabView(selection: $tab) {
             homeStack
-                .tabItem { Label("日子", systemImage: "square.stack") }
+                .tabItem { Label("日子", systemImage: "square.grid.2x2") }
                 .tag(AppTab.home)
             calendarStack
                 .tabItem { Label("日历", systemImage: "calendar") }
                 .tag(AppTab.calendar)
-            categoriesStack
-                .tabItem { Label("分类", systemImage: "square.grid.2x2") }
-                .tag(AppTab.categories)
-            NotificationsView()
-                .tabItem { Label("提醒", systemImage: "bell") }
-                .tag(AppTab.notifications)
+            meStack
+                .tabItem { Label("我的", systemImage: "person.crop.circle") }
+                .tag(AppTab.me)
         }
     }
 
@@ -174,23 +179,32 @@ struct RootTabView: View {
         .overlay(alignment: .bottom) { undoOverlay(on: .calendar) }
     }
 
-    private var categoriesStack: some View {
-        NavigationStack(path: $categoryPath) {
-            CategoriesView()
+    private var meStack: some View {
+        NavigationStack(path: $mePath) {
+            MeView()
                 .toolbar(.hidden, for: .navigationBar)
                 .dayDetailDestination()
                 .navigationDestination(for: CategoryRoute.self) { route in
                     switch route {
                     case .all:
                         CategoryDaysListView(title: String(localized: "全部日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale), categoryID: nil,
-                                             onOpen: { categoryPath.append(DayRoute(id: $0.id)) })
+                                             onOpen: { mePath.append(DayRoute(id: $0.id)) })
                     case .category(let id):
                         CategoryDaysListView(title: store.category(for: id).displayName, categoryID: id,
-                                             onOpen: { categoryPath.append(DayRoute(id: $0.id)) })
+                                             onOpen: { mePath.append(DayRoute(id: $0.id)) })
+                    }
+                }
+                .navigationDestination(for: MeRoute.self) { route in
+                    switch route {
+                    case .reminders:
+                        NotificationsView(showsHeader: false)
+                            .navigationTitle("提醒")
+                            .navigationBarTitleDisplayMode(.large)
+                            .toolbar(.visible, for: .navigationBar)
                     }
                 }
         }
-        .overlay(alignment: .bottom) { undoOverlay(on: .categories) }
+        .overlay(alignment: .bottom) { undoOverlay(on: .me) }
     }
 }
 
