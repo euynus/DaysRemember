@@ -1,7 +1,8 @@
 #!/bin/bash
 # Renders the promotional video: 9:16 (1080 x 1920), 30 fps, H.264, silent, with Simplified Chinese
-# captions, from the App Store screenshots in docs/screenshots/zh-Hans and the app's cover
-# illustrations (scripts/promo/render.swift). Run scripts/screenshots.sh first when the app changes.
+# captions, from the App Store screenshots in docs/screenshots/zh-Hans and the flat cover
+# illustrations in docs/assets/covers (scripts/promo/render.swift). Run scripts/screenshots.sh first
+# when the app changes, and scripts/flat-covers.py when a cover does.
 # Output: build/promo/days-remember-promo-zh-Hans.mp4, and contact-sheet.png with one frame a second.
 set -euo pipefail
 
