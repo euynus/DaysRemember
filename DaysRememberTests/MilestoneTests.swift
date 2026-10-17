@@ -80,6 +80,24 @@ final class MilestoneTests: XCTestCase {
                        .init(value: 2, remainderDays: 26))
     }
 
+    /// The hero's label stands in for everything on the card, so VoiceOver hears the milestone too.
+    func testPastHeroLabelReadsItsMilestone() throws {
+        let today = date(2026, 10, 16)
+        let moved = Day(id: "moved", title: "搬进新家", date: date(2024, 11, 5), category: .family, photo: .home)
+        let info = DayInfo.compute(moved, today: today)
+        let milestone = try XCTUnwrap(Milestone.next(after: moved.date, today: today))
+        let label = DayCardText.heroAccessibilityLabel(moved, info: info, milestone: milestone)
+        XCTAssertTrue(label.hasPrefix(DayCardText.accessibilityLabel(moved, info: info)))
+        XCTAssertTrue(label.contains(DayCardText.milestone(milestone)), label)
+        XCTAssertEqual(DayCardText.heroAccessibilityLabel(moved, info: info, milestone: nil),
+                       DayCardText.accessibilityLabel(moved, info: info))
+
+        let exam = Day(id: "exam", title: "考研", date: date(2026, 12, 20), category: .work, photo: .study)
+        let ahead = DayCardText.heroAccessibilityLabel(exam, info: DayInfo.compute(exam, today: today), milestone: nil)
+        XCTAssertTrue(ahead.contains("考研"))
+        XCTAssertFalse(ahead.contains(DayCardText.milestone(milestone)))
+    }
+
     func testOneTimeDaysAreNeverRecentAnniversaries() {
         XCTAssertNil(RecentOccurrence.of(sample("japan"), today: date(2026, 7, 22)))
     }

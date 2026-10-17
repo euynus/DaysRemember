@@ -122,8 +122,7 @@ struct HeroDayCard: View {
             .contentShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         }
         .buttonStyle(PressableTileStyle())
-        .accessibilityLabel(info.isPast ? DayCardText.accessibilityLabel(day, info: info)
-                            : String(localized: "即将到来，\(day.title)，\(DayCardText.countdown(info))", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        .accessibilityLabel(DayCardText.heroAccessibilityLabel(day, info: info, milestone: milestone))
         .accessibilityHint("长按可置顶、编辑或分享")
         .accessibilityIdentifier(info.isPast ? "pastHero.\(day.id)" : "upcomingDay.\(day.id)")
     }
@@ -275,6 +274,16 @@ enum DayCardText {
         return day.pinned
             ? String(localized: "\(day.title)，\(countdown)，已置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             : String(localized: "\(day.title)，\(countdown)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+    }
+
+    /// The hero card's label replaces its children's, so it carries the milestone it shows.
+    static func heroAccessibilityLabel(_ day: Day, info: DayInfo, milestone: Milestone?) -> String {
+        guard info.isPast else {
+            return String(localized: "即将到来，\(day.title)，\(countdown(info))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        }
+        let label = accessibilityLabel(day, info: info)
+        guard let milestone else { return label }
+        return String(localized: "\(label)，\(Self.milestone(milestone))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     /// Short date and category under a grid card's title; past days show when they began.
