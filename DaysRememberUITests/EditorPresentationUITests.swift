@@ -130,4 +130,18 @@ final class EditorPresentationUITests: XCTestCase {
         XCTAssertTrue(app.buttons["detail.moreActions"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["小年糕出生"].exists)
     }
+
+    /// The empty widget links to `daysremember://home`, which has no day to open but must
+    /// still bring 日子 forward from another tab.
+    func testHomeLinkReturnsToTheDaysTab() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchArguments = ["--tab", "me", "--seed-sample-data"]
+        app.launch()
+        XCTAssertTrue(app.buttons["settings.data"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["home.addDay"].exists)
+
+        open("daysremember://home")
+        XCTAssertTrue(app.buttons["home.addDay"].waitForExistence(timeout: 5))
+    }
 }

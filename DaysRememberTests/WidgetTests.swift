@@ -42,6 +42,13 @@ final class WidgetTests: XCTestCase {
         XCTAssertTrue(SharedStorage.loadCategories(defaults: UserDefaults(suiteName: "\(suite).empty")!).isEmpty)
     }
 
+    func testWidgetLinksOpenTheirDayOrHome() {
+        XCTAssertEqual(DeepLink(URL(string: "daysremember://day/wedding")!), .day("wedding"))
+        XCTAssertEqual(DeepLink(URL(string: "daysremember://home")!), .home)
+        XCTAssertEqual(DeepLink(URL(string: "daysremember://day/")!), .home)
+        XCTAssertNil(DeepLink(URL(string: "https://days.gooday.dev/day/wedding")!))
+    }
+
     func testAutomaticAndExplicitSelection() {
         let today = CNDate.calendar.date(from: DateComponents(year: 2026, month: 10, day: 2))!
         let past = Day(id: "past", title: "过去", date: today.addingTimeInterval(-86400),

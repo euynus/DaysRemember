@@ -13,6 +13,18 @@ enum AppTab: String, Hashable {
     }
 }
 
+/// A widget link: `daysremember://day/<id>` opens that day; any other link in the scheme,
+/// such as the empty widget's `daysremember://home`, returns to 日子.
+enum DeepLink: Equatable {
+    case day(String), home
+
+    init?(_ url: URL) {
+        guard url.scheme == "daysremember" else { return nil }
+        let id = url.lastPathComponent
+        self = url.host() == "day" && !id.isEmpty && id != "/" ? .day(id) : .home
+    }
+}
+
 /// Navigation value for a day's detail. Routing by ID keeps photo bytes out of the
 /// path's hashing and lets the detail read the live record.
 struct DayRoute: Hashable {
@@ -120,10 +132,20 @@ struct RootTabView: View {
         }
     }
 
-    /// `daysremember://day/<id>` (tapped from the widget) opens that day's detail.
+    /// A day's link opens its detail; the empty widget's link, or one to a day deleted since,
+    /// shows 日子.
     private func handleDeepLink(_ url: URL) {
-        guard url.scheme == "daysremember" else { return }
-        openDay(id: url.lastPathComponent)
+        switch DeepLink(url) {
+        case .day(let id): if !openDay(id: id) { openHome() }
+        case .home: openHome()
+        case nil: break
+        }
+    }
+
+    private func openHome() {
+        router.linkOpenCount += 1
+        tab = .home
+        homePath = NavigationPath()
     }
 
     private func routePending(_ id: String?) {
@@ -132,15 +154,15 @@ struct RootTabView: View {
         router.dayID = nil
     }
 
-    /// Open a day's detail on the Home stack. No-ops safely if the id no longer exists.
+    /// Open a day's detail on the Home stack; false, changing nothing, if the id no longer exists.
     /// Shared by the widget URL and tapped-reminder routing. Editors keep their drafts on top;
     /// the detail opens beneath them.
-    private func openDay(id: String) {
-        guard let day = store.days.first(where: { $0.id == id }) else { return }
-        router.linkOpenCount += 1
-        tab = .home
-        homePath = NavigationPath()
+    @discardableResult
+    private func openDay(id: String) -> Bool {
+        guard let day = store.days.first(where: { $0.id == id }) else { return false }
+        openHome()
         homePath.append(DayRoute(id: day.id))
+        return true
     }
 
     @ViewBuilder
