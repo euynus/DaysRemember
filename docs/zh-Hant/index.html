@@ -3,18 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>時光 · 紀念日與倒數</title>
-  <meta name="description" content="時光是一款紀念日與倒數 App：將至的日子倒數，已過的日子正數，還有農曆與節氣、貼心提醒、主畫面與鎖定畫面小工具和 iCloud 同步。不收集任何資料。">
-  <meta name="theme-color" content="#FCFCFA">
+  <title>時光 – 紀念日倒數日 App｜農曆生日提醒、iPhone 小工具</title>
+  <meta name="description" content="時光是一款免費的 iPhone 紀念日與倒數日 App：支援農曆生日和節氣、提前提醒、主畫面和鎖定畫面小工具、iCloud 同步，無廣告、不蒐集資料。">
+  <meta name="theme-color" content="#F6F6F3">
   <link rel="canonical" href="https://days.gooday.dev/zh-Hant/">
   <link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/">
   <link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/">
   <link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/">
+  <link rel="alternate" hreflang="x-default" href="https://days.gooday.dev/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="時光 · 紀念日與倒數">
-  <meta property="og:description" content="溫柔記住每一個重要的日子。">
+  <meta property="og:site_name" content="时光 · Days Remember">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:locale:alternate" content="zh_CN">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:title" content="時光 – 紀念日倒數日 App｜農曆生日提醒、iPhone 小工具">
+  <meta property="og:description" content="時光是一款免費的 iPhone 紀念日與倒數日 App：支援農曆生日和節氣、提前提醒、主畫面和鎖定畫面小工具、iCloud 同步，無廣告、不蒐集資料。">
   <meta property="og:url" content="https://days.gooday.dev/zh-Hant/">
-  <meta property="og:image" content="https://days.gooday.dev/assets/icon-512.png">
+  <meta property="og:image" content="https://days.gooday.dev/assets/og/zh-Hant.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="時光的圖示和 App 截圖：將至、已過和日子詳情">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="時光 – 紀念日倒數日 App｜農曆生日提醒、iPhone 小工具">
+  <meta name="twitter:description" content="時光是一款免費的 iPhone 紀念日與倒數日 App：支援農曆生日和節氣、提前提醒、主畫面和鎖定畫面小工具、iCloud 同步，無廣告、不蒐集資料。">
+  <meta name="twitter:image" content="https://days.gooday.dev/assets/og/zh-Hant.jpg">
+  <meta name="twitter:image:alt" content="時光的圖示和 App 截圖：將至、已過和日子詳情">
+  <!-- 上架後：加上 <meta name="apple-itunes-app" content="app-id=…">（填真實的 App Store ID），並把頁面裡的「即將登陸 App Store」換成下載連結。 -->
   <link rel="icon" href="../assets/icon-180.png">
   <link rel="apple-touch-icon" href="../assets/icon-180.png">
   <link rel="stylesheet" href="../assets/site.css">
@@ -26,6 +40,48 @@
       root.classList.add("motion");
       setTimeout(function () { if (!root.hasAttribute("data-motion-ready")) root.classList.remove("motion"); }, 3000);
     })(document.documentElement);
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "@id": "https://days.gooday.dev/#app",
+    "name": "時光",
+    "alternateName": "Days Remember",
+    "description": "時光是一款免費的 iPhone 紀念日與倒數日 App：支援農曆生日和節氣、提前提醒、主畫面和鎖定畫面小工具、iCloud 同步，無廣告、不蒐集資料。",
+    "url": "https://days.gooday.dev/zh-Hant/",
+    "inLanguage": "zh-Hant",
+    "image": "https://days.gooday.dev/assets/icon-512.png",
+    "operatingSystem": "iOS",
+    "softwareRequirements": "iOS 17 以上",
+    "availableOnDevice": "iPhone",
+    "applicationCategory": "LifestyleApplication",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "CNY"
+    },
+    "screenshot": [
+      "https://days.gooday.dev/screenshots/zh-Hant/01-home.jpg",
+      "https://days.gooday.dev/screenshots/zh-Hant/02-detail.jpg",
+      "https://days.gooday.dev/screenshots/zh-Hant/03-calendar.jpg",
+      "https://days.gooday.dev/screenshots/zh-Hant/04-widgets.jpg",
+      "https://days.gooday.dev/screenshots/zh-Hant/05-share.jpg",
+      "https://days.gooday.dev/screenshots/zh-Hant/06-me.jpg",
+      "https://days.gooday.dev/screenshots/zh-Hant/07-past.jpg"
+    ],
+    "featureList": [
+      "將至的日子倒數，已過的日子正數",
+      "整數紀念：1000 天以內每滿 100 天，之後每滿 500 天，或者滿一整年",
+      "農曆與二十四節氣，農曆支援 1900 至 2100 年",
+      "提前 7 天、3 天、1 天或當天提醒",
+      "主畫面小、中、大三種尺寸和鎖定畫面三種樣式的小工具",
+      "照片、手記、極簡、雙欄四種分享卡片範本",
+      "自訂分類",
+      "透過你自己的 iCloud 同步日子、分類和照片"
+    ]
+  }
   </script>
 </head>
 <body>
@@ -48,7 +104,7 @@
           <div class="cta-row">
             <!-- 上架後換成 App Store 連結：<a class="cta" href="https://apps.apple.com/app/id…">在 App Store 下載</a> -->
             <span class="cta is-soon">即將登陸 App Store</span>
-            <span class="requirements">iPhone · iOS 17 以上</span>
+            <span class="requirements">免費 · iPhone · iOS 17 以上</span>
           </div>
         </div>
         <div class="phone"><img src="../screenshots/zh-Hant/01-home.jpg" width="1320" height="2868" alt="時光首頁的「將至」：媽媽生日還有 69 天，下面是其他日子的彩色卡片"></div>

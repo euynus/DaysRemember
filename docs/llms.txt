@@ -1,0 +1,31 @@
+# 时光 · Days Remember
+
+> 时光（Days Remember, 時光）is a free anniversary and countdown app for iPhone (iOS 17 or later). It counts down to the days ahead and up from the days behind you, repeats days by the Gregorian or the lunar calendar, and collects no data. It is not on the App Store yet.
+
+Facts stated on this site:
+
+- Days are counted in Beijing time, and turn over at midnight Beijing time.
+- Home has two sides: 将至 (Ahead) counts down, with the five nearest days at the top; one-time days that have passed move to 已过 (Past) and count up. A yearly day stays on home for a week after it passes.
+- Round-number milestones for past days: every 100 days up to 1,000 days, every 500 days after that, or a whole year.
+- In a day's detail, tapping the number switches between days, weeks, months and hours.
+- Lunar calendar: days can repeat yearly by the lunar calendar; the calendar shows lunar dates, the 24 solar terms and traditional festivals. Lunar dates are supported from 1900 through 2100.
+- Every day is a card in its category's color, with a photo or one of 12 flat illustrations as its cover.
+- Reminders 7, 3 or 1 day ahead, or on the day, at a chosen time; a daily greeting and yearly memories can be turned on separately.
+- Widgets: small, medium and large on the Home Screen, plus three Lock Screen styles; each widget can show a day of its own, chosen with Edit Widget.
+- Share cards: Photo, Journal, Minimal and Split templates, with a 3:4 portrait export.
+- Categories: Love, Family, Travel, Work and Life, plus custom categories with their own icon and color (five colors).
+- iCloud sync: days, categories and photos sync through the user's own iCloud (CloudKit private database). Deleted days stay in Recently Deleted on each device for 30 days. Backups can be exported to a file of up to 100 MB.
+- Languages: Simplified Chinese, Traditional Chinese and English.
+- Privacy: no account, no ads, no tracking, no third-party SDKs; data stays on the device and in the user's own iCloud and is not sent to the developer.
+
+## Pages
+
+- [时光 (简体中文)](https://days.gooday.dev/): product page in Simplified Chinese
+- [時光 (繁體中文)](https://days.gooday.dev/zh-Hant/): product page in Traditional Chinese
+- [Days Remember (English)](https://days.gooday.dev/en/): product page in English
+- [Privacy policy](https://days.gooday.dev/privacy/): what the app stores and where, in all three languages
+- [Support](https://days.gooday.dev/support/): frequently asked questions and how to get in touch, in all three languages
+
+## Optional
+
+- [Source code](https://github.com/euynus/DaysRemember): the app's public GitHub repository

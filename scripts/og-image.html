@@ -1,0 +1,73 @@
+<!doctype html>
+<!-- The 1200 x 630 share image for one product page, opened by scripts/og-images.sh as
+     og-image.html?lang=zh-Hans|zh-Hant|en. Colors and type follow the app (Theme/Tokens.swift). -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #FCE5CB;
+    color: #24222B;
+    font-family: -apple-system, "SF Pro Text", "PingFang SC", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body.zh-Hant { font-family: -apple-system, "SF Pro Text", "PingFang TC", sans-serif; }
+  .text { position: absolute; left: 76px; top: 0; bottom: 0; width: 520px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+  .brand { display: flex; align-items: center; gap: 22px; }
+  .brand img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 6px 18px rgba(36, 34, 43, 0.12); }
+  h1 { margin: 0; font-size: 84px; line-height: 1; font-weight: 900; letter-spacing: -0.01em; }
+  body.en h1 { font-size: 64px; }
+  .tagline { margin: 0; font-size: 34px; line-height: 1.3; font-weight: 700; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .chips li { background: #FFFFFF; border-radius: 999px; padding: 8px 18px; font-size: 22px; font-weight: 700; color: #5E5A66; }
+  .count { display: inline-flex; align-items: baseline; gap: 8px; font-size: 22px; font-weight: 800; color: #8A4B12; }
+  .count b { font-family: ui-rounded, "SF Pro Rounded", -apple-system, sans-serif; font-size: 40px; font-weight: 900; }
+  .phones { position: absolute; right: 40px; top: 54px; width: 560px; height: 640px; }
+  .phones img {
+    position: absolute;
+    width: 250px;
+    border-radius: 34px;
+    border: 6px solid #FFFFFF;
+    box-shadow: 0 10px 30px rgba(36, 34, 43, 0.14);
+  }
+  .phones .a { left: 0; top: 60px; }
+  .phones .b { left: 160px; top: 0; z-index: 2; }
+  .phones .c { left: 320px; top: 80px; }
+</style>
+</head>
+<body>
+  <div class="text">
+    <div class="brand"><img src="../docs/assets/icon-512.png" alt=""><h1 data-name></h1></div>
+    <p class="tagline" data-tagline></p>
+    <ul class="chips" data-chips></ul>
+  </div>
+  <div class="phones">
+    <img class="a" data-shot="01-home" alt="">
+    <img class="b" data-shot="07-past" alt="">
+    <img class="c" data-shot="02-detail" alt="">
+  </div>
+  <script>
+    var TEXT = {
+      "zh-Hans": { name: "时光", tagline: "温柔记住每一个重要的日子", chips: ["纪念日", "倒数日", "农历与节气", "小组件", "免费"] },
+      "zh-Hant": { name: "時光", tagline: "溫柔記住每一個重要的日子", chips: ["紀念日", "倒數日", "農曆與節氣", "小工具", "免費"] },
+      en: { name: "Days Remember", tagline: "Gently remember every day that matters", chips: ["Anniversaries", "Countdowns", "Lunar calendar", "Widgets", "Free"] }
+    };
+    var lang = new URLSearchParams(location.search).get("lang") || "zh-Hans";
+    var text = TEXT[lang];
+    document.body.className = lang;
+    document.documentElement.lang = lang;
+    document.querySelector("[data-name]").textContent = text.name;
+    document.querySelector("[data-tagline]").textContent = text.tagline;
+    var chips = document.querySelector("[data-chips]");
+    text.chips.forEach(function (chip) {
+      var item = document.createElement("li");
+      item.textContent = chip;
+      chips.appendChild(item);
+    });
+    document.querySelectorAll("[data-shot]").forEach(function (shot) {
+      shot.src = "../docs/screenshots/" + lang + "/" + shot.getAttribute("data-shot") + ".jpg";
+    });
+  </script>
+</body>
+</html>
