@@ -406,6 +406,12 @@ struct DetailView: View {
             : String(localized: "\(-n) 天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
+    /// The note under 那一天 for a one-time day: how long ago it was, or 今天 on the day itself.
+    static func sinceTheDay(_ info: DayInfo) -> String {
+        info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : String(localized: "已过 \(info.days) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+    }
+
     private func timelineContent(day: Day, info: DayInfo) -> (String, [Node], Progress?) {
         let cal = CNDate.calendar
         let todayStart = cal.startOfDay(for: today)
@@ -440,7 +446,7 @@ struct DetailView: View {
             guard let milestone = Milestone.next(after: day.date, today: today) else { return ("", [], nil) }
             let nodes = [
                 Node(title: String(localized: "那一天", bundle: AppLocalization.bundle, locale: AppLocalization.locale), date: day.date,
-                     relative: String(localized: "已过 \(info.days) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
+                     relative: Self.sinceTheDay(info)),
                 Node(title: milestone.title, date: milestone.date, relative: relative(milestone.date)),
             ]
             let progress = Progress(fraction: milestone.progress, leading: CNDate.full(day.date),

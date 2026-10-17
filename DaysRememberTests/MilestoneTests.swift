@@ -98,6 +98,18 @@ final class MilestoneTests: XCTestCase {
         XCTAssertFalse(ahead.contains(DayCardText.milestone(milestone)))
     }
 
+    /// A one-time day's detail shows its round numbers from the day itself; that day reads 今天,
+    /// matching the count above it, rather than 已过 0 天.
+    func testOneTimeDayReadsTodayOnTheDay() {
+        let trip = Day(id: "trip", title: "北海道旅行", date: date(2026, 7, 20), category: .travel, photo: .voyage)
+        let onTheDay = DayInfo.compute(trip, today: date(2026, 7, 20))
+        XCTAssertTrue(onTheDay.isToday)
+        XCTAssertEqual(DetailView.sinceTheDay(onTheDay),
+                       String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        let after = DayInfo.compute(trip, today: date(2026, 7, 23))
+        XCTAssertTrue(DetailView.sinceTheDay(after).contains("3"))
+    }
+
     func testOneTimeDaysAreNeverRecentAnniversaries() {
         XCTAssertNil(RecentOccurrence.of(sample("japan"), today: date(2026, 7, 22)))
     }
