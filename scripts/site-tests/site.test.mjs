@@ -175,10 +175,10 @@ test("the hero slideshow can be paused", () => {
   assert.deepEqual(showing(), ["calendar.jpg"], "playing again");
 });
 
-// On /privacy/ and /support/ the Traditional text sits in <article lang="zh-Hant"> under a
-// zh-Hans page; a font list resolved once on body would keep the Simplified fonts there.
+// Each language switch has a 繁體 link marked lang="zh-Hant" on pages in other languages; a font
+// list resolved once on body would keep the Simplified or Latin fonts there.
 test("Traditional Chinese text uses the Traditional font list", () => {
-  assert.match(read("privacy/index.html"), /<html lang="zh-Hans">[\s\S]*<article id="zh-Hant" lang="zh-Hant">/);
+  assert.match(read("privacy/index.html"), /<html lang="zh-Hans">[\s\S]*<a [^>]*lang="zh-Hant">繁體<\/a>/);
   assert.match(rule(":lang(zh-Hant)")["--font-sans"], /PingFang TC/);
   assert.equal(rule(":lang(zh-Hant)")["font-family"], "var(--font-sans)");
 });
@@ -196,7 +196,8 @@ test("the screenshot strip's label belongs to a region", () => {
 // A deletion that syncs in puts the day in that device's 最近删除 and 同步保留版本 as well
 // (DayStore.applyCloudUpdate), so no page may say only the deleting device keeps it.
 test("the pages say every device keeps a deleted day", () => {
-  const pages = ["privacy/index.html", "support/index.html", "index.html", "zh-Hant/index.html", "en/index.html"]
+  const pages = ["", "zh-Hant/", "en/"]
+    .flatMap((prefix) => ["index.html", "privacy/index.html", "support/index.html"].map((page) => prefix + page))
     .map(read).join("\n");
   for (const claim of ["只保存在删除它的那台设备上", "只儲存在刪除它的那台裝置上", "kept only on the device where you deleted",
                        "这台设备的「最近删除」会保留", "這台裝置的「最近刪除」會保留", "Recently Deleted keeps it on this device",

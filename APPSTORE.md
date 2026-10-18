@@ -15,12 +15,12 @@
 
 ## 网址
 
-产品网站在 `docs/`，由 Cloudflare Workers Builds 在每次推送 `main` 时按 `wrangler.jsonc` 发布到 `days.gooday.dev`（静态文件，没有构建步骤）。隐私政策与支持页面包含三种语言，按锚点区分。
+产品网站在 `docs/`，由 Cloudflare Workers Builds 在每次推送 `main` 时按 `wrangler.jsonc` 发布到 `days.gooday.dev`（静态文件，没有构建步骤）。隐私政策与支持页面和产品页一样每种语言一页：简体在根路径，繁體和英文在 `zh-Hant/`、`en/` 下。
 
 | 字段 | 简体中文 | 繁體中文 | English |
 |---|---|---|---|
-| 隐私政策网址（必填） | `https://days.gooday.dev/privacy/#zh-Hans` | `…/privacy/#zh-Hant` | `…/privacy/#en` |
-| 支持网址（必填） | `https://days.gooday.dev/support/#zh-Hans` | `…/support/#zh-Hant` | `…/support/#en` |
+| 隐私政策网址（必填） | `https://days.gooday.dev/privacy/` | `…/zh-Hant/privacy/` | `…/en/privacy/` |
+| 支持网址（必填） | `https://days.gooday.dev/support/` | `…/zh-Hant/support/` | `…/en/support/` |
 | 营销网址（可选） | `https://days.gooday.dev/` | `…/zh-Hant/` | `…/en/` |
 
 App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开同样的页面（`SettingsView.siteURL`）。换域名时两处一起改。

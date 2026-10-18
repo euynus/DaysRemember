@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://days.gooday.dev/</loc>
-    <lastmod>2026-10-17</lastmod>
+    <lastmod>2026-10-18</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/"/>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/"/>
@@ -10,7 +10,7 @@
   </url>
   <url>
     <loc>https://days.gooday.dev/en/</loc>
-    <lastmod>2026-10-17</lastmod>
+    <lastmod>2026-10-18</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/"/>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/"/>
@@ -18,7 +18,7 @@
   </url>
   <url>
     <loc>https://days.gooday.dev/zh-Hant/</loc>
-    <lastmod>2026-10-17</lastmod>
+    <lastmod>2026-10-18</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/"/>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/"/>
@@ -26,10 +26,50 @@
   </url>
   <url>
     <loc>https://days.gooday.dev/privacy/</loc>
-    <lastmod>2026-10-17</lastmod>
+    <lastmod>2026-10-18</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://days.gooday.dev/privacy/"/>
+  </url>
+  <url>
+    <loc>https://days.gooday.dev/en/privacy/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://days.gooday.dev/privacy/"/>
+  </url>
+  <url>
+    <loc>https://days.gooday.dev/zh-Hant/privacy/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://days.gooday.dev/privacy/"/>
   </url>
   <url>
     <loc>https://days.gooday.dev/support/</loc>
-    <lastmod>2026-10-17</lastmod>
+    <lastmod>2026-10-18</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/support/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/support/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/support/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://days.gooday.dev/support/"/>
+  </url>
+  <url>
+    <loc>https://days.gooday.dev/en/support/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/support/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/support/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/support/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://days.gooday.dev/support/"/>
+  </url>
+  <url>
+    <loc>https://days.gooday.dev/zh-Hant/support/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/support/"/>
+    <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/support/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/support/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://days.gooday.dev/support/"/>
   </url>
 </urlset>

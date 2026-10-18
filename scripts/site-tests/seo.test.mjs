@@ -12,10 +12,17 @@ const PRODUCT = {
   "zh-Hant/index.html": { lang: "zh-Hant", url: SITE + "zh-Hant/", title: "時光 – 紀念日倒數日 App｜農曆生日提醒、iPhone 小工具", free: "免費" },
   "en/index.html": { lang: "en", url: SITE + "en/", title: "Days Remember – Anniversary & Countdown App for iPhone", free: "free" }
 };
-const DOCUMENTS = {
-  "privacy/index.html": { url: SITE + "privacy/", title: "隐私政策 Privacy Policy – 时光 · Days Remember" },
-  "support/index.html": { url: SITE + "support/", title: "支持 Support – 时光 · Days Remember" }
-};
+// The privacy policy and support pages, one per language like the product pages.
+const PREFIX = { "zh-Hans": "", "zh-Hant": "zh-Hant/", en: "en/" };
+const DOCUMENTS = Object.fromEntries(Object.entries({
+  privacy: { "zh-Hans": "隐私政策 – 时光", "zh-Hant": "隱私權政策 – 時光", en: "Privacy Policy – Days Remember" },
+  support: { "zh-Hans": "支持 – 时光", "zh-Hant": "支援 – 時光", en: "Support – Days Remember" }
+}).flatMap(([name, titles]) => Object.entries(titles).map(([lang, title]) => [
+  `${PREFIX[lang]}${name}/index.html`, { lang, title, name, url: `${SITE}${PREFIX[lang]}${name}/` }
+])));
+const alternatesOf = (name) => ({
+  "zh-Hans": SITE + name, "zh-Hant": SITE + "zh-Hant/" + name, en: SITE + "en/" + name, "x-default": SITE + name
+});
 
 const decode = (text) => text.replace(/&amp;/g, "&").replace(/&quot;/g, "\"").replace(/&#x27;|&#39;/g, "'")
   .replace(/&lt;/g, "<").replace(/&gt;/g, ">");
@@ -96,23 +103,42 @@ test("each product page has its title, description, alternates and share card", 
     assert.equal(meta(page, "twitter:description"), description, page);
     assert.equal(link(page, "canonical"), expected.url, page);
     assert.equal(meta(page, "og:url"), expected.url, page);
-    assert.deepEqual(hreflangs(page), {
-      "zh-Hans": SITE, "zh-Hant": SITE + "zh-Hant/", en: SITE + "en/", "x-default": SITE
-    }, page);
+    assert.deepEqual(hreflangs(page), alternatesOf(""), page);
     assert.match(read(page), new RegExp(`<html lang="${expected.lang}">`), page);
     checkShareImage(page);
   }
 });
 
-test("the privacy and support pages have their own titles and share card", () => {
+test("each privacy and support page is in one language, with its alternates and share card", () => {
   for (const [page, expected] of Object.entries(DOCUMENTS)) {
+    assert.match(read(page), new RegExp(`<html lang="${expected.lang}">`), page);
     assert.equal(title(page), expected.title, page);
     assert.equal(meta(page, "og:title"), expected.title, page);
+    assert.ok(meta(page, "description"), page);
+    assert.equal(meta(page, "og:description"), meta(page, "description"), page);
     assert.equal(link(page, "canonical"), expected.url, page);
     assert.equal(meta(page, "og:url"), expected.url, page);
-    // One URL holds all three languages, so there are no alternates to name.
-    assert.deepEqual(hreflangs(page), {}, page);
+    assert.deepEqual(hreflangs(page), alternatesOf(expected.name + "/"), page);
+    assert.equal(meta(page, "og:image"), `${SITE}assets/og/${expected.lang}.jpg`, page);
     checkShareImage(page);
+    // One language per page: no section of the page switches to another.
+    assert.doesNotMatch(read(page).split("</head>")[1].replace(/<a [^>]*lang="[^"]+"[^>]*>[^<]*<\/a>/g, ""),
+                        / lang="/, page);
+  }
+});
+
+// Links shared before the split pointed at /support/#en and the like; the Simplified page sends them on.
+test("the old section links still reach their language", () => {
+  for (const name of ["privacy", "support"]) {
+    const script = /<script>([\s\S]*?)<\/script>/.exec(head(`${name}/index.html`))[1];
+    let replaced = null;
+    for (const hash of ["#zh-Hant", "#en", "#zh-Hans", ""]) {
+      replaced = null;
+      new Function("location", script)({ hash, replace: (to) => { replaced = to; } });
+      const expected = { "#zh-Hant": "../zh-Hant/" + name + "/", "#en": "../en/" + name + "/" }[hash] ?? null;
+      assert.equal(replaced, expected, name + hash);
+      if (expected) assert.ok(existsSync(new URL(`${name}/${expected}index.html`, docs)), expected);
+    }
   }
 });
 
@@ -151,17 +177,19 @@ test("the product pages describe the app in JSON-LD, as the page does", () => {
 
 const text = (fragment) => decode(fragment.replace(/<[^>]+>/g, "")).trim();
 
-test("the support page's FAQPage mirrors its questions and answers", () => {
-  const page = read("support/index.html");
-  const graph = jsonLD("support/index.html")["@graph"];
-  for (const lang of ["zh-Hans", "zh-Hant", "en"]) {
-    const article = new RegExp(`<article id="${lang}" lang="${lang}">([\\s\\S]*?)</article>`).exec(page)[1];
+test("each support page has one FAQPage that mirrors its questions and answers", () => {
+  for (const [page, expected] of Object.entries(DOCUMENTS).filter(([, document]) => document.name === "support")) {
+    const lang = expected.lang;
+    assert.equal(read(page).match(/<script type="application\/ld\+json">/g).length, 1, page);
+    const article = /<article>([\s\S]*?)<\/article>/.exec(read(page))[1];
     const shown = [...article.matchAll(/<div class="qa">\s*<h3>([\s\S]*?)<\/h3>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/g)]
       .map((match) => [text(match[1]), text(match[2])]);
     assert.ok(shown.length >= 8, lang + " questions");
-    const faq = graph.find((node) => node["@id"] === `${SITE}support/#${lang}`);
-    assert.ok(faq, lang);
+    const faq = jsonLD(page);
+    assert.equal(faq["@context"], "https://schema.org");
     assert.equal(faq["@type"], "FAQPage");
+    assert.equal(faq["@id"], expected.url + "#faq");
+    assert.equal(faq.url, expected.url);
     assert.equal(faq.inLanguage, lang);
     assert.deepEqual(faq.mainEntity.map((question) => {
       assert.equal(question["@type"], "Question");
@@ -179,8 +207,8 @@ test("the sitemap lists every page, and robots.txt points to it", () => {
   const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
   assert.deepEqual([...locations].sort(), [...PAGES].sort());
   for (const location of locations) assert.ok(existsSync(local(location)), location);
-  // The product pages' alternates match the ones in their heads.
-  for (const [page, expected] of Object.entries(PRODUCT)) {
+  // Every page's alternates match the ones in its head.
+  for (const [page, expected] of Object.entries({ ...PRODUCT, ...DOCUMENTS })) {
     const entry = new RegExp(`<url>\\s*<loc>${expected.url}</loc>([\\s\\S]*?)</url>`).exec(sitemap)[1];
     const alternates = Object.fromEntries([...entry.matchAll(/<xhtml:link rel="alternate" hreflang="([^"]+)" href="([^"]+)"\/>/g)]
       .map((match) => [match[1], match[2]]));

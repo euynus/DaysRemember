@@ -49,8 +49,8 @@
   color-scheme: light;
 }
 
-/* Set again here, not only inherited from body: /privacy/ and /support/ hold the Traditional text
-   in <article lang="zh-Hant"> on a zh-Hans page. */
+/* Set again here, not only inherited from body: the 繁體 link in each language switch is
+   lang="zh-Hant" on a page in another language. */
 :lang(zh-Hant) {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang TC",
     "Heiti TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
@@ -115,7 +115,7 @@ p { margin: 0; }
   font-size: var(--step-1);
 }
 .brand img { width: 2.25rem; height: 2.25rem; border-radius: 0.6rem; }
-.languages, .doc-languages {
+.languages {
   display: flex;
   gap: 0.25rem;
   padding: 0.2rem;
@@ -123,7 +123,7 @@ p { margin: 0; }
   background: var(--bg-2);
   font-size: var(--step--1);
 }
-.languages a, .doc-languages a {
+.languages a {
   display: inline-flex;
   align-items: center;
   min-height: 2.25rem;
@@ -134,7 +134,7 @@ p { margin: 0; }
   font-weight: 600;
 }
 .languages a[aria-current="page"] { color: var(--ink); background: var(--card); font-weight: 800; box-shadow: 0 1px 4px rgba(36, 34, 43, 0.08); }
-.languages a:hover, .doc-languages a:hover { color: var(--ink); }
+.languages a:hover { color: var(--ink); }
 
 /* Hero: the headline beside the home screen. */
 .hero {
@@ -420,12 +420,11 @@ p { margin: 0; }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
 .site-footer a { color: var(--ink-2); font-weight: 600; }
 
-/* Document pages: privacy policy and support, each language on its own white card. */
+/* Document pages: the privacy policy and support, on a white card. */
 .doc { padding-block: clamp(1rem, 4vw, 2.5rem) clamp(2rem, 6vw, 4rem); display: grid; gap: 1.25rem; }
 .doc-head { display: grid; gap: 0.75rem; padding-bottom: 0.75rem; }
 .doc-head h1 { font-size: var(--step-3); font-weight: 900; letter-spacing: -0.02em; }
 .doc-head p { color: var(--ink-2); }
-.doc-languages { justify-self: start; flex-wrap: wrap; }
 .doc article {
   display: grid;
   gap: 1rem;

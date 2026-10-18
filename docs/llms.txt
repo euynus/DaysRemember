@@ -23,8 +23,12 @@ Facts stated on this site:
 - [时光 (简体中文)](https://days.gooday.dev/): product page in Simplified Chinese
 - [時光 (繁體中文)](https://days.gooday.dev/zh-Hant/): product page in Traditional Chinese
 - [Days Remember (English)](https://days.gooday.dev/en/): product page in English
-- [Privacy policy](https://days.gooday.dev/privacy/): what the app stores and where, in all three languages
-- [Support](https://days.gooday.dev/support/): frequently asked questions and how to get in touch, in all three languages
+- [Privacy policy (English)](https://days.gooday.dev/en/privacy/): what the app stores and where
+- [隐私政策 (简体中文)](https://days.gooday.dev/privacy/): the privacy policy in Simplified Chinese
+- [隱私權政策 (繁體中文)](https://days.gooday.dev/zh-Hant/privacy/): the privacy policy in Traditional Chinese
+- [Support (English)](https://days.gooday.dev/en/support/): frequently asked questions and how to get in touch
+- [支持 (简体中文)](https://days.gooday.dev/support/): the support page in Simplified Chinese
+- [支援 (繁體中文)](https://days.gooday.dev/zh-Hant/support/): the support page in Traditional Chinese
 
 ## Optional
 
