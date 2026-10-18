@@ -90,6 +90,11 @@ function properties(selector) {
 }
 
 const root = properties(":root");
+/// A colour, with a `var(--name)` reference looked up in :root.
+function resolve(value) {
+  const name = /^var\((--[\w-]+)\)$/.exec(value)?.[1];
+  return name ? root[name] : value;
+}
 
 // WCAG 1.4.3: tiles carry body text in ink-2 and figures in their tone's ink, both at least 4.5:1.
 test("text on every pastel tone is readable", () => {
@@ -97,16 +102,17 @@ test("text on every pastel tone is readable", () => {
   assert.ok(tones.length >= 7, "tones");
   for (const selector of [...tones, ".day-card.is-past"]) {
     const tone = properties(selector);
-    for (const [name, colour] of [["--tone-ink", tone["--tone-ink"]], ["--ink", root["--ink"]], ["--ink-2", root["--ink-2"]]]) {
-      const ratio = contrast(colour, tone["--tone"]);
+    for (const [name, colour] of [["--tone-ink", resolve(tone["--tone-ink"])], ["--ink", root["--ink"]], ["--ink-2", root["--ink-2"]]]) {
+      const ratio = contrast(colour, resolve(tone["--tone"]));
       assert.ok(ratio >= 4.5, `${name} on ${selector}: ${ratio.toFixed(2)}:1`);
     }
   }
-  // The category colours in :root match the tones the tiles use.
+  // The tiles take the category colours from :root rather than repeating them.
   for (const name of ["rose", "apricot", "sky", "mint", "lemon", "lavender"]) {
     const tone = properties(".tone-" + name);
-    assert.equal(tone["--tone"], root["--" + name], name);
-    assert.equal(tone["--tone-ink"], root[`--${name}-ink`], name);
+    assert.equal(tone["--tone"], `var(--${name})`, name);
+    assert.equal(tone["--tone-ink"], `var(--${name}-ink)`, name);
+    assert.ok(root["--" + name] && root[`--${name}-ink`], name);
   }
   // Every tone a page uses has a rule.
   for (const page of PRODUCT) {

@@ -58,13 +58,13 @@
 }
 
 /* A pastel tile and the colour of its figures. White tiles carry ink. */
-.tone-rose { --tone: #FBE0E8; --tone-ink: #9C2F55; }
-.tone-apricot { --tone: #FCE5CB; --tone-ink: #8A4B12; }
-.tone-sky { --tone: #DDEBFA; --tone-ink: #23608F; }
-.tone-mint { --tone: #D7EFE0; --tone-ink: #2F6A47; }
-.tone-lemon { --tone: #FBF0C4; --tone-ink: #7A5A0E; }
-.tone-lavender { --tone: #E8E4F8; --tone-ink: #4B3F8F; }
-.tone-white { --tone: #FFFFFF; --tone-ink: #24222B; }
+.tone-rose { --tone: var(--rose); --tone-ink: var(--rose-ink); }
+.tone-apricot { --tone: var(--apricot); --tone-ink: var(--apricot-ink); }
+.tone-sky { --tone: var(--sky); --tone-ink: var(--sky-ink); }
+.tone-mint { --tone: var(--mint); --tone-ink: var(--mint-ink); }
+.tone-lemon { --tone: var(--lemon); --tone-ink: var(--lemon-ink); }
+.tone-lavender { --tone: var(--lavender); --tone-ink: var(--lavender-ink); }
+.tone-white { --tone: var(--card); --tone-ink: var(--ink); }
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -285,7 +285,7 @@ p { margin: 0; }
   transition: background-color 0.3s var(--ease-out);
 }
 /* A one-time day that has passed counts up, on the app's lavender. */
-.day-card.is-past { --tone: #E8E4F8; --tone-ink: #4B3F8F; }
+.day-card.is-past { --tone: var(--lavender); --tone-ink: var(--lavender-ink); }
 .day-card .cover { position: absolute; right: -0.5rem; bottom: -0.5rem; width: min(48%, 14rem); }
 .day-card-title { position: relative; display: grid; gap: 0.25rem; max-width: 100%; }
 .day-card-title strong { font-size: var(--step-2); font-weight: 900; line-height: 1.25; overflow-wrap: anywhere; }
