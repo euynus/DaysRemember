@@ -61,16 +61,18 @@ final class LanguagePreferencesTests: XCTestCase {
         XCTAssertNil(regionless.region)
     }
 
-    func testSiteLinksOpenTheSectionInTheAppLanguage() {
+    func testSiteLinksOpenThePageInTheAppLanguage() {
         let cases: [(AppLanguage, String, String)] = [
-            (.simplifiedChinese, "en_US", "zh-Hans"),
-            (.traditionalChinese, "zh_CN", "zh-Hant"),
-            (.english, "zh_TW", "en")
+            (.simplifiedChinese, "en_US", ""),
+            (.traditionalChinese, "zh_CN", "zh-Hant/"),
+            (.english, "zh_TW", "en/")
         ]
-        for (language, region, anchor) in cases {
+        for (language, region, prefix) in cases {
             let locale = AppLocalization.locale(for: language, regionalLocale: Locale(identifier: region))
             XCTAssertEqual(SettingsView.siteURL("privacy/", locale: locale).absoluteString,
-                           "https://days.gooday.dev/privacy/#\(anchor)")
+                           "https://days.gooday.dev/\(prefix)privacy/")
+            XCTAssertEqual(SettingsView.siteURL("support/", locale: locale).absoluteString,
+                           "https://days.gooday.dev/\(prefix)support/")
         }
     }
 

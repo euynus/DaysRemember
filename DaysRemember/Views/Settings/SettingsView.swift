@@ -5,12 +5,13 @@ import SwiftUI
 enum SettingsView {
     static let siteBase = "https://days.gooday.dev/"
 
-    /// The privacy and support pages hold all three languages, anchored by localization.
+    /// The site's page in the app's language: Simplified Chinese at the root, the others under
+    /// `zh-Hant/` and `en/`.
     static func siteURL(_ page: String, locale: Locale = AppLocalization.locale) -> URL {
         let language = locale.language
-        let anchor = language.languageCode?.identifier == "en" ? "en"
-            : language.script?.identifier == "Hant" ? "zh-Hant" : "zh-Hans"
-        return URL(string: siteBase + page + "#" + anchor)!
+        let prefix = language.languageCode?.identifier == "en" ? "en/"
+            : language.script?.identifier == "Hant" ? "zh-Hant/" : ""
+        return URL(string: siteBase + prefix + page)!
     }
 
     static var version: String {
