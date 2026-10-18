@@ -129,6 +129,8 @@ test("the product pages describe the app in JSON-LD, as the page does", () => {
     const app = jsonLD(page);
     assert.equal(app["@context"], "https://schema.org");
     assert.equal(app["@type"], "MobileApplication");
+    // Each language describes the app in its own words, so each is its own entity.
+    assert.equal(app["@id"], expected.url + "#app", page);
     assert.equal(app.url, expected.url, page);
     assert.equal(app.inLanguage, expected.lang, page);
     assert.equal(app.description, meta(page, "description"), page);
