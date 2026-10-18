@@ -1813,29 +1813,6 @@
         }
       }
     },
-    "下一次 · 第%lld周年" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Next · %lld-year anniversary"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "下一次 · 第%lld周年"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "下一次 · 第%lld週年"
-          }
-        }
-      }
-    },
     "下一次已安排提醒" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3031,29 +3008,6 @@
         }
       }
     },
-    "农历重复" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lunar recurrence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "农历重复"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "農曆重複"
-          }
-        }
-      }
-    },
     "冬" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3307,29 +3261,6 @@
         }
       }
     },
-    "切换分类，或在加号里给它添个新日子。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose another category or tap + to add a day."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "切换分类，或在加号里给它添个新日子。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "切換分類，或在加號裡給它添個新日子。"
-          }
-        }
-      }
-    },
     "删除" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3579,29 +3510,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "即將到來，%@，%@"
-          }
-        }
-      }
-    },
-    "原始日期 %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Original date: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "原始日期 %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "原始日期 %@"
           }
         }
       }
@@ -3993,29 +3901,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "圓形"
-          }
-        }
-      }
-    },
-    "在日子上长按可以置顶它。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touch and hold a day to pin it."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在日子上长按可以置顶它。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在日子上長按可以置頂它。"
           }
         }
       }
@@ -6609,29 +6494,6 @@
         }
       }
     },
-    "日子清单" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your days"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日子清单"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日子清單"
-          }
-        }
-      }
-    },
     "日常" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7468,29 +7330,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "本機變更等待上傳"
-          }
-        }
-      }
-    },
-    "本次 · 第%lld周年" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This time · %lld-year anniversary"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本次 · 第%lld周年"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "本次 · 第%lld週年"
           }
         }
       }
@@ -9382,29 +9221,6 @@
         }
       }
     },
-    "起始日" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start date"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "起始日"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "起始日"
-          }
-        }
-      }
-    },
     "跟随全局" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -9608,52 +9424,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "還沒有日子"
-          }
-        }
-      }
-    },
-    "还没有置顶的日子" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No pinned days"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还没有置顶的日子"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "還沒有置頂的日子"
-          }
-        }
-      }
-    },
-    "这个分类里还没有日子" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No days in this category"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这个分类里还没有日子"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "這個分類裡還沒有日子"
           }
         }
       }
