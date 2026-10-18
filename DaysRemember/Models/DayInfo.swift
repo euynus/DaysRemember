@@ -141,16 +141,4 @@ struct DayInfo {
             entries[key] = info
         }
     }
-
-    /// "还有" / "已过去" / "就是今天"
-    var label: String {
-        if isToday { return String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
-        return isPast ? String(localized: "已过去", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还有", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-    }
-
-    /// Short "已过" / "还有"
-    var labelShort: String {
-        if isToday { return String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
-        return isPast ? String(localized: "已过", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "还有", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-    }
 }

@@ -470,17 +470,6 @@ final class DayStore {
         removeUnusedPhotos()
     }
 
-    /// Nearest upcoming (future or today) within `within` days.
-    func nearestUpcoming(within: Int = 100, today: Date = Today.date) -> Day? {
-        days
-            .compactMap { day -> (Day, Int)? in
-                let info = DayInfo.compute(day, today: today)
-                return (info.isPast || info.days > within) ? nil : (day, info.days)
-            }
-            .min { $0.1 < $1.1 }?
-            .0
-    }
-
     func resetToSamples() {
         guard loadError == nil else { return }
         deletedDays = []

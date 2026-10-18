@@ -28,10 +28,6 @@ enum CNDate {
         date.formatted(style(locale: locale).month(.wide))
     }
 
-    static func day(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
-        date.formatted(style(locale: locale).day())
-    }
-
     static var shortWeekdaySymbols: [String] {
         let formatter = DateFormatter()
         formatter.calendar = calendar

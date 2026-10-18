@@ -110,26 +110,6 @@ struct Chip: View {
     }
 }
 
-// MARK: - Info chip (non-interactive, icon + text)
-
-struct InfoChip: View {
-    let systemName: String
-    let text: String
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: systemName)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Theme.ink2)
-                .accessibilityHidden(true)
-            Text(text).font(Theme.sans(13)).foregroundStyle(Theme.ink2)
-        }
-        .padding(.vertical, 8)
-        .frame(minHeight: 36)
-        .padding(.trailing, 12)
-        .accessibilityElement(children: .combine)
-    }
-}
-
 // MARK: - Meta row (bullet separated)
 
 struct MetaItem {

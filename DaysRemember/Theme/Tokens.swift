@@ -12,7 +12,6 @@ enum Theme {
     static let muted = Color(hex: 0x6E6A75)
     /// Primary actions are ink pills; the tint follows them.
     static let accent = Color(hex: 0x24222B)
-    static let accentForeground = Color.white
     /// Secondary text on a pastel card.
     static let onPastel = Color(hex: 0x24222B, opacity: 0.7)
 
