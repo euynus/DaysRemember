@@ -42,6 +42,28 @@ final class WidgetTests: XCTestCase {
         XCTAssertTrue(SharedStorage.loadCategories(defaults: UserDefaults(suiteName: "\(suite).empty")!).isEmpty)
     }
 
+    /// A colour-only edit rewrites no day, so the category change itself must ask the widgets
+    /// to redraw, or they keep the old pastel until their timeline runs out.
+    @MainActor
+    func testCategoryColourChangesReloadWidgets() throws {
+        let suite = "WidgetTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = DayStore(defaults: defaults)
+        var reloads = 0
+        store.reloadWidgets = { reloads += 1 }
+        var custom = store.addCategory(name: "雾", icon: "cloud", colorToken: .dusty)
+        store.add(Day(id: "custom", title: "雾", date: Date(), category: .life, photo: .home,
+                      categoryID: custom.id, categoryLabel: custom.name))
+
+        reloads = 0
+        custom.colorToken = .sage
+        XCTAssertTrue(store.updateCategory(custom))
+        XCTAssertGreaterThan(reloads, 0)
+        XCTAssertEqual(CategoryDefinition.colorToken(for: try XCTUnwrap(store.days.first),
+                                                     in: SharedStorage.loadCategories(defaults: defaults)), .sage)
+    }
+
     func testWidgetLinksOpenTheirDayOrHome() {
         XCTAssertEqual(DeepLink(URL(string: "daysremember://day/wedding")!), .day("wedding"))
         XCTAssertEqual(DeepLink(URL(string: "daysremember://home")!), .home)

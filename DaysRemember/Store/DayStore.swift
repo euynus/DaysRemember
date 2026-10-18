@@ -30,6 +30,8 @@ final class DayStore {
                 isRestoring = false
                 return
             }
+            // Widget cards take a custom category's colour, which can change without any day changing.
+            reloadWidgetTimelines()
         }
     }
     private(set) var deletedDays: [DeletedDay] = []
@@ -180,10 +182,15 @@ final class DayStore {
         saveFailure = nil
     }
 
-    private func reloadWidgetTimelines() {
+    /// Asks WidgetKit to rebuild every timeline; tests replace it to count the requests.
+    @ObservationIgnored var reloadWidgets: () -> Void = {
         #if canImport(WidgetKit)
         WidgetCenter.shared.reloadAllTimelines()
         #endif
+    }
+
+    private func reloadWidgetTimelines() {
+        reloadWidgets()
     }
 
     @discardableResult
