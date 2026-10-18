@@ -1,0 +1,20 @@
+# Permanent redirects to each page's canonical address. Without them the asset server answers
+# /en and /en/index.html with a temporary 307. Run before any asset is matched; see
+# https://developers.cloudflare.com/workers/static-assets/redirects/
+/index.html / 301
+/zh-Hant /zh-Hant/ 301
+/zh-Hant/index.html /zh-Hant/ 301
+/en /en/ 301
+/en/index.html /en/ 301
+/privacy /privacy/ 301
+/privacy/index.html /privacy/ 301
+/zh-Hant/privacy /zh-Hant/privacy/ 301
+/zh-Hant/privacy/index.html /zh-Hant/privacy/ 301
+/en/privacy /en/privacy/ 301
+/en/privacy/index.html /en/privacy/ 301
+/support /support/ 301
+/support/index.html /support/ 301
+/zh-Hant/support /zh-Hant/support/ 301
+/zh-Hant/support/index.html /zh-Hant/support/ 301
+/en/support /en/support/ 301
+/en/support/index.html /en/support/ 301

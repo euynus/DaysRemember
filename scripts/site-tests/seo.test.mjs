@@ -220,6 +220,24 @@ test("the sitemap lists every page, and robots.txt points to it", () => {
   assert.match(robots, new RegExp(`^Sitemap: ${SITE}sitemap.xml$`, "m"));
 });
 
+// Cloudflare answers /en and /en/index.html with a temporary 307 unless _redirects says otherwise.
+test("every other address of a page redirects permanently to it, without loops", () => {
+  const rules = read("_redirects").split("\n").filter((line) => line && !line.startsWith("#"))
+    .map((line) => line.split(/\s+/));
+  for (const rule of rules) assert.equal(rule.length, 3, rule.join(" "));
+  const redirects = Object.fromEntries(rules.map(([from, to, status]) => [from, { to, status }]));
+  assert.equal(Object.keys(redirects).length, rules.length, "one rule per source");
+  for (const url of PAGES) {
+    const path = "/" + url.slice(SITE.length);
+    const others = path === "/" ? ["/index.html"] : [path.slice(0, -1), path + "index.html"];
+    for (const other of others) assert.deepEqual(redirects[other], { to: path, status: "301" }, other);
+  }
+  for (const { to } of Object.values(redirects)) {
+    assert.ok(PAGES.includes(SITE + to.slice(1)), to);
+    assert.ok(!(to in redirects), "loops at " + to);
+  }
+});
+
 test("llms.txt names the app and links only to pages that exist", () => {
   const llms = read("llms.txt");
   assert.match(llms, /^# 时光 · Days Remember\n\n> /);
