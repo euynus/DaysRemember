@@ -89,3 +89,6 @@ done
 
 sips -g pixelWidth -g pixelHeight -g hasAlpha "$docs_dir/zh-Hans/01-home.jpg" | tail -3
 printf 'Screenshots: %s\n' "$docs_dir"
+
+# The product pages show smaller WebP copies.
+bash scripts/web-screenshots.sh

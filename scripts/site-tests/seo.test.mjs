@@ -1,6 +1,6 @@
 // Checks for the product site's search and sharing metadata (docs/). Run with `node --test scripts/site-tests`.
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 
 const docs = new URL("../../docs/", import.meta.url);
@@ -168,10 +168,29 @@ test("the product pages describe the app in JSON-LD, as the page does", () => {
       assert.ok(!(invented in app), page + " claims " + invented);
     }
     assert.ok(existsSync(local(app.image)), app.image);
-    const shown = [...read(page).matchAll(/<img src="([^"]*screenshots\/[^"]+)"/g)]
+    const shown = [...read(page).matchAll(/<img src="([^"]*assets\/screens\/[^"]+)"/g)]
       .map((match) => new URL(match[1], new URL(page, SITE)).href);
     assert.deepEqual([...new Set(shown)].sort(), [...app.screenshot].sort(), page + ": the screenshots the page shows");
     for (const shot of app.screenshot) assert.ok(existsSync(local(shot)), shot);
+  }
+});
+
+// The pages show 900 px WebP copies (scripts/web-screenshots.sh); the 1320 px JPEGs are for the App Store.
+test("the pages show a WebP copy of every App Store screenshot", () => {
+  for (const lang of ["zh-Hans", "zh-Hant", "en"]) {
+    const store = readdirSync(new URL(`screenshots/${lang}/`, docs)).filter((name) => name.endsWith(".jpg"));
+    const web = readdirSync(new URL(`assets/screens/${lang}/`, docs)).filter((name) => name.endsWith(".webp"));
+    assert.deepEqual(web.sort(), store.map((name) => name.replace(/\.jpg$/, ".webp")).sort(), lang);
+    for (const name of web) {
+      const bytes = readFileSync(new URL(`assets/screens/${lang}/${name}`, docs));
+      assert.equal(bytes.toString("ascii", 8, 12), "WEBP", name);
+      assert.ok(bytes.length < 120 * 1024, `${lang}/${name}: ${bytes.length} bytes`);
+    }
+  }
+  for (const page of Object.keys(PRODUCT)) {
+    for (const match of read(page).matchAll(/<img src="[^"]*assets\/screens\/[^"]+" width="(\d+)" height="(\d+)"/g)) {
+      assert.deepEqual([match[1], match[2]], ["900", "1956"], page);
+    }
   }
 });
 
