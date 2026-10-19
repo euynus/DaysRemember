@@ -355,12 +355,16 @@ struct CloudLibraryState: Codable {
 
     /// The records to send for `changes`, each marked with what was sent. One with more text than a
     /// CloudKit record holds stays pending and comes back in `tooLarge`, so it can't hold back the rest.
-    mutating func prepareBatch(_ changes: [CKSyncEngine.PendingRecordZoneChange], assetDirectory: URL) throws
+    /// Up to `limit` records to send, taken from `changes` in order. Changes that can't be sent (too
+    /// large, or no longer dirty) are passed over rather than counted, so they never hold back the rest.
+    mutating func prepareBatch(_ changes: [CKSyncEngine.PendingRecordZoneChange], limit: Int = 100,
+                               assetDirectory: URL) throws
         -> (saves: [CKRecord], deletions: [CKRecord.ID], tooLarge: [CloudLibraryRecord]) {
         var saves: [CKRecord] = []
         var deletions: [CKRecord.ID] = []
         var tooLarge: [CloudLibraryRecord] = []
         for change in changes {
+            guard saves.count + deletions.count < limit else { break }
             switch change {
             case .saveRecord(let id):
                 guard var entry = records[id.recordName], entry.dirty, let value = entry.value else { continue }

@@ -376,6 +376,32 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// A batch holds `limit` records that can be sent: a run of oversized ones at the front of the
+    /// queue can't take every place and leave later changes, deletions included, unsent.
+    func testOversizedRecordsDoNotFillTheBatch() throws {
+        try withDirectory { directory in
+            let big = (1...3).map { index -> Day in
+                var day = day("big\(index)", title: "Long notes \(index)")
+                day.note = String(repeating: "长", count: 310_000)
+                return day
+            }
+            let small = day("small")
+            let gone = day("gone")
+            var state = CloudLibraryState()
+            try state.updateLocal(days: big + [small, gone], categories: [], inferDeletions: false)
+            // Sent once, so deleting it here has to reach the server.
+            _ = try state.prepareBatch([.saveRecord(CloudLibraryRecord.day(gone).recordID)], assetDirectory: directory)
+            try state.updateLocal(days: big + [small], categories: [], inferDeletions: true)
+            let changes = big.map { CKSyncEngine.PendingRecordZoneChange.saveRecord(CloudLibraryRecord.day($0).recordID) }
+                + [.saveRecord(CloudLibraryRecord.day(small).recordID), .deleteRecord(CloudLibraryRecord.day(gone).recordID)]
+
+            let batch = try state.prepareBatch(changes, limit: 2, assetDirectory: directory)
+            XCTAssertEqual(batch.saves.map(\.recordID), [CloudLibraryRecord.day(small).recordID])
+            XCTAssertEqual(batch.deletions, [CloudLibraryRecord.day(gone).recordID])
+            XCTAssertEqual(batch.tooLarge, big.map(CloudLibraryRecord.day))
+        }
+    }
+
     func testFailedRemoteApplyRetainsDurablePendingAndRetryReplaysBeforeLocalSnapshot() throws {
         enum ApplyError: Error { case diskFull }
         try withDirectory { directory in

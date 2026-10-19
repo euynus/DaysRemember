@@ -415,8 +415,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 showAccountChange()
                 return nil
             }
-            let changes = syncEngine.state.pendingRecordZoneChanges.filter { context.options.scope.contains($0) }.prefix(100)
-            let batch = try state.prepareBatch(Array(changes), assetDirectory: assetDirectory)
+            // The whole queue, so changes that can't be sent don't fill the batch's 100 places.
+            let changes = syncEngine.state.pendingRecordZoneChanges.filter { context.options.scope.contains($0) }
+            let batch = try state.prepareBatch(changes, assetDirectory: assetDirectory)
             reportTooLarge(batch.tooLarge)
             guard persist(), !batch.saves.isEmpty || !batch.deletions.isEmpty else { return nil }
             inFlightAssets[ObjectIdentifier(syncEngine), default: []].formUnion(batch.saves.compactMap { ($0["photo"] as? CKAsset)?.fileURL })
