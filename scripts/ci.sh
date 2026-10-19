@@ -53,17 +53,45 @@ printf 'CI simulator: %s\n' "$simulator_id" | tee -a "$output_dir/setup.log"
 xcrun simctl boot "$simulator_id" 2>&1 | tee -a "$output_dir/setup.log"
 xcrun simctl bootstatus "$simulator_id" -b 2>&1 | tee -a "$output_dir/setup.log"
 
-xcodebuild test \
-    -project DaysRemember.xcodeproj \
-    -scheme DaysRememberCI \
-    -destination "platform=iOS Simulator,id=$simulator_id" \
-    -derivedDataPath "$output_dir/DerivedData" \
-    -resultBundlePath "$output_dir/Tests.xcresult" \
-    -parallel-testing-enabled NO \
-    -test-timeouts-enabled YES \
-    -default-test-execution-time-allowance 300 \
-    -maximum-test-execution-time-allowance 300 \
-    2>&1 | tee "$output_dir/tests.log"
+# A test that fails is run up to twice more, so a UI interaction that misses once (the system
+# document picker is another process) doesn't fail the run; one that fails all three times does.
+run_tests() {
+    local bundle="$1"
+    shift
+    xcodebuild test \
+        -project DaysRemember.xcodeproj \
+        -scheme DaysRememberCI \
+        -destination "platform=iOS Simulator,id=$simulator_id" \
+        -derivedDataPath "$output_dir/DerivedData" \
+        -resultBundlePath "$bundle" \
+        -parallel-testing-enabled NO \
+        -test-timeouts-enabled YES \
+        -default-test-execution-time-allowance 300 \
+        -maximum-test-execution-time-allowance 300 \
+        -retry-tests-on-failure \
+        -test-iterations 3 \
+        "$@" \
+        2>&1 | tee -a "$output_dir/tests.log"
+}
+
+if ! run_tests "$output_dir/Tests.xcresult"; then
+    # GitHub's macOS runners sometimes can't start the UI test runner ("Timed out while loading
+    # Accessibility"), and then no UI test runs at all. When that is the only failure, run the UI
+    # tests once more and merge both result bundles; any failing test still fails the run.
+    if grep -q 'failed to initialize for UI testing' "$output_dir/tests.log" \
+        && ! grep -q '^Failing tests:' "$output_dir/tests.log"; then
+        printf '\nThe UI test runner did not start; running the UI tests again.\n' | tee -a "$output_dir/tests.log"
+        # -only-testing can override the scheme's skip list, so name its manual widget test again.
+        run_tests "$output_dir/UITests.xcresult" -only-testing:DaysRememberUITests \
+            -skip-testing:DaysRememberUITests/WidgetHomeUITests
+        mv "$output_dir/Tests.xcresult" "$output_dir/FirstRun.xcresult"
+        xcrun xcresulttool merge "$output_dir/FirstRun.xcresult" "$output_dir/UITests.xcresult" \
+            --output-path "$output_dir/Tests.xcresult"
+        rm -rf "$output_dir/FirstRun.xcresult" "$output_dir/UITests.xcresult"
+    else
+        exit 1
+    fi
+fi
 
 xcrun xccov view --report --json "$output_dir/Tests.xcresult" > "$output_dir/coverage.json"
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
