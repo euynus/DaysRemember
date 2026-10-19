@@ -712,6 +712,30 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
+    /// A restore that fails writing its photos keeps the recovery copy it had, so 恢复上一次本机副本
+    /// still returns the library from before the last restore that succeeded.
+    func testFailedRestoreKeepsTheEarlierRecoveryCopy() throws {
+        try withStorage { defaults, _, directory in
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            @MainActor func library(_ title: String, photo: [UInt8]) -> DayBackup {
+                DayBackup(days: [day(title, photo: Data(photo))], categories: store.categories, deletedDays: [])
+            }
+            try store.restoreBackup(library("Library A", photo: [1]))
+            try store.restoreBackup(library("Library B", photo: [2]))
+
+            // A read-only photo directory: C's new photo can't be written.
+            let manager = FileManager.default
+            try manager.setAttributes([.posixPermissions: 0o555], ofItemAtPath: directory.path)
+            defer { try? manager.setAttributes([.posixPermissions: 0o755], ofItemAtPath: directory.path) }
+            XCTAssertThrowsError(try store.restoreBackup(library("Library C", photo: [3, 3, 3])))
+            XCTAssertEqual(store.days.map(\.title), ["Library B"])
+            try manager.setAttributes([.posixPermissions: 0o755], ofItemAtPath: directory.path)
+
+            try store.restorePreviousBackup()
+            XCTAssertEqual(store.days.map(\.title), ["Library A"])
+        }
+    }
+
     private func withStorage(_ body: (UserDefaults, String, URL) throws -> Void) throws {
         let suite = "PhotoFilePersistenceTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))

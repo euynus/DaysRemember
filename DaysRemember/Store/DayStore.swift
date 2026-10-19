@@ -399,17 +399,22 @@ final class DayStore {
     private func restoreBackup(_ backup: DayBackup, encoded: Data?) throws {
         try backup.validate()
         let wasUnreadable = loadError != nil
+        // The library being replaced becomes the recovery copy, but only once nothing can fail any
+        // more: a restore that fails keeps the recovery copy it had.
+        var recovery: Data?
         do {
             guard loadError == nil else { throw DayBackup.BackupError.unreadable }
-            try keepRecoveryBackup()
+            recovery = try localBackupData(currentBackup)
         } catch {
             // Damaged photo files must not prevent an explicit repair or lose their original bytes.
             // An older recovery backup is part of that raw copy, and isn't the library replaced now.
             defaults.set(try exportOriginalData(includingRawCopy: false), forKey: unreadableKey)
-            defaults.removeObject(forKey: recoveryKey)
         }
         let data = try encoded ?? localBackupData(backup, repairCorruptFiles: true)
-        try applyBackup(backup, encoded: data, repairCorruptFiles: true)
+        try applyBackup(backup, encoded: data, repairCorruptFiles: true) { [defaults, recoveryKey] in
+            if let recovery { defaults.set(recovery, forKey: recoveryKey) }
+            else { defaults.removeObject(forKey: recoveryKey) }
+        }
         loadFailed = false
         saveFailure = nil
         // Reminders weren't rescheduled while the library was unreadable.
@@ -424,10 +429,6 @@ final class DayStore {
     func restorePreviousBackup() throws {
         guard let data = defaults.data(forKey: recoveryKey) else { throw DayBackup.BackupError.unreadable }
         try restoreBackup(Self.unexpired(decodeLocalBackup(data)), encoded: nil)
-    }
-
-    private func keepRecoveryBackup() throws {
-        defaults.set(try localBackupData(currentBackup), forKey: recoveryKey)
     }
 
     /// Decided once, before CloudKit first starts: keeps the library as it was, unless it holds
@@ -457,9 +458,12 @@ final class DayStore {
         return backup
     }
 
-    private func applyBackup(_ backup: DayBackup, encoded: Data, repairCorruptFiles: Bool = false) throws {
+    /// `beforeWriting` runs once every fallible step has succeeded, just before the library is written.
+    private func applyBackup(_ backup: DayBackup, encoded: Data, repairCorruptFiles: Bool = false,
+                             beforeWriting: () -> Void = {}) throws {
         // All fallible photo writes finish before a replayable journal is published.
         let values = try encodedBackupValues(backup, repairCorruptFiles: repairCorruptFiles)
+        beforeWriting()
         defaults.set(encoded, forKey: pendingRestoreKey)
         for (key, data) in values { defaults.set(data, forKey: key) }
         isRestoring = true
@@ -800,9 +804,11 @@ final class DayStore {
             let backup = DayBackup(days: days + additions, categories: categories + categoryAdditions,
                                    deletedDays: deletedDays, syncConflicts: syncConflicts)
             let encoded = try localBackupData(backup)
+            let recovery = try localBackupData(currentBackup)
             try keepMigrationBackup()
-            try keepRecoveryBackup()
-            try applyBackup(backup, encoded: encoded)
+            try applyBackup(backup, encoded: encoded) { [defaults, recoveryKey] in
+                defaults.set(recovery, forKey: recoveryKey)
+            }
             if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
         }
         defaults.set(Array(seenDays.union(legacyDays.map(\.id))), forKey: legacyDayIDsKey)
@@ -871,7 +877,8 @@ final class DayStore {
                                  syncConflicts: syncConflicts)
         let recoveryData = try localBackupData(recovery)
         let encoded = try localBackupData(backup)
-        defaults.set(recoveryData, forKey: recoveryKey)
-        try applyBackup(backup, encoded: encoded)
+        try applyBackup(backup, encoded: encoded) { [defaults, recoveryKey] in
+            defaults.set(recoveryData, forKey: recoveryKey)
+        }
     }
 }
