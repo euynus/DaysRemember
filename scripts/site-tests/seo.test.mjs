@@ -127,6 +127,13 @@ test("each privacy and support page is in one language, with its alternates and 
   }
 });
 
+// App Store review and readers look for a way to reach the developer on both pages.
+test("each privacy and support page gives the support email", () => {
+  for (const page of Object.keys(DOCUMENTS)) {
+    assert.match(read(page), /<a href="mailto:support@gooday\.dev">support@gooday\.dev<\/a>/, page);
+  }
+});
+
 // Links shared before the split pointed at /support/#en and the like; the Simplified page sends them on.
 test("the old section links still reach their language", () => {
   for (const name of ["privacy", "support"]) {
