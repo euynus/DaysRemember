@@ -517,7 +517,7 @@ final class EditFlowUITests: XCTestCase {
         field.typeText(name)
         app.buttons["保存"].tap()
         let edit = app.buttons["编辑" + name]
-        for _ in 0..<3 where !edit.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        app.scrollUntilHittable(edit)
         XCTAssertTrue(edit.waitForExistence(timeout: 5))
         edit.tap()
         XCTAssertTrue(field.waitForExistence(timeout: 5))
@@ -532,7 +532,7 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(edited.waitForExistence(timeout: 5))
         edited.tap()
         let delete = app.buttons["删除分类"]
-        for _ in 0..<3 where !delete.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        app.scrollUntilHittable(delete)
         delete.tap()
         app.buttons["迁移到 生活"].tap()
         XCTAssertFalse(edited.waitForExistence(timeout: 2))
@@ -709,8 +709,9 @@ final class EditFlowUITests: XCTestCase {
             for _ in 0..<3 where element.exists && !result.exists {
                 _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: element)],
                                    timeout: 5)
-                element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-                if let confirm, confirm.waitForExistence(timeout: 1) { confirm.tap() }
+                // The element can leave the picker while it moves; then this tap misses and is retried.
+                app.tapWhereItIs(element)
+                if let confirm, confirm.waitForExistence(timeout: 1) { app.tapWhereItIs(confirm) }
                 _ = result.waitForExistence(timeout: 4)
             }
         }
@@ -730,12 +731,12 @@ final class EditFlowUITests: XCTestCase {
         // The picker can open on its list of locations, which has nothing to save into.
         if !save.waitForExistence(timeout: 5) { tapInPicker(onMyiPhone, until: save) }
         XCTAssertTrue(save.waitForExistence(timeout: 10), app.debugDescription)
-        save.tap()
+        // A tap while the picker is still settling goes unanswered, so save until the export ends.
         // Only a reused simulator has a backup from the same day to replace. On iOS 27 the picker's
         // replace prompt isn't in the app's accessibility tree, so move that file aside first.
-        let replace = app.buttons["替换"]
-        if replace.waitForExistence(timeout: 1) { replace.tap() }
-        XCTAssertTrue(app.staticTexts["备份已导出。"].waitForExistence(timeout: 10), app.debugDescription)
+        let exported = app.staticTexts["备份已导出。"]
+        tapInPicker(save, until: exported, confirming: app.buttons["替换"])
+        XCTAssertTrue(exported.waitForExistence(timeout: 10), app.debugDescription)
         app.buttons["好"].tap()
         app.buttons["关闭"].tap()
         app.tabBars.buttons["日子"].tap()
@@ -804,12 +805,7 @@ final class EditFlowUITests: XCTestCase {
 
     private func reveal(_ element: XCUIElement, in app: XCUIApplication,
                         file: StaticString = #filePath, line: UInt = #line) {
-        // Short content-area drags avoid Home's separate horizontal category scroller.
-        for _ in 0..<8 where !element.isHittable {
-            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
-            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
-            start.press(forDuration: 0.05, thenDragTo: end)
-        }
+        app.scrollUntilHittable(element)
         XCTAssertTrue(element.waitForExistence(timeout: 5), file: file, line: line)
         XCTAssertTrue(element.isHittable, file: file, line: line)
     }

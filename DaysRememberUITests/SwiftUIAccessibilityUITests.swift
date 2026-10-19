@@ -81,7 +81,7 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(category.frame.minX, 0)
         XCTAssertLessThanOrEqual(category.frame.maxX, app.frame.maxX)
         let edit = app.buttons["editCategory-ui-polish-custom"]
-        for _ in 0..<4 where !edit.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        app.scrollUntilHittable(edit)
         XCTAssertTrue(edit.isHittable)
         XCTAssertGreaterThanOrEqual(edit.frame.width, 44)
         XCTAssertGreaterThanOrEqual(edit.frame.height, 44)
@@ -173,7 +173,7 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         waitForExpectations(timeout: 5)
 
         let edit = app.buttons["编辑" + name]
-        for _ in 0..<3 where !edit.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        app.scrollUntilHittable(edit)
         XCTAssertTrue(edit.waitForExistence(timeout: 5))
         XCTAssertTrue(edit.isHittable)
         edit.tap()
