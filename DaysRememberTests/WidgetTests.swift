@@ -64,6 +64,19 @@ final class WidgetTests: XCTestCase {
                                                      in: SharedStorage.loadCategories(defaults: defaults)), .sage)
     }
 
+    /// App Store Connect rejects a build whose extension's version or build number differs from the
+    /// app's; both Info.plists read them from the project's build settings.
+    func testWidgetVersionMatchesTheApp() throws {
+        let app = try XCTUnwrap(Bundle.main.infoDictionary)
+        let plugIns = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
+        let widget = try XCTUnwrap(Bundle(url: plugIns.appendingPathComponent("DaysRememberWidget.appex"))?.infoDictionary)
+        for key in ["CFBundleShortVersionString", "CFBundleVersion"] {
+            let value = try XCTUnwrap(app[key] as? String, key)
+            XCTAssertFalse(value.isEmpty || value.contains("$("), "\(key): \(value)")
+            XCTAssertEqual(widget[key] as? String, value, key)
+        }
+    }
+
     func testWidgetLinksOpenTheirDayOrHome() {
         XCTAssertEqual(DeepLink(URL(string: "daysremember://day/wedding")!), .day("wedding"))
         XCTAssertEqual(DeepLink(URL(string: "daysremember://home")!), .home)

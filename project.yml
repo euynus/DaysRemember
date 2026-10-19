@@ -9,7 +9,13 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
+    # The 10-character Team ID from developer.apple.com › Membership; archiving needs it
+    # (scripts/archive.sh also takes TEAM_ID=…).
     DEVELOPMENT_TEAM: ""
+    # App and widget share these through their Info.plists. scripts/archive.sh sets the build
+    # number for each upload; raise MARKETING_VERSION for each App Store version.
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
     CODE_SIGN_STYLE: Automatic
     CODE_SIGN_IDENTITY: ""
     "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
