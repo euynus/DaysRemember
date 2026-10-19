@@ -24,6 +24,8 @@ xcodebuild -project DaysRemember.xcodeproj -scheme DaysRemember \
   -derivedDataPath /tmp/dr-dd build
 ```
 
+`bash scripts/archive.sh` archives for the App Store, exports the IPA with `scripts/ExportOptions.plist` and checks it (production `aps-environment` and iCloud environment, matching app and widget versions, the App Group, an opaque marketing icon); `--upload` then sends it to App Store Connect and `--unsigned` only checks the device build, as CI does. It needs `DEVELOPMENT_TEAM` in `project.yml` (or `TEAM_ID=`) and a clean tree, and numbers the build by commit count (`BUILD_NUMBER=` overrides); both Info.plists read `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` from `project.yml`.
+
 Keep simulator ad-hoc signing enabled as configured in `project.yml`; App Group and widget integration require it. Use `bash scripts/ci.sh` for the full CI suite and Release build on a disposable simulator; it keeps each run's logs, coverage and result bundle in `build/ci/` and removes its DerivedData (`scripts/ci-tests/ci.test.sh` checks this against stub tools). The `DaysRememberCI` scheme excludes only the manually configured Home Screen widget test. Single test class on a dedicated test device: `xcodebuild ... test -only-testing:DaysRememberTests/LunarTests`. UI fixtures reset their simulator's library, so never use a simulator containing user data.
 
 When SourceKit reports "Cannot find Theme / Day / DayInfo in scope" on a single file, that is **file-isolation** — there's no per-file build context outside the project. Run `xcodegen generate` and rely on `xcodebuild` for ground truth.
