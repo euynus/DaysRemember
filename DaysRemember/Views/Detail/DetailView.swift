@@ -190,24 +190,36 @@ struct DetailView: View {
                     unit = all[(all.firstIndex(of: unit)! + 1) % all.count]
                 }
             } label: {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    if !info.isToday { CountLabel(info: info) }
+                Group {
                     if info.isToday {
                         Text("今天")
                             .numberFont(64)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.4)
+                    } else if dynamicTypeSize.isAccessibilitySize {
+                        // The number gets a line of its own, so a long count shrinks to fit the width
+                        // instead of being cut off beside its label and unit.
+                        VStack(alignment: .leading, spacing: 2) {
+                            CountLabel(info: info)
+                            countNumber(breakdown)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.2)
+                            Text(unitText(breakdown))
+                                .font(Theme.sans(18, weight: .heavy))
+                        }
                     } else {
-                        Text(breakdown.value.formatted())
-                            .numberFont(breakdown.value >= 1_000 ? 84 : 108)
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                        Text(unitText(breakdown))
-                            .font(Theme.sans(18, weight: .heavy))
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            CountLabel(info: info)
+                            countNumber(breakdown)
+                            Text(unitText(breakdown))
+                                .font(Theme.sans(18, weight: .heavy))
+                        }
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.4)
                     }
-                    Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .foregroundStyle(Theme.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.4)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -219,6 +231,13 @@ struct DetailView: View {
             if !info.isToday { unitPicker }
         }
         .padding(.horizontal, 4)
+    }
+
+    private func countNumber(_ breakdown: CountdownBreakdown) -> some View {
+        Text(breakdown.value.formatted())
+            .numberFont(breakdown.value >= 1_000 ? 84 : 108)
+            .monospacedDigit()
+            .contentTransition(.numericText())
     }
 
     private var unitPicker: some View {
