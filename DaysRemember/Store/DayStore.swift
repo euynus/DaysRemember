@@ -211,6 +211,57 @@ final class DayStore {
         days[i] = normalized(day)
         return saveError == nil
     }
+
+    /// Saves an edit made from `base`, the day as its editor opened it. A sync can change the day
+    /// while the editor is open: what the edit left alone keeps the newer value, and where both
+    /// changed the same thing the edit wins and the version it replaces is kept in 同步保留版本.
+    @discardableResult
+    func update(_ edit: Day, editedFrom base: Day) -> Bool {
+        saveFailure = nil
+        guard loadError == nil, let i = days.firstIndex(where: { $0.id == edit.id }) else { return false }
+        let current = days[i]
+        guard current != base else { return update(edit) }
+        let (merged, conflicted) = Self.merging(edit, from: base, onto: current)
+        guard conflicted else { return update(merged) }
+        var nextDays = days
+        nextDays[i] = normalized(merged)
+        commitChange(days: nextDays, categories: categories,
+                     syncConflicts: Self.unexpired(syncConflicts + [SyncConflict(record: .day(current))]),
+                     failure: .library)
+        return saveError == nil
+    }
+
+    /// A three-way merge of `edit`, made from `base`, onto `current`. Fields that only mean something
+    /// together (the date and its calendar, a photo and its framing, a category and its label, the
+    /// reminders and their time) move as one group; `conflicted` is true when both sides changed a
+    /// group differently, and there the edit wins.
+    static func merging(_ edit: Day, from base: Day, onto current: Day) -> (day: Day, conflicted: Bool) {
+        var merged = current
+        var conflicted = false
+        func group(_ same: (Day, Day) -> Bool, _ copy: (inout Day, Day) -> Void) {
+            guard !same(edit, base) else { return }
+            if !same(current, base) && !same(current, edit) { conflicted = true }
+            copy(&merged, edit)
+        }
+        group({ $0.title == $1.title }) { $0.title = $1.title }
+        group({ $0.date == $1.date && $0.recurring == $1.recurring && $0.lunar == $1.lunar }) {
+            $0.date = $1.date; $0.recurring = $1.recurring; $0.lunar = $1.lunar
+        }
+        group({ $0.categoryID == $1.categoryID && $0.categoryLabel == $1.categoryLabel && $0.category == $1.category }) {
+            $0.categoryID = $1.categoryID; $0.categoryLabel = $1.categoryLabel; $0.category = $1.category
+        }
+        group({ $0.photo == $1.photo && $0.photoData == $1.photoData
+                && $0.coverFocusX == $1.coverFocusX && $0.coverFocusY == $1.coverFocusY }) {
+            $0.photo = $1.photo; $0.photoData = $1.photoData; $0.coverFocusX = $1.coverFocusX; $0.coverFocusY = $1.coverFocusY
+        }
+        group({ $0.reminderOffsets == $1.reminderOffsets && $0.reminderTime == $1.reminderTime }) {
+            $0.reminderOffsets = $1.reminderOffsets; $0.reminderTime = $1.reminderTime
+        }
+        group({ $0.note == $1.note }) { $0.note = $1.note }
+        group({ $0.location == $1.location }) { $0.location = $1.location }
+        group({ $0.pinned == $1.pinned }) { $0.pinned = $1.pinned }
+        return (merged, conflicted)
+    }
     func delete(_ day: Day) {
         guard loadError == nil, let current = days.first(where: { $0.id == day.id }) else { return }
         let id = day.id
@@ -605,8 +656,8 @@ final class DayStore {
             updated.record = .day(relabeled(day))
             return updated
         }
-        commitCategoryChange(days: days.map(relabeled), categories: updatedCategories,
-                             deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
+        commitChange(days: days.map(relabeled), categories: updatedCategories,
+                     deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
         return saveError == nil
     }
 
@@ -637,13 +688,16 @@ final class DayStore {
             updated.record = .day(migrated(day))
             return updated
         }
-        commitCategoryChange(days: days.map(migrated), categories: updatedCategories,
-                             deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
+        commitChange(days: days.map(migrated), categories: updatedCategories,
+                     deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
         return saveError == nil
     }
 
-    private func commitCategoryChange(days: [Day], categories: [CategoryDefinition],
-                                      deletedDays: [DeletedDay]? = nil, syncConflicts: [SyncConflict]? = nil) {
+    /// Writes several parts of the library at once through the restore journal; `failure` names
+    /// the message shown if it can't.
+    private func commitChange(days: [Day], categories: [CategoryDefinition],
+                              deletedDays: [DeletedDay]? = nil, syncConflicts: [SyncConflict]? = nil,
+                              failure: SaveFailure = .categories) {
         do {
             let backup = DayBackup(days: days, categories: categories, deletedDays: deletedDays ?? self.deletedDays,
                                    syncConflicts: syncConflicts ?? self.syncConflicts)
@@ -652,7 +706,7 @@ final class DayStore {
             saveFailure = nil
             if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
         } catch {
-            saveFailure = .categories
+            saveFailure = failure
         }
     }
 

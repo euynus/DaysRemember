@@ -823,7 +823,8 @@ struct DayEditorView: View {
             return
         }
 
-        let saved = editingDay == nil ? store.add(new) : store.update(new)
+        // The day may have synced while the editor was open; merge onto it rather than overwrite.
+        let saved = editingDay.map { store.update(new, editedFrom: $0) } ?? store.add(new)
         guard saved else {
             saveError = store.loadError ?? store.saveError
                 ?? String(localized: "这个日子已被删除，修改尚未保存。草稿已保留。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)

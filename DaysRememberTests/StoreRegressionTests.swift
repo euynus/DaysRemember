@@ -119,6 +119,63 @@ final class StoreRegressionTests: XCTestCase {
         }
     }
 
+    /// An editor opened before a sync saves onto the synced day: what it left alone keeps the synced
+    /// value, and where both changed the same thing its edit wins with the replaced version kept.
+    func testEditorSaveMergesWithChangesThatSyncedMeanwhile() throws {
+        try withSuite { defaults in
+            let store = DayStore(defaults: defaults)
+            let base = Day(id: "shared", title: "Trip", date: Date(timeIntervalSince1970: 1_700_000_000),
+                           category: .travel, photo: .voyage, note: "Pack light")
+            store.add(base)
+            @MainActor func sync(_ change: (inout Day) -> Void) throws {
+                var remote = try XCTUnwrap(store.days.first)
+                change(&remote)
+                try store.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [remote]))
+            }
+
+            // Another device changes the note while this one edits only the title.
+            try sync { $0.note = "Bring the passport" }
+            let keptBySync = store.syncConflicts.count
+            var titled = base
+            titled.title = "Trip to Hokkaido"
+            XCTAssertTrue(store.update(titled, editedFrom: base))
+            XCTAssertEqual(store.days.first?.title, "Trip to Hokkaido")
+            XCTAssertEqual(store.days.first?.note, "Bring the passport")
+            XCTAssertEqual(store.syncConflicts.count, keptBySync, "nothing was overwritten")
+
+            // Both change the note: the edit wins and the synced note stays restorable.
+            let opened = try XCTUnwrap(store.days.first)
+            try sync { $0.note = "Book the ryokan" }
+            var noted = opened
+            noted.note = "Take the night train"
+            XCTAssertTrue(store.update(noted, editedFrom: opened))
+            XCTAssertEqual(store.days.first?.note, "Take the night train")
+            XCTAssertTrue(store.syncConflicts.contains { conflict in
+                if case .day(let day) = conflict.record { return day.note == "Book the ryokan" }
+                return false
+            })
+            XCTAssertEqual(DayStore(defaults: defaults).days.first?.note, "Take the night train")
+
+            // A date belongs with its calendar: a synced switch to lunar doesn't pair with an edited date.
+            let beforeDate = try XCTUnwrap(store.days.first)
+            try sync { $0.lunar = true }
+            var dated = beforeDate
+            dated.date = Date(timeIntervalSince1970: 1_710_000_000)
+            XCTAssertTrue(store.update(dated, editedFrom: beforeDate))
+            XCTAssertEqual(store.days.first?.date, dated.date)
+            XCTAssertEqual(store.days.first?.lunar, false)
+
+            // With nothing synced meanwhile it is an ordinary update.
+            let unchanged = try XCTUnwrap(store.days.first)
+            var retitled = unchanged
+            retitled.title = "Hokkaido"
+            let conflicts = store.syncConflicts
+            XCTAssertTrue(store.update(retitled, editedFrom: unchanged))
+            XCTAssertEqual(store.days.first, retitled)
+            XCTAssertEqual(store.syncConflicts, conflicts)
+        }
+    }
+
     /// Renaming a category renames it on the copies in 最近删除 and 同步保留版本 too, so a
     /// restored copy comes back under the current name.
     func testRenamingCategoryRelabelsRecoverableCopies() throws {
