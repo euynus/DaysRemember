@@ -46,11 +46,13 @@ struct Milestone: Equatable {
         let byDays = Milestone(kind: .days(target), date: dayDate,
                                daysUntil: CNDate.daysBetween(todayStart, dayDate))
 
-        var years = max(1, cal.dateComponents([.year], from: origin, to: todayStart).year ?? 1)
-        var yearDate = cal.date(byAdding: .year, value: years, to: origin) ?? dayDate
+        // Whole years follow the anniversary rule the countdown and reminders use (DayInfo).
+        let originYear = cal.component(.year, from: origin)
+        var years = max(1, cal.component(.year, from: todayStart) - originYear)
+        var yearDate = DayInfo.gregorianAnniversary(of: origin, inYear: originYear + years) ?? dayDate
         if yearDate < todayStart {
             years += 1
-            yearDate = cal.date(byAdding: .year, value: years, to: origin) ?? dayDate
+            yearDate = DayInfo.gregorianAnniversary(of: origin, inYear: originYear + years) ?? dayDate
         }
         let byYears = Milestone(kind: .years(years), date: yearDate,
                                 daysUntil: CNDate.daysBetween(todayStart, yearDate))

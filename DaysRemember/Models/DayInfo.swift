@@ -36,10 +36,18 @@ struct DayInfo {
                                                      day: source.day, isLeap: source.isLeap))
             }.filter { cal.component(.year, from: $0) == year && $0 >= original }
         }
-        let source = cal.dateComponents([.month, .day], from: day.date)
-        guard let occurrence = cal.date(from: DateComponents(year: year, month: source.month,
-                                                             day: source.day)) else { return [] }
-        return occurrence >= original ? [cal.startOfDay(for: occurrence)] : []
+        guard let occurrence = gregorianAnniversary(of: day.date, inYear: year) else { return [] }
+        return occurrence >= original ? [occurrence] : []
+    }
+
+    /// The Gregorian anniversary of `date` in `year`. February 29 falls on March 1 in a common year,
+    /// for the countdown, the calendar, reminders and milestones alike.
+    static func gregorianAnniversary(of date: Date, inYear year: Int) -> Date? {
+        let cal = CNDate.calendar
+        let source = cal.dateComponents([.month, .day], from: date)
+        // The calendar is lenient: February 29 of a common year becomes March 1.
+        return cal.date(from: DateComponents(year: year, month: source.month, day: source.day))
+            .map { cal.startOfDay(for: $0) }
     }
 
     /// A lunar day outside the lunar table has no lunar date to recur on, so it counts like a

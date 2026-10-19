@@ -46,6 +46,22 @@ final class MilestoneTests: XCTestCase {
         XCTAssertEqual(milestone.daysUntil, 0)
     }
 
+    /// February 29 has its anniversary on March 1 in a common year, as the countdown, the calendar and
+    /// the yearly memory reminder have it, and on February 29 again in a leap year.
+    func testLeapDayAnniversaryFallsOnMarchFirstInACommonYear() throws {
+        let leap = date(2024, 2, 29)
+        let first = try XCTUnwrap(Milestone.next(after: leap, today: date(2025, 2, 28)))
+        XCTAssertEqual(first.kind, .years(1))
+        XCTAssertEqual(first.date, date(2025, 3, 1))
+        XCTAssertEqual(first.daysUntil, 1)
+        let yearly = Day(id: "leap", title: "闰日", date: leap, recurring: true, category: .life, photo: .home)
+        XCTAssertEqual(DayInfo.occurrences(of: yearly, inGregorianYear: 2025), [first.date])
+
+        let fourth = try XCTUnwrap(Milestone.next(after: leap, today: date(2028, 2, 1)))
+        XCTAssertEqual(fourth.kind, .years(4))
+        XCTAssertEqual(fourth.date, date(2028, 2, 29))
+    }
+
     func testFutureDaysHaveNoMilestone() {
         XCTAssertNil(Milestone.next(after: date(2026, 12, 20), today: date(2026, 10, 16)))
     }
