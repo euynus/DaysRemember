@@ -413,6 +413,18 @@ final class RenderingTests: XCTestCase {
         XCTAssertLessThan(center[1], 80, "\(center)")
     }
 
+    /// Inter is under the SIL Open Font License, which must travel with every copy of the font.
+    func testInterShipsWithItsLicence() throws {
+        let plugIns = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
+        let widget = try XCTUnwrap(Bundle(url: plugIns.appendingPathComponent("DaysRememberWidget.appex")))
+        for bundle in [Bundle.main, widget] {
+            XCTAssertNotNil(bundle.url(forResource: "Inter", withExtension: "ttf"), bundle.bundlePath)
+            let licence = try String(contentsOf: XCTUnwrap(bundle.url(forResource: "OFL", withExtension: "txt")), encoding: .utf8)
+            XCTAssertTrue(licence.contains("SIL OPEN FONT LICENSE Version 1.1"), bundle.bundlePath)
+            XCTAssertTrue(licence.contains("The Inter Project Authors"), bundle.bundlePath)
+        }
+    }
+
     /// The launch screen paints LaunchBackground before SwiftUI draws Theme.bg, and system UI outside
     /// the SwiftUI tint uses AccentColor; a mismatch shows as a flash or a stray colour.
     func testLaunchAndAccentColoursMatchTheTheme() throws {
