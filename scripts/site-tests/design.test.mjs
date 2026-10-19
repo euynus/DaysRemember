@@ -127,10 +127,12 @@ test("secondary text is readable on the ground, the cards and the ink", () => {
       assert.ok(ratio >= 4.5, `${foreground} on ${background}: ${ratio.toFixed(2)}:1`);
     }
   }
-  const promise = /\.promise-text p \{ color: (#[0-9A-Fa-f]{6}); \}/.exec(css);
-  assert.ok(promise, "the privacy card's text colour");
-  assert.ok(contrast(promise[1], root["--ink"]) >= 4.5, "privacy text on ink");
+  // The ink pills (the call to action, the selected chip) carry white text.
   assert.ok(contrast(root["--card"], root["--ink"]) >= 4.5, "white on ink");
+  // The privacy card is a pastel tile like the others, so the tone check covers its text.
+  assert.equal(properties(".promise").background, "var(--tone)");
+  assert.equal(properties(".promise-text p").color, "var(--ink-2)");
+  for (const page of PRODUCT) assert.match(read(page), /<div class="promise tone-[a-z]+ reveal">/, page);
 });
 
 // The pages must read completely without motion: nothing is hidden outside html.motion.

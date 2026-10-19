@@ -374,7 +374,7 @@ p { margin: 0; }
 .shots img { border-radius: 1.75rem; border: 0.25rem solid var(--card); background: var(--card); box-shadow: 0 4px 16px rgba(36, 34, 43, 0.08); }
 .shots figcaption { color: var(--ink-2); font-size: var(--step--1); font-weight: 700; padding-inline: 0.25rem; }
 
-/* Privacy: an ink card, the one dark surface, as the app's ink pill. */
+/* Privacy: a pastel card like the tiles (its tone class picks the colour), the 0 in the tone's ink. */
 .promise {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -382,17 +382,15 @@ p { margin: 0; }
   align-items: center;
   padding: clamp(1.5rem, 4vw, 2.75rem);
   border-radius: var(--radius);
-  background: var(--ink);
-  color: var(--card);
+  background: var(--tone);
 }
-.promise .figure { color: var(--card); }
 .promise .figure b { font-size: clamp(6rem, 4rem + 8vw, 10rem); }
 .promise-text { display: grid; gap: 0.75rem; max-width: 36rem; }
 .promise-text h2 { font-size: var(--step-2); font-weight: 900; }
-.promise-text p { color: #E3E1E8; }
-.promise-text a { color: var(--card); font-weight: 800; text-decoration-color: rgba(255, 255, 255, 0.5); }
+.promise-text p { color: var(--ink-2); }
+.promise-text a { color: var(--ink); font-weight: 800; }
 .promise-text ul { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; padding: 0; margin: 0.25rem 0 0; }
-.promise-text li { background: rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 0.25rem 0.85rem; font-size: var(--step--1); font-weight: 700; }
+.promise-text li { background: var(--card); border-radius: 999px; padding: 0.25rem 0.85rem; font-size: var(--step--1); font-weight: 700; }
 
 /* Support: a white card pointing to the questions. */
 .help {
