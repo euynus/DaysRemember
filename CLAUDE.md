@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project shape
 
-Native SwiftUI iOS 26+ app — Chinese-language anniversary / countdown ("时光 · Days Remember"). The current UI (the 柔彩便当 redesign) uses three native tabs, a pastel card feed split into 将至 and 已过, a monthly agenda, and shared app/widget layouts. `_design/days-remember/` preserves the historical prototype, not the current visual specification. Two targets: the main app (`DaysRemember`) and a WidgetKit extension (`DaysRememberWidget`).
+Native SwiftUI iOS 26+ app, built in the Swift 6 language mode — Chinese-language anniversary / countdown ("时光 · Days Remember"). The current UI (the 柔彩便当 redesign) uses three native tabs, a pastel card feed split into 将至 and 已过, a monthly agenda, and shared app/widget layouts. `_design/days-remember/` preserves the historical prototype, not the current visual specification. Two targets: the main app (`DaysRemember`) and a WidgetKit extension (`DaysRememberWidget`).
 
 ## Build & run
 
@@ -126,7 +126,7 @@ When changing the data model in `Day.swift` or its persistence format, be aware:
 | `UNUserNotificationCenter` | `Store/NotificationManager.swift`. Identifier scheme `dr.day.<id>.pre.<offset>` lets a single day's pending requests be cancelled or replaced in isolation. Authorization is requested when a day with reminders is saved or reminders are enabled (skipped when `DebugLaunch.isAutomated` so `simctl` screenshots don't stall on the system prompt). Reminders fire on their own day at `AppSettings.notificationHour` / `notificationMinute` or the day's `reminderTime` — see `NotificationManager.triggerDate(...)`; the daily greeting uses `greetingHour` / `greetingMinute`. |
 | `CKSyncEngine` | `Store/CloudLibrarySync.swift` — see *iCloud sync* above. |
 | `NSUbiquitousKeyValueStore` | `Store/ICloudSyncStore.swift`, settings only — see *iCloud sync* above. Entitlement `com.apple.developer.ubiquity-kvstore-identifier` lives on `DaysRemember.entitlements` only; the widget reads through shared `UserDefaults`. |
-| `PhotosUI.PhotosPicker` | `DayEditorView.photosPickerTile`. Picked images are downsampled and JPEG-recompressed off the main actor to ≤ 1600px before being stored on `Day.photoData`. Cancelled selections never overwrite the current cover. `coverFocusX/Y` (normalized 0–1) drives the framing in `PhotoTile`. |
+| `PhotosUI` photo picker | `DayEditorView.photosPickerTile`, a button that presents `.photosPicker(isPresented:)`: `PhotosPicker`'s own label is a `@Sendable` closure that can't read the editor's state. Picked images are downsampled and JPEG-recompressed off the main actor to ≤ 1600px before being stored on `Day.photoData`. Cancelled selections never overwrite the current cover. `coverFocusX/Y` (normalized 0–1) drives the framing in `PhotoTile`. |
 | `ImageRenderer` + `UIActivityViewController` | `ShareCardView.renderImage(card:ratio:scale:)` (card height or 3:4, at least 3x) + `Components/ShareSheet.swift`. 分享图片 presents the rendered image using an item-driven sheet; no per-app SDK integration. |
 | `PHPhotoLibrary` | `Components/ShareSheet.swift::PhotoSaver`. Requires `NSPhotoLibraryAddUsageDescription` in `Info.plist`. |
 
@@ -135,6 +135,7 @@ Per-day reminder offsets use `nil` for global settings and `[]` for no day remin
 ## Conventions
 
 - Commits use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `feat(scope):`, …). Each integration / discrete change is its own commit.
+- Every target builds in the Swift 6 language mode (`SWIFT_VERSION` in `project.yml`), so data races are compile errors. UI test classes are `@MainActor`; a teardown that drives the app overrides `tearDown() async throws`, since the synchronous override stays nonisolated.
 - Tests in `DaysRememberTests/` use `@testable import DaysRemember`. The target requires the main module to be built with `-enable-testing` (XcodeGen does this automatically for the test bundle).
 - Sample data in `Models/SampleData.swift` is verbatim from `_design/days-remember/project/data.jsx` — keep them in sync if regenerating.
 - Validate UI changes with simulator screenshots and the rendering/UI tests, including compact screens and large accessibility text.

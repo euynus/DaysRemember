@@ -194,6 +194,7 @@ final class BDDTests: XCTestCase {
 
     // MARK: - 倒数与重复
 
+    @MainActor
     func test_recurringGregorianDay_rollsForwardOnceAnniversaryHasPassed() {
         var info: DayInfo!
 
@@ -213,6 +214,7 @@ final class BDDTests: XCTestCase {
         }
     }
 
+    @MainActor
     func test_recurringLunarDay_walksToCurrentYearLunarAnniversary() {
         var info: DayInfo!
 
@@ -236,6 +238,7 @@ final class BDDTests: XCTestCase {
 
     // MARK: - 提醒触发时间
 
+    @MainActor
     func test_lateReminderFiresAtTheChosenTime() {
         var trigger: Date?
 
@@ -260,6 +263,7 @@ final class BDDTests: XCTestCase {
 
     // MARK: - 旧版本数据迁移
 
+    @MainActor
     func test_oldDayJSON_decodesWithSensibleDefaultsForNewFields() throws {
         var day: Day!
 
@@ -293,6 +297,7 @@ final class BDDTests: XCTestCase {
 
 /// Reports each Given / When / Then step as a nested XCTContext activity so that
 /// the test log reads like a Gherkin scenario in Xcode and on the command line.
+@MainActor
 private extension XCTestCase {
     func given(_ description: String, _ block: () throws -> Void) rethrows {
         try XCTContext.runActivity(named: "Given \(description)") { _ in try block() }

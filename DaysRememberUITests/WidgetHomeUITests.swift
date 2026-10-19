@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class WidgetHomeUITests: XCTestCase {
     func testWidgetOnHomeScreen() {
         continueAfterFailure = false

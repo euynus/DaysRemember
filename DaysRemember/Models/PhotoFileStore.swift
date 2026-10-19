@@ -1,20 +1,22 @@
 import CryptoKit
 import Darwin
 import Foundation
+import Synchronization
 
 /// Local-only Codable context. Backups and CloudKit payloads keep their portable format.
-final class PhotoFileStore {
+final class PhotoFileStore: Sendable {
     static let codingKey = CodingUserInfoKey(rawValue: "DaysRemember.PhotoFileStore")!
     static let repairKey = CodingUserInfoKey(rawValue: "DaysRemember.RepairPhotoFiles")!
     static let deferredKey = CodingUserInfoKey(rawValue: "DaysRemember.DeferredPhotoFiles")!
     let directory: URL
 
     /// Collects photo references during a metadata-only decode instead of reading files.
-    final class DeferredReferences {
-        private(set) var byDayID: [String: String] = [:]
-        func record(_ reference: String, for id: String) { byDayID[id] = reference }
+    final class DeferredReferences: Sendable {
+        private let references = Mutex<[String: String]>([:])
+        var byDayID: [String: String] { references.withLock { $0 } }
+        func record(_ reference: String, for id: String) { references.withLock { $0[id] = reference } }
     }
-    private var cached: [String: (reference: String, data: Data, stamp: FileStamp)] = [:]
+    private let cached = Mutex<[String: (reference: String, data: Data, stamp: FileStamp)]>([:])
 
     private struct FileStamp: Equatable {
         let number: UInt64
@@ -66,7 +68,7 @@ final class PhotoFileStore {
     }
 
     func reference(for data: Data, id: String, repairCorruptFiles: Bool = false) throws -> String {
-        if let entry = cached[id], entry.data == data,
+        if let entry = cached.withLock({ $0[id] }), entry.data == data,
            (try? FileStamp(url: directory.appendingPathComponent(entry.reference))) == entry.stamp {
             return entry.reference
         }
@@ -85,10 +87,10 @@ final class PhotoFileStore {
                 try data.write(to: url, options: .atomic)
                 _ = try self.data(for: reference, id: id)
             } else {
-                cached[id] = (reference, data, stamp)
+                cached.withLock { $0[id] = (reference, data, stamp) }
             }
         } else {
-            if cached[id]?.reference == reference && !repairCorruptFiles {
+            if cached.withLock({ $0[id]?.reference }) == reference && !repairCorruptFiles {
                 throw CocoaError(.fileReadNoSuchFile)
             }
             // Publish the immutable photo before metadata can reference it.
@@ -105,7 +107,7 @@ final class PhotoFileStore {
         let data = try Data(contentsOf: url)
         guard Self.digest(data) + ".photo" == reference else { throw CocoaError(.fileReadCorruptFile) }
         guard try FileStamp(url: url) == stamp else { throw CocoaError(.fileReadCorruptFile) }
-        cached[id] = (reference, data, stamp)
+        cached.withLock { $0[id] = (reference, data, stamp) }
         return data
     }
 
@@ -123,7 +125,7 @@ final class PhotoFileStore {
             guard Self.isValidReference(reference), !referenced.contains(reference) else { continue }
             try FileManager.default.removeItem(at: url)
             // A cached entry for a missing file reads as damage when the photo is saved again.
-            cached = cached.filter { $0.value.reference != reference }
+            cached.withLock { entries in entries = entries.filter { $0.value.reference != reference } }
         }
     }
 

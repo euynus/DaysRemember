@@ -3,6 +3,7 @@ import XCTest
 /// An editor for an existing day must keep editing that day, with its draft, while the view it
 /// was opened from changes or goes away: the hero card moving to another day, a row becoming the
 /// hero, or a link to another day replacing the open detail.
+@MainActor
 final class EditorPresentationUITests: XCTestCase {
     override func setUp() {
         super.setUp()

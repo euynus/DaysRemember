@@ -14,6 +14,7 @@ struct DayEditorView: View {
     @State private var photo: PhotoStyle
     @State private var photoData: Data?
     @State private var pickerItem: PhotosPickerItem?
+    @State private var showPhotoPicker = false
     @State private var isLoadingPhoto = false
     @State private var photoError: String?
     @State private var showTemplateGallery = false
@@ -492,8 +493,12 @@ struct DayEditorView: View {
             }
     }
 
+    /// A button presents the picker, since `PhotosPicker`'s own label is a `@Sendable` closure that
+    /// can't read the editor's state.
     private var photosPickerTile: some View {
-        PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
+        Button {
+            showPhotoPicker = true
+        } label: {
             HStack(spacing: 8) {
                 if let data = photoData {
                     miniPolaroid(selected: true) {
@@ -518,6 +523,8 @@ struct DayEditorView: View {
         .accessibilityLabel("选择相册封面")
         .accessibilityIdentifier("dayCoverPhotoPicker")
         .accessibilityAddTraits(photoData != nil ? [.isSelected] : [])
+        .photosPicker(isPresented: $showPhotoPicker, selection: $pickerItem, matching: .images,
+                      photoLibrary: .shared())
         .overlay { if isLoadingPhoto { ProgressView() } }
         .task(id: pickerItem) {
             guard let item = pickerItem else { isLoadingPhoto = false; return }

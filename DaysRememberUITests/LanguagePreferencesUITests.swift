@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class LanguagePreferencesUITests: XCTestCase {
     private var application: XCUIApplication?
     private let languages = ["system", "zh-Hans", "zh-Hant", "en"]
@@ -9,16 +10,18 @@ final class LanguagePreferencesUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    override func tearDown() {
-        defer { super.tearDown() }
-        guard let app = application else { return }
-        app.terminate()
-        // Recover from any open editor/sheet without reseeding or retaining large text.
-        configure(app)
-        app.launch()
-        restoreSystemLanguage(in: app)
-        app.terminate()
-        application = nil
+    /// The async override runs on the main actor, as the XCUIApplication calls require.
+    override func tearDown() async throws {
+        if let app = application {
+            app.terminate()
+            // Recover from any open editor/sheet without reseeding or retaining large text.
+            configure(app)
+            app.launch()
+            restoreSystemLanguage(in: app)
+            app.terminate()
+            application = nil
+        }
+        try await super.tearDown()
     }
 
     func testLiveSwitchingRequiresConfirmationAndCancelDiscardsTheDraft() {

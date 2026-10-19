@@ -426,7 +426,7 @@ struct DetailView: View {
     }
 
     /// The note under 那一天 for a one-time day: how long ago it was, or 今天 on the day itself.
-    static func sinceTheDay(_ info: DayInfo) -> String {
+    nonisolated static func sinceTheDay(_ info: DayInfo) -> String {
         info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             : String(localized: "已过 \(info.days) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }

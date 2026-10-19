@@ -8,7 +8,7 @@ options:
   groupSortPosition: top
 settings:
   base:
-    SWIFT_VERSION: "5.9"
+    SWIFT_VERSION: "6.0"
     # The 10-character Team ID from developer.apple.com › Membership; archiving needs it
     # (scripts/archive.sh also takes TEAM_ID=…).
     DEVELOPMENT_TEAM: ""

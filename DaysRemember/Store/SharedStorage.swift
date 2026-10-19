@@ -11,7 +11,8 @@ enum SharedStorage {
     static let legacyDaysKey = "days.v1"
     static let categoriesKey = "categories.v1"
 
-    static let defaults: UserDefaults = {
+    // UserDefaults is thread-safe, though the SDK does not mark it Sendable.
+    nonisolated(unsafe) static let defaults: UserDefaults = {
         UserDefaults(suiteName: appGroupID) ?? .standard
     }()
 

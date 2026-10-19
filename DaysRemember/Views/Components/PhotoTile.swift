@@ -6,7 +6,8 @@ import WidgetKit
 
 /// Share pixel-bounded bitmaps across list rows, previews and widget snapshots.
 enum PhotoDecodeCache {
-    private static let storage: NSCache<NSString, UIImage> = {
+    // NSCache is thread-safe, though the SDK does not mark it Sendable.
+    nonisolated(unsafe) private static let storage: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
         cache.countLimit = 64
         cache.totalCostLimit = 32 * 1024 * 1024
@@ -179,7 +180,7 @@ struct PhotoTile: View {
             .mask(LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom))
     }
 
-    static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {
+    nonisolated static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {
         guard maximumPixelSize.isFinite, maximumPixelSize >= 1,
               image.size.width > 0, image.size.height > 0 else { return nil }
         if let bitmap = image.cgImage,

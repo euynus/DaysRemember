@@ -2,8 +2,8 @@ import AppIntents
 import Foundation
 
 struct WidgetDay: AppEntity {
-    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: LocalizedStringResource("widget.day", defaultValue: "日子"))
-    static var defaultQuery = WidgetDayQuery()
+    static let typeDisplayRepresentation = TypeDisplayRepresentation(name: LocalizedStringResource("widget.day", defaultValue: "日子"))
+    static let defaultQuery = WidgetDayQuery()
 
     var id: String
     var title: String
@@ -43,8 +43,8 @@ struct WidgetDayQuery: EntityQuery {
 }
 
 struct SelectWidgetDay: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "选择日子"
-    static var description = IntentDescription("不选择时，自动显示最近的日子。")
+    static let title: LocalizedStringResource = "选择日子"
+    static let description = IntentDescription("不选择时，自动显示最近的日子。")
 
     @Parameter(title: LocalizedStringResource("widget.day", defaultValue: "日子"))
     var day: WidgetDay?

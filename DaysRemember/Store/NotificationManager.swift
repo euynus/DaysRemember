@@ -30,6 +30,7 @@ final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse) async {
         guard let id = response.notification.request.content.userInfo["dayID"] as? String else { return }
+        let router = router
         await MainActor.run { router.dayID = id }
     }
 }

@@ -6,6 +6,7 @@ import XCTest
 /// `DetailView` whose navigation controller had become unresponsive, so the
 /// "更多操作 → 编辑" menu never opened the editor. `--screen detail` probes
 /// could not catch it because they render detail as the stack *root*, not pushed.
+@MainActor
 final class EditFlowUITests: XCTestCase {
     override func setUp() {
         super.setUp()
