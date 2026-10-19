@@ -413,6 +413,18 @@ final class RenderingTests: XCTestCase {
         XCTAssertLessThan(center[1], 80, "\(center)")
     }
 
+    /// The launch screen paints LaunchBackground before SwiftUI draws Theme.bg, and system UI outside
+    /// the SwiftUI tint uses AccentColor; a mismatch shows as a flash or a stray colour.
+    func testLaunchAndAccentColoursMatchTheTheme() throws {
+        func rgb(_ color: UIColor) -> [Int] {
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            color.getRed(&r, green: &g, blue: &b, alpha: &a)
+            return [r, g, b, a].map { Int(($0 * 255).rounded()) }
+        }
+        XCTAssertEqual(rgb(try XCTUnwrap(UIColor(named: "LaunchBackground"))), rgb(UIColor(Theme.bg)))
+        XCTAssertEqual(rgb(try XCTUnwrap(UIColor(named: "AccentColor"))), rgb(UIColor(Theme.accent)))
+    }
+
     /// A photo that can't be decoded falls back to the preset in a list row, as it does in the
     /// detail and share images, rather than staying on blank paper.
     @MainActor
