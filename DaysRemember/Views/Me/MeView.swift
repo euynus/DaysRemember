@@ -19,8 +19,7 @@ struct MeView: View {
     @Environment(DeepLinkRouter.self) private var router
     @AppStorage(AppLocalization.languageKey, store: SharedStorage.defaults)
     private var language = AppLanguage.system
-    @State private var creatingCategory = false
-    @State private var editingCategory: CategoryDefinition?
+    @Environment(\.editCategory) private var editCategory
     @State private var showingLanguage = false
     @State private var showingWidgets = false
     @State private var showingData = false
@@ -94,15 +93,12 @@ struct MeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
-        .sheet(isPresented: $creatingCategory) { CategoryEditorView().environment(store) }
-        .sheet(item: $editingCategory) { CategoryEditorView(category: $0).environment(store) }
         .sheet(isPresented: $showingLanguage) { LanguageSettingsView() }
         .sheet(isPresented: $showingWidgets) { WidgetsPreviewView() }
         .sheet(isPresented: $showingData) { DataManagementView() }
-        // A widget or reminder link opens its day on 日子; close whatever is open here.
+        // A widget or reminder link opens its day on 日子; close the settings open here. A category
+        // editor (categoryEditorHost) stays on top with its draft, and the day opens beneath it.
         .onChange(of: router.linkOpenCount) {
-            creatingCategory = false
-            editingCategory = nil
             showingLanguage = false
             showingWidgets = false
             showingData = false
@@ -164,10 +160,10 @@ struct MeView: View {
             ForEach(store.categories) { category in
                 let days = byCategory[category.id] ?? []
                 CategoryTile(category: category, coverDay: days.first, count: days.count) {
-                    editingCategory = category
+                    editCategory(category)
                 }
             }
-            Button { creatingCategory = true } label: {
+            Button { editCategory(nil) } label: {
                 Label("新分类", systemImage: "plus")
                     .font(Theme.sans(14, weight: .bold))
                     .foregroundStyle(Theme.ink2)

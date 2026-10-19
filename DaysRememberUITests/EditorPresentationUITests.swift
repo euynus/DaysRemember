@@ -131,6 +131,31 @@ final class EditorPresentationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["小年糕出生"].exists)
     }
 
+    /// A link opens its day beneath an open category editor, which keeps its draft, as a day's
+    /// editor does, rather than closing without asking.
+    func testLinkKeepsACategoryDraft() {
+        let app = XCUIApplication()
+        app.launchEnvironment["DR_PIN_TODAY"] = "1"
+        app.launchArguments = ["--tab", "me", "--seed-sample-data"]
+        app.launch()
+        let create = app.buttons["新建分类"]
+        XCTAssertTrue(create.waitForExistence(timeout: 10))
+        create.tap()
+        let name = app.textFields["categoryNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.tap()
+        name.typeText("旅伴")
+        XCTAssertEqual(name.value as? String, "旅伴")
+
+        open("daysremember://day/baby")
+        XCTAssertTrue(name.waitForExistence(timeout: 5), "the editor closed")
+        XCTAssertEqual(name.value as? String, "旅伴")
+        app.buttons["saveCategoryButton"].tap()
+        expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: name)
+        waitForExpectations(timeout: 5)
+        XCTAssertTrue(app.staticTexts["小年糕出生"].waitForExistence(timeout: 5), "the link's day is open")
+    }
+
     /// The empty widget links to `daysremember://home`, which has no day to open but must
     /// still bring 日子 forward from another tab.
     func testHomeLinkReturnsToTheDaysTab() {
