@@ -8,14 +8,14 @@
 - **副标题（建议）**：温柔记住每一个重要的日子
 - **分类**：生活 / 效率
 - **Bundle ID**：`com.shiguang.daysremember`（Widget：`.widget`）
-- **版本 / 构建号**：1.0 / 1
+- **版本 / 构建号**：版本取 `project.yml` 的 `MARKETING_VERSION`（现为 1.0），App 与小组件共用；构建号由 `scripts/archive.sh` 按提交数生成，每次从新的提交上传都会更大
 - **支持设备**：iPhone，竖屏，iOS 17+
 - **语言**：简体中文、繁體中文、English
 - **名称是否可用**：App Store 名称全局唯一，「时光」很可能已被占用。被占用时可改用「时光 · 纪念日倒数」这类名称，主屏幕上显示的仍是 `CFBundleDisplayName` 里的「时光」。
 
 ## 网址
 
-产品网站在 `docs/`，由 Cloudflare Workers Builds 在每次推送 `main` 时按 `wrangler.jsonc` 发布到 `days.gooday.dev`（静态文件，没有构建步骤）。隐私政策与支持页面和产品页一样每种语言一页：简体在根路径，繁體和英文在 `zh-Hant/`、`en/` 下。
+产品网站在 `docs/`，按 `wrangler.jsonc` 作为静态文件发布到 `days.gooday.dev`（没有构建步骤）：Worker 连上 GitHub 后推送 `main` 即自动部署，否则在仓库里运行 `npx wrangler deploy`。隐私政策与支持页面和产品页一样每种语言一页：简体在根路径，繁體和英文在 `zh-Hant/`、`en/` 下。
 
 | 字段 | 简体中文 | 繁體中文 | English |
 |---|---|---|---|
@@ -117,23 +117,45 @@ Free to use. Everything stays on your devices and in your own iCloud. No data co
 
 ## 提交前清单
 
-- [x] App 图标 1024²、无 alpha 通道（黑底日月图形）
-- [x] 启动屏背景与 App 背景一致（米白 `#FCFCFA`，仅浅色）
+**仓库里已就绪**
+
+- [x] App 图标 1024²、无 alpha 通道（浅蓝底的晴空日月，`python3 scripts/app-icon.py` 生成）；另有 iOS 18 深色与着色版本，背景透明是这两种外观的要求
+- [x] 启动屏背景与 App 背景一致（`#F6F6F3`，仅浅色），`AccentColor` 与 App 的墨色一致（`RenderingTests` 检查）
 - [x] 隐私清单（App + Widget）
-- [x] 出口合规声明
-- [ ] 在 Xcode 签名里填入真实 `DEVELOPMENT_TEAM`（归档上传所需；当前为空。`project.yml` 里的值会在 `xcodegen generate` 时覆盖 Xcode 中手动选的团队）
-- [ ] 开发者账号中为 App ID 与 Widget App ID 启用 App Groups（`group.com.shiguang.daysremember`），为 App ID 启用 iCloud（CloudKit 容器 `iCloud.com.shiguang.daysremember`）与推送
-- [ ] CloudKit：用真机 Development 环境完成一次同步，确认 `DaysRememberLibrary` 区域里有 `LibraryDay` / `LibraryCategory` 记录，再在 CloudKit Console 把 Schema **部署到 Production**（否则 App Store 用户的同步全部失败；模拟器不会连接 CloudKit）
-- [ ] 归档后在 Organizer 检查导出的 App 权限：`aps-environment` 应为 `production`（源文件里是 `development`，由分发签名改写）
-- [x] 隐私政策与支持页面：`docs/privacy/`、`docs/support/`，App 内「我的 › 关于」可打开
-- [ ] Cloudflare：Workers & Pages → 创建 → 导入 GitHub 仓库 `euynus/DaysRemember`，Worker 名称填 `days-remember`（与 `wrangler.jsonc` 一致），部署命令保持 `npx wrangler deploy`；部署后在该 Worker 的「设置 › 域和路由」添加自定义域 `days.gooday.dev`，确认上面三个网址能打开。**提交审核前必须完成**，否则 App 内的隐私政策链接打不开
-- [ ] App Store Connect：填写上面的网址、年龄分级问卷、版权
-- [ ] App Store Connect：新建 App 记录时确认名称可用；为繁體中文与英文添加本地化，填入上面的草稿
-- [ ] 中国大陆上架需要 App 备案号（ICP）：在「价格与销售范围」选中国大陆时填写。备案通过接入商（如阿里云、腾讯云）办理，需要 Bundle ID 与签名证书信息，通常要一到几周。暂未备案就先不选中国大陆
-- [ ] 欧盟上架需要在 App Store Connect 声明「交易商身份」（DSA）。声明为交易商时，地址、电话与邮箱会公开显示在商店页
-- [ ] 用正式版 Xcode 归档（不能是 beta），并在 Organizer 中验证后上传
+- [x] 出口合规声明（`ITSAppUsesNonExemptEncryption = false`，上传后不会再问）
+- [x] 版本号与构建号由构建设置提供，App 与小组件一致（`WidgetTests` 检查）
+- [x] Inter 字体的 SIL OFL 许可随字体打包（`Fonts/OFL.txt`）
+- [x] 隐私政策与支持页面：三种语言各一页，App 内「我的 › 关于」打开当前语言的页面
+- [x] 网站已上线：`/`、`/privacy/`、`/support/` 及 `zh-Hant/`、`en/` 下的页面都能打开，旧地址 301 跳转
 - [x] App Store 截图：`docs/screenshots/<语言>/`，6.9 英寸 1320×2868、无 alpha 的 JPEG，简体 / 繁体 / 英文各 7 张（首页、详情、日历、小组件、分享、我的、已过）。按文件名顺序上传到 App Store Connect 各语言的「6.9 英寸 iPhone」截图位；`bash scripts/screenshots.sh` 可重新生成
-- [ ] TestFlight 真机回归：两台设备间的 iCloud 同步、通知权限与点按跳转、主屏/锁屏小组件、触感、动态字体放大
-- [ ] App Store Connect 隐私问卷按上文填写
+- [x] 归档脚本：`bash scripts/archive.sh` 归档并导出 IPA，导出后检查 `aps-environment` 与 iCloud 环境为 production、App 与小组件版本一致、App Group、图标无 alpha；`--upload` 检查通过后再上传。CI 每次跑一遍不签名的真机归档（`--unsigned`）
+
+**待补的信息**
+
+- [ ] Team ID：填进 `project.yml` 的 `DEVELOPMENT_TEAM`（或运行时 `TEAM_ID=…`），然后 `xcodegen generate`。`project.yml` 里的值会覆盖 Xcode 中手动选的团队
+- [ ] 支持邮箱（可选）：确定后加到三个支持页「联系我们」里预留的位置（页面里有注释标出），也可以加到 App 内「我的 › 关于」
+
+**开发者账号与 CloudKit**
+
+- [ ] 为 App ID（`com.shiguang.daysremember`）与 Widget App ID（`.widget`）启用 App Groups（`group.com.shiguang.daysremember`），为 App ID 启用 iCloud（CloudKit 容器 `iCloud.com.shiguang.daysremember`）与推送
+- [ ] CloudKit：用真机 Development 环境完成一次同步，确认 `DaysRememberLibrary` 区域里有 `LibraryDay` / `LibraryCategory` 记录，再在 CloudKit Console 把 Schema **部署到 Production**（否则 App Store 用户的同步全部失败；模拟器不会连接 CloudKit）
+- [ ] 不要删掉 `remote-notification` 后台模式与 `registerForRemoteNotifications`：CloudKit 用静默推送通知同步变化
+
+**App Store Connect**
+
+- [ ] 新建 App 记录：先确认名称可用（见上文「名称是否可用」），SKU、主语言简体中文、Bundle ID
+- [ ] App 信息：副标题、分类（生活 / 效率）、年龄分级问卷（4+）、版权；为繁體中文与英文添加本地化，填入上面的草稿
+- [ ] 价格与销售范围：免费。中国大陆需要 App 备案号（ICP），备案通过接入商（如阿里云、腾讯云）办理，需要 Bundle ID 与签名证书信息，通常要一到几周；暂未备案就先不选中国大陆
+- [ ] 欧盟上架需要声明「交易商身份」（DSA）。声明为交易商时，地址、电话与邮箱会公开显示在商店页
+- [ ] App 隐私问卷按上文填写，隐私政策网址见上表
+- [ ] 内容权利：图标和 12 张扁平封面由仓库里的脚本绘制（`scripts/app-icon.py`、`scripts/flat-covers.py`）；作为照片后备保留的位图封面（`Cover*`）由 AI 生成，按实际情况回答
+- [ ] 版本信息：首次发布的「新内容」、推广文本、关键词、描述、支持与营销网址、截图
+- [ ] 审核信息：联系人与审核备注（见上文），无需演示账号
+
+**构建与回归**
+
+- [ ] 用正式版 Xcode 运行 `bash scripts/archive.sh`（脚本会拒绝 beta 版 Xcode），确认检查通过后 `--upload`，或在 Organizer 中验证后上传
+- [ ] iOS 17 回归：部署目标是 iOS 17，CI 只跑最新的系统。在 Xcode › Settings › Components 装上 iOS 17 模拟器后跑一遍测试，最好再用一台 iOS 17 真机
+- [ ] TestFlight 真机回归：两台设备间的 iCloud 同步、没有登录 iCloud 时的表现、通知权限（允许与拒绝）与点按跳转、相册权限被拒绝时的保存、主屏/锁屏小组件、触感、动态字体放大
 
 > 注：App 已锁定浅色外观（`UIUserInterfaceStyle = Light`），无需深色截图。
