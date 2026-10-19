@@ -9,7 +9,7 @@
 - **分类**：生活 / 效率
 - **Bundle ID**：`com.shiguang.daysremember`（Widget：`.widget`）
 - **版本 / 构建号**：版本取 `project.yml` 的 `MARKETING_VERSION`（现为 1.0），App 与小组件共用；构建号由 `scripts/archive.sh` 按提交数生成，每次从新的提交上传都会更大
-- **支持设备**：iPhone，竖屏，iOS 17+
+- **支持设备**：iPhone，竖屏，iOS 26+
 - **语言**：简体中文、繁體中文、English
 - **名称是否可用**：App Store 名称全局唯一，「时光」很可能已被占用。被占用时可改用「时光 · 纪念日倒数」这类名称，主屏幕上显示的仍是 `CFBundleDisplayName` 里的「时光」。
 
@@ -155,7 +155,7 @@ Free to use. Everything stays on your devices and in your own iCloud. No data co
 **构建与回归**
 
 - [ ] 用正式版 Xcode 运行 `bash scripts/archive.sh`（脚本会拒绝 beta 版 Xcode），确认检查通过后 `--upload`，或在 Organizer 中验证后上传
-- [ ] iOS 17 回归：部署目标是 iOS 17，CI 只跑最新的系统。在 Xcode › Settings › Components 装上 iOS 17 模拟器后跑一遍测试，最好再用一台 iOS 17 真机
+- [ ] iOS 26.0 回归：部署目标是 iOS 26.0，CI 跑 iOS 26.5。在 Xcode › Settings › Components 装上 iOS 26.0 模拟器后跑一遍测试，最好再用一台 iOS 26 真机
 - [ ] TestFlight 真机回归：两台设备间的 iCloud 同步、没有登录 iCloud 时的表现、通知权限（允许与拒绝）与点按跳转、相册权限被拒绝时的保存、主屏/锁屏小组件、触感、动态字体放大
 
 > 注：App 已锁定浅色外观（`UIUserInterfaceStyle = Light`），无需深色截图。

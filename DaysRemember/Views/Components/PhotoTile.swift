@@ -203,13 +203,8 @@ struct PhotoTile: View {
 
     /// Tinted and clear Home Screens draw a widget in one tint by opacity, which turns an opaque
     /// picture into a solid block; desaturated, it keeps its picture. Full colour is unaffected.
-    @ViewBuilder
     private static func tintable(_ image: Image) -> some View {
-        if #available(iOS 18, *) {
-            image.widgetAccentedRenderingMode(.accentedDesaturated)
-        } else {
-            image
-        }
+        image.widgetAccentedRenderingMode(.accentedDesaturated)
     }
 
     private func fillSize(image: CGSize, in container: CGSize) -> CGSize {

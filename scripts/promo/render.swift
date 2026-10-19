@@ -461,7 +461,7 @@ func scenes(_ assets: Assets) -> [Scene] {
         let soon = easeOut(progress(t, from: 0.7, over: 0.8))
         canvas.layer(alpha: soon, offset: CGPoint(x: 0, y: 24 * (1 - soon))) {
             chip("即将登陆 App Store", fill: ink, color: card, size: 42, y: 1150, on: canvas)
-            canvas.text(canvas.attributed("免费 · iPhone · iOS 17 及以上", sans(38), ink2), y: 1290)
+            canvas.text(canvas.attributed("免费 · iPhone · iOS 26 及以上", sans(38), ink2), y: 1290)
             canvas.text(canvas.attributed("days.gooday.dev", sans(36), muted, kern: 1), y: 1360)
         }
     }

@@ -1,6 +1,6 @@
 # 时光 · Days Remember
 
-A multilingual anniversary and countdown app built with SwiftUI, iOS 17+. Native tabs, a photo-led day feed, monthly agenda, custom categories, reminders, share cards, and WidgetKit layouts share one visual system. The original prototype remains in `_design/days-remember/` as a historical reference.
+A multilingual anniversary and countdown app built with SwiftUI for iOS 26+. Native tabs, a photo-led day feed, monthly agenda, custom categories, reminders, share cards, and WidgetKit layouts share one visual system. The original prototype remains in `_design/days-remember/` as a historical reference.
 
 ## Screenshots
 
@@ -76,7 +76,7 @@ xcodegen generate
 open DaysRemember.xcodeproj
 ```
 
-Then choose an available iPhone simulator (iOS 17+).
+Then choose an available iPhone simulator (iOS 26+).
 
 ## Data and CloudKit
 

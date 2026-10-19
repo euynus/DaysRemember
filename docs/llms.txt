@@ -1,6 +1,6 @@
 # 时光 · Days Remember
 
-> 时光（Days Remember, 時光）is a free anniversary and countdown app for iPhone (iOS 17 or later). It counts down to the days ahead and up from the days behind you, repeats days by the Gregorian or the lunar calendar, and collects no data. It is not on the App Store yet.
+> 时光（Days Remember, 時光）is a free anniversary and countdown app for iPhone (iOS 26 or later). It counts down to the days ahead and up from the days behind you, repeats days by the Gregorian or the lunar calendar, and collects no data. It is not on the App Store yet.
 
 Facts stated on this site:
 

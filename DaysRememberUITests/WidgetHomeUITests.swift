@@ -1,10 +1,7 @@
 import XCTest
 
 final class WidgetHomeUITests: XCTestCase {
-    func testWidgetOnHomeScreen() throws {
-        guard #available(iOS 18, *) else {
-            throw XCTSkip("The Home Screen resize shortcut requires iOS 18 or newer.")
-        }
+    func testWidgetOnHomeScreen() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["--seed-sample-data", "--seed-widget-photo", "--tab", "home"]
