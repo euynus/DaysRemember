@@ -5,11 +5,9 @@ struct MeView: View {
     @Environment(DayStore.self) private var store
     @Environment(AppSettings.self) private var settings
     @Environment(\.currentDay) private var today
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(DeepLinkRouter.self) private var router
     @AppStorage(AppLocalization.languageKey, store: SharedStorage.defaults)
     private var language = AppLanguage.system
-    @Environment(\.editCategory) private var editCategory
     @State private var showingLanguage = false
     @State private var showingWidgets = false
     @State private var showingData = false
@@ -22,7 +20,7 @@ struct MeView: View {
             NavHeader(title: String(localized: "我的", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    stats(total: infos.count, upcoming: infos.count - past.count, past: past.count)
+                    MeStats(total: infos.count, upcoming: infos.count - past.count, past: past.count)
                     if let oldest = past.max(by: { $0.1.days < $1.1.days }) {
                         Text("记得最久的是「\(oldest.0.title)」，已经 \(oldest.1.days) 天。")
                             .font(Theme.sans(13))
@@ -31,7 +29,7 @@ struct MeView: View {
                     }
 
                     sectionTitle(String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-                    categoryGrid(byCategory)
+                    MeCategoryGrid(byCategory: byCategory)
 
                     sectionTitle(String(localized: "提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     MeGroup {
@@ -100,75 +98,6 @@ struct MeView: View {
         let time = NotificationManager.notificationTime(hour: settings.notificationHour,
                                                         minute: settings.notificationMinute)
         return String(localized: "每天 \(CNDate.time(hour: time.hour, minute: time.minute))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-    }
-
-    // MARK: Stats
-
-    private func stats(total: Int, upcoming: Int, past: Int) -> some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: 8))
-            : AnyLayout(HStackLayout(spacing: 8))
-        return layout {
-            NavigationLink(value: CategoryRoute.all) {
-                statCard(total, label: String(localized: "个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                         tint: Theme.card)
-            }
-            .buttonStyle(PressableTileStyle())
-            .accessibilityIdentifier("me.allDays")
-            statCard(upcoming, label: String(localized: "home.face.upcoming", defaultValue: "将至", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                     tint: Theme.noteYellow)
-            statCard(past, label: String(localized: "home.face.past", defaultValue: "已过", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                     tint: Theme.memory)
-        }
-    }
-
-    private func statCard(_ value: Int, label: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value, format: .number)
-                .numberFont(36)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-            Text(label)
-                .font(Theme.sans(12))
-                .foregroundStyle(Theme.ink2)
-        }
-        .foregroundStyle(Theme.ink)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, minHeight: 88, alignment: .bottomLeading)
-        .background(tint, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-
-    // MARK: Categories
-
-    private func categoryGrid(_ byCategory: [String: [Day]]) -> some View {
-        let columns = dynamicTypeSize.isAccessibilitySize
-            ? [GridItem(.flexible())]
-            : [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
-        return LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(store.categories) { category in
-                let days = byCategory[category.id] ?? []
-                CategoryTile(category: category, coverDay: days.first, count: days.count) {
-                    editCategory(category)
-                }
-            }
-            Button { editCategory(nil) } label: {
-                Label("新分类", systemImage: "plus")
-                    .font(Theme.sans(14, weight: .bold))
-                    .foregroundStyle(Theme.ink2)
-                    .frame(maxWidth: .infinity, minHeight: 92)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .strokeBorder(Theme.hairlineStrong, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                    }
-                    .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            }
-            .buttonStyle(PressableTileStyle())
-            .accessibilityLabel("新建分类")
-            .accessibilityIdentifier("addCategoryButton")
-        }
     }
 
     // MARK: Rows
