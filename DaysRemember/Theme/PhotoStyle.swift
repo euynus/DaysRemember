@@ -65,8 +65,8 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    /// The flat illustration drawn straight onto a pastel card. These vector assets live in
-    /// the app catalog only; widgets keep the bitmap `assetName` covers.
+    /// The flat illustration drawn straight onto a pastel card, in both the app's and the
+    /// widget's catalogs; the bitmap `assetName` covers remain for `PhotoTile` fallbacks.
     var flatAssetName: String {
         "Flat" + assetName.dropFirst("Cover".count)
     }

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Computed display info for a Day — port of `data.jsx`'s `dayInfo()`.
 struct DayInfo {
@@ -128,25 +129,23 @@ struct DayInfo {
         let todayStartRef: TimeInterval
     }
 
-    private final class Cache: @unchecked Sendable {
+    private final class Cache: Sendable {
         static let shared = Cache()
-        private let lock = NSLock()
-        private var entries: [CacheKey: DayInfo] = [:]
-        private var day: TimeInterval?
+        private let state = Mutex<(day: TimeInterval?, entries: [CacheKey: DayInfo])>((nil, [:]))
 
         func fetch(_ key: CacheKey) -> DayInfo? {
-            lock.lock(); defer { lock.unlock() }
-            return entries[key]
+            state.withLock { $0.entries[key] }
         }
 
         func store(_ key: CacheKey, _ info: DayInfo) {
-            lock.lock(); defer { lock.unlock() }
-            // Entries for another day are never hit again; the cap only bounds unusual mixes.
-            if key.todayStartRef != day || entries.count >= 4096 {
-                entries.removeAll(keepingCapacity: true)
-                day = key.todayStartRef
+            state.withLock { state in
+                // Entries for another day are never hit again; the cap only bounds unusual mixes.
+                if key.todayStartRef != state.day || state.entries.count >= 4096 {
+                    state.entries.removeAll(keepingCapacity: true)
+                    state.day = key.todayStartRef
+                }
+                state.entries[key] = info
             }
-            entries[key] = info
         }
     }
 }

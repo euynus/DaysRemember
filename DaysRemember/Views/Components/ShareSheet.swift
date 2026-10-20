@@ -31,7 +31,8 @@ enum PhotoSaver {
         case .authorized, .limited:
             granted = true
         case .notDetermined:
-            granted = await PHPhotoLibrary.requestAuthorization(for: .addOnly) != .denied
+            let answer = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+            granted = answer == .authorized || answer == .limited
         default:
             granted = false
         }

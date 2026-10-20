@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// 24 节气 + traditional lunar holidays.
 ///
@@ -99,21 +100,21 @@ enum SolarTerms {
     }
 
     /// Calendar cells look terms up on every render, so each year is solved once.
-    private final class YearCache: @unchecked Sendable {
+    private final class YearCache: Sendable {
         static let shared = YearCache()
-        private let lock = NSLock()
-        private var years: [Int: [Int: Int]] = [:]
+        private let years = Mutex<[Int: [Int: Int]]>([:])
 
         func terms(in year: Int) -> [Int: Int] {
-            lock.lock(); defer { lock.unlock() }
-            if let cached = years[year] { return cached }
-            var days: [Int: Int] = [:]
-            for (index, instant) in SolarTerms.instants(in: year).enumerated() {
-                let c = SolarTerms.beijing.dateComponents([.month, .day], from: instant)
-                if let month = c.month, let day = c.day { days[month * 100 + day] = index }
+            years.withLock { years in
+                if let cached = years[year] { return cached }
+                var days: [Int: Int] = [:]
+                for (index, instant) in SolarTerms.instants(in: year).enumerated() {
+                    let c = SolarTerms.beijing.dateComponents([.month, .day], from: instant)
+                    if let month = c.month, let day = c.day { days[month * 100 + day] = index }
+                }
+                years[year] = days
+                return days
             }
-            years[year] = days
-            return days
         }
     }
 

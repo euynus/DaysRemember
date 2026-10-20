@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// Shared light appearance palette and scalable typography.
 enum Theme {
@@ -69,11 +68,8 @@ enum Theme {
     /// meta rows, and the big tabular countdown numbers (use `.monospacedDigit()`).
     static func sans(_ size: CGFloat, weight: Font.Weight = .regular,
                      relativeTo textStyle: Font.TextStyle = .body) -> Font {
-        if FontAvailability.inter {
-            return .custom("Inter", size: size, relativeTo: textStyle).weight(weight)
-        }
-        return .custom(UIFont.systemFont(ofSize: size).fontName, size: size,
-                       relativeTo: textStyle).weight(weight)
+        // A custom font falls back to the system font if Inter isn't registered.
+        .custom("Inter", size: size, relativeTo: textStyle).weight(weight)
     }
 
     /// SF Symbol size that follows Dynamic Type, at `size` points for the default text size.
@@ -81,12 +77,6 @@ enum Theme {
         Font.body.scaled(by: size / 17).weight(weight)
     }
 
-}
-
-/// Resolved-once availability of the bundled custom fonts. `UIFont(name:)` is the
-/// reliable "is this registered?" probe; caching avoids hitting it per text view.
-enum FontAvailability {
-    static let inter = UIFont(name: "Inter", size: 12) != nil
 }
 
 extension Color {

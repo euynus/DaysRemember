@@ -77,6 +77,15 @@ struct DayBackup: Codable {
         return data
     }
 
+    /// Reads a picked backup file off the main actor, refusing one too large to restore.
+    @concurrent static func load(from url: URL) async throws -> DayBackup {
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+        guard let size, size <= maximumBytes else { throw BackupError.tooLarge }
+        return try decode(Data(contentsOf: url))
+    }
+
     static func decode(_ data: Data) throws -> DayBackup {
         guard data.count <= maximumBytes else { throw BackupError.tooLarge }
         let backup: DayBackup

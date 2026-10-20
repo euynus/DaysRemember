@@ -543,9 +543,7 @@ struct DayEditorView: View {
                     throw CocoaError(.fileReadCorruptFile)
                 }
                 try Task.checkCancellation()
-                let compressed = await Task.detached(priority: .userInitiated) {
-                    autoreleasepool { PhotoDecodeCache.compressedJPEG(from: data) }
-                }.value
+                let compressed = await PhotoDecodeCache.compressedJPEGInBackground(from: data)
                 try Task.checkCancellation()
                 guard let compressed else {
                     throw CocoaError(.fileReadCorruptFile)

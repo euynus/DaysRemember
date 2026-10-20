@@ -235,13 +235,7 @@ struct DataManagementView: View {
             Task {
                 defer { isReading = false }
                 do {
-                    pendingImport = try await Task.detached(priority: .userInitiated) {
-                        let access = url.startAccessingSecurityScopedResource()
-                        defer { if access { url.stopAccessingSecurityScopedResource() } }
-                        let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize
-                        guard let size, size <= DayBackup.maximumBytes else { throw DayBackup.BackupError.tooLarge }
-                        return try DayBackup.decode(Data(contentsOf: url))
-                    }.value
+                    pendingImport = try await DayBackup.load(from: url)
                 } catch { message = error.localizedDescription }
             }
         }

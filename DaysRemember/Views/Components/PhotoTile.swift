@@ -66,6 +66,16 @@ enum PhotoDecodeCache {
     static func compressedJPEG(from data: Data) -> Data? {
         downsample(data, maximumPixelSize: 1600)?.jpegData(compressionQuality: 0.82)
     }
+
+    /// `decoded(_:maximumPixelSize:)` off the main actor, for lists that decode while scrolling.
+    @concurrent static func decodedInBackground(_ data: Data, maximumPixelSize: CGFloat) async -> UIImage? {
+        decoded(data, maximumPixelSize: maximumPixelSize)
+    }
+
+    /// `compressedJPEG(from:)` off the main actor, for an imported photo.
+    @concurrent static func compressedJPEGInBackground(from data: Data) async -> Data? {
+        autoreleasepool { compressedJPEG(from: data) }
+    }
 }
 
 /// User photos take precedence over bundled covers; both obey the same clipping bounds.
@@ -159,10 +169,7 @@ struct PhotoTile: View {
             // Keep a reference even to a cached image: the cache may drop it while the tile is shown.
             loadedImage = PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize)
             guard loadedImage == nil else { return }
-            let size = maximumPixelSize
-            let image = await Task.detached(priority: .userInitiated) {
-                PhotoDecodeCache.decoded(data, maximumPixelSize: size)
-            }.value
+            let image = await PhotoDecodeCache.decodedInBackground(data, maximumPixelSize: maximumPixelSize)
             guard !Task.isCancelled else { return }
             loadedImage = image
             decodeFailed = image == nil

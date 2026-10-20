@@ -12,7 +12,7 @@ struct ShareCardView: View {
     @State private var ratio: Ratio = .natural
     @State private var includeNote = false
     @State private var sharedImage: SharedImage?
-    @State private var savedToast: (id: UUID, text: String)?
+    @State private var savedToast: (id: UUID, text: String, feedback: SensoryFeedback)?
 
     enum Template: String, CaseIterable {
         case polaroid, note, minimal, collage
@@ -98,6 +98,7 @@ struct ShareCardView: View {
                 .background(Theme.bg)
         }
         .sensoryFeedback(.selection, trigger: template)
+        .sensoryFeedback(trigger: savedToast?.id) { _, _ in savedToast?.feedback }
         .overlay(alignment: .top) {
             if let savedToast {
                 Text(savedToast.text)
@@ -144,8 +145,7 @@ struct ShareCardView: View {
 
     private func presentShareSheet() {
         guard let img = renderCardImage() else {
-            Haptics.warning()
-            flashToast(String(localized: "生成失败，请重试", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            flashToast(String(localized: "生成失败，请重试", bundle: AppLocalization.bundle, locale: AppLocalization.locale), feedback: .warning)
             return
         }
         sharedImage = SharedImage(image: img)
@@ -153,28 +153,24 @@ struct ShareCardView: View {
 
     private func saveToPhotos() {
         guard let img = renderCardImage() else {
-            Haptics.warning()
-            flashToast(String(localized: "生成失败，请重试", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            flashToast(String(localized: "生成失败，请重试", bundle: AppLocalization.bundle, locale: AppLocalization.locale), feedback: .warning)
             return
         }
         Task {
             do {
                 try await PhotoSaver.save(image: img)
-                Haptics.success()
-                flashToast(String(localized: "已保存到相册", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                flashToast(String(localized: "已保存到相册", bundle: AppLocalization.bundle, locale: AppLocalization.locale), feedback: .success)
             } catch PhotoSaver.SaveError.denied {
-                Haptics.warning()
-                flashToast(String(localized: "无相册权限", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                flashToast(String(localized: "无相册权限", bundle: AppLocalization.bundle, locale: AppLocalization.locale), feedback: .warning)
             } catch {
-                Haptics.warning()
-                flashToast(String(localized: "保存失败", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                flashToast(String(localized: "保存失败", bundle: AppLocalization.bundle, locale: AppLocalization.locale), feedback: .warning)
             }
         }
     }
 
     @MainActor
-    private func flashToast(_ text: String) {
-        withAnimation(.easeInOut(duration: 0.18)) { savedToast = (UUID(), text) }
+    private func flashToast(_ text: String, feedback: SensoryFeedback) {
+        withAnimation(.easeInOut(duration: 0.18)) { savedToast = (UUID(), text, feedback) }
         AccessibilityNotification.Announcement(text).post()
     }
 

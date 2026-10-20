@@ -436,7 +436,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             referenced.insert(CloudLibraryRecord.assetURL(recordName: name, revision: entry.revision, directory: assetDirectory))
         }
         do { try CloudLibraryRecord.removeUnusedAssets(in: assetDirectory, keeping: referenced) }
-        catch { Logger(subsystem: "com.shiguang.daysremember", category: "CloudLibrarySync").error("Asset cleanup failed: \(error.localizedDescription)") }
+        catch { Logger(subsystem: "com.shiguang.daysremember", category: "CloudLibrarySync").error("Asset cleanup failed: \(error.localizedDescription, privacy: .public)") }
     }
 
     func handleEvent(_ event: CKSyncEngine.Event, syncEngine: CKSyncEngine) async {
