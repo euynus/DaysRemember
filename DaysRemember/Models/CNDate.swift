@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Display follows the app language; day boundaries remain in the stored calendar.
 enum CNDate {
@@ -7,6 +8,18 @@ enum CNDate {
         c.timeZone = TimeZone(identifier: "Asia/Shanghai") ?? .current
         return c
     }()
+
+    private static let lastDayStart = Mutex<(date: Date, start: Date)?>(nil)
+
+    /// The start of the day containing `date`. A feed update asks for today's start once per day
+    /// it shows, and finding a day boundary is the costly part of a cached countdown lookup, so the
+    /// latest answer is kept.
+    static func startOfDay(_ date: Date) -> Date {
+        if let start = lastDayStart.withLock({ $0?.date == date ? $0?.start : nil }) { return start }
+        let start = calendar.startOfDay(for: date)
+        lastDayStart.withLock { $0 = (date, start) }
+        return start
+    }
 
     static func full(_ date: Date, locale: Locale = AppLocalization.locale) -> String {
         date.formatted(style(locale: locale).year().month(.wide).day())

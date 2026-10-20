@@ -34,9 +34,24 @@ struct Milestone: Equatable {
     }
 
     static func next(after start: Date, today: Date = Today.date) -> Milestone? {
+        let todayStart = CNDate.startOfDay(today)
+        // The 已过 feed asks for every past day on each update; the answer changes only with the day.
+        let key = CacheKey(start: start.timeIntervalSinceReferenceDate,
+                           todayStart: todayStart.timeIntervalSinceReferenceDate)
+        return cache.value(for: key, on: key.todayStart) {
+            uncached(origin: CNDate.calendar.startOfDay(for: start), todayStart: todayStart)
+        }
+    }
+
+    private struct CacheKey: Hashable {
+        let start: TimeInterval
+        let todayStart: TimeInterval
+    }
+
+    private static let cache = DailyCache<CacheKey, Milestone?>()
+
+    private static func uncached(origin: Date, todayStart: Date) -> Milestone? {
         let cal = CNDate.calendar
-        let origin = cal.startOfDay(for: start)
-        let todayStart = cal.startOfDay(for: today)
         let elapsed = CNDate.daysBetween(origin, todayStart)
         guard elapsed >= 0 else { return nil }
 

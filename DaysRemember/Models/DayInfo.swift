@@ -1,5 +1,4 @@
 import Foundation
-import Synchronization
 
 /// Computed display info for a Day — port of `data.jsx`'s `dayInfo()`.
 struct DayInfo {
@@ -59,7 +58,7 @@ struct DayInfo {
 
     static func compute(_ d: Day, today: Date = Today.date) -> DayInfo {
         let cal = CNDate.calendar
-        let todayStart = cal.startOfDay(for: today)
+        let todayStart = CNDate.startOfDay(today)
         let key = CacheKey(
             dayID: d.id,
             dateRef: d.date.timeIntervalSinceReferenceDate,
@@ -67,10 +66,7 @@ struct DayInfo {
             lunar: d.lunar,
             todayStartRef: todayStart.timeIntervalSinceReferenceDate
         )
-        if let hit = Cache.shared.fetch(key) { return hit }
-        let result = uncached(d, todayStart: todayStart, calendar: cal)
-        Cache.shared.store(key, result)
-        return result
+        return cache.value(for: key, on: key.todayStartRef) { uncached(d, todayStart: todayStart, calendar: cal) }
     }
 
     private static func uncached(_ d: Day, todayStart: Date, calendar cal: Calendar) -> DayInfo {
@@ -129,23 +125,5 @@ struct DayInfo {
         let todayStartRef: TimeInterval
     }
 
-    private final class Cache: Sendable {
-        static let shared = Cache()
-        private let state = Mutex<(day: TimeInterval?, entries: [CacheKey: DayInfo])>((nil, [:]))
-
-        func fetch(_ key: CacheKey) -> DayInfo? {
-            state.withLock { $0.entries[key] }
-        }
-
-        func store(_ key: CacheKey, _ info: DayInfo) {
-            state.withLock { state in
-                // Entries for another day are never hit again; the cap only bounds unusual mixes.
-                if key.todayStartRef != state.day || state.entries.count >= 4096 {
-                    state.entries.removeAll(keepingCapacity: true)
-                    state.day = key.todayStartRef
-                }
-                state.entries[key] = info
-            }
-        }
-    }
+    private static let cache = DailyCache<CacheKey, DayInfo>()
 }

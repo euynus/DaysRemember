@@ -19,7 +19,8 @@ struct HomeView: View {
 
     var body: some View {
         let sorted = store.sortedDays(store.days, today: today)
-        let feed = Self.split(sorted, today: today)
+        // Search lists the sorted days; only the faces need them split.
+        let feed = query.isEmpty ? Self.split(sorted, today: today) : (upcoming: [], past: [])
         let upcoming = feed.upcoming
         let past = feed.past
         VStack(spacing: 0) {

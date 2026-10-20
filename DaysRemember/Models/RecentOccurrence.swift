@@ -10,8 +10,24 @@ struct RecentOccurrence: Equatable {
 
     static func of(_ day: Day, today: Date = Today.date, within window: Int = 7) -> RecentOccurrence? {
         guard day.recurring else { return nil }
+        let todayStart = CNDate.startOfDay(today)
+        // The home feed asks for every day on each update; the answer changes only with the day.
+        let key = CacheKey(date: day.date.timeIntervalSinceReferenceDate, lunar: day.lunar,
+                           todayStart: todayStart.timeIntervalSinceReferenceDate, window: window)
+        return cache.value(for: key, on: key.todayStart) { uncached(day, todayStart: todayStart, window: window) }
+    }
+
+    private struct CacheKey: Hashable {
+        let date: TimeInterval
+        let lunar: Bool
+        let todayStart: TimeInterval
+        let window: Int
+    }
+
+    private static let cache = DailyCache<CacheKey, RecentOccurrence?>()
+
+    private static func uncached(_ day: Day, todayStart: Date, window: Int) -> RecentOccurrence? {
         let cal = CNDate.calendar
-        let todayStart = cal.startOfDay(for: today)
         let year = cal.component(.year, from: todayStart)
         let latest = ((year - 1)...year)
             .flatMap { DayInfo.occurrences(of: day, inGregorianYear: $0) }
