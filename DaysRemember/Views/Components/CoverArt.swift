@@ -17,22 +17,3 @@ struct CoverArt: View {
         }
     }
 }
-
-/// A preset cover's flat illustration, fitted inside its frame.
-struct FlatCover: View {
-    let style: PhotoStyle
-
-    var body: some View {
-        Image(style.flatAssetName)
-            .resizable()
-            .scaledToFit()
-            .accessibilityHidden(true)
-    }
-}
-
-extension CategoryDefinition {
-    /// The pastel card colour.
-    var tint: Color { colorToken.soft }
-    /// Text and marks drawn on the pastel.
-    var tintInk: Color { colorToken.color }
-}
