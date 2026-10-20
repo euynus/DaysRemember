@@ -6,16 +6,16 @@ final class EditorSaveTests: XCTestCase {
     /// The reminder sheet hands back offsets sorted and without repeats; a stored day from a backup
     /// or sync may hold the same reminders in another order.
     func testSameRemindersInAnotherOrderAreNoChange() {
-        XCTAssertFalse(DayEditorView.remindersDiffer([7, 3, 0], from: [0, 3, 7]))
-        XCTAssertFalse(DayEditorView.remindersDiffer([7], from: [7, 7]))
-        XCTAssertFalse(DayEditorView.remindersDiffer(nil, from: nil))
-        XCTAssertTrue(DayEditorView.remindersDiffer([], from: nil))
-        XCTAssertTrue(DayEditorView.remindersDiffer([3], from: [7]))
+        XCTAssertFalse(DayDraft.remindersDiffer([7, 3, 0], from: [0, 3, 7]))
+        XCTAssertFalse(DayDraft.remindersDiffer([7], from: [7, 7]))
+        XCTAssertFalse(DayDraft.remindersDiffer(nil, from: nil))
+        XCTAssertTrue(DayDraft.remindersDiffer([], from: nil))
+        XCTAssertTrue(DayDraft.remindersDiffer([3], from: [7]))
     }
 
     /// A new day starts in 生活, so it starts with 生活's cover, as picking that category gives.
     func testNewDayStartsWithItsCategorysCover() {
-        let draft = DayEditorView.newDraft(date: Today.date)
+        let draft = DayDraft.newDay(date: Today.date)
         XCTAssertEqual(draft.categoryID, DayCategory.life.rawValue)
         XCTAssertEqual(draft.photo, PhotoStyle.defaultCover(forCategoryID: draft.categoryID))
     }
@@ -23,10 +23,10 @@ final class EditorSaveTests: XCTestCase {
     /// The date row already says 农历日期超出范围 for a date before 1900-01-31.
     func testLunarDateOutsideTableCannotBeSaved() {
         let early = CNDate.calendar.date(from: DateComponents(year: 1899, month: 8, day: 10))!
-        XCTAssertFalse(DayEditorView.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: true, date: early))
-        XCTAssertTrue(DayEditorView.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: false, date: early))
-        XCTAssertTrue(DayEditorView.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: true, date: Today.date))
-        XCTAssertFalse(DayEditorView.canSave(title: " ", isLoadingPhoto: false, lunar: false, date: Today.date))
+        XCTAssertFalse(DayDraft.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: true, date: early))
+        XCTAssertTrue(DayDraft.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: false, date: early))
+        XCTAssertTrue(DayDraft.canSave(title: "爷爷生日", isLoadingPhoto: false, lunar: true, date: Today.date))
+        XCTAssertFalse(DayDraft.canSave(title: " ", isLoadingPhoto: false, lunar: false, date: Today.date))
     }
 
     func testMissingDayUpdateReturnsFalseWithoutMutation() throws {
@@ -154,7 +154,7 @@ final class EditorSaveTests: XCTestCase {
             store.add(original)
             var draft = original
             draft.title = "Edited title"
-            let saved = try XCTUnwrap(DayEditorView.applyingCategory(
+            let saved = try XCTUnwrap(DayDraft.applyingCategory(
                 to: draft, selectedCategory: nil, categories: store.categories))
 
             XCTAssertEqual(saved, draft)
@@ -206,7 +206,7 @@ final class EditorSaveTests: XCTestCase {
         let draft = day("unresolved")
         let resolved = CategoryDefinition(id: draft.categoryID, name: "Resolved category",
                                           icon: "tag", colorToken: .sage, isSystem: false)
-        let saved = try XCTUnwrap(DayEditorView.applyingCategory(
+        let saved = try XCTUnwrap(DayDraft.applyingCategory(
             to: draft, selectedCategory: nil, categories: CategoryDefinition.system + [resolved]))
         var expected = draft
         expected.categoryLabel = resolved.name
@@ -220,7 +220,7 @@ final class EditorSaveTests: XCTestCase {
                                           icon: "tag", colorToken: .sage, isSystem: false)
         var renamed = selected
         renamed.name = "Current name"
-        let saved = try XCTUnwrap(DayEditorView.applyingCategory(
+        let saved = try XCTUnwrap(DayDraft.applyingCategory(
             to: draft, selectedCategory: selected, categories: CategoryDefinition.system + [renamed]))
         var expected = draft
         expected.categoryID = renamed.id
@@ -234,7 +234,7 @@ final class EditorSaveTests: XCTestCase {
         for id in [draft.categoryID, "custom.selected"] {
             let selected = CategoryDefinition(id: id, name: "Removed category",
                                               icon: "tag", colorToken: .sage, isSystem: false)
-            XCTAssertNil(DayEditorView.applyingCategory(
+            XCTAssertNil(DayDraft.applyingCategory(
                 to: draft, selectedCategory: selected, categories: CategoryDefinition.system))
         }
     }
@@ -242,7 +242,7 @@ final class EditorSaveTests: XCTestCase {
     func testSelectingSystemCategoryUpdatesLegacyCategory() throws {
         let draft = day("edited")
         let selected = try XCTUnwrap(CategoryDefinition.system.first { $0.id == DayCategory.work.rawValue })
-        let saved = try XCTUnwrap(DayEditorView.applyingCategory(
+        let saved = try XCTUnwrap(DayDraft.applyingCategory(
             to: draft, selectedCategory: selected, categories: CategoryDefinition.system))
         var expected = draft
         expected.categoryID = selected.id

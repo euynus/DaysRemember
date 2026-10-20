@@ -8,28 +8,14 @@ struct DayEditorView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let editingDay: Day?
-    @State private var initialDay: Day
-    @State private var title: String
-    @State private var selectedCategory: CategoryDefinition?
-    @State private var photo: PhotoStyle
-    @State private var photoData: Data?
+    @State private var draft: DayDraft
     @State private var pickerItem: PhotosPickerItem?
     @State private var isLoadingPhoto = false
     @State private var photoError: String?
     @State private var showTemplateGallery = false
-    /// New days follow the selected category's cover until a template or photo is picked.
-    @State private var coverChosen: Bool
-    @State private var recurring: Bool
-    @State private var solar: Bool
-    @State private var reminderOffsets: [Int]?
-    @State private var reminderTime: DayReminderTime?
     @State private var showReminderSettings = false
-    @State private var selectedDate: Date
+    /// The date sheet's choice, which 完成 gives the draft.
     @State private var draftDate: Date
-    @State private var note: String
-    @State private var location: String
-    @State private var coverFocusX: Double
-    @State private var coverFocusY: Double
     @State private var showDatePicker = false
     @State private var confirmDiscard = false
     @State private var saveError: String?
@@ -37,89 +23,47 @@ struct DayEditorView: View {
     /// `date` prefills a new day, e.g. from an empty calendar cell.
     init(day: Day? = nil, date: Date? = nil) {
         editingDay = day
-        let initial = day ?? Self.newDraft(date: date ?? Today.date)
-        _initialDay = State(initialValue: initial)
-        _title = State(initialValue: initial.title)
-        _photo = State(initialValue: initial.photo)
-        _photoData = State(initialValue: initial.photoData)
-        _recurring = State(initialValue: initial.recurring)
-        _solar = State(initialValue: !initial.lunar)
-        _selectedDate = State(initialValue: initial.date)
-        _draftDate = State(initialValue: initial.date)
-        _note = State(initialValue: initial.note)
-        _location = State(initialValue: initial.location)
-        _coverFocusX = State(initialValue: initial.coverFocusX)
-        _coverFocusY = State(initialValue: initial.coverFocusY)
-        _reminderOffsets = State(initialValue: initial.reminderOffsets)
-        _reminderTime = State(initialValue: initial.reminderTime)
-        _coverChosen = State(initialValue: day != nil)
+        let draft = DayDraft(editing: day, date: date ?? Today.date)
+        _draft = State(initialValue: draft)
+        _draftDate = State(initialValue: draft.date)
     }
 
-    /// A new day starts in 生活, with the cover choosing 生活 would give it.
-    static func newDraft(date: Date) -> Day {
-        Day(id: "", title: "", date: date, recurring: true, category: .life,
-            photo: PhotoStyle.defaultCover(forCategoryID: DayCategory.life.rawValue) ?? .systemDefault)
-    }
+    private var canSave: Bool { draft.canSave(isLoadingPhoto: isLoadingPhoto) }
 
-    private var canSave: Bool {
-        Self.canSave(title: title, isLoadingPhoto: isLoadingPhoto, lunar: !solar, date: selectedDate)
-    }
-
-    /// A lunar day needs a date the lunar table covers; the date row says so otherwise.
-    static func canSave(title: String, isLoadingPhoto: Bool, lunar: Bool, date: Date) -> Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoadingPhoto
-            && (!lunar || Lunar.supportedLunarDate(for: date) != nil)
-    }
-
-    /// The reminder sheet hands back offsets sorted and without repeats, so order and repeats in a
-    /// stored day's offsets aren't a change.
-    static func remindersDiffer(_ offsets: [Int]?, from stored: [Int]?) -> Bool {
-        offsets.map(Set.init) != stored.map(Set.init)
-    }
-
-    private var categoryID: String { selectedCategory?.id ?? initialDay.categoryID }
-
-    private var hasUnsavedChanges: Bool {
-        isLoadingPhoto || title != initialDay.title || categoryID != initialDay.categoryID
-            || photo != initialDay.photo || photoData != initialDay.photoData
-            || recurring != initialDay.recurring || solar != !initialDay.lunar
-            || !CNDate.calendar.isDate(selectedDate, inSameDayAs: initialDay.date)
-            || note != initialDay.note || location != initialDay.location
-            || coverFocusX != initialDay.coverFocusX || coverFocusY != initialDay.coverFocusY
-            || Self.remindersDiffer(reminderOffsets, from: initialDay.reminderOffsets)
-            || reminderTime != initialDay.reminderTime
-    }
+    private var hasUnsavedChanges: Bool { isLoadingPhoto || draft.hasChanges }
 
     var body: some View {
         VStack(spacing: 0) {
             DayEditorNavBar(isNew: editingDay == nil, canSave: canSave, onCancel: cancel, onSave: saveDay)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    DayEditorPreview(title: title, date: selectedDate, recurring: recurring, solar: solar,
-                                     photo: photo, photoData: photoData,
-                                     coverFocusX: $coverFocusX, coverFocusY: $coverFocusY, tint: previewTint)
+                    DayEditorPreview(title: draft.title, date: draft.date, recurring: draft.recurring, solar: draft.solar,
+                                     photo: draft.photo, photoData: draft.photoData,
+                                     coverFocusX: $draft.coverFocusX, coverFocusY: $draft.coverFocusY, tint: previewTint)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
                         .padding(.bottom, 12)
                     titleField.padding(.bottom, 12)
-                    DayEditorForm(selectedDate: selectedDate, solar: $solar, recurring: $recurring,
-                                  reminderOffsets: reminderOffsets, reminderTime: reminderTime, location: $location,
+                    DayEditorForm(selectedDate: draft.date, solar: $draft.solar, recurring: $draft.recurring,
+                                  reminderOffsets: draft.reminderOffsets, reminderTime: draft.reminderTime,
+                                  location: $draft.location,
                                   onPickDate: {
-                                      draftDate = selectedDate
+                                      draftDate = draft.date
                                       showDatePicker = true
                                   },
                                   onEditReminders: { showReminderSettings = true })
                         .padding(.bottom, 22)
 
                     SectionHeader(String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
-                    DayEditorCategoryPills(categoryID: categoryID, selectedCategory: selectedCategory,
-                                           storedName: initialDay.categoryDisplayName, onSelect: selectCategory)
+                    DayEditorCategoryPills(categoryID: draft.categoryID, selectedCategory: draft.selectedCategory,
+                                           storedName: draft.original.categoryDisplayName,
+                                           onSelect: { draft.selectCategory($0) })
                         .padding(.bottom, 22)
 
                     coverPicker.padding(.bottom, 28)
 
                     SectionHeader(String(localized: "心情笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
-                    DayEditorNotes(note: $note)
+                    DayEditorNotes(note: $draft.note)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 40)
@@ -133,16 +77,16 @@ struct DayEditorView: View {
         .interactiveDismissDisabled(hasUnsavedChanges)
         .onChange(of: store.categories, initial: true) { _, categories in
             // Remember a resolved selection so its later deletion cannot look like pending sync.
-            if let category = categories.first(where: { $0.id == categoryID }) {
-                selectedCategory = category
+            if let category = categories.first(where: { $0.id == draft.categoryID }) {
+                draft.selectedCategory = category
             }
         }
         .sheet(isPresented: $showDatePicker) {
-            DayEditorDatePickerSheet(solar: solar, draftDate: $draftDate,
+            DayEditorDatePickerSheet(solar: draft.solar, draftDate: $draftDate,
                                      onCancel: { showDatePicker = false }, onConfirm: confirmDraftDate)
         }
         .sheet(isPresented: $showTemplateGallery) {
-            DayEditorTemplateGallery(photo: photo, photoData: photoData, tint: previewTint,
+            DayEditorTemplateGallery(photo: draft.photo, photoData: draft.photoData, tint: previewTint,
                                      onSelect: { preset in
                                          selectTemplate(preset)
                                          showTemplateGallery = false
@@ -150,10 +94,10 @@ struct DayEditorView: View {
                                      onClose: { showTemplateGallery = false })
         }
         .sheet(isPresented: $showReminderSettings) {
-            DayReminderSettingsView(offsets: reminderOffsets, time: reminderTime,
+            DayReminderSettingsView(offsets: draft.reminderOffsets, time: draft.reminderTime,
                                     globalOffsets: globalReminderOffsets, globalTime: globalReminderTime) { offsets, time in
-                reminderOffsets = offsets
-                reminderTime = time
+                draft.reminderOffsets = offsets
+                draft.reminderTime = time
             }
         }
         .alert("放弃未保存的修改？", isPresented: $confirmDiscard) {
@@ -176,11 +120,11 @@ struct DayEditorView: View {
         } message: {
             Text(photoError ?? "")
         }
-        .sensoryFeedback(.selection, trigger: photo)
-        .sensoryFeedback(.selection, trigger: reminderOffsets)
-        .sensoryFeedback(.selection, trigger: categoryID)
-        .sensoryFeedback(.selection, trigger: solar)
-        .sensoryFeedback(.selection, trigger: recurring)
+        .sensoryFeedback(.selection, trigger: draft.photo)
+        .sensoryFeedback(.selection, trigger: draft.reminderOffsets)
+        .sensoryFeedback(.selection, trigger: draft.categoryID)
+        .sensoryFeedback(.selection, trigger: draft.solar)
+        .sensoryFeedback(.selection, trigger: draft.recurring)
     }
 
     // MARK: - Actions
@@ -193,7 +137,7 @@ struct DayEditorView: View {
     // MARK: - Cover preview
 
     private var previewTint: Color {
-        store.categories.first(where: { $0.id == categoryID })?.tint ?? Theme.bg2
+        store.categories.first(where: { $0.id == draft.categoryID })?.tint ?? Theme.bg2
     }
 
     /// The framing as VoiceOver reads it.
@@ -205,7 +149,7 @@ struct DayEditorView: View {
     // MARK: - Title
 
     private var titleField: some View {
-        TextField("", text: $title,
+        TextField("", text: $draft.title,
                   prompt: Text("给这一天起个名字").foregroundStyle(Theme.muted))
             .font(Theme.sans(22, weight: .heavy))
             .foregroundStyle(Theme.ink)
@@ -240,57 +184,30 @@ struct DayEditorView: View {
                 .accessibilityIdentifier("openDayCoverTemplateGallery")
 
                 if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
-                DayEditorPhotoButton(photo: photo, photoData: photoData,
-                                     coverFocusX: coverFocusX, coverFocusY: coverFocusY, tint: previewTint,
+                DayEditorPhotoButton(photo: draft.photo, photoData: draft.photoData,
+                                     coverFocusX: draft.coverFocusX, coverFocusY: draft.coverFocusY, tint: previewTint,
                                      pickerItem: $pickerItem, isLoadingPhoto: $isLoadingPhoto,
-                                     onLoad: { data in
-                                         photoData = data
-                                         coverChosen = true
-                                         resetFocus()
-                                     },
+                                     onLoad: { draft.usePhoto($0) },
                                      onFailure: {
                                          photoError = String(localized: "照片未能加载，原封面已保留。请重新选择。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                                      })
             }
 
-            DayEditorQuickTemplates(photo: photo, photoData: photoData, tint: previewTint,
+            DayEditorQuickTemplates(photo: draft.photo, photoData: draft.photoData, tint: previewTint,
                                     onSelect: selectTemplate)
         }
     }
 
-    private func isTemplateSelected(_ preset: PhotoStyle) -> Bool {
-        Self.isTemplateSelected(preset, photo: photo, photoData: photoData)
-    }
-
-    /// A template is chosen while no photo covers it; legacy aliases match by their asset.
-    static func isTemplateSelected(_ preset: PhotoStyle, photo: PhotoStyle, photoData: Data?) -> Bool {
-        photoData == nil && photo.assetName == preset.assetName
-    }
-
+    /// A template replaces a photo still loading.
     private func selectTemplate(_ preset: PhotoStyle) {
-        coverChosen = true
         pickerItem = nil
-        guard !isTemplateSelected(preset) else { return }
-        photo = preset
-        photoData = nil
-        resetFocus()
-    }
-
-    // MARK: - Category
-
-    /// A new day's cover follows the category until a template or photo is chosen.
-    private func selectCategory(_ category: CategoryDefinition) {
-        selectedCategory = category
-        if !coverChosen, photoData == nil,
-           let cover = PhotoStyle.defaultCover(forCategoryID: category.id) {
-            photo = cover
-        }
+        draft.selectTemplate(preset)
     }
 
     // MARK: - Date picker sheet
 
     private func confirmDraftDate() {
-        selectedDate = draftDate
+        draft.date = draftDate
         showDatePicker = false
     }
 
@@ -303,50 +220,17 @@ struct DayEditorView: View {
 
     private var globalReminderOffsets: [Int] {
         guard let settings = store.settings else { return [7, 3, 0] }
-        var day = initialDay
+        var day = draft.original
         day.reminderOffsets = nil
         return NotificationManager.shared.offsets(for: day, settings: settings)
     }
 
-    /// A nil selection preserves an original category that has not yet resolved locally.
-    static func applyingCategory(to draft: Day, selectedCategory: CategoryDefinition?,
-                                 categories: [CategoryDefinition]) -> Day? {
-        let id = selectedCategory?.id ?? draft.categoryID
-        guard let category = categories.first(where: { $0.id == id }) else {
-            return selectedCategory == nil ? draft : nil
-        }
-        var day = draft
-        day.categoryID = category.id
-        day.categoryLabel = category.name
-        day.category = DayCategory(rawValue: category.id) ?? .life
-        return day
-    }
-
     private func saveDay() {
-        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanTitle.isEmpty else { return }
-
-        let draft = Day(
-            id: editingDay?.id ?? UUID().uuidString,
-            title: cleanTitle,
-            date: selectedDate,
-            recurring: recurring,
-            lunar: !solar,
-            category: initialDay.category,
-            photo: photo,
-            photoData: photoData,
-            categoryID: initialDay.categoryID,
-            coverFocusX: coverFocusX,
-            coverFocusY: coverFocusY,
-            reminderOffsets: reminderOffsets,
-            reminderTime: reminderTime,
-            note: note.trimmingCharacters(in: .whitespacesAndNewlines),
-            location: location.trimmingCharacters(in: .whitespacesAndNewlines),
-            pinned: editingDay?.pinned ?? false,
-            categoryLabel: initialDay.categoryLabel
-        )
-        guard let new = Self.applyingCategory(to: draft, selectedCategory: selectedCategory,
-                                             categories: store.categories) else {
+        guard let draftDay = draft.day(id: editingDay?.id ?? UUID().uuidString, pinned: editingDay?.pinned ?? false) else {
+            return
+        }
+        guard let new = DayDraft.applyingCategory(to: draftDay, selectedCategory: draft.selectedCategory,
+                                                  categories: store.categories) else {
             saveError = String(localized: "所选分类已不可用，修改尚未保存。请选择其他分类后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             return
         }
@@ -371,10 +255,5 @@ struct DayEditorView: View {
                 store.rescheduleNotifications()
             }
         }
-    }
-
-    private func resetFocus() {
-        coverFocusX = 0.5
-        coverFocusY = 0.5
     }
 }

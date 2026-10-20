@@ -64,7 +64,7 @@ struct DayEditorTemplateGallery: View {
     }
 
     private func template(_ preset: PhotoStyle) -> some View {
-        let selected = DayEditorView.isTemplateSelected(preset, photo: photo, photoData: photoData)
+        let selected = DayDraft.isTemplateSelected(preset, photo: photo, photoData: photoData)
         return Button {
             onSelect(preset)
         } label: {

@@ -13,7 +13,7 @@ struct DayEditorQuickTemplates: View {
             ScrollView(.horizontal) {
                 HStack(alignment: .top, spacing: 10) {
                     ForEach(PhotoStyle.pickerOptions, id: \.self) { preset in
-                        let selected = DayEditorView.isTemplateSelected(preset, photo: photo, photoData: photoData)
+                        let selected = DayDraft.isTemplateSelected(preset, photo: photo, photoData: photoData)
                         Button {
                             onSelect(preset)
                         } label: {

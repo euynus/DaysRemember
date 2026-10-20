@@ -54,16 +54,7 @@ struct DayEditorPhotoButton: View {
             isLoadingPhoto = true
             defer { if !Task.isCancelled { isLoadingPhoto = false } }
             do {
-                guard let data = try await item.loadTransferable(type: Data.self) else {
-                    throw CocoaError(.fileReadCorruptFile)
-                }
-                try Task.checkCancellation()
-                let compressed = await PhotoDecodeCache.compressedJPEGInBackground(from: data)
-                try Task.checkCancellation()
-                guard let compressed else {
-                    throw CocoaError(.fileReadCorruptFile)
-                }
-                onLoad(compressed)
+                onLoad(try await CoverPhotoImport.cover { try await item.loadTransferable(type: Data.self) })
             } catch {
                 guard !Task.isCancelled else { return }
                 onFailure()
