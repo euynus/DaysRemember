@@ -158,7 +158,9 @@ final class EditFlowUITests: XCTestCase {
         app.buttons["搜索日子"].tap()
         app.textFields["搜索日子"].tap()
         app.textFields["搜索日子"].typeText(title)
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch.tap()
+        let result = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 10), app.debugDescription)
+        result.tap()
         app.buttons["更多操作"].tap()
         app.buttons["pencil"].firstMatch.tap()
         app.buttons["dayDatePickerButton"].tap()
@@ -221,7 +223,9 @@ final class EditFlowUITests: XCTestCase {
         app.buttons["搜索日子"].tap()
         app.textFields["搜索日子"].tap()
         app.textFields["搜索日子"].typeText(title)
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch.tap()
+        let result = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: 10), app.debugDescription)
+        result.tap()
         app.buttons["更多操作"].tap()
         app.buttons["pencil"].firstMatch.tap()
         app.buttons["dayReminderSettingsButton"].tap()
