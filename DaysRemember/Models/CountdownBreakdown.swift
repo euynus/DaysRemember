@@ -1,10 +1,5 @@
 import Foundation
 
-/// The units the detail's countdown cycles through when tapped.
-enum CountdownUnit: CaseIterable {
-    case days, weeks, months, hours
-}
-
 /// A day count restated in another unit: whole weeks or months plus leftover days, or hours.
 struct CountdownBreakdown: Equatable {
     let value: Int

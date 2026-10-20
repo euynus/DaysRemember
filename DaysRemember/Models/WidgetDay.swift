@@ -27,25 +27,3 @@ struct WidgetDay: AppEntity {
         return (upcoming.isEmpty ? candidates : upcoming).min { $0.1.days < $1.1.days }?.0
     }
 }
-
-struct WidgetDayQuery: EntityQuery {
-    func entities(for identifiers: [String]) async throws -> [WidgetDay] {
-        let days = SharedStorage.loadLibrary().days
-        // Preserve a deleted selection so it cannot turn into automatic selection.
-        return identifiers.map { id in
-            WidgetDay(id: id, title: days.first { $0.id == id }?.title ?? String(localized: "日子已删除", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-        }
-    }
-
-    func suggestedEntities() async throws -> [WidgetDay] {
-        SharedStorage.loadLibrary().days.map { WidgetDay(id: $0.id, title: $0.title) }
-    }
-}
-
-struct SelectWidgetDay: WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "选择日子"
-    static let description = IntentDescription("不选择时，自动显示最近的日子。")
-
-    @Parameter(title: LocalizedStringResource("widget.day", defaultValue: "日子"))
-    var day: WidgetDay?
-}
