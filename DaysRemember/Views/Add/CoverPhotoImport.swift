@@ -4,9 +4,9 @@ import Foundation
 /// abandoned as soon as its task is cancelled (another photo or a template was chosen).
 @MainActor
 enum CoverPhotoImport {
-    /// `data` reads the picked item; nil, or bytes that aren't an image, fail as a corrupt file.
-    static func cover(from data: () async throws -> Data?) async throws -> Data {
-        guard let data = try await data() else {
+    /// `data` is the picked item's contents; nil, or bytes that aren't an image, fail as a corrupt file.
+    static func cover(from data: Data?) async throws -> Data {
+        guard let data else {
             throw CocoaError(.fileReadCorruptFile)
         }
         try Task.checkCancellation()

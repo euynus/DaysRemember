@@ -182,7 +182,7 @@ final class DayDraftTests: XCTestCase {
                 context.fill(CGRect(x: 0, y: 0, width: 3200, height: 1600))
             }.pngData())
 
-        let cover = try await CoverPhotoImport.cover { png }
+        let cover = try await CoverPhotoImport.cover(from: png)
         let image = try XCTUnwrap(UIImage(data: cover))
         XCTAssertEqual(cover.prefix(2), Data([0xFF, 0xD8]), "a JPEG")
         XCTAssertEqual(max(image.size.width * image.scale, image.size.height * image.scale), 1600)
@@ -191,7 +191,7 @@ final class DayDraftTests: XCTestCase {
     func testAPhotoThatCannotBeReadFails() async {
         for data in [nil, Data("not an image".utf8)] {
             do {
-                _ = try await CoverPhotoImport.cover { data }
+                _ = try await CoverPhotoImport.cover(from: data)
                 XCTFail("expected a failure for \(String(describing: data))")
             } catch let error as CocoaError {
                 XCTAssertEqual(error.code, .fileReadCorruptFile)
@@ -203,12 +203,12 @@ final class DayDraftTests: XCTestCase {
 
     /// Choosing another photo or a template cancels the import before it compresses anything.
     func testACancelledImportStops() async {
-        let result = await Task { @MainActor in
-            try await CoverPhotoImport.cover {
-                withUnsafeCurrentTask { $0?.cancel() }
-                return Data("not an image".utf8)
-            }
-        }.result
+        // Bytes that would otherwise fail as a corrupt file, so only cancellation explains a CancellationError.
+        let task = Task { @MainActor in
+            try await CoverPhotoImport.cover(from: Data("not an image".utf8))
+        }
+        task.cancel()
+        let result = await task.result
         XCTAssertThrowsError(try result.get()) { error in
             XCTAssertTrue(error is CancellationError, "\(error)")
         }

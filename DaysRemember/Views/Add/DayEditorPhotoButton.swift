@@ -54,7 +54,8 @@ struct DayEditorPhotoButton: View {
             isLoadingPhoto = true
             defer { if !Task.isCancelled { isLoadingPhoto = false } }
             do {
-                onLoad(try await CoverPhotoImport.cover { try await item.loadTransferable(type: Data.self) })
+                let data = try await item.loadTransferable(type: Data.self)
+                onLoad(try await CoverPhotoImport.cover(from: data))
             } catch {
                 guard !Task.isCancelled else { return }
                 onFailure()
