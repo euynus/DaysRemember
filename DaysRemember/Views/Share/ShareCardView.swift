@@ -331,7 +331,7 @@ struct SharePostcard: View {
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
             : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 6))
         return layout {
-            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
+            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted(.number.locale(AppLocalization.locale)))
                 .font(info.isToday ? Theme.number(34) : Theme.number(template == .minimal ? 112 : 66))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1)

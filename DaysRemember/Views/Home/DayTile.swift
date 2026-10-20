@@ -151,7 +151,7 @@ struct CountValue: View {
                 Text("今天")
                     .numberFont(size * 0.62)
             } else {
-                Text(info.days.formatted())
+                Text(info.days, format: .number)
                     .numberFont(size)
                     .monospacedDigit()
                 Text(String(localized: "countdown.days", defaultValue: "\(info.days)天", bundle: AppLocalization.bundle, locale: AppLocalization.locale))

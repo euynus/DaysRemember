@@ -107,7 +107,7 @@ struct DayWidgetCard: View {
 
     private var countdown: some View {
         HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted())
+            Text(info.isToday ? String(localized: "今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : info.days.formatted(.number.locale(AppLocalization.locale)))
                 .font(Theme.number(info.isToday ? 26 : size == .small ? 42 : 52))
                 .monospacedDigit()
                 .foregroundStyle(Theme.ink)

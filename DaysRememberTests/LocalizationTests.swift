@@ -36,6 +36,8 @@ final class LocalizationTests: XCTestCase {
             XCTAssertEqual(String(localized: "countdown.daysAgoUnit", defaultValue: "\(count)天前",
                                   bundle: bundle, locale: locale), "\(expectedUnit) ago")
             let date = "April 23, 2026"
+            XCTAssertEqual(String(localized: "记得最久的是「\(title)」，已经 \(count) 天。", bundle: bundle, locale: locale),
+                           "You’ve remembered “\(title)” the longest: \(count) \(expectedUnit).")
             XCTAssertEqual(String(localized: "\(date)，\(count) 个日子", bundle: bundle, locale: locale),
                            "\(date), \(count) \(count == 1 ? "event" : "events")")
             XCTAssertEqual(String(localized: "其中 \(count) 条日期提醒，最晚至 \(date)", bundle: bundle, locale: locale),

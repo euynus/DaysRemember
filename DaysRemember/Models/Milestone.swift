@@ -16,7 +16,7 @@ struct Milestone: Equatable {
     var title: String {
         switch kind {
         case .days(let count):
-            return String(localized: "满 \(count.formatted()) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            return String(localized: "满 \(count.formatted(.number.locale(AppLocalization.locale))) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .years(let count):
             return String(localized: "满 \(count) 年", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }

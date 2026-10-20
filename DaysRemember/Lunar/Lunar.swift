@@ -239,6 +239,7 @@ enum Lunar {
         if AppLocalization.isEnglish {
             return String(localized: "农历\(String(l.year))年 · \(fmt(date))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
-        return String(localized: "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return String(localized: "农历\(ganZhi(l.year))\(zodiac(l.year))年 · \(monthCN(l.month, isLeap: l.isLeap))\(dayCN(l.day))", bundle: AppLocalization.bundle, locale: AppLocalization.locale,
+                      comment: "Full lunar date in Chinese. 1: the sexagenary year, such as 丙午; 2: the zodiac animal; 3: the lunar month; 4: the lunar day.")
     }
 }

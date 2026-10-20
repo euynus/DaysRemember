@@ -227,7 +227,7 @@ struct DetailView: View {
             .buttonStyle(.plain)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(countdownLabel)
-            .accessibilityValue(info.isToday ? "" : "\(breakdown.value.formatted()) \(unitText(breakdown))")
+            .accessibilityValue(info.isToday ? "" : "\(breakdown.value.formatted(.number.locale(AppLocalization.locale))) \(unitText(breakdown))")
             .accessibilityHint(info.isToday ? "" : String(localized: "轻点切换单位", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             .accessibilityIdentifier("detail.countdown")
             if !info.isToday { unitPicker }
@@ -236,7 +236,7 @@ struct DetailView: View {
     }
 
     private func countNumber(_ breakdown: CountdownBreakdown) -> some View {
-        Text(breakdown.value.formatted())
+        Text(breakdown.value, format: .number)
             .numberFont(breakdown.value >= 1_000 ? 84 : 108)
             .monospacedDigit()
             .contentTransition(.numericText())

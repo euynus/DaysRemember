@@ -301,6 +301,7 @@
       }
     },
     "%@：%@（%lld）" : {
+      "comment" : "iCloud sync error. 1: the sync status, such as “Sync failed”; 2: the system’s error message; 3: the CloudKit error code.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -873,6 +874,7 @@
       }
     },
     "%@ · %@" : {
+      "comment" : "Reminder body with a place. 1: the reminder sentence, such as “Kyoto trip is in 7 days”; 2: the day’s location.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2848,6 +2850,7 @@
       }
     },
     "农历%@%@年 · %@%@" : {
+      "comment" : "Full lunar date in Chinese. 1: the sexagenary year, such as 丙午; 2: the zodiac animal; 3: the lunar month; 4: the lunar day.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -10735,25 +10738,47 @@
         }
       }
     },
-    "记得最久的是「%@」，已经 %@ 天。" : {
+    "记得最久的是「%@」，已经 %lld 天。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You’ve remembered “%1$@” the longest: %2$@ days."
+            "value" : "%#@days@"
+          },
+          "substitutions" : {
+            "days" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "You’ve remembered “%1$@” the longest: %2$lld day."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "You’ve remembered “%1$@” the longest: %2$lld days."
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "记得最久的是「%@」，已经 %@ 天。"
+            "value" : "记得最久的是「%@」，已经 %lld 天。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "記得最久的是「%@」，已經 %@ 天。"
+            "value" : "記得最久的是「%@」，已經 %lld 天。"
           }
         }
       }

@@ -616,7 +616,7 @@ struct DayEditorView: View {
                                 .font(Theme.sans(14, weight: .semibold))
                                 .foregroundStyle(Theme.ink2)
                             if let reminderTime, reminderOffsets != [] {
-                                Text(String(format: "%02d:%02d", reminderTime.hour, reminderTime.minute))
+                                Text(CNDate.time(hour: reminderTime.hour, minute: reminderTime.minute))
                                     .font(Theme.sans(12, weight: .medium))
                                     .foregroundStyle(Theme.muted)
                             }

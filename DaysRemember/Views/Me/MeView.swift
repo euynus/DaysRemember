@@ -34,7 +34,7 @@ struct MeView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     stats(total: infos.count, upcoming: infos.count - past.count, past: past.count)
                     if let oldest = past.max(by: { $0.1.days < $1.1.days }) {
-                        Text("记得最久的是「\(oldest.0.title)」，已经 \(oldest.1.days.formatted()) 天。")
+                        Text("记得最久的是「\(oldest.0.title)」，已经 \(oldest.1.days) 天。")
                             .font(Theme.sans(13))
                             .foregroundStyle(Theme.ink2)
                             .padding(.horizontal, 4)
@@ -109,7 +109,7 @@ struct MeView: View {
     private var reminderSummary: String {
         let time = NotificationManager.notificationTime(hour: settings.notificationHour,
                                                         minute: settings.notificationMinute)
-        return String(localized: "每天 \(String(format: "%02d:%02d", time.hour, time.minute))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return String(localized: "每天 \(CNDate.time(hour: time.hour, minute: time.minute))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     // MARK: Stats
@@ -134,7 +134,7 @@ struct MeView: View {
 
     private func statCard(_ value: Int, label: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(value.formatted())
+            Text(value, format: .number)
                 .numberFont(36)
                 .monospacedDigit()
                 .lineLimit(1)

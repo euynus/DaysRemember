@@ -50,7 +50,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         case .accountUnavailable:
             return String(localized: "请检查系统中的 iCloud 登录、账户限制和网络，再重试同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .cloudKit(let error):
-            return String(localized: "\(statusMessage)：\(error.localizedDescription)（\(error.errorCode)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            return String(localized: "\(statusMessage)：\(error.localizedDescription)（\(error.errorCode)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale,
+                          comment: "iCloud sync error. 1: the sync status, such as “Sync failed”; 2: the system’s error message; 3: the CloudKit error code.")
         case .other(let error):
             return error.localizedDescription
         case .tooLarge(.day(let day)):

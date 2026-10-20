@@ -322,7 +322,8 @@ final class NotificationManager {
         // Append the place when there is one, for a more contextual reminder
         // ("「蜜月旅行」还有 7 天 · 京都").
         let location = day.location.trimmingCharacters(in: .whitespacesAndNewlines)
-        return location.isEmpty ? lead : String(localized: "\(lead) · \(location)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return location.isEmpty ? lead : String(localized: "\(lead) · \(location)", bundle: AppLocalization.bundle, locale: AppLocalization.locale,
+                                                   comment: "Reminder body with a place. 1: the reminder sentence, such as “Kyoto trip is in 7 days”; 2: the day’s location.")
     }
 
     nonisolated static func triggerDate(displayDate: Date, offset: Int, hour: Int, minute: Int,

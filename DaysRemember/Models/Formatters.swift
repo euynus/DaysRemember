@@ -28,6 +28,13 @@ enum CNDate {
         date.formatted(style(locale: locale).month(.wide))
     }
 
+    /// A time of day as the app's time pickers show it: 14:35 in Chinese, 2:35 PM in English.
+    static func time(hour: Int, minute: Int, locale: Locale = AppLocalization.locale) -> String {
+        let date = calendar.date(from: DateComponents(year: 2000, month: 1, day: 1, hour: hour, minute: minute)) ?? .now
+        return date.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: locale,
+                                               calendar: calendar, timeZone: calendar.timeZone))
+    }
+
     static var shortWeekdaySymbols: [String] {
         let formatter = DateFormatter()
         formatter.calendar = calendar

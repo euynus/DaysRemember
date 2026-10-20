@@ -267,12 +267,19 @@ struct HomeView: View {
                     Button { onOpen(day) } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(alignment: .firstTextBaseline, spacing: 3) {
-                                Text(milestone.daysUntil.formatted())
-                                    .numberFont(26)
-                                    .foregroundStyle(store.category(for: day).tintInk)
-                                Text("天后")
-                                    .font(Theme.sans(12))
-                                    .foregroundStyle(Theme.muted)
+                                if milestone.daysUntil == 0 {
+                                    Text("今天")
+                                        .numberFont(26)
+                                        .foregroundStyle(store.category(for: day).tintInk)
+                                } else {
+                                    Text(milestone.daysUntil, format: .number)
+                                        .numberFont(26)
+                                        .foregroundStyle(store.category(for: day).tintInk)
+                                    Text(String(localized: "countdown.daysLeftUnit", defaultValue: "\(milestone.daysUntil)天后",
+                                                bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                                        .font(Theme.sans(12))
+                                        .foregroundStyle(Theme.muted)
+                                }
                             }
                             Text(verbatim: "\(day.title) \(milestone.title)")
                                 .font(Theme.sans(13, weight: .bold))

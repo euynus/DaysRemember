@@ -66,7 +66,7 @@ struct NotificationsView: View {
     }
 
     private var greetingTimeText: String {
-        String(format: "%02d:%02d", settings.greetingHour, settings.greetingMinute)
+        CNDate.time(hour: settings.greetingHour, minute: settings.greetingMinute)
     }
 
     var body: some View {
