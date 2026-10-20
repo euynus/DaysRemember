@@ -58,7 +58,7 @@ struct PillButton: View {
             HStack(spacing: 7) {
                 Text(title).font(Theme.sans(15, weight: .heavy))
                 if let t = trailingSystemName {
-                    Image(systemName: t).font(.system(size: 16, weight: .bold))
+                    Image(systemName: t).font(Theme.symbol(16, weight: .bold))
                 }
             }
             .foregroundStyle(foreground)

@@ -91,17 +91,6 @@ struct DetailView: View {
             showDeleteConfirm = false
         }
         .onChange(of: dayID) { unit = .days }
-        .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            Button("删除", role: .destructive) {
-                Haptics.warning()
-                deletedHere = true
-                store.delete(currentDay)
-                if liveDay == nil { dismiss() } else { deletedHere = false }
-            }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text("删除后会取消它的待提醒；30 天内可在「我的 › 数据与同步 › 最近删除」中恢复。")
-        }
     }
 
     // MARK: - Toolbar (pin + more)
@@ -122,8 +111,21 @@ struct DetailView: View {
             } label: {
                 Label("更多操作", systemImage: "ellipsis")
             }
+            .confirmationDialog("删除这个日子？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("删除", role: .destructive, action: deleteDay)
+                Button("取消", role: .cancel) {}
+            } message: {
+                Text("删除后会取消它的待提醒；30 天内可在「我的 › 数据与同步 › 最近删除」中恢复。")
+            }
             .accessibilityIdentifier("detail.moreActions")
         }
+    }
+
+    private func deleteDay() {
+        Haptics.warning()
+        deletedHere = true
+        store.delete(currentDay)
+        if liveDay == nil { dismiss() } else { deletedHere = false }
     }
 
     private func togglePinned() {
@@ -255,7 +257,7 @@ struct DetailView: View {
                         .padding(.horizontal, 10)
                         .frame(minHeight: 26)
                         .background(value == unit ? Theme.ink : Theme.bg2, in: Capsule())
-                        .frame(minHeight: 44)
+                        .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)

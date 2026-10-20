@@ -76,6 +76,11 @@ enum Theme {
                        relativeTo: textStyle).weight(weight)
     }
 
+    /// SF Symbol size that follows Dynamic Type, at `size` points for the default text size.
+    static func symbol(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        Font.body.scaled(by: size / 17).weight(weight)
+    }
+
 }
 
 /// Resolved-once availability of the bundled custom fonts. `UIFont(name:)` is the

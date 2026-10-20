@@ -86,19 +86,6 @@ struct CategoryEditorView: View {
         .background(Theme.bg)
         .sensoryFeedback(.selection, trigger: icon)
         .sensoryFeedback(.selection, trigger: colorToken)
-        .confirmationDialog("删除分类后迁移日子到哪里？",
-                            isPresented: $confirmingDelete,
-                            titleVisibility: .visible) {
-            if let category {
-                ForEach(store.categories.filter { $0.id != category.id }) { target in
-                    Button("迁移到 \(target.displayName)") {
-                        Haptics.warning()
-                        finishSaving(store.deleteCategory(id: category.id, migrateTo: target.id))
-                    }
-                }
-            }
-            Button("取消", role: .cancel) {}
-        }
         .alert("未能保存", isPresented: Binding(
             get: { saveError != nil }, set: { if !$0 { saveError = nil } }
         )) {
@@ -182,10 +169,10 @@ struct CategoryEditorView: View {
                         icon = choice.symbol
                     } label: {
                         Image(systemName: choice.symbol)
-                            .font(.system(size: 24))
+                            .font(Theme.symbol(24))
                             .foregroundStyle(selected ? Theme.accent : Theme.ink2)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 56)
+                            .frame(minHeight: 56)
                             .background(selected ? colorToken.soft : Color.white, in: .rect(cornerRadius: 8))
                             .overlay {
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -199,6 +186,8 @@ struct CategoryEditorView: View {
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }
+            // Five fixed columns; larger text would push the symbols out of their tiles.
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
     }
 
@@ -239,6 +228,19 @@ struct CategoryEditorView: View {
     private var deleteButton: some View {
         PillButton(title: String(localized: "删除分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale), style: .ghost, fill: true) {
             confirmingDelete = true
+        }
+        .confirmationDialog("删除分类后迁移日子到哪里？",
+                            isPresented: $confirmingDelete,
+                            titleVisibility: .visible) {
+            if let category {
+                ForEach(store.categories.filter { $0.id != category.id }) { target in
+                    Button("迁移到 \(target.displayName)") {
+                        Haptics.warning()
+                        finishSaving(store.deleteCategory(id: category.id, migrateTo: target.id))
+                    }
+                }
+            }
+            Button("取消", role: .cancel) {}
         }
         .padding(.top, 4)
         .accessibilityIdentifier("deleteCategoryButton")

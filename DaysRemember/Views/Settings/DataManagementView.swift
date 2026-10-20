@@ -51,55 +51,6 @@ struct DataManagementView: View {
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 readBackup(result)
             }
-            .confirmationDialog("恢复此备份？", isPresented: Binding(
-                get: { pendingImport != nil }, set: { if !$0 { pendingImport = nil } }
-            ), titleVisibility: .visible) {
-                Button("恢复备份", role: .destructive) {
-                    guard let backup = pendingImport else { return }
-                    perform { try store.restoreBackup(backup) }
-                    pendingImport = nil
-                }
-                Button("取消", role: .cancel) { pendingImport = nil }
-            } message: {
-                Text("当前 \(store.days.count) 个日子将被备份中的 \(pendingImport?.days.count ?? 0) 个日子替换，并同步到其他设备。替换前会保留本机副本。")
-            }
-            .confirmationDialog("恢复上一次本机副本？", isPresented: $confirmRecovery, titleVisibility: .visible) {
-                Button("恢复", role: .destructive) { perform { try store.restorePreviousBackup() } }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("将替换当前日子和分类，并同步到其他设备。当前数据会留为新的本机副本。")
-            }
-            .confirmationDialog("删除替换前的原始数据？", isPresented: $confirmRawCopyDeletion, titleVisibility: .visible) {
-                Button("删除", role: .destructive) { store.deleteUnreadableDataCopy() }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("这份数据包含恢复备份时被替换的日子和照片，删除后无法找回。")
-            }
-            .confirmationDialog("导入旧版 iCloud 数据？", isPresented: $confirmLegacyImport, titleVisibility: .visible) {
-                Button("追加导入") {
-                    do {
-                        let count = try store.importLegacyCloudData()
-                        message = count > 0 ? String(localized: "已导入 \(count) 个日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                            : String(localized: "未发现可导入的新日子。旧数据可能仍在下载，请稍后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                    } catch { message = error.localizedDescription }
-                    hasLegacyData = store.hasUnseenLegacyCloudData()
-                }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("仅追加本机未见过的记录，不覆盖已有记录。旧版数据可能包含曾在其他设备删除的日子；所有设备请升级后再编辑。")
-            }
-            .confirmationDialog("将本机日子同步到当前账户？", isPresented: $confirmAccountChange, titleVisibility: .visible) {
-                Button("确认并同步") { Task { await cloud.confirmAccountChangeAndSync() } }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("本机日子及照片将上传到系统当前登录的 iCloud 账户，请先确认账户归属。")
-            }
-            .confirmationDialog("重新上传本机日子？", isPresented: $confirmReupload, titleVisibility: .visible) {
-                Button("重新上传") { Task { await cloud.reuploadAfterZoneDeletion() } }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("iCloud 中时光的资料已被删除。本机日子及照片会重新上传，并同步到你的其他设备。")
-            }
             .alert("数据与同步", isPresented: Binding(
                 get: { message != nil }, set: { if !$0 { message = nil } }
             )) {
@@ -151,10 +102,22 @@ struct DataManagementView: View {
                     Button("确认使用当前 iCloud 账户", systemImage: "person.crop.circle.badge.checkmark") {
                         confirmAccountChange = true
                     }
+                    .confirmationDialog("将本机日子同步到当前账户？", isPresented: $confirmAccountChange, titleVisibility: .visible) {
+                        Button("确认并同步") { Task { await cloud.confirmAccountChangeAndSync() } }
+                        Button("取消", role: .cancel) {}
+                    } message: {
+                        Text("本机日子及照片将上传到系统当前登录的 iCloud 账户，请先确认账户归属。")
+                    }
                 }
                 if cloud.status == .zoneDeleted {
                     Button("重新上传到 iCloud", systemImage: "icloud.and.arrow.up") {
                         confirmReupload = true
+                    }
+                    .confirmationDialog("重新上传本机日子？", isPresented: $confirmReupload, titleVisibility: .visible) {
+                        Button("重新上传") { Task { await cloud.reuploadAfterZoneDeletion() } }
+                        Button("取消", role: .cancel) {}
+                    } message: {
+                        Text("iCloud 中时光的资料已被删除。本机日子及照片会重新上传，并同步到你的其他设备。")
                     }
                 }
                 if hasLegacyData {
@@ -162,6 +125,19 @@ struct DataManagementView: View {
                         confirmLegacyImport = true
                     }
                     .disabled(store.loadError != nil)
+                    .confirmationDialog("导入旧版 iCloud 数据？", isPresented: $confirmLegacyImport, titleVisibility: .visible) {
+                        Button("追加导入") {
+                            do {
+                                let count = try store.importLegacyCloudData()
+                                message = count > 0 ? String(localized: "已导入 \(count) 个日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                                    : String(localized: "未发现可导入的新日子。旧数据可能仍在下载，请稍后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                            } catch { message = error.localizedDescription }
+                            hasLegacyData = store.hasUnseenLegacyCloudData()
+                        }
+                        Button("取消", role: .cancel) {}
+                    } message: {
+                        Text("仅追加本机未见过的记录，不覆盖已有记录。旧版数据可能包含曾在其他设备删除的日子；所有设备请升级后再编辑。")
+                    }
                 }
             }
             backupSection
@@ -186,10 +162,28 @@ struct DataManagementView: View {
             .disabled(store.loadError != nil)
             Button("从文件恢复", systemImage: "square.and.arrow.down") { importing = true }
                 .disabled(isReading)
+                .confirmationDialog("恢复此备份？", isPresented: Binding(
+                    get: { pendingImport != nil }, set: { if !$0 { pendingImport = nil } }
+                ), titleVisibility: .visible) {
+                    Button("恢复备份", role: .destructive) {
+                        guard let backup = pendingImport else { return }
+                        perform { try store.restoreBackup(backup) }
+                        pendingImport = nil
+                    }
+                    Button("取消", role: .cancel) { pendingImport = nil }
+                } message: {
+                    Text("当前 \(store.days.count) 个日子将被备份中的 \(pendingImport?.days.count ?? 0) 个日子替换，并同步到其他设备。替换前会保留本机副本。")
+                }
             if isReading { ProgressView("正在读取备份") }
             if store.hasRecoveryBackup {
                 Button("恢复上一次本机副本", systemImage: "arrow.uturn.backward") {
                     confirmRecovery = true
+                }
+                .confirmationDialog("恢复上一次本机副本？", isPresented: $confirmRecovery, titleVisibility: .visible) {
+                    Button("恢复", role: .destructive) { perform { try store.restorePreviousBackup() } }
+                    Button("取消", role: .cancel) {}
+                } message: {
+                    Text("将替换当前日子和分类，并同步到其他设备。当前数据会留为新的本机副本。")
                 }
             }
             // A library replaced while it couldn't be read is kept as raw data.
@@ -199,6 +193,12 @@ struct DataManagementView: View {
                 }
                 Button("删除替换前的原始数据", systemImage: "trash", role: .destructive) {
                     confirmRawCopyDeletion = true
+                }
+                .confirmationDialog("删除替换前的原始数据？", isPresented: $confirmRawCopyDeletion, titleVisibility: .visible) {
+                    Button("删除", role: .destructive) { store.deleteUnreadableDataCopy() }
+                    Button("取消", role: .cancel) {}
+                } message: {
+                    Text("这份数据包含恢复备份时被替换的日子和照片，删除后无法找回。")
                 }
             }
             if store.hasMigrationBackup {
@@ -291,16 +291,22 @@ private struct RecentlyDeletedView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
-                    Button("恢复", systemImage: "arrow.uturn.backward") { store.restoreDeletedDay(id: entry.id) }
-                        .accessibilityLabel("恢复\(entry.day.title)")
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .frame(minWidth: 44, minHeight: 44)
-                    Button("永久删除", systemImage: "trash", role: .destructive) { deletion = entry }
-                        .accessibilityLabel("永久删除\(entry.day.title)")
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .frame(minWidth: 44, minHeight: 44)
+                    Button { store.restoreDeletedDay(id: entry.id) } label: {
+                        Label("恢复", systemImage: "arrow.uturn.backward")
+                            .labelStyle(.iconOnly)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(.rect)
+                    }
+                    .accessibilityLabel("恢复\(entry.day.title)")
+                    .buttonStyle(.borderless)
+                    Button(role: .destructive) { deletion = entry } label: {
+                        Label("永久删除", systemImage: "trash")
+                            .labelStyle(.iconOnly)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(.rect)
+                    }
+                    .accessibilityLabel("永久删除\(entry.day.title)")
+                    .buttonStyle(.borderless)
                 }
             }
         }

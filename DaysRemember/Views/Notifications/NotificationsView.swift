@@ -262,12 +262,18 @@ struct NotificationsView: View {
 
     // MARK: - Permission banner
 
+    private func openSystemSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
+    }
+
     /// Shown when the user has denied notification permission — the reminder toggles
     /// below would otherwise be silently inert.
     private var permissionBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "bell.slash.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(Theme.symbol(16, weight: .semibold))
                 .foregroundStyle(Theme.danger)
             VStack(alignment: .leading, spacing: 2) {
                 Text("通知权限已关闭")
@@ -278,13 +284,13 @@ struct NotificationsView: View {
                     .foregroundStyle(Theme.muted)
             }
             Spacer(minLength: 8)
-            Button("去设置") {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url)
-                }
+            Button(action: openSystemSettings) {
+                Text("去设置")
+                    .font(Theme.sans(14, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(.rect)
             }
-            .font(Theme.sans(14, weight: .bold))
-            .foregroundStyle(Theme.ink)
             .buttonStyle(.plain)
         }
         .padding(14)

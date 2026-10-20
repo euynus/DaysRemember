@@ -170,14 +170,15 @@ struct DayEditorView: View {
 
     private var navBar: some View {
         HStack {
-            Button("取消") {
-                if hasUnsavedChanges { confirmDiscard = true }
-                else { dismiss() }
+            Button(action: cancel) {
+                Text("取消")
+                    .font(Theme.sans(16, weight: .semibold))
+                    .foregroundStyle(Theme.ink2)
+                    .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                    .contentShape(.rect)
             }
-                .font(Theme.sans(16, weight: .semibold))
-                .foregroundStyle(Theme.ink2)
-                .buttonStyle(PressScale())
-                .accessibilityIdentifier("cancelDayButton")
+            .buttonStyle(PressScale())
+            .accessibilityIdentifier("cancelDayButton")
 
             Spacer()
             Text(editingDay == nil ? String(localized: "新的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "编辑日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
@@ -194,6 +195,11 @@ struct DayEditorView: View {
         .padding(.top, 16)
         .padding(.bottom, 8)
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+
+    private func cancel() {
+        if hasUnsavedChanges { confirmDiscard = true }
+        else { dismiss() }
     }
 
     // MARK: - Cover preview
@@ -510,8 +516,8 @@ struct DayEditorView: View {
                     }
                 } else {
                     Image(systemName: "photo.badge.plus")
-                        .font(.system(size: 20))
-                        .frame(width: 40, height: 40)
+                        .font(Theme.symbol(20))
+                        .frame(minWidth: 40, minHeight: 40)
                 }
                 Text("照片")
                     .font(Theme.sans(14, weight: .semibold))
@@ -577,8 +583,9 @@ struct DayEditorView: View {
                         }
                     }
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(Theme.symbol(12, weight: .semibold))
                         .foregroundStyle(Theme.muted)
+                        .accessibilityHidden(true)
                 }
                 .cardRow()
                 .contentShape(Rectangle())
@@ -615,8 +622,9 @@ struct DayEditorView: View {
                             }
                         }
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(Theme.symbol(12, weight: .semibold))
                             .foregroundStyle(Theme.muted)
+                            .accessibilityHidden(true)
                     }
                 }
                 .contentShape(Rectangle())
@@ -665,7 +673,7 @@ struct DayEditorView: View {
                     ? String(localized: "未同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "不可用", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                 Chip(String(localized: "\(label)（\(status)）", bundle: AppLocalization.bundle, locale: AppLocalization.locale), selected: true, leading: {
                     Image(systemName: "questionmark.folder")
-                        .font(.system(size: 14))
+                        .font(Theme.symbol(14))
                 })
                 .disabled(true)
                 .accessibilityLabel("分类 \(label)，\(status)")
@@ -674,7 +682,7 @@ struct DayEditorView: View {
             ForEach(store.categories) { category in
                 Chip(category.displayName, selected: categoryID == category.id) {
                     Image(systemName: category.symbolName)
-                        .font(.system(size: 14))
+                        .font(Theme.symbol(14))
                 } action: {
                     selectedCategory = category
                     if !coverChosen, photoData == nil,
@@ -691,6 +699,7 @@ struct DayEditorView: View {
 
     // MARK: - Notes card (lined paper)
 
+    // A TextEditor rather than a vertical TextField: Return must start a new line in the note.
     private var notesCard: some View {
         ZStack(alignment: .topLeading) {
             if note.isEmpty {
@@ -715,13 +724,22 @@ struct DayEditorView: View {
 
     // MARK: - Date picker sheet
 
+    private func confirmDraftDate() {
+        selectedDate = draftDate
+        showDatePicker = false
+    }
+
     private var datePickerSheet: some View {
         VStack(spacing: 0) {
             HStack {
-                Button("取消") { showDatePicker = false }
-                    .font(Theme.sans(15, weight: .semibold))
-                    .foregroundStyle(Theme.ink2)
-                    .accessibilityIdentifier("cancelDayDatePicker")
+                Button { showDatePicker = false } label: {
+                    Text("取消")
+                        .font(Theme.sans(15, weight: .semibold))
+                        .foregroundStyle(Theme.ink2)
+                        .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                        .contentShape(.rect)
+                }
+                .accessibilityIdentifier("cancelDayDatePicker")
                 Spacer()
                 Text(solar ? String(localized: "选择日期", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "选择农历日期", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     .font(Theme.sans(16, weight: .bold)).foregroundStyle(Theme.ink)
@@ -729,13 +747,14 @@ struct DayEditorView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("dayDatePickerTitle")
                 Spacer()
-                Button("完成") {
-                    selectedDate = draftDate
-                    showDatePicker = false
+                Button(action: confirmDraftDate) {
+                    Text("完成")
+                        .font(Theme.sans(15, weight: .bold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
+                        .contentShape(.rect)
                 }
-                    .font(Theme.sans(15, weight: .bold))
-                    .foregroundStyle(Theme.ink)
-                    .accessibilityIdentifier("confirmDayDatePicker")
+                .accessibilityIdentifier("confirmDayDatePicker")
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
