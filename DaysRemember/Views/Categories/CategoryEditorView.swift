@@ -70,10 +70,10 @@ struct CategoryEditorView: View {
             navBar
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    preview
+                    CategoryEditorPreview(name: name, icon: icon, colorToken: colorToken)
                     nameField
-                    stickerPicker
-                    colorPicker
+                    CategoryIconPicker(icon: $icon, storedIcon: category?.icon, colorToken: colorToken)
+                    CategoryColorPicker(colorToken: $colorToken)
                     if canDelete { deleteButton }
                 }
                 .padding(.horizontal, 22)
@@ -112,30 +112,6 @@ struct CategoryEditorView: View {
         }
     }
 
-    // MARK: - Live preview card
-
-    private var preview: some View {
-        HStack(spacing: 14) {
-            Image(systemName: CategoryDefinition.symbolName(for: icon))
-                .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(colorToken.color)
-                .frame(width: 56, height: 56)
-                .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            VStack(alignment: .leading, spacing: 3) {
-                Text(name.isEmpty ? String(localized: "分类名称", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : name)
-                    .font(Theme.sans(22, weight: .medium))
-                    .foregroundStyle(name.isEmpty ? Theme.muted : Theme.ink)
-                Text(colorToken.label)
-                    .font(Theme.sans(12, weight: .bold))
-                    .foregroundStyle(colorToken.color)
-            }
-            Spacer()
-        }
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .overlay(alignment: .bottom) { RowDivider() }
-    }
-
     // MARK: - Name field
 
     private var nameField: some View {
@@ -152,74 +128,6 @@ struct CategoryEditorView: View {
                 .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline, lineWidth: 1) }
                 .accessibilityLabel("分类名称")
                 .accessibilityIdentifier("categoryNameField")
-        }
-    }
-
-    // MARK: - Sticker picker
-
-    private var stickerPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionHeader(String(localized: "图标", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5),
-                      spacing: 10) {
-                // Offered from the stored icon, so picking another doesn't take it away.
-                ForEach(Self.iconChoices(for: category?.icon ?? icon), id: \.symbol) { choice in
-                    let selected = Self.isSelected(choice.symbol, icon: icon)
-                    Button {
-                        icon = choice.symbol
-                    } label: {
-                        Image(systemName: choice.symbol)
-                            .font(Theme.symbol(24))
-                            .foregroundStyle(selected ? Theme.accent : Theme.ink2)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 56)
-                            .background(selected ? colorToken.soft : Color.white, in: .rect(cornerRadius: 8))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(selected ? colorToken.color : Theme.hairline,
-                                                  lineWidth: selected ? 2 : 0.5)
-                            }
-                    }
-                    .buttonStyle(PressScale(scale: 0.92))
-                    .accessibilityLabel("图标 \(choice.label)")
-                    .accessibilityIdentifier("category-icon-\(choice.symbol)")
-                    .accessibilityAddTraits(selected ? .isSelected : [])
-                }
-            }
-            // Five fixed columns; larger text would push the symbols out of their tiles.
-            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-        }
-    }
-
-    // MARK: - Color picker
-
-    private var colorPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionHeader(String(localized: "颜色", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-            HStack(spacing: 12) {
-                ForEach(CategoryColorToken.allCases) { token in
-                    let selected = colorToken == token
-                    Button { colorToken = token } label: {
-                        Circle()
-                            .fill(token.color)
-                            .frame(width: 38, height: 38)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .overlay {
-                                Circle().strokeBorder(Color.white, lineWidth: selected ? 3 : 0)
-                            }
-                            .overlay {
-                                Circle().strokeBorder(token.color, lineWidth: selected ? 2 : 0)
-                                    .padding(-3)
-                            }
-                            .shadow(color: Color(hex: 0x15171C).opacity(0.12), radius: 3, x: 0, y: 2)
-                    }
-                    .buttonStyle(PressScale(scale: 0.9))
-                    .accessibilityLabel("颜色 \(token.label)")
-                    .accessibilityIdentifier("category-color-\(token.rawValue)")
-                    .accessibilityAddTraits(selected ? .isSelected : [])
-                }
-                Spacer()
-            }
         }
     }
 
