@@ -68,7 +68,7 @@ final class PhotoFileStore: Sendable {
     }
 
     func reference(for data: Data, id: String, repairCorruptFiles: Bool = false) throws -> String {
-        if let entry = cached.withLock({ $0[id] }), entry.data == data,
+        if let entry = cached.withLock({ $0[id] }), entry.data.hasSameBytes(as: data),
            (try? FileStamp(url: directory.appending(path: entry.reference))) == entry.stamp {
             return entry.reference
         }

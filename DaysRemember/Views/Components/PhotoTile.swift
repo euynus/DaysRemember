@@ -17,6 +17,7 @@ struct PhotoTile: View {
     @State private var loadedImage: UIImage?
     /// Set when the photo can't be decoded, so the preset takes over as it does synchronously.
     @State private var decodeFailed = false
+    @State private var digestMemo = PhotoDigestMemo()
     @Environment(\.widgetRenderingMode) private var renderingMode
 
     init(style: PhotoStyle, imageData: Data? = nil, focusX: Double = 0.5, focusY: Double = 0.5,
@@ -43,9 +44,10 @@ struct PhotoTile: View {
 
     var body: some View {
         let pickedImage = imageData.flatMap { data in
-            decodesAsynchronously
-                ? PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize) ?? loadedImage
-                : PhotoDecodeCache.decoded(data, maximumPixelSize: maximumPixelSize)
+            let digest = digestMemo.digest(of: data)
+            return decodesAsynchronously
+                ? PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize) ?? loadedImage
+                : PhotoDecodeCache.decoded(data, digest: digest, maximumPixelSize: maximumPixelSize)
         }
         let awaitingPhoto = imageData != nil && pickedImage == nil && decodesAsynchronously && !decodeFailed
         let image = pickedImage ?? PhotoDecodeCache.bundled(style.assetName, maximumPixelSize: maximumPixelSize)
@@ -91,9 +93,10 @@ struct PhotoTile: View {
             decodeFailed = false
             guard decodesAsynchronously, let data = imageData else { return }
             // Keep a reference even to a cached image: the cache may drop it while the tile is shown.
-            loadedImage = PhotoDecodeCache.cached(data, maximumPixelSize: maximumPixelSize)
+            let digest = digestMemo.digest(of: data)
+            loadedImage = PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize)
             guard loadedImage == nil else { return }
-            let image = await PhotoDecodeCache.decodedInBackground(data, maximumPixelSize: maximumPixelSize)
+            let image = await PhotoDecodeCache.decodedInBackground(data, digest: digest, maximumPixelSize: maximumPixelSize)
             guard !Task.isCancelled else { return }
             loadedImage = image
             decodeFailed = image == nil
