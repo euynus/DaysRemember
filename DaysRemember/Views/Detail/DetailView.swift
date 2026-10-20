@@ -367,15 +367,7 @@ struct DetailView: View {
                     .accessibilityAddTraits(.isHeader)
                 if let progress {
                     VStack(alignment: .leading, spacing: 6) {
-                        Capsule()
-                            .fill(tint)
-                            .frame(height: 8)
-                            .overlay(alignment: .leading) {
-                                GeometryReader { proxy in
-                                    Capsule().fill(ink).frame(width: max(8, proxy.size.width * progress.fraction))
-                                }
-                            }
-                            .accessibilityHidden(true)
+                        ProgressCapsule(fraction: progress.fraction, track: tint, fill: ink)
                         HStack {
                             Text(progress.leading)
                             Spacer(minLength: 8)

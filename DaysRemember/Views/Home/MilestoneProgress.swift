@@ -7,16 +7,7 @@ struct MilestoneProgress: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Capsule()
-                .fill(Color.white.opacity(0.8))
-                .frame(height: 8)
-                .overlay(alignment: .leading) {
-                    GeometryReader { proxy in
-                        Capsule().fill(ink)
-                            .frame(width: max(8, proxy.size.width * milestone.progress))
-                    }
-                }
-                .accessibilityHidden(true)
+            ProgressCapsule(fraction: milestone.progress, track: Color.white.opacity(0.8), fill: ink)
             Text(DayCardText.milestone(milestone))
                 .font(Theme.sans(12, weight: .bold))
                 .foregroundStyle(ink)
