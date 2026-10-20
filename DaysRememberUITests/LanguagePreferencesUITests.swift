@@ -2,26 +2,11 @@ import XCTest
 
 @MainActor
 final class LanguagePreferencesUITests: XCTestCase {
-    private var application: XCUIApplication?
     private let languages = ["system", "zh-Hans", "zh-Hant", "en"]
 
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
-    }
-
-    /// The async override runs on the main actor, as the XCUIApplication calls require.
-    override func tearDown() async throws {
-        if let app = application {
-            app.terminate()
-            // Recover from any open editor/sheet without reseeding or retaining large text.
-            configure(app)
-            app.launch()
-            restoreSystemLanguage(in: app)
-            app.terminate()
-            application = nil
-        }
-        try await super.tearDown()
     }
 
     func testLiveSwitchingRequiresConfirmationAndCancelDiscardsTheDraft() {
@@ -132,10 +117,9 @@ final class LanguagePreferencesUITests: XCTestCase {
 
     private func launchFixture(largeText: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
-        application = app
+        // The seed argument also clears any language a stopped run left behind.
         configure(app, arguments: ["--seed-sample-data"], largeText: largeText)
         app.launch()
-        restoreSystemLanguage(in: app)
         assertHomeLanguage("system", in: app)
         return app
     }
@@ -147,17 +131,6 @@ final class LanguagePreferencesUITests: XCTestCase {
             "-UIPreferredContentSizeCategoryName",
             largeText ? "UICTContentSizeCategoryAccessibilityXXXL" : "UICTContentSizeCategoryL"
         ]
-    }
-
-    private func restoreSystemLanguage(in app: XCUIApplication) {
-        openLanguageSettings(in: app)
-        if app.buttons["language.option.system"].isSelected {
-            closeLanguageSettings(using: "language.cancel", in: app)
-        } else {
-            selectLanguage("system", in: app)
-            closeLanguageSettings(using: "language.done", in: app)
-        }
-        assertHomeLanguage("system", in: app)
     }
 
     private func openLanguageSettings(in app: XCUIApplication, title: String? = nil) {

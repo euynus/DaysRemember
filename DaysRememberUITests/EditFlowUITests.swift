@@ -70,7 +70,7 @@ final class EditFlowUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["DR_PIN_TODAY"] = "1"
         app.launchEnvironment["DR_ADVANCE_DAY_AFTER_SECONDS"] = "6"
-        app.launchArguments = ["--screen", "add"]
+        app.launchArguments = ["--empty-library", "--screen", "add"]
         app.launch()
         let title = app.textFields["日子名称"]
         XCTAssertTrue(title.waitForExistence(timeout: 5))

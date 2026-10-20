@@ -5,7 +5,18 @@ import SwiftUI
 /// DEBUG-only — never compiled into the App Store / Release build.
 @MainActor
 enum DebugLaunch {
+    /// Arguments that set up the library a launch starts from.
+    private static let fixtureArguments = ["--seed-sample-data", "--empty-library", "--ui-polish-fixture",
+                                           "--simulate-photo-save-failure"]
+
+    private static var isFixture: Bool {
+        let args = ProcessInfo.processInfo.arguments
+        return fixtureArguments.contains { args.contains($0) }
+    }
+
+    /// `DaysRememberApp` builds its store first, so the language is reset before anything reads it.
     static func makeStore() -> DayStore {
+        resetLanguage()
         if ProcessInfo.processInfo.arguments.contains("--ui-polish-fixture") {
             let name = "UIPolishUITests.\(UUID().uuidString)"
             guard let defaults = UserDefaults(suiteName: name) else {
@@ -48,6 +59,15 @@ enum DebugLaunch {
         return DayStore(defaults: defaults, photoDirectory: directory)
     }
 
+    /// Fixture launches and unit tests start from the system language, so a run stopped before
+    /// it restored the language can't leave later runs in another one. A launch that needs one
+    /// passes `-app.language.v1 <code>`, which overrides the stored choice; a relaunch without a
+    /// fixture argument keeps the language its test chose.
+    private static func resetLanguage() {
+        guard isFixture || isUnitTesting else { return }
+        SharedStorage.defaults.removeObject(forKey: AppLocalization.languageKey)
+    }
+
     enum Screen: String {
         case onboarding, detail, add, share, widgets, settings
 
@@ -75,10 +95,8 @@ enum DebugLaunch {
     /// automated screenshot session that can't dismiss system popups.
     static var isAutomated: Bool {
         let args = ProcessInfo.processInfo.arguments
-        if args.contains("--screen") || args.contains("--tab") { return true }
-        if args.contains("--empty-library") || args.contains("--seed-sample-data") || args.contains("--localized-samples")
-            || args.contains("--seed-sync-conflicts") || args.contains("--simulate-photo-save-failure")
-            || args.contains("--ui-polish-fixture") { return true }
+        if args.contains("--screen") || args.contains("--tab") || isFixture { return true }
+        if args.contains("--localized-samples") || args.contains("--seed-sync-conflicts") { return true }
         if ProcessInfo.processInfo.environment["DR_PIN_TODAY"] != nil { return true }
         return false
     }
