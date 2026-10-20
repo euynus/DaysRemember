@@ -349,7 +349,8 @@ struct DetailView: View {
     // MARK: - Timeline
 
     private struct Node: Identifiable {
-        let id = UUID()
+        // Dates never repeat within one timeline, and stay put across updates, unlike a fresh UUID.
+        var id: Date { date }
         let title: String
         let date: Date
         let relative: String

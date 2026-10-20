@@ -92,10 +92,8 @@ struct CalendarMonthView: View {
                             .frame(maxWidth: .infinity, minHeight: 60)
                             .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     } else {
-                        ForEach(eventsByDay.keys.sorted(), id: \.self) { dayNumber in
-                            ForEach(eventsByDay[dayNumber] ?? []) { day in
-                                monthRow(day, dayNumber: dayNumber)
-                            }
+                        ForEach(Self.monthEntries(eventsByDay)) { entry in
+                            monthRow(entry.day, dayNumber: entry.dayNumber)
                         }
                     }
                 }
@@ -202,11 +200,13 @@ struct CalendarMonthView: View {
                 ForEach(0..<42, id: \.self) { i in
                     let inMonth = i >= firstWeekday && i < firstWeekday + dayCount
                     let d = i - firstWeekday + 1
-                    if inMonth {
-                        let events = eventsByDay[d] ?? []
-                        cellView(d: d, events: events, isToday: isCurrentMonth && d == todayDay)
-                    } else {
-                        Color.clear.aspectRatio(0.85, contentMode: .fit)
+                    // One container per cell, so a lazy grid cell's identity doesn't depend on the branch.
+                    ZStack {
+                        if inMonth {
+                            cellView(d: d, events: eventsByDay[d] ?? [], isToday: isCurrentMonth && d == todayDay)
+                        } else {
+                            Color.clear.aspectRatio(0.85, contentMode: .fit)
+                        }
                     }
                 }
             }
@@ -225,7 +225,6 @@ struct CalendarMonthView: View {
         )
     }
 
-    @ViewBuilder
     private func cellView(d: Int, events: [Day], isToday: Bool) -> some View {
         let hasEvents = !events.isEmpty
         let eventCategory = events.first.map { store.category(for: $0) }
@@ -276,25 +275,40 @@ struct CalendarMonthView: View {
         // The whole cell is the target, not just its digits.
         .contentShape(Rectangle())
 
-        if hasEvents {
-            Button {
-                if events.count == 1, let first = events.first {
-                    onOpen(first)
-                } else {
-                    selectedDay = CalendarDaySelection(date: cellDate)
-                }
-            } label: { cell }
-                .buttonStyle(PressScale(scale: 0.92))
-                .accessibilityLabel(String(localized: "\(cellLabel)，\(events.count) 个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+        return Button { openCell(events: events, date: cellDate) } label: { cell }
+            .buttonStyle(PressScale(scale: 0.92))
+            .accessibilityLabel(hasEvents
+                ? String(localized: "\(cellLabel)，\(events.count) 个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                : cellLabel)
+            .accessibilityHint(hasEvents ? Text(verbatim: "") : Text("新建这一天的日子"))
+    }
+
+    /// One day opens directly; several open the day's list; none starts a new day.
+    private func openCell(events: [Day], date: Date) {
+        if events.count == 1, let first = events.first {
+            onOpen(first)
+        } else if events.isEmpty {
+            newDayDate = CalendarDaySelection(date: date)
         } else {
-            Button { newDayDate = CalendarDaySelection(date: cellDate) } label: { cell }
-                .buttonStyle(PressScale(scale: 0.92))
-                .accessibilityLabel(cellLabel)
-                .accessibilityHint("新建这一天的日子")
+            selectedDay = CalendarDaySelection(date: date)
         }
     }
 
     // MARK: - This-month list
+
+    private struct MonthEntry: Identifiable {
+        let dayNumber: Int
+        let day: Day
+        // A day recurs at most once in a Gregorian month.
+        var id: String { day.id }
+    }
+
+    /// The month's days in date order, flat, so each list row is one element.
+    private static func monthEntries(_ eventsByDay: [Int: [Day]]) -> [MonthEntry] {
+        eventsByDay.keys.sorted().flatMap { dayNumber in
+            (eventsByDay[dayNumber] ?? []).map { MonthEntry(dayNumber: dayNumber, day: $0) }
+        }
+    }
 
     private func monthRow(_ day: Day, dayNumber: Int) -> some View {
         let metadata = subtitle(for: day, label: store.category(for: day).displayName)

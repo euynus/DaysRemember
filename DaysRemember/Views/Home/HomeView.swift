@@ -33,8 +33,9 @@ struct HomeView: View {
 
     var body: some View {
         let sorted = store.sortedDays(store.days, today: today)
-        let upcoming = sorted.filter { !DayInfo.compute($0, today: today).isPast }
-        let past = sorted.filter { DayInfo.compute($0, today: today).isPast }
+        let feed = Self.split(sorted, today: today)
+        let upcoming = feed.upcoming
+        let past = feed.past
         VStack(spacing: 0) {
             header
             if isSearching { searchField }
@@ -190,7 +191,8 @@ struct HomeView: View {
                       symbol: "sun.max",
                       detail: String(localized: "每年重复的日子和未来的日子会出现在这里。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         } else {
-            let heroes = Array(days.sorted { DayInfo.compute($0, today: today).days < DayInfo.compute($1, today: today).days }.prefix(5))
+            let heroes = days.map { ($0, DayInfo.compute($0, today: today).days) }
+                .sorted { $0.1 < $1.1 }.prefix(5).map(\.0)
             heroPager(heroes)
             if let recent = recentOccurrence {
                 RecentOccurrenceBanner(day: recent.day, occurrence: recent.occurrence, onOpen: onOpen)
@@ -226,6 +228,16 @@ struct HomeView: View {
                 if let page = heroPage, !ids.contains(page) { heroPage = nil }
             }
         }
+    }
+
+    /// Splits the sorted feed into 将至 and 已过, computing each day once.
+    private static func split(_ days: [Day], today: Date) -> (upcoming: [Day], past: [Day]) {
+        var upcoming: [Day] = []
+        var past: [Day] = []
+        for day in days {
+            if DayInfo.compute(day, today: today).isPast { past.append(day) } else { upcoming.append(day) }
+        }
+        return (upcoming, past)
     }
 
     /// The most recent recurring day that passed within the last week.

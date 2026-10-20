@@ -342,8 +342,9 @@ struct PressableTileStyle: ButtonStyle {
 }
 
 /// Long-press context menu for a day tile — quick pin / edit / share / delete
-/// without opening Detail. Self-contained: owns its sheet + dialog state and reads
-/// the live `Day` back from the store so the actions reflect the latest edit.
+/// without opening Detail. Self-contained: owns its sheet + dialog state. Callers pass
+/// the store's current record, which the menu shows; the actions read it back from the
+/// store when they run, so the menu doesn't search every day on each update.
 struct DayContextMenu: ViewModifier {
     @Environment(DayStore.self) private var store
     @Environment(DeepLinkRouter.self) private var router
@@ -363,8 +364,8 @@ struct DayContextMenu: ViewModifier {
                     updated.pinned.toggle()
                     store.update(updated)
                 } label: {
-                    Label(current.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                          systemImage: current.pinned ? "pin.slash" : "pin")
+                    Label(day.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                          systemImage: day.pinned ? "pin.slash" : "pin")
                 }
                 Button { editDay(current) } label: {
                     Label("编辑", systemImage: "pencil")
@@ -393,7 +394,7 @@ struct DayContextMenu: ViewModifier {
                 sharing = nil
                 deleting = nil
             }
-            .sensoryFeedback(.impact(flexibility: .soft), trigger: current.pinned)
+            .sensoryFeedback(.impact(flexibility: .soft), trigger: day.pinned)
     }
 }
 

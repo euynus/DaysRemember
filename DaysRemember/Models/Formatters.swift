@@ -36,11 +36,10 @@ enum CNDate {
     }
 
     static var shortWeekdaySymbols: [String] {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.locale = AppLocalization.locale
-        return AppLocalization.isEnglish ? formatter.shortStandaloneWeekdaySymbols
-            : formatter.veryShortStandaloneWeekdaySymbols
+        var calendar = calendar
+        calendar.locale = AppLocalization.locale
+        return AppLocalization.isEnglish ? calendar.shortStandaloneWeekdaySymbols
+            : calendar.veryShortStandaloneWeekdaySymbols
     }
 
     /// The user's first day of the week (1 = Sunday), including the iOS

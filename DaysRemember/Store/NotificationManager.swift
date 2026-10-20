@@ -160,12 +160,20 @@ final class NotificationManager {
         status == .authorized || status == .provisional || status == .ephemeral
     }
 
-    struct PendingReminder: Identifiable {
+    struct PendingReminder: Identifiable, Equatable {
         let request: UNNotificationRequest
         let date: Date
         var id: String { request.identifier }
         var dayID: String? { request.content.userInfo["dayID"] as? String }
         var repeats: Bool { request.trigger?.repeats == true }
+
+        /// Equal when nothing shown changed, so a refresh that finds the same schedule
+        /// doesn't update the reminders screen.
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.id == rhs.id && lhs.date == rhs.date && lhs.repeats == rhs.repeats
+                && lhs.request.content.title == rhs.request.content.title
+                && lhs.request.content.body == rhs.request.content.body
+        }
     }
 
     nonisolated static func scheduledReminders(from requests: [UNNotificationRequest]) -> [PendingReminder] {
