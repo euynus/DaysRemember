@@ -3,7 +3,6 @@ import SwiftUI
 struct CalendarMonthView: View {
     @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(DeepLinkRouter.self) private var router
     @State private var month: Int
     @State private var year: Int
@@ -21,20 +20,6 @@ struct CalendarMonthView: View {
 
     private var monthDate: Date {
         CNDate.calendar.date(from: DateComponents(year: year, month: month + 1, day: 1)) ?? today
-    }
-
-    private var daysInMonth: Int {
-        let cal = CNDate.calendar
-        var c = DateComponents(); c.year = year; c.month = month + 2; c.day = 0
-        return cal.component(.day, from: cal.date(from: c) ?? Date.now)
-    }
-
-    /// Leading blank cells before the 1st, counted from the user's first weekday.
-    private func leadingBlanks(weekStart: Int) -> Int {
-        let cal = CNDate.calendar
-        var c = DateComponents(); c.year = year; c.month = month + 1; c.day = 1
-        let dt = cal.date(from: c) ?? Date.now
-        return (cal.component(.weekday, from: dt) - weekStart + 7) % 7
     }
 
     private var isShowingCurrentMonth: Bool {
@@ -72,12 +57,15 @@ struct CalendarMonthView: View {
     var body: some View {
         let eventsByDay = computeEventsByDay()
         return VStack(spacing: 0) {
-            monthHeader
+            CalendarMonthHeader(monthDate: monthDate, isShowingCurrentMonth: isShowingCurrentMonth,
+                                onShowMonth: { showMonth(offset: $0) }, onShowCurrentMonth: showCurrentMonth)
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
-                    calendarCard(eventsByDay: eventsByDay)
+                    CalendarMonthGrid(year: year, month: month, eventsByDay: eventsByDay,
+                                      onShowMonth: { showMonth(offset: $0) },
+                                      onOpenCell: { events, date in openCell(events: events, date: date) })
                         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     Text("本月日子")
                         .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
@@ -93,7 +81,8 @@ struct CalendarMonthView: View {
                             .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     } else {
                         ForEach(Self.monthEntries(eventsByDay)) { entry in
-                            monthRow(entry.day, dayNumber: entry.dayNumber)
+                            CalendarMonthRow(day: entry.day, year: year, month: month, dayNumber: entry.dayNumber,
+                                             onOpen: onOpen)
                         }
                     }
                 }
@@ -124,165 +113,6 @@ struct CalendarMonthView: View {
         .onChange(of: router.linkOpenCount) { selectedDay = nil }
     }
 
-    // MARK: - Month header
-
-    private var monthHeader: some View {
-        HStack(alignment: .bottom) {
-            // Tapping the title jumps back to the current month (preserves the old
-            // "今天" jump without a separate control).
-            Button(action: showCurrentMonth) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(CNDate.year(monthDate))
-                        .font(Theme.sans(13, weight: .bold))
-                        .foregroundStyle(Theme.muted)
-                    Text(CNDate.month(monthDate))
-                        .font(Theme.sans(30, weight: .heavy, relativeTo: .largeTitle))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(String(localized: "\(CNDate.year(monthDate)) \(CNDate.month(monthDate))，回到本月", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-            Spacer(minLength: 8)
-            HStack(spacing: 8) {
-                FAB(systemName: "chevron.left", size: 40, iconSize: 15) { showMonth(offset: -1) }
-                    .accessibilityLabel("上个月")
-                if !isShowingCurrentMonth {
-                    Button(action: showCurrentMonth) {
-                        Text("今天")
-                            .font(Theme.sans(14, weight: .heavy))
-                            .foregroundStyle(Color.white)
-                            .padding(.horizontal, 16)
-                            .frame(minHeight: 40)
-                            .background(Theme.ink, in: Capsule())
-                            .frame(minHeight: 44)
-                    }
-                    .buttonStyle(PressScale(scale: 0.94))
-                    .accessibilityIdentifier("calendar.today")
-                }
-                FAB(systemName: "chevron.right", size: 40, iconSize: 15) { showMonth(offset: 1) }
-                    .accessibilityLabel("下个月")
-            }
-            .fixedSize(horizontal: true, vertical: false)
-        }
-        .padding(.bottom, 10)
-    }
-
-    // MARK: - Calendar card
-
-    private func calendarCard(eventsByDay: [Int: [Day]]) -> some View {
-        let cal = CNDate.calendar
-        let isCurrentMonth = (cal.component(.year, from: today) == year)
-            && (cal.component(.month, from: today) - 1 == month)
-        let todayDay = cal.component(.day, from: today)
-        let weekStart = CNDate.firstWeekday()
-        let firstWeekday = leadingBlanks(weekStart: weekStart)
-        let dayCount = daysInMonth
-        let cols = Array(repeating: GridItem(.flexible(), spacing: 1), count: 7)
-        let symbols = CNDate.shortWeekdaySymbols
-        let orderedSymbols = Array(symbols[(weekStart - 1)...] + symbols[..<(weekStart - 1)])
-
-        return VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                ForEach(orderedSymbols, id: \.self) { d in
-                    Text(d)
-                        .font(Theme.sans(12))
-                        .foregroundStyle(Theme.muted)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .frame(maxWidth: .infinity)
-                        .padding(.bottom, 8)
-                }
-            }
-            LazyVGrid(columns: cols, spacing: 4) {
-                ForEach(0..<42, id: \.self) { i in
-                    let inMonth = i >= firstWeekday && i < firstWeekday + dayCount
-                    let d = i - firstWeekday + 1
-                    // One container per cell, so a lazy grid cell's identity doesn't depend on the branch.
-                    ZStack {
-                        if inMonth {
-                            cellView(d: d, events: eventsByDay[d] ?? [], isToday: isCurrentMonth && d == todayDay)
-                        } else {
-                            Color.clear.aspectRatio(0.85, contentMode: .fit)
-                        }
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 14)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .contentShape(Rectangle())
-        // Horizontal swipes change month; vertical drags still scroll the page.
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 30).onEnded { value in
-                let dx = value.translation.width
-                guard abs(dx) > 60, abs(dx) > abs(value.translation.height) * 2 else { return }
-                showMonth(offset: dx < 0 ? 1 : -1)
-            }
-        )
-    }
-
-    private func cellView(d: Int, events: [Day], isToday: Bool) -> some View {
-        let hasEvents = !events.isEmpty
-        let eventCategory = events.first.map { store.category(for: $0) }
-        let dotColor = eventCategory?.tintInk ?? Theme.muted
-        let cal = CNDate.calendar
-        let cellDate = cal.date(from: DateComponents(year: year, month: month + 1, day: d)) ?? today
-        let marks = SolarTerms.marks(for: cellDate)
-        let term = marks.first
-        // Chinese layouts show the lunar day (the month name on 初一); English shows terms only.
-        let lunar = AppLocalization.isEnglish ? nil : Lunar.supportedLunarDate(for: cellDate).map { l in
-            l.day == 1 ? Lunar.monthCN(l.month, isLeap: l.isLeap) : Lunar.dayCN(l.day)
-        }
-        let dateLabel = isToday ? String(localized: "今天，\(CNDate.full(cellDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : CNDate.full(cellDate)
-        let lunarLabel = AppLocalization.isEnglish ? dateLabel
-            : String(localized: "\(dateLabel)，\(Lunar.fmt(cellDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        let cellLabel = marks.reduce(lunarLabel) { String(localized: "\($0)，\($1)", bundle: AppLocalization.bundle, locale: AppLocalization.locale) }
-
-        let cell = VStack(spacing: 1) {
-            Text(verbatim: String(d))
-                .numberFont(17, weight: .bold)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .foregroundStyle(isToday ? Color.white : Theme.ink)
-            if let second = term ?? lunar {
-                Text(verbatim: second)
-                    .font(Theme.sans(9, weight: .medium))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(isToday ? Color.white.opacity(0.8) : term != nil ? Theme.solarTerm : Theme.muted)
-                    .padding(.horizontal, 2)
-            }
-            if hasEvents {
-                Circle()
-                    .fill(isToday ? Color.white : dotColor)
-                    .frame(width: 5, height: 5)
-                    .padding(.top, 1)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .aspectRatio(0.85, contentMode: .fit)
-        .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(isToday ? Theme.ink : (eventCategory?.tint ?? .clear))
-                .padding(.horizontal, 2)
-        }
-        // The whole cell is the target, not just its digits.
-        .contentShape(Rectangle())
-
-        return Button { openCell(events: events, date: cellDate) } label: { cell }
-            .buttonStyle(PressScale(scale: 0.92))
-            .accessibilityLabel(hasEvents
-                ? String(localized: "\(cellLabel)，\(events.count) 个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                : cellLabel)
-            .accessibilityHint(hasEvents ? Text(verbatim: "") : Text("新建这一天的日子"))
-    }
-
     /// One day opens directly; several open the day's list; none starts a new day.
     private func openCell(events: [Day], date: Date) {
         if events.count == 1, let first = events.first {
@@ -308,49 +138,5 @@ struct CalendarMonthView: View {
         eventsByDay.keys.sorted().flatMap { dayNumber in
             (eventsByDay[dayNumber] ?? []).map { MonthEntry(dayNumber: dayNumber, day: $0) }
         }
-    }
-
-    private func monthRow(_ day: Day, dayNumber: Int) -> some View {
-        let metadata = subtitle(for: day, label: store.category(for: day).displayName)
-        let date = CNDate.calendar.date(from: DateComponents(year: year, month: month + 1, day: dayNumber)) ?? today
-        let category = store.category(for: day)
-        return Button { onOpen(day) } label: {
-            HStack(alignment: .center, spacing: 12) {
-                if !dynamicTypeSize.isAccessibilitySize {
-                    CoverArt(day: day, photoCornerRadius: 12, maximumPixelSize: 192, decodesAsynchronously: true)
-                        .frame(width: 52, height: 52)
-                        .accessibilityHidden(true)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(CNDate.short(date))
-                        .font(Theme.sans(12, weight: .heavy))
-                        .foregroundStyle(category.tintInk)
-                    Text(verbatim: day.title)
-                        .font(Theme.sans(16, weight: .heavy))
-                        .foregroundStyle(Theme.ink)
-                    Text(verbatim: metadata)
-                        .font(Theme.sans(12))
-                        .foregroundStyle(Theme.onPastel)
-                }
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 10)
-            .background(category.tint, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        }
-        .buttonStyle(PressableTileStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "\(CNDate.short(date))，\(day.title)，\(metadata)", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-        .accessibilityHint("查看日子详情")
-        .accessibilityInputLabels([day.title])
-    }
-
-    private func subtitle(for day: Day, label: String) -> String {
-        var parts = [label]
-        if day.recurring { parts.append(String(localized: "每年", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) }
-        if day.lunar { parts.append(String(localized: "农历", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) }
-        return parts.joined(separator: " · ")
     }
 }
