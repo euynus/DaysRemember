@@ -82,7 +82,8 @@ final class NotificationManager {
         let pending = await center.pendingNotificationRequests()
         let otherCount = pending.count { !$0.identifier.hasPrefix("dr.") }
         let plan = Self.canDeliver(status)
-            ? Self.plan(days: days, settings: settings, now: Date.now, capacity: Self.pendingLimit - otherCount)
+            ? await Self.planInBackground(days: days, settings: settings, now: Date.now,
+                                          capacity: Self.pendingLimit - otherCount)
             : []
         let wanted = Set(plan.map(\.id))
         let stale = pending
@@ -212,6 +213,22 @@ final class NotificationManager {
         }
     }
 
+    /// `plan` off the main actor: a large library takes long enough to drop frames.
+    @concurrent nonisolated static func planInBackground(days: [Day], settings: AppSettingsSnapshot, now: Date,
+                                                         capacity: Int) async -> [PlannedReminder] {
+        plan(days: days, settings: settings, now: now, capacity: capacity)
+    }
+
+    /// A reminder before its text: a library yields thousands across the planning window, and only
+    /// the earliest `pendingLimit` are kept, so their titles and bodies are written after ranking.
+    private struct Candidate {
+        /// `day` indexes the planned days.
+        enum Kind { case countdown(day: Int, displayDate: Date), memory(day: Int, displayDate: Date), greeting }
+        let id: String
+        let date: Date
+        let kind: Kind
+    }
+
     /// Finite, deterministic planning; never depends on the DEBUG display clock.
     nonisolated static func plan(days: [Day], settings: AppSettingsSnapshot, now: Date,
                                  capacity: Int = pendingLimit) -> [PlannedReminder] {
@@ -222,9 +239,9 @@ final class NotificationManager {
         let lastYear = calendar.component(.year, from: end) + 1
         let lunarStart = Lunar.lunarToSolar(year: 1900, month: 1, day: 1)
         let lunarEnd = Lunar.lunarToSolar(year: 1900 + LunarTable.info.count, month: 1, day: 1)
-        var candidates: [PlannedReminder] = []
+        var candidates: [Candidate] = []
 
-        for day in days {
+        for (index, day) in days.enumerated() {
             guard day.reminderTime?.isValid ?? true else { continue }
             let hour = day.reminderTime?.hour ?? settings.notificationHour
             let minute = day.reminderTime?.minute ?? settings.notificationMinute
@@ -249,20 +266,18 @@ final class NotificationManager {
                 for offset in offsets {
                     guard let trigger = triggerDate(displayDate: date, offset: offset,
                                                     hour: hour, minute: minute, now: now), trigger <= end else { continue }
-                    candidates.append(PlannedReminder(
+                    candidates.append(Candidate(
                         id: "dr.day.\(day.id).pre.\(offset).\(Int(date.timeIntervalSince1970))", date: trigger,
-                        title: String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                        body: body(for: day, offset: CNDate.daysBetween(trigger, date)), dayID: day.id))
+                        kind: .countdown(day: index, displayDate: date)))
                 }
             }
             if memory {
                 for date in annualDates where date > calendar.startOfDay(for: day.date) {
                     guard let trigger = triggerDate(displayDate: date, offset: 0,
                                                     hour: hour, minute: minute, now: now), trigger <= end else { continue }
-                    candidates.append(PlannedReminder(
+                    candidates.append(Candidate(
                         id: "dr.memory.\(day.id).\(Int(date.timeIntervalSince1970))", date: trigger,
-                        title: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                        body: String(localized: "想起这一天 · 「\(day.title)」 · \(CNDate.full(date))", bundle: AppLocalization.bundle, locale: AppLocalization.locale), dayID: day.id))
+                        kind: .memory(day: index, displayDate: date)))
                 }
             }
         }
@@ -272,17 +287,33 @@ final class NotificationManager {
                                                                                  minute: min(59, max(0, settings.greetingMinute)),
                                                                                  second: 0),
                                             matchingPolicy: .nextTime) {
-            // "早安" only suits a morning greeting.
-            let body = (5..<12).contains(greetingHour)
-                ? String(localized: "早安 · 今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                : String(localized: "今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            candidates.append(PlannedReminder(id: "dr.daily.greeting", date: greeting,
-                                               title: String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                                               body: body, dayID: nil, repeats: true))
+            candidates.append(Candidate(id: "dr.daily.greeting", date: greeting, kind: .greeting))
         }
         // ponytail: finite five-year window; reopening the app replenishes it, not a background recurrence engine.
-        return Array(candidates.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date < $1.date }
-            .prefix(min(pendingLimit, capacity)))
+        let kept = candidates.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date < $1.date }
+            .prefix(min(pendingLimit, capacity))
+        let appName = String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return kept.map { candidate in
+            switch candidate.kind {
+            case .countdown(let index, let displayDate):
+                return PlannedReminder(id: candidate.id, date: candidate.date, title: appName,
+                                       body: body(for: days[index], offset: CNDate.daysBetween(candidate.date, displayDate)),
+                                       dayID: days[index].id)
+            case .memory(let index, let displayDate):
+                return PlannedReminder(
+                    id: candidate.id, date: candidate.date,
+                    title: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                    body: String(localized: "想起这一天 · 「\(days[index].title)」 · \(CNDate.full(displayDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                    dayID: days[index].id)
+            case .greeting:
+                // "早安" only suits a morning greeting.
+                let body = (5..<12).contains(greetingHour)
+                    ? String(localized: "早安 · 今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                    : String(localized: "今天也要好好生活，珍惜每一个值得记住的日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                return PlannedReminder(id: candidate.id, date: candidate.date, title: appName,
+                                       body: body, dayID: nil, repeats: true)
+            }
+        }
     }
 
     nonisolated private static func body(for day: Day, offset: Int) -> String {
