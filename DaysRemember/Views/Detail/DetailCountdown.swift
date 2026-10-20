@@ -87,9 +87,10 @@ struct DetailCountdown: View {
                         .font(Theme.sans(12, weight: value == unit ? .heavy : .medium))
                         .foregroundStyle(value == unit ? Color.white : Theme.ink2)
                         .padding(.horizontal, 10)
-                        .frame(minHeight: 26)
+                        // The pill itself is at least 44pt wide, so the gaps between chips stay even.
+                        .frame(minWidth: 44, minHeight: 26)
                         .background(value == unit ? Theme.ink : Theme.bg2, in: Capsule())
-                        .frame(minWidth: 44, minHeight: 44)
+                        .frame(minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
