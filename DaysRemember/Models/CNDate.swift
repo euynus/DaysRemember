@@ -28,11 +28,11 @@ enum CNDate {
         date.formatted(style(locale: locale).month(.wide))
     }
 
-    /// A time of day as the app's time pickers show it: 14:35 in Chinese, 2:35 PM in English.
+    /// A time of day as the app's time pickers show it, in the locale's preferred hour cycle:
+    /// 09:00 in Simplified Chinese, 上午9:00 in Traditional Chinese, 9:00 AM in English.
     static func time(hour: Int, minute: Int, locale: Locale = AppLocalization.locale) -> String {
         let date = calendar.date(from: DateComponents(year: 2000, month: 1, day: 1, hour: hour, minute: minute)) ?? .now
-        return date.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: locale,
-                                               calendar: calendar, timeZone: calendar.timeZone))
+        return date.formatted(style(locale: locale).hour().minute())
     }
 
     static var shortWeekdaySymbols: [String] {

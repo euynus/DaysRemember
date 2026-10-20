@@ -130,7 +130,7 @@ When changing the data model in `Day.swift` or its persistence format, be aware:
 | `ImageRenderer` + `UIActivityViewController` | `ShareCardView.renderImage(card:ratio:scale:)` (card height or 3:4, at least 3x) + `Components/ShareSheet.swift`. 分享图片 presents the rendered image using an item-driven sheet; no per-app SDK integration. |
 | `PHPhotoLibrary` | `Components/PhotoSaver.swift`. Requires `NSPhotoLibraryAddUsageDescription` in `Info.plist`. |
 
-Per-day reminder offsets use `nil` for global settings and `[]` for no day reminders. Times of day are shown with `CNDate.time(hour:minute:)`, as the time pickers show them (14:35 in Chinese, 2:35 PM in English); day counts use `Text(_:format: .number)` or `.formatted(.number.locale(AppLocalization.locale))`, since a bare `.formatted()` ignores the in-app language. Ordinary reminders and yearly memories share the same time: the day's override, else the global time.
+Per-day reminder offsets use `nil` for global settings and `[]` for no day reminders. Times of day are shown with `CNDate.time(hour:minute:)`, in the locale's preferred hour cycle as the time pickers show them (09:00 in Simplified Chinese, 上午9:00 in Traditional Chinese, 9:00 AM in English); day counts use `Text(_:format: .number)` or `.formatted(.number.locale(AppLocalization.locale))`, since a bare `.formatted()` ignores the in-app language. Ordinary reminders and yearly memories share the same time: the day's override, else the global time.
 
 ## Conventions
 
