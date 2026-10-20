@@ -1,15 +1,5 @@
 import SwiftUI
 
-/// Pushed screens inside 我的.
-enum MeRoute: Hashable {
-    case reminders
-}
-
-/// A category's day list, or every day.
-enum CategoryRoute: Hashable {
-    case all, category(String)
-}
-
 /// The third tab: a summary of the library, the categories, reminders and app settings.
 struct MeView: View {
     @Environment(DayStore.self) private var store
@@ -209,65 +199,5 @@ struct MeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(identifier)
-    }
-}
-
-/// A white rounded group of rows.
-struct MeGroup<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(spacing: 0) { content }
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-    }
-}
-
-struct MeDivider: View {
-    var body: some View {
-        Rectangle()
-            .fill(Theme.hairline)
-            .frame(height: 1)
-            .padding(.leading, 56)
-    }
-}
-
-/// Icon tile, title, optional value and a chevron.
-struct MeRowLabel: View {
-    let title: String
-    let systemImage: String
-    let tint: Color
-    let ink: Color
-    var value: String? = nil
-    var showsChevron = true
-    var trailingSymbol = "chevron.right"
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(ink)
-                .frame(width: 32, height: 32)
-                .background(tint, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .accessibilityHidden(true)
-            Text(title)
-                .font(Theme.sans(16, weight: .medium))
-                .foregroundStyle(Theme.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if let value {
-                Text(verbatim: value)
-                    .font(Theme.sans(15))
-                    .foregroundStyle(Theme.muted)
-                    .multilineTextAlignment(.trailing)
-            }
-            if showsChevron {
-                Image(systemName: trailingSymbol)
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.muted)
-                    .accessibilityHidden(true)
-            }
-        }
-        .padding(.horizontal, 12)
-        .frame(minHeight: 54)
-        .contentShape(Rectangle())
     }
 }
