@@ -6,7 +6,6 @@ struct ShareCardView: View {
     @Environment(DayStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.displayScale) private var displayScale
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let day: Day
     @State private var template: Template = .polaroid
     @State private var ratio: Ratio = .natural
@@ -92,7 +91,7 @@ struct ShareCardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
         .safeAreaInset(edge: .bottom) {
-            shareGrid
+            ShareActionBar(onSave: saveToPhotos, onShare: presentShareSheet)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(Theme.bg)
@@ -192,33 +191,5 @@ struct ShareCardView: View {
             }
         }
         .pickerStyle(.segmented)
-    }
-
-    private var shareGrid: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: 10))
-            : AnyLayout(HStackLayout(spacing: 16))
-        return layout {
-            Button(action: saveToPhotos) {
-                Label("保存", systemImage: "square.and.arrow.down")
-                    .font(Theme.sans(16, weight: .heavy))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                    .padding(.horizontal, 20)
-                    .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, minHeight: 52)
-                    .background(Theme.card, in: Capsule())
-            }
-            .buttonStyle(PressScale(scale: 0.97))
-            Button(action: presentShareSheet) {
-                Label("分享图片", systemImage: "square.and.arrow.up")
-                    .font(Theme.sans(16, weight: .heavy))
-                    .foregroundStyle(Color.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(Theme.ink, in: Capsule())
-            }
-            .buttonStyle(PressScale(scale: 0.97))
-        }
     }
 }
