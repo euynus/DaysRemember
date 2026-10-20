@@ -4,7 +4,6 @@ struct HomeView: View {
     @Environment(DayStore.self) var store
     @Environment(\.currentDay) private var today
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var face: HomeFace = HomeFace.initial()
     @State private var heroPage: String?
     @State private var isSearching = false
@@ -34,10 +33,10 @@ struct HomeView: View {
                         } else if !query.isEmpty {
                             searchResults(sorted)
                         } else {
-                            facePicker(upcoming: upcoming.count, past: past.count)
+                            HomeFacePicker(face: $face, upcoming: upcoming.count, past: past.count)
                             switch face {
-                            case .upcoming: upcomingFace(upcoming)
-                            case .past: pastFace(past)
+                            case .upcoming: UpcomingFace(days: upcoming, heroPage: $heroPage, heroHeight: heroHeight, onOpen: onOpen)
+                            case .past: PastFace(days: past, heroHeight: heroHeight, onOpen: onOpen)
                             }
                         }
                     }
@@ -136,86 +135,7 @@ struct HomeView: View {
         .onAppear { Task { @MainActor in searchFocused = true } }
     }
 
-    // MARK: Faces
-
-    private func facePicker(upcoming: Int, past: Int) -> some View {
-        HStack(spacing: 4) {
-            faceButton(.upcoming, title: String(localized: "将至 · \(upcoming)", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                       identifier: "home.face.upcoming")
-            faceButton(.past, title: String(localized: "已过 · \(past)", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                       identifier: "home.face.past")
-        }
-        .padding(3)
-        .background(Theme.bg2, in: Capsule())
-    }
-
-    private func faceButton(_ value: HomeFace, title: String, identifier: String) -> some View {
-        let selected = face == value
-        return Button {
-            withAnimation(reduceMotion ? nil : .snappy(duration: 0.2)) { face = value }
-        } label: {
-            Text(title)
-                .font(Theme.sans(14, weight: selected ? .heavy : .medium))
-                .foregroundStyle(selected ? Theme.ink : Theme.ink2)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .background {
-                    if selected {
-                        Capsule().fill(Theme.card)
-                            .shadow(color: Theme.ink.opacity(0.08), radius: 3, y: 1)
-                    }
-                }
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-        .accessibilityIdentifier(identifier)
-    }
-
-    @ViewBuilder
-    private func upcomingFace(_ days: [Day]) -> some View {
-        if days.isEmpty {
-            emptyFace(title: String(localized: "没有将至的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                      symbol: "sun.max",
-                      detail: String(localized: "每年重复的日子和未来的日子会出现在这里。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-        } else {
-            let heroes = days.map { ($0, DayInfo.compute($0, today: today).days) }
-                .sorted { $0.1 < $1.1 }.prefix(5).map(\.0)
-            heroPager(heroes)
-            if let recent = recentOccurrence {
-                RecentOccurrenceBanner(day: recent.day, occurrence: recent.occurrence, onOpen: onOpen)
-                    .dayContextMenu(day: recent.day)
-            }
-            let rest = days.filter { $0.id != heroes.first?.id }
-            if !rest.isEmpty {
-                sectionTitle(String(localized: "接下来", bundle: AppLocalization.bundle, locale: AppLocalization.locale), count: rest.count)
-                DayGrid(days: rest, onOpen: onOpen)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func heroPager(_ heroes: [Day]) -> some View {
-        if dynamicTypeSize.isAccessibilitySize || heroes.count == 1 {
-            if let first = heroes.first {
-                HeroDayCard(day: first, onOpen: onOpen)
-                    .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? nil : heroHeight)
-                    .dayContextMenu(day: first)
-            }
-        } else {
-            TabView(selection: Binding(get: { heroPage ?? heroes.first?.id }, set: { heroPage = $0 })) {
-                ForEach(heroes.enumerated(), id: \.element.id) { index, day in
-                    HeroDayCard(day: day, position: (index, heroes.count), onOpen: onOpen)
-                        .dayContextMenu(day: day)
-                        .tag(Optional(day.id))
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: heroHeight)
-            .onChange(of: heroes.map(\.id)) { _, ids in
-                if let page = heroPage, !ids.contains(page) { heroPage = nil }
-            }
-        }
-    }
+    // MARK: Feed
 
     /// Splits the sorted feed into 将至 and 已过, computing each day once.
     private static func split(_ days: [Day], today: Date) -> (upcoming: [Day], past: [Day]) {
@@ -225,92 +145,6 @@ struct HomeView: View {
             if DayInfo.compute(day, today: today).isPast { past.append(day) } else { upcoming.append(day) }
         }
         return (upcoming, past)
-    }
-
-    /// The most recent recurring day that passed within the last week.
-    private var recentOccurrence: (day: Day, occurrence: RecentOccurrence)? {
-        store.days
-            .compactMap { day in RecentOccurrence.of(day, today: today).map { (day, $0) } }
-            .min { $0.1.daysAgo < $1.1.daysAgo }
-    }
-
-    @ViewBuilder
-    private func pastFace(_ days: [Day]) -> some View {
-        if days.isEmpty {
-            emptyFace(title: String(localized: "还没有走过的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                      symbol: "moon",
-                      detail: String(localized: "不重复的日子过去以后，会在这里一天天记着。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-        } else {
-            let milestones = days.compactMap { day in Milestone.next(after: day.date, today: today).map { (day, $0) } }
-                .sorted { $0.1.daysUntil < $1.1.daysUntil }
-            if let hero = milestones.first {
-                HeroDayCard(day: hero.0, milestone: hero.1, onOpen: onOpen)
-                    .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? nil : heroHeight)
-                    .dayContextMenu(day: hero.0)
-            }
-            if milestones.count > 1 {
-                milestoneStrip(Array(milestones.dropFirst().prefix(5)))
-            }
-            let rest = days.filter { $0.id != milestones.first?.0.id }
-            if !rest.isEmpty {
-                sectionTitle(String(localized: "走过的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale), count: rest.count)
-                DayGrid(days: rest, onOpen: onOpen)
-            }
-        }
-    }
-
-    private func milestoneStrip(_ items: [(Day, Milestone)]) -> some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(items, id: \.0.id) { day, milestone in
-                    Button { onOpen(day) } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                                if milestone.daysUntil == 0 {
-                                    Text("今天")
-                                        .numberFont(26)
-                                        .foregroundStyle(store.category(for: day).tintInk)
-                                } else {
-                                    Text(milestone.daysUntil, format: .number)
-                                        .numberFont(26)
-                                        .foregroundStyle(store.category(for: day).tintInk)
-                                    Text(String(localized: "countdown.daysLeftUnit", defaultValue: "\(milestone.daysUntil)天后",
-                                                bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-                                        .font(Theme.sans(12))
-                                        .foregroundStyle(Theme.muted)
-                                }
-                            }
-                            Text(verbatim: "\(day.title) \(milestone.title)")
-                                .font(Theme.sans(13, weight: .bold))
-                                .foregroundStyle(Theme.ink)
-                                .lineLimit(1)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .frame(width: 160, alignment: .leading)
-                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    }
-                    .buttonStyle(PressableTileStyle())
-                }
-            }
-        }
-        .scrollIndicators(.hidden)
-        .scrollClipDisabled()
-    }
-
-    private func sectionTitle(_ title: String, count: Int) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
-                .foregroundStyle(Theme.ink)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 8)
-            Text("\(count)")
-                .font(Theme.sans(12))
-                .foregroundStyle(Theme.muted)
-        }
-        .padding(.horizontal, 4)
-        .padding(.top, 6)
     }
 
     // MARK: Empty and search
@@ -329,12 +163,6 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func emptyFace(title: String, symbol: String, detail: String) -> some View {
-        ContentUnavailableView(title, systemImage: symbol, description: Text(detail))
-            .foregroundStyle(Theme.muted)
-            .padding(.top, 40)
-    }
-
     @ViewBuilder
     private func searchResults(_ sorted: [Day]) -> some View {
         let matched = sorted.filter { day in
@@ -343,9 +171,9 @@ struct HomeView: View {
                 .contains { $0.localizedStandardContains(query) }
         }
         if matched.isEmpty {
-            emptyFace(title: String(localized: "没有找到日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                      symbol: "magnifyingglass",
-                      detail: String(localized: "换个关键词试试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            FeedEmptyState(title: String(localized: "没有找到日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                           symbol: "magnifyingglass",
+                           detail: String(localized: "换个关键词试试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         } else {
             DayGrid(days: matched, onOpen: onOpen)
         }

@@ -14,7 +14,7 @@ struct CategoryDaysListView: View {
             if days.isEmpty {
                 ContentUnavailableView("还没有日子", systemImage: "calendar")
             } else {
-                DayList(days: days, onOpen: onOpen)
+                DayGrid(days: days, onOpen: onOpen)
                     .padding(.horizontal, 22)
                     .padding(.bottom, 22)
             }
