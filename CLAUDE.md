@@ -32,7 +32,7 @@ When SourceKit reports "Cannot find Theme / Day / DayInfo in scope" on a single 
 
 ## Debug launch arguments
 
-The app reads the following from `ProcessInfo.processInfo.arguments` / env (defined in `DaysRememberApp.swift::DebugLaunch`):
+The app reads the following from `ProcessInfo.processInfo.arguments` / env (defined in `DebugLaunch.swift`):
 
 ```sh
 # Pin "today" to 2026-04-23 to match the prototype's hard-coded countdowns

@@ -1,36 +1,6 @@
 import Accessibility
 import SwiftUI
 
-enum AppTab: String, Hashable {
-    case home, calendar, me
-
-    /// `--tab` values, including the old categories and reminders tabs, which now live in 我的.
-    init?(argument: String) {
-        switch argument {
-        case "categories", "notifications", "settings": self = .me
-        default: self.init(rawValue: argument)
-        }
-    }
-}
-
-/// A widget link: `daysremember://day/<id>` opens that day; any other link in the scheme,
-/// such as the empty widget's `daysremember://home`, returns to 日子.
-enum DeepLink: Equatable {
-    case day(String), home
-
-    init?(_ url: URL) {
-        guard url.scheme == "daysremember" else { return nil }
-        let id = url.lastPathComponent
-        self = url.host() == "day" && !id.isEmpty && id != "/" ? .day(id) : .home
-    }
-}
-
-/// Navigation value for a day's detail. Routing by ID keeps photo bytes out of the
-/// path's hashing and lets the detail read the live record.
-struct DayRoute: Hashable {
-    let id: String
-}
-
 struct RootTabView: View {
     @Environment(DayStore.self) private var store
     @Environment(DeepLinkRouter.self) private var router
