@@ -97,7 +97,7 @@ struct DayEditorView: View {
     var body: some View {
         VStack(spacing: 0) {
             navBar
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     livePreview
                         .frame(maxWidth: .infinity)
@@ -117,11 +117,12 @@ struct DayEditorView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .accessibilityIdentifier("dayEditorScroll")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Theme.bg.ignoresSafeArea())
+        .background(Theme.bg)
         .interactiveDismissDisabled(hasUnsavedChanges)
         .onChange(of: store.categories, initial: true) { _, categories in
             // Remember a resolved selection so its later deletion cannot look like pending sync.
@@ -330,7 +331,7 @@ struct DayEditorView: View {
             }
 
             ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
+                ScrollView(.horizontal) {
                     HStack(alignment: .top, spacing: 10) {
                         ForEach(PhotoStyle.pickerOptions, id: \.self) { preset in
                             let selected = isTemplateSelected(preset)
@@ -360,6 +361,7 @@ struct DayEditorView: View {
                     .padding(.vertical, 4)
                     .padding(.horizontal, 1)
                 }
+                .scrollIndicators(.hidden)
                 .accessibilityIdentifier("dayCoverQuickTemplates")
                 .onChange(of: photoData == nil ? photo.assetName : nil, initial: true) { _, asset in
                     if let asset { proxy.scrollTo(asset, anchor: .center) }
@@ -417,7 +419,7 @@ struct DayEditorView: View {
                 }
             }
         }
-        .background(Theme.bg.ignoresSafeArea())
+        .background(Theme.bg)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
@@ -476,7 +478,7 @@ struct DayEditorView: View {
                                              @ViewBuilder content: () -> Content) -> some View {
         content()
             .padding(5)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(previewTint))
+            .background(previewTint, in: .rect(cornerRadius: 16))
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(selected ? Theme.ink : .clear, lineWidth: 2.5)
@@ -708,10 +710,7 @@ struct DayEditorView: View {
                 .accessibilityLabel("心情笔记")
                 .accessibilityIdentifier("dayNoteEditor")
         }
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Theme.card)
-        )
+        .background(Theme.card, in: .rect(cornerRadius: 22))
     }
 
     // MARK: - Date picker sheet
@@ -759,7 +758,7 @@ struct DayEditorView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Theme.bg.ignoresSafeArea())
+        .background(Theme.bg)
         .presentationDetents(dynamicTypeSize > .large ? [.large] : [.medium, .large])
     }
 

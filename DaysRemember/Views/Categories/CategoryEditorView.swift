@@ -68,7 +68,7 @@ struct CategoryEditorView: View {
     var body: some View {
         VStack(spacing: 0) {
             navBar
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     preview
                     nameField
@@ -161,7 +161,7 @@ struct CategoryEditorView: View {
                 .padding(.horizontal, 16)
                 .frame(minHeight: 52)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.white))
+                .background(.white, in: .rect(cornerRadius: 8))
                 .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline, lineWidth: 1) }
                 .accessibilityLabel("分类名称")
                 .accessibilityIdentifier("categoryNameField")
@@ -186,10 +186,7 @@ struct CategoryEditorView: View {
                             .foregroundStyle(selected ? Theme.accent : Theme.ink2)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(selected ? colorToken.soft : Color.white)
-                            )
+                            .background(selected ? colorToken.soft : Color.white, in: .rect(cornerRadius: 8))
                             .overlay {
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .strokeBorder(selected ? colorToken.color : Theme.hairline,

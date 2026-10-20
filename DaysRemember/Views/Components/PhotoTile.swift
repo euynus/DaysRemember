@@ -177,7 +177,7 @@ struct PhotoTile: View {
             .init(color: .black, location: 0.94), .init(color: .clear, location: 1),
         ]
         return LinearGradient(stops: stops, startPoint: .leading, endPoint: .trailing)
-            .mask(LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom))
+            .mask { LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom) }
     }
 
     nonisolated static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {

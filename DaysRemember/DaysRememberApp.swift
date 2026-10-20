@@ -242,7 +242,7 @@ enum DebugLaunch {
             case .widgets:
                 WidgetsPreviewView()
             case .settings:
-                NavigationStack { MeView().toolbar(.hidden, for: .navigationBar) }.categoryEditorHost()
+                NavigationStack { MeView().toolbarVisibility(.hidden, for: .navigationBar) }.categoryEditorHost()
             }
         }
     }

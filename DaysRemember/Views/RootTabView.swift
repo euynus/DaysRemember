@@ -39,7 +39,7 @@ struct RootTabView: View {
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
     @State private var mePath = NavigationPath()
-    @State private var addingDay = false
+    @State private var addingDay: Bool
 
     init(startWithNewDay: Bool = false) {
         _addingDay = State(initialValue: startWithNewDay)
@@ -169,15 +169,9 @@ struct RootTabView: View {
     @ViewBuilder
     private var content: some View {
         TabView(selection: $tab) {
-            homeStack
-                .tabItem { Label("日子", systemImage: "square.grid.2x2") }
-                .tag(AppTab.home)
-            calendarStack
-                .tabItem { Label("日历", systemImage: "calendar") }
-                .tag(AppTab.calendar)
-            meStack
-                .tabItem { Label("我的", systemImage: "person.crop.circle") }
-                .tag(AppTab.me)
+            Tab("日子", systemImage: "square.grid.2x2", value: AppTab.home) { homeStack }
+            Tab("日历", systemImage: "calendar", value: AppTab.calendar) { calendarStack }
+            Tab("我的", systemImage: "person.crop.circle", value: AppTab.me) { meStack }
         }
     }
 
@@ -187,7 +181,7 @@ struct RootTabView: View {
                 onOpen: { day in homePath.append(DayRoute(id: day.id)) },
                 onAdd: { addingDay = true }
             )
-            .toolbar(.hidden, for: .navigationBar)
+            .toolbarVisibility(.hidden, for: .navigationBar)
             .dayDetailDestination()
         }
         .overlay(alignment: .bottom) { undoOverlay(on: .home) }
@@ -196,7 +190,7 @@ struct RootTabView: View {
     private var calendarStack: some View {
         NavigationStack(path: $calendarPath) {
             CalendarMonthView(onOpen: { day in calendarPath.append(DayRoute(id: day.id)) })
-                .toolbar(.hidden, for: .navigationBar)
+                .toolbarVisibility(.hidden, for: .navigationBar)
                 .dayDetailDestination()
         }
         .overlay(alignment: .bottom) { undoOverlay(on: .calendar) }
@@ -205,7 +199,7 @@ struct RootTabView: View {
     private var meStack: some View {
         NavigationStack(path: $mePath) {
             MeView()
-                .toolbar(.hidden, for: .navigationBar)
+                .toolbarVisibility(.hidden, for: .navigationBar)
                 .dayDetailDestination()
                 .navigationDestination(for: CategoryRoute.self) { route in
                     switch route {
@@ -223,7 +217,7 @@ struct RootTabView: View {
                         NotificationsView(showsHeader: false)
                             .navigationTitle("提醒")
                             .navigationBarTitleDisplayMode(.large)
-                            .toolbar(.visible, for: .navigationBar)
+                            .toolbarVisibility(.visible, for: .navigationBar)
                     }
                 }
         }
@@ -237,7 +231,7 @@ private extension View {
     func dayDetailDestination() -> some View {
         navigationDestination(for: DayRoute.self) { route in
             DetailView(dayID: route.id)
-                .toolbar(.visible, for: .navigationBar)
+                .toolbarVisibility(.visible, for: .navigationBar)
         }
     }
 }

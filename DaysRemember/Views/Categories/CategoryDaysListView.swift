@@ -25,7 +25,7 @@ struct CategoryDaysListView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.large)
         .toolbarRole(.editor)
-        .toolbar(.visible, for: .navigationBar)
+        .toolbarVisibility(.visible, for: .navigationBar)
         // A sync can delete the category while its list is open, as for a day's detail.
         .onChange(of: categoryID.map { id in store.categories.contains { $0.id == id } } ?? true) { _, exists in
             if !exists { dismiss() }

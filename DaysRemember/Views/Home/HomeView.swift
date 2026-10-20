@@ -39,7 +39,7 @@ struct HomeView: View {
             header
             if isSearching { searchField }
             ScrollViewReader { proxy in
-                ScrollView(.vertical, showsIndicators: false) {
+                ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         if store.days.isEmpty {
                             emptyLibrary
@@ -58,6 +58,7 @@ struct HomeView: View {
                     .padding(.bottom, 24)
                     .id("home.feed.top")
                 }
+                .scrollIndicators(.hidden)
                 .accessibilityIdentifier("home.feed")
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: face) {
@@ -213,7 +214,7 @@ struct HomeView: View {
             }
         } else {
             TabView(selection: Binding(get: { heroPage ?? heroes.first?.id }, set: { heroPage = $0 })) {
-                ForEach(Array(heroes.enumerated()), id: \.element.id) { index, day in
+                ForEach(heroes.enumerated(), id: \.element.id) { index, day in
                     HeroDayCard(day: day, position: (index, heroes.count), onOpen: onOpen)
                         .dayContextMenu(day: day)
                         .tag(Optional(day.id))
@@ -260,7 +261,7 @@ struct HomeView: View {
     }
 
     private func milestoneStrip(_ items: [(Day, Milestone)]) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 ForEach(items, id: \.0.id) { day, milestone in
                     Button { onOpen(day) } label: {
@@ -287,6 +288,7 @@ struct HomeView: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
         .scrollClipDisabled()
     }
 

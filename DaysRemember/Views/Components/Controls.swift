@@ -31,7 +31,7 @@ struct FAB: View {
                 .font(.system(size: iconSize, weight: .regular))
                 .foregroundStyle(dark ? Color.white : Theme.ink)
                 .frame(width: size, height: size)
-                .background(Circle().fill(dark ? Theme.accent : Color.white))
+                .background(dark ? Theme.accent : Color.white, in: .circle)
                 .overlay { Circle().strokeBorder(dark ? .clear : Theme.hairline, lineWidth: 1) }
                 // Keep the tappable area at the 44pt HIG minimum even when the visible
                 // circle is smaller (e.g. the 38/42pt calendar & header FABs).
@@ -65,7 +65,7 @@ struct PillButton: View {
             .frame(maxWidth: fill ? .infinity : nil)
             .frame(minHeight: height)
             .padding(.horizontal, 22)
-            .background(Capsule().fill(background))
+            .background(background, in: .capsule)
         }
         .buttonStyle(PressScale())
     }
@@ -80,33 +80,37 @@ struct PillButton: View {
 
 // MARK: - Chip
 
-struct Chip: View {
+struct Chip<Leading: View>: View {
     let title: String
     var selected: Bool = false
-    var leading: AnyView? = nil
+    let leading: Leading
     var action: () -> Void = {}
 
-    init(_ title: String, selected: Bool = false, action: @escaping () -> Void = {}) {
-        self.title = title; self.selected = selected; self.action = action
-    }
-    init<L: View>(_ title: String, selected: Bool = false, @ViewBuilder leading: () -> L, action: @escaping () -> Void = {}) {
-        self.title = title; self.selected = selected; self.leading = AnyView(leading()); self.action = action
+    init(_ title: String, selected: Bool = false, @ViewBuilder leading: () -> Leading,
+         action: @escaping () -> Void = {}) {
+        self.title = title; self.selected = selected; self.leading = leading(); self.action = action
     }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                if let leading { leading }
+                leading
                 Text(title).font(Theme.sans(14, weight: .medium))
             }
             .foregroundStyle(selected ? Color.white : Theme.ink2)
             .padding(.vertical, 8)
             .frame(minHeight: 44)
             .padding(.horizontal, 15)
-            .background(Capsule().fill(selected ? Theme.ink : Theme.card))
+            .background(selected ? Theme.ink : Theme.card, in: .capsule)
         }
         .buttonStyle(PressScale(scale: 0.95))
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+extension Chip where Leading == EmptyView {
+    init(_ title: String, selected: Bool = false, action: @escaping () -> Void = {}) {
+        self.init(title, selected: selected, leading: { EmptyView() }, action: action)
     }
 }
 
@@ -126,7 +130,7 @@ struct MetaRow: View {
 
     var body: some View {
         FlowLayout(spacing: 9) {
-            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+            ForEach(items.enumerated(), id: \.offset) { idx, item in
                 Text((idx > 0 ? "· " : "") + item.text)
                     .font(Theme.sans(12, weight: item.bold ? .semibold : .regular))
                     .foregroundStyle(item.color)
@@ -154,7 +158,7 @@ struct SectionHeader: View {
 struct NavHeader<Trailing: View>: View {
     let title: String
     var onBack: (() -> Void)? = nil
-    @ViewBuilder var trailing: () -> Trailing
+    @ViewBuilder let trailing: Trailing
 
     var body: some View {
         HStack(spacing: 12) {
@@ -169,7 +173,7 @@ struct NavHeader<Trailing: View>: View {
                 .lineLimit(onBack == nil ? 1 : 2)
                 .minimumScaleFactor(0.5)
             Spacer(minLength: 8)
-            trailing()
+            trailing
         }
         .padding(.horizontal, 24)
         .padding(.top, 16)
@@ -187,9 +191,9 @@ extension NavHeader where Trailing == EmptyView {
 
 /// Unframed form sections with shared separators.
 struct CardList<Content: View>: View {
-    @ViewBuilder var content: () -> Content
+    @ViewBuilder let content: Content
     var body: some View {
-        VStack(spacing: 0) { content() }
+        VStack(spacing: 0) { content }
             .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }

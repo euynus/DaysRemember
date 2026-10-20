@@ -74,7 +74,7 @@ struct NotificationsView: View {
             if showsHeader {
                 NavHeader(title: String(localized: "提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             }
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if manager.authorizationStatus == .denied { permissionBanner.padding(.bottom, 18) }
                     previewCard.padding(.bottom, 26)
@@ -288,7 +288,7 @@ struct NotificationsView: View {
             .buttonStyle(.plain)
         }
         .padding(14)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.notePink))
+        .background(Theme.notePink, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityHint("打开系统设置以开启通知")
     }

@@ -43,7 +43,7 @@ struct DetailView: View {
         } else {
             ContentUnavailableView("日子已删除", systemImage: "calendar")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Theme.bg.ignoresSafeArea())
+                .background(Theme.bg)
         }
     }
 
@@ -75,8 +75,8 @@ struct DetailView: View {
             .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Theme.bg.ignoresSafeArea())
-        .safeAreaInset(edge: .bottom, spacing: 0) { actionBar }
+        .background(Theme.bg)
+        .safeAreaBar(edge: .bottom, spacing: 0) { actionBar }
         // The native bar keeps the system back button, and with it the edge swipe.
         .toolbar { toolbarItems(day: day) }
         .toolbarRole(.editor)

@@ -30,7 +30,7 @@ struct MeView: View {
         let byCategory = store.daysByCategory(today: today)
         VStack(spacing: 0) {
             NavHeader(title: String(localized: "我的", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     stats(total: infos.count, upcoming: infos.count - past.count, past: past.count)
                     if let oldest = past.max(by: { $0.1.days < $1.1.days }) {
@@ -90,6 +90,7 @@ struct MeView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
+            .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
@@ -213,10 +214,10 @@ struct MeView: View {
 
 /// A white rounded group of rows.
 struct MeGroup<Content: View>: View {
-    @ViewBuilder var content: () -> Content
+    @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(spacing: 0) { content() }
+        VStack(spacing: 0) { content }
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
