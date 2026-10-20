@@ -1,17 +1,5 @@
 import Foundation
 
-struct DeletedDay: Codable, Identifiable, Equatable {
-    var day: Day
-    var deletedAt: Date
-    var id: String { day.id }
-}
-
-struct SyncConflict: Codable, Identifiable, Equatable {
-    var id = UUID().uuidString
-    var createdAt = Date.now
-    var record: CloudLibraryRecord
-}
-
 struct DayBackup: Codable {
     static let maximumBytes = 100 * 1024 * 1024
 

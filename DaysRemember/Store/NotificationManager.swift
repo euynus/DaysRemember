@@ -3,38 +3,6 @@ import UserNotifications
 import Observation
 import OSLog
 
-/// Bridges a tapped reminder (or widget link) to SwiftUI navigation: `RootTabView`
-/// observes `dayID`, opens that day's detail, and clears it.
-@MainActor
-@Observable
-final class DeepLinkRouter {
-    var dayID: String?
-    /// Counts days opened from a link or reminder. Sheets that hold no draft close each time,
-    /// so the day doesn't open out of sight beneath them.
-    var linkOpenCount = 0
-}
-
-/// UNUserNotificationCenter delegate — routes a tapped reminder to its day, and lets
-/// reminders surface as a banner while the app is in the foreground.
-final class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
-    private let router: DeepLinkRouter
-    init(router: DeepLinkRouter) { self.router = router; super.init() }
-
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification) async
-        -> UNNotificationPresentationOptions {
-        await NotificationManager.shared.refresh()
-        return [.banner, .sound]
-    }
-
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                didReceive response: UNNotificationResponse) async {
-        guard let id = response.notification.request.content.userInfo["dayID"] as? String else { return }
-        let router = router
-        await MainActor.run { router.dayID = id }
-    }
-}
-
 @MainActor
 @Observable
 final class NotificationManager {
