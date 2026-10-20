@@ -40,7 +40,7 @@ struct NotificationsView: View {
                 components.day = 1
                 components.hour = time.hour
                 components.minute = time.minute
-                return CNDate.calendar.date(from: components) ?? Date()
+                return CNDate.calendar.date(from: components) ?? Date.now
             },
             set: { newValue in
                 settings.notificationHour = CNDate.calendar.component(.hour, from: newValue)
@@ -55,7 +55,7 @@ struct NotificationsView: View {
             get: {
                 let components = DateComponents(calendar: CNDate.calendar, year: 2000, month: 1, day: 1,
                                                  hour: settings.greetingHour, minute: settings.greetingMinute)
-                return CNDate.calendar.date(from: components) ?? Date()
+                return CNDate.calendar.date(from: components) ?? Date.now
             },
             set: { newValue in
                 settings.greetingHour = CNDate.calendar.component(.hour, from: newValue)

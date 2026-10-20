@@ -115,7 +115,7 @@ struct DaysRememberApp: App {
         }
         #endif
         while !Task.isCancelled {
-            let now = Date()
+            let now = Date.now
             let next = CNDate.dayStarts(after: now, count: 1).first ?? now.addingTimeInterval(21600)
             do { try await Task.sleep(for: .seconds(max(1, next.timeIntervalSinceNow))) }
             catch { return }
@@ -211,7 +211,7 @@ enum DebugLaunch {
         guard let defaults = UserDefaults(suiteName: name) else {
             preconditionFailure("Unable to create isolated editor test storage")
         }
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        let directory = URL.temporaryDirectory.appending(path: name)
         let day = Day(id: "save-failure-fixture", title: "Save failure fixture", date: Today.date,
                       category: .life, photo: .systemDefault,
                       photoData: Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII="))

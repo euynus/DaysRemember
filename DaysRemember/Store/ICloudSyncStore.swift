@@ -60,7 +60,7 @@ final class ICloudSyncStore {
 
     @discardableResult
     func push<Value: Codable>(_ value: Value, for key: String,
-                              updatedAt: TimeInterval = Date().timeIntervalSinceReferenceDate) -> Bool {
+                              updatedAt: TimeInterval = Date.now.timeIntervalSinceReferenceDate) -> Bool {
         noteLocalWrite(for: key, updatedAt: updatedAt)
 
         let envelope = Envelope(updatedAt: updatedAt, deviceID: deviceID, value: value)

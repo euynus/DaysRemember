@@ -112,9 +112,9 @@ final class NotificationManager {
         let center = UNUserNotificationCenter.current()
         let status = await currentStatus()
         let pending = await center.pendingNotificationRequests()
-        let otherCount = pending.filter { !$0.identifier.hasPrefix("dr.") }.count
+        let otherCount = pending.count { !$0.identifier.hasPrefix("dr.") }
         let plan = Self.canDeliver(status)
-            ? Self.plan(days: days, settings: settings, now: Date(), capacity: Self.pendingLimit - otherCount)
+            ? Self.plan(days: days, settings: settings, now: Date.now, capacity: Self.pendingLimit - otherCount)
             : []
         let wanted = Set(plan.map(\.id))
         let stale = pending
@@ -137,7 +137,7 @@ final class NotificationManager {
         }
         await readPending()
         let actual = Set(pendingReminders.map(\.id))
-        failed.formUnion(plan.filter { $0.date > Date() && !actual.contains($0.id) }.map(\.id))
+        failed.formUnion(plan.filter { $0.date > Date.now && !actual.contains($0.id) }.map(\.id))
         failed.formUnion(actual.subtracting(wanted))
         if !failed.isEmpty {
             lastError = String(localized: "有 \(failed.count) 条提醒未能更新，请重试；页面仅显示系统已安排的提醒。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)

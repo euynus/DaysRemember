@@ -7,7 +7,7 @@ enum SampleData {
         func d(_ y: Int, _ m: Int, _ day: Int) -> Date {
             var c = DateComponents()
             c.year = y; c.month = m; c.day = day
-            return cal.date(from: c) ?? Date()
+            return cal.date(from: c) ?? Date.now
         }
         return [
             Day(id: "wedding", title: "结婚纪念日", date: d(2019,10,12),

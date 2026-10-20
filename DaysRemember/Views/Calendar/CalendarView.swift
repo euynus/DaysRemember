@@ -26,14 +26,14 @@ struct CalendarMonthView: View {
     private var daysInMonth: Int {
         let cal = CNDate.calendar
         var c = DateComponents(); c.year = year; c.month = month + 2; c.day = 0
-        return cal.component(.day, from: cal.date(from: c) ?? Date())
+        return cal.component(.day, from: cal.date(from: c) ?? Date.now)
     }
 
     /// Leading blank cells before the 1st, counted from the user's first weekday.
     private func leadingBlanks(weekStart: Int) -> Int {
         let cal = CNDate.calendar
         var c = DateComponents(); c.year = year; c.month = month + 1; c.day = 1
-        let dt = cal.date(from: c) ?? Date()
+        let dt = cal.date(from: c) ?? Date.now
         return (cal.component(.weekday, from: dt) - weekStart + 7) % 7
     }
 

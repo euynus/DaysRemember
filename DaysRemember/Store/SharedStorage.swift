@@ -18,8 +18,8 @@ enum SharedStorage {
 
     static var photoDirectory: URL {
         let root = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
-            ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return root.appendingPathComponent("DayPhotos", isDirectory: true)
+            ?? URL.applicationSupportDirectory
+        return root.appending(path: "DayPhotos", directoryHint: .isDirectory)
     }
 
     static func loadDays(defaults: UserDefaults = SharedStorage.defaults,

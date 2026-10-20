@@ -143,7 +143,7 @@ enum CloudLibraryRecord: Codable, Equatable {
             try FileManager.default.createDirectory(at: assetDirectory, withIntermediateDirectories: true)
             let url = Self.assetURL(recordName: recordName, revision: revision, directory: assetDirectory)
             // Each revision gets an immutable file while CloudKit may still be reading it.
-            if !FileManager.default.fileExists(atPath: url.path) {
+            if !FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) {
                 try photoData.write(to: url, options: .atomic)
             }
             record["photo"] = CKAsset(fileURL: url)
@@ -205,11 +205,11 @@ enum CloudLibraryRecord: Codable, Equatable {
     }
 
     static func assetURL(recordName: String, revision: String, directory: URL) -> URL {
-        directory.appendingPathComponent(recordName + "." + digest(Data(revision.utf8)))
+        directory.appending(path: recordName + "." + digest(Data(revision.utf8)))
     }
 
     static func removeUnusedAssets(in directory: URL, keeping referenced: Set<URL>) throws {
-        guard FileManager.default.fileExists(atPath: directory.path) else { return }
+        guard FileManager.default.fileExists(atPath: directory.path(percentEncoded: false)) else { return }
         for url in try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.isRegularFileKey]) {
             guard url.lastPathComponent.hasPrefix("LibraryDay."), !referenced.contains(url),
                   try url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else { continue }
@@ -431,7 +431,7 @@ struct CloudLibraryState: Codable {
 
     func write(to url: URL, photoFiles: PhotoFileStore? = nil) throws {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appendingPathComponent("Photos"))
+        let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appending(path: "Photos", directoryHint: .isDirectory))
         var checkpoint = self
         checkpoint.version = 2
         let data = try files.encoder().encode(checkpoint)
@@ -441,8 +441,8 @@ struct CloudLibraryState: Codable {
     }
 
     static func read(from url: URL, photoFiles: PhotoFileStore? = nil) throws -> CloudLibraryState {
-        guard FileManager.default.fileExists(atPath: url.path) else { return CloudLibraryState() }
-        let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appendingPathComponent("Photos"))
+        guard FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) else { return CloudLibraryState() }
+        let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appending(path: "Photos", directoryHint: .isDirectory))
         let state = try files.decoder().decode(Self.self, from: Data(contentsOf: url))
         guard (1...2).contains(state.version) else { throw CloudLibraryRecord.RecordError.corruptState }
         for (name, entry) in state.records {

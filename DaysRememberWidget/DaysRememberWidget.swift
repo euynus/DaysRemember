@@ -39,19 +39,19 @@ struct DaysEntry: TimelineEntry {
 
 struct DaysProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> DaysEntry {
-        DaysEntry(date: Date(), day: WidgetDay.gallerySample)
+        DaysEntry(date: Date.now, day: WidgetDay.gallerySample)
     }
 
     func snapshot(for configuration: SelectWidgetDay, in context: Context) async -> DaysEntry {
         var photos = PhotoLoader(library: SharedStorage.loadLibrary(), family: context.family)
         let entry = makeEntry(configuration: configuration, photos: &photos,
-                              categories: SharedStorage.loadCategories(), asOf: Date())
+                              categories: SharedStorage.loadCategories(), asOf: Date.now)
         return context.isPreview && configuration.day == nil && entry.day == nil
             ? placeholder(in: context) : entry
     }
 
     func timeline(for configuration: SelectWidgetDay, in context: Context) async -> Timeline<DaysEntry> {
-        let now = Date()
+        let now = Date.now
         var photos = PhotoLoader(library: SharedStorage.loadLibrary(), family: context.family)
         let categories = SharedStorage.loadCategories()
         let entries = ([now] + CNDate.dayStarts(after: now, count: 7)).map {

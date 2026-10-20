@@ -69,21 +69,21 @@ final class PhotoFileStore: Sendable {
 
     func reference(for data: Data, id: String, repairCorruptFiles: Bool = false) throws -> String {
         if let entry = cached.withLock({ $0[id] }), entry.data == data,
-           (try? FileStamp(url: directory.appendingPathComponent(entry.reference))) == entry.stamp {
+           (try? FileStamp(url: directory.appending(path: entry.reference))) == entry.stamp {
             return entry.reference
         }
         let reference = Self.digest(data) + ".photo"
-        let url = directory.appendingPathComponent(reference)
+        let url = directory.appending(path: reference)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        if FileManager.default.fileExists(atPath: url.path) {
+        if FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) {
             let stamp = try FileStamp(url: url)
             let existing = try Data(contentsOf: url)
             guard try FileStamp(url: url) == stamp else { throw CocoaError(.fileReadCorruptFile) }
             if existing != data {
                 guard repairCorruptFiles else { throw CocoaError(.fileReadCorruptFile) }
-                let retained = directory.appendingPathComponent("Unreadable", isDirectory: true)
+                let retained = directory.appending(path: "Unreadable", directoryHint: .isDirectory)
                 try FileManager.default.createDirectory(at: retained, withIntermediateDirectories: true)
-                try existing.write(to: retained.appendingPathComponent(UUID().uuidString + ".photo"), options: .atomic)
+                try existing.write(to: retained.appending(path: UUID().uuidString + ".photo"), options: .atomic)
                 try data.write(to: url, options: .atomic)
                 _ = try self.data(for: reference, id: id)
             } else {
@@ -102,7 +102,7 @@ final class PhotoFileStore: Sendable {
 
     func data(for reference: String, id: String) throws -> Data {
         guard Self.isValidReference(reference) else { throw CocoaError(.fileReadCorruptFile) }
-        let url = directory.appendingPathComponent(reference)
+        let url = directory.appending(path: reference)
         let stamp = try FileStamp(url: url)
         let data = try Data(contentsOf: url)
         guard Self.digest(data) + ".photo" == reference else { throw CocoaError(.fileReadCorruptFile) }
@@ -119,7 +119,7 @@ final class PhotoFileStore: Sendable {
             Self.collectReferences(in: try JSONSerialization.jsonObject(with: document, options: .fragmentsAllowed),
                                    into: &referenced)
         }
-        guard FileManager.default.fileExists(atPath: directory.path) else { return }
+        guard FileManager.default.fileExists(atPath: directory.path(percentEncoded: false)) else { return }
         for url in try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) {
             let reference = url.lastPathComponent
             guard Self.isValidReference(reference), !referenced.contains(reference) else { continue }
@@ -139,13 +139,13 @@ final class PhotoFileStore: Sendable {
     }
 
     func originalFiles() throws -> [String: Data] {
-        guard FileManager.default.fileExists(atPath: directory.path) else { return [:] }
+        guard FileManager.default.fileExists(atPath: directory.path(percentEncoded: false)) else { return [:] }
         let files = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
         var original = try Dictionary(uniqueKeysWithValues: files.filter { Self.isValidReference($0.lastPathComponent) }.map {
             ("photos/" + $0.lastPathComponent, try Data(contentsOf: $0))
         })
-        let retained = directory.appendingPathComponent("Unreadable", isDirectory: true)
-        if FileManager.default.fileExists(atPath: retained.path) {
+        let retained = directory.appending(path: "Unreadable", directoryHint: .isDirectory)
+        if FileManager.default.fileExists(atPath: retained.path(percentEncoded: false)) {
             for file in try FileManager.default.contentsOfDirectory(at: retained, includingPropertiesForKeys: nil)
                 where file.pathExtension == "photo" {
                 original["photos/unreadable/" + file.lastPathComponent] = try Data(contentsOf: file)

@@ -8,7 +8,7 @@ struct DeletedDay: Codable, Identifiable, Equatable {
 
 struct SyncConflict: Codable, Identifiable, Equatable {
     var id = UUID().uuidString
-    var createdAt = Date()
+    var createdAt = Date.now
     var record: CloudLibraryRecord
 }
 
@@ -16,13 +16,13 @@ struct DayBackup: Codable {
     static let maximumBytes = 100 * 1024 * 1024
 
     var version = 2
-    var createdAt = Date()
+    var createdAt = Date.now
     var days: [Day]
     var categories: [CategoryDefinition]
     var deletedDays: [DeletedDay]
     var syncConflicts: [SyncConflict]
 
-    init(version: Int = 2, createdAt: Date = Date(), days: [Day],
+    init(version: Int = 2, createdAt: Date = Date.now, days: [Day],
          categories: [CategoryDefinition], deletedDays: [DeletedDay],
          syncConflicts: [SyncConflict] = []) {
         self.version = version

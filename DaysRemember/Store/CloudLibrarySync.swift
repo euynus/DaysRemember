@@ -97,18 +97,18 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     @ObservationIgnored private var startTask: Task<Void, Never>?
     @ObservationIgnored private var inFlightAssets: [ObjectIdentifier: Set<URL>] = [:]
 
-    private var assetDirectory: URL { stateURL.deletingLastPathComponent().appendingPathComponent("Assets") }
+    private var assetDirectory: URL { stateURL.deletingLastPathComponent().appending(path: "Assets", directoryHint: .isDirectory) }
 
     init(containerIdentifier: String = "iCloud.com.shiguang.daysremember", stateURL: URL? = nil) {
         self.containerIdentifier = containerIdentifier
-        self.stateURL = stateURL ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("CloudLibrarySync", isDirectory: true)
-            .appendingPathComponent(containerIdentifier, isDirectory: true)
-            .appendingPathComponent("state-v2.json")
-        self.photoFiles = PhotoFileStore(directory: self.stateURL.deletingLastPathComponent().appendingPathComponent("Photos"))
+        self.stateURL = stateURL ?? URL.applicationSupportDirectory
+            .appending(path: "CloudLibrarySync", directoryHint: .isDirectory)
+            .appending(path: containerIdentifier, directoryHint: .isDirectory)
+            .appending(path: "state-v2.json")
+        self.photoFiles = PhotoFileStore(directory: self.stateURL.deletingLastPathComponent().appending(path: "Photos", directoryHint: .isDirectory))
         do {
-            let legacyURL = self.stateURL.deletingLastPathComponent().appendingPathComponent("state-v1.json")
-            let readURL = stateURL == nil && !FileManager.default.fileExists(atPath: self.stateURL.path)
+            let legacyURL = self.stateURL.deletingLastPathComponent().appending(path: "state-v1.json")
+            let readURL = stateURL == nil && !FileManager.default.fileExists(atPath: self.stateURL.path(percentEncoded: false))
                 ? legacyURL : self.stateURL
             state = try CloudLibraryState.read(from: readURL, photoFiles: photoFiles)
             lastFetchedAt = state.lastFetchedAt
@@ -193,7 +193,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                   !storageFailed, !problemHoldsStatus else { return }
             canSend = true
             state.hasFetched = true
-            state.lastFetchedAt = Date()
+            state.lastFetchedAt = Date.now
             guard persist() else { return }
             enqueuePendingChanges()
             try await engine.sendChanges(.init(scope: .zoneIDs([CloudLibraryRecord.zoneID])))
@@ -382,7 +382,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         }
         state.hasFetched = true
         state.zoneExists = true
-        state.lastFetchedAt = Date()
+        state.lastFetchedAt = Date.now
         canSend = true
         clearRetriedError()
         guard persist() else { return }
@@ -496,7 +496,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 }
                 for record in event.savedRecords { try state.acknowledgeSave(record) }
                 for id in event.deletedRecordIDs { state.acknowledgeDeletion(id) }
-                if !event.savedRecords.isEmpty || !event.deletedRecordIDs.isEmpty { state.lastSentAt = Date() }
+                if !event.savedRecords.isEmpty || !event.deletedRecordIDs.isEmpty { state.lastSentAt = Date.now }
                 var failed = false
                 for failure in event.failedRecordSaves {
                     if failure.error.code == .serverRecordChanged, let server = failure.error.serverRecord {
