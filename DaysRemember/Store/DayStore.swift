@@ -235,7 +235,10 @@ final class DayStore {
     /// together (the date and its calendar, a photo and its framing, a category and its label, the
     /// reminders and their time) move as one group; `conflicted` is true when both sides changed a
     /// group differently, and there the edit wins.
-    static func merging(_ edit: Day, from base: Day, onto current: Day) -> (day: Day, conflicted: Bool) {
+    ///
+    /// Nonisolated, as it reads no store state: Swift 6.2 rejects the nested `group` capturing its
+    /// closures in a Release build when the merge is main-actor isolated.
+    nonisolated static func merging(_ edit: Day, from base: Day, onto current: Day) -> (day: Day, conflicted: Bool) {
         var merged = current
         var conflicted = false
         func group(_ same: (Day, Day) -> Bool, _ copy: (inout Day, Day) -> Void) {
