@@ -32,8 +32,17 @@ struct CloudLibraryState: Codable {
     var lastFetchedAt: Date?
     var lastSentAt: Date?
     var pendingRemoteUpdate = CloudLibraryUpdate()
+    /// Optional, so a checkpoint written before it existed still decodes.
+    private var unreadableRecords: [String: String]?
 
     var hasPendingChanges: Bool { records.values.contains(where: \.dirty) }
+
+    /// Fetched records this app version couldn't read, by record name, with the version that tried.
+    /// Set aside, they can't stop the rest of the library syncing; see `receiveIfReadable`.
+    var unreadable: [String: String] {
+        get { unreadableRecords ?? [:] }
+        set { unreadableRecords = newValue.isEmpty ? nil : newValue }
+    }
 
     mutating func updateLocal(days: [Day], categories: [CategoryDefinition], inferDeletions: Bool) throws {
         let values = days.map(CloudLibraryRecord.day) + categories.map(CloudLibraryRecord.category)
@@ -83,9 +92,37 @@ struct CloudLibraryState: Codable {
         records[name] = entry
     }
 
+    /// Receives a server record, setting aside one this version can't read (a newer schema, value
+    /// or record type) instead of throwing: a failed batch never advances the change token, so the
+    /// same record would stop every later sync too. Its entry keeps the version it was based on,
+    /// and a local edit to it waits unsent rather than overwriting what it can't read.
+    mutating func receiveIfReadable(_ record: CKRecord, forceServer: Bool = false, appVersion: String) throws {
+        let name = record.recordID.recordName
+        do {
+            try receive(record, forceServer: forceServer)
+            unreadable[name] = nil
+        } catch let error as CloudLibraryRecord.RecordError where error == .missingPhoto {
+            // Still downloading: fetching it again can read it.
+            throw error
+        } catch {
+            unreadable[name] = appVersion
+        }
+    }
+
+    /// After an update, records an earlier version set aside may be readable: forgetting the change
+    /// token makes the next engine fetch the whole zone again. Only call it with no engine running,
+    /// whose next state update would restore the token.
+    mutating func retryUnreadable(appVersion: String) -> Bool {
+        guard unreadable.values.contains(where: { $0 != appVersion }) else { return false }
+        unreadable = unreadable.mapValues { _ in appVersion }
+        engineState = nil
+        return true
+    }
+
     mutating func receiveDeletion(_ recordID: CKRecord.ID) {
-        guard recordID.zoneID == CloudLibraryRecord.zoneID,
-              var entry = records[recordID.recordName] else { return }
+        guard recordID.zoneID == CloudLibraryRecord.zoneID else { return }
+        unreadable[recordID.recordName] = nil
+        guard var entry = records[recordID.recordName] else { return }
         pendingRemoteUpdate.recover(entry.value)
         pendingRemoteUpdate.delete(id: entry.id, recordType: entry.recordType)
         entry.value = nil
@@ -110,6 +147,7 @@ struct CloudLibraryState: Codable {
     }
 
     mutating func acknowledgeDeletion(_ id: CKRecord.ID) {
+        unreadable[id.recordName] = nil
         guard var entry = records[id.recordName] else { return }
         entry.systemFields = nil
         entry.serverFingerprint = nil
@@ -139,7 +177,8 @@ struct CloudLibraryState: Codable {
     /// The records to send for `changes`, each marked with what was sent. One with more text than a
     /// CloudKit record holds stays pending and comes back in `tooLarge`, so it can't hold back the rest.
     /// Up to `limit` records to send, taken from `changes` in order. Changes that can't be sent (too
-    /// large, or no longer dirty) are passed over rather than counted, so they never hold back the rest.
+    /// large, no longer dirty, or an edit to a record set aside as unreadable) are passed over rather
+    /// than counted, so they never hold back the rest. Deleting an unreadable record is still sent.
     mutating func prepareBatch(_ changes: [CKSyncEngine.PendingRecordZoneChange], limit: Int = 100,
                                assetDirectory: URL) throws
         -> (saves: [CKRecord], deletions: [CKRecord.ID], tooLarge: [CloudLibraryRecord]) {
@@ -150,7 +189,8 @@ struct CloudLibraryState: Codable {
             guard saves.count + deletions.count < limit else { break }
             switch change {
             case .saveRecord(let id):
-                guard var entry = records[id.recordName], entry.dirty, let value = entry.value else { continue }
+                guard var entry = records[id.recordName], entry.dirty, let value = entry.value,
+                      unreadable[id.recordName] == nil else { continue }
                 let record: CKRecord
                 do {
                     record = try value.makeRecord(systemFields: entry.systemFields, revision: entry.revision,
@@ -201,6 +241,7 @@ struct CloudLibraryState: Codable {
         zoneWasDeleted = false
         lastFetchedAt = nil
         lastSentAt = nil
+        unreadable = [:]
         for name in records.keys {
             records[name]?.systemFields = nil
             records[name]?.serverFingerprint = nil

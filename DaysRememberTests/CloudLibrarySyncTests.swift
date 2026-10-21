@@ -20,6 +20,23 @@ final class CloudLibrarySyncTests: XCTestCase {
         try CloudLibraryRecord.day(day).makeRecord(systemFields: nil, revision: revision, assetDirectory: directory)
     }
 
+    /// A record as a newer version might write it, with a cover this version doesn't know.
+    private func recordWithUnknownCover(_ day: Day, directory: URL) throws -> CKRecord {
+        let record = try record(day, directory: directory)
+        let payload = try XCTUnwrap(record["payload"] as? Data)
+        var fields = try XCTUnwrap(JSONSerialization.jsonObject(with: payload) as? [String: Any])
+        fields["photo"] = "aurora"
+        record["payload"] = try JSONSerialization.data(withJSONObject: fields) as NSData
+        XCTAssertThrowsError(try CloudLibraryRecord.decode(record))
+        return record
+    }
+
+    private func futureSchemaRecord(_ day: Day, directory: URL) throws -> CKRecord {
+        let record = try record(day, directory: directory)
+        record["schemaVersion"] = 2 as NSNumber
+        return record
+    }
+
     func testPhotoLargerThanKVSUsesAssetAndRoundTripsAllDayFields() throws {
         try withDirectory { directory in
             var original = day(photo: Data(repeating: 0xA5, count: 2_000_000))
@@ -460,6 +477,129 @@ final class CloudLibrarySyncTests: XCTestCase {
             XCTAssertFalse(FileManager.default.fileExists(atPath: sentURL.path))
             XCTAssertTrue(FileManager.default.fileExists(atPath: dirtyURL.path))
             XCTAssertTrue(FileManager.default.fileExists(atPath: uploadingURL.path))
+        }
+    }
+
+    /// A record this version can't read, from a newer schema or with a value it doesn't know, is set
+    /// aside rather than failing its batch, which would keep the change token from ever advancing.
+    func testUnreadableRecordsAreSetAsideWhileTheRestArrive() throws {
+        try withDirectory { directory in
+            let known = day("known", title: "Known")
+            let knownName = CloudLibraryRecord.day(known).recordName
+            var state = CloudLibraryState()
+            try state.receive(record(known, directory: directory))
+            state.acknowledgeRemoteUpdate()
+
+            let future = try futureSchemaRecord(day("future"), directory: directory)
+            let readable = day("readable", title: "Readable")
+            for fetched in [try recordWithUnknownCover(day("known", title: "Newer"), directory: directory),
+                            future, try record(readable, directory: directory)] {
+                try state.receiveIfReadable(fetched, appVersion: "1.0 (376)")
+            }
+
+            XCTAssertEqual(state.pendingRemoteUpdate.upsertedDays, [readable])
+            XCTAssertTrue(state.pendingRemoteUpdate.recoveryDays.isEmpty)
+            // The known day keeps the version it was based on.
+            XCTAssertEqual(state.records[knownName]?.value, .day(known))
+            XCTAssertEqual(state.records[knownName]?.serverFingerprint, try CloudLibraryRecord.day(known).fingerprint())
+            XCTAssertNil(state.records[future.recordID.recordName])
+            XCTAssertEqual(state.unreadable, [knownName: "1.0 (376)", future.recordID.recordName: "1.0 (376)"])
+        }
+    }
+
+    /// A photo that hasn't finished downloading still fails the batch, so the next fetch reads it.
+    func testPhotoStillDownloadingIsNotSetAside() throws {
+        try withDirectory { directory in
+            let downloading = try record(day(photo: Data([1, 2, 3])), directory: directory)
+            downloading["photo"] = nil
+            var state = CloudLibraryState()
+            XCTAssertThrowsError(try state.receiveIfReadable(downloading, appVersion: "1.0 (376)"))
+            XCTAssertTrue(state.unreadable.isEmpty)
+        }
+    }
+
+    /// An edit isn't sent over a version this one can't read, even once a refused save hands that
+    /// version back; deleting the day is still sent, as the user asked.
+    func testEditToAnUnreadableRecordWaitsUnsent() throws {
+        try withDirectory { directory in
+            let edited = day("known", title: "Edited here")
+            let id = CloudLibraryRecord.day(edited).recordID
+            var state = CloudLibraryState()
+            try state.receive(record(day("known", title: "Known"), directory: directory))
+            state.acknowledgeRemoteUpdate()
+            try state.updateLocal(days: [edited], categories: [], inferDeletions: true)
+            XCTAssertEqual(try state.prepareBatch([.saveRecord(id)], assetDirectory: directory).saves.count, 1)
+
+            try state.receiveIfReadable(recordWithUnknownCover(day("known", title: "Newer"), directory: directory),
+                                        forceServer: true, appVersion: "1.0 (376)")
+            XCTAssertEqual(state.records[id.recordName]?.value, .day(edited))
+            XCTAssertTrue(state.records[id.recordName]?.dirty == true)
+            XCTAssertTrue(try state.prepareBatch([.saveRecord(id)], assetDirectory: directory).saves.isEmpty)
+
+            try state.updateLocal(days: [], categories: [], inferDeletions: true)
+            XCTAssertEqual(try state.prepareBatch([.deleteRecord(id)], assetDirectory: directory).deletions, [id])
+            state.acknowledgeDeletion(id)
+            XCTAssertTrue(state.unreadable.isEmpty)
+        }
+    }
+
+    /// A record set aside that is then deleted remotely no longer counts, though this device never
+    /// read it.
+    func testRemoteDeletionClearsAnUnreadableRecord() throws {
+        try withDirectory { directory in
+            let future = try futureSchemaRecord(day("future"), directory: directory)
+            var state = CloudLibraryState()
+            try state.receiveIfReadable(future, appVersion: "1.0 (376)")
+            state.receiveDeletion(future.recordID)
+            XCTAssertTrue(state.unreadable.isEmpty)
+            XCTAssertTrue(state.pendingRemoteUpdate.isEmpty)
+        }
+    }
+
+    /// The first engine of an updated app fetches the whole zone again, once, so records an earlier
+    /// version set aside are read by one that may understand them.
+    func testAnUpdateFetchesUnreadableRecordsAgain() throws {
+        try withDirectory { directory in
+            let newer = try recordWithUnknownCover(day("known"), directory: directory)
+            var state = CloudLibraryState()
+            try state.receiveIfReadable(newer, appVersion: "1.0 (376)")
+            XCTAssertFalse(state.retryUnreadable(appVersion: "1.0 (376)"))
+
+            let url = directory.appendingPathComponent("state.json")
+            try state.write(to: url)
+            state = try CloudLibraryState.read(from: url)
+            XCTAssertEqual(state.unreadable, [newer.recordID.recordName: "1.0 (376)"])
+            XCTAssertTrue(state.retryUnreadable(appVersion: "1.1 (400)"))
+            XCTAssertFalse(state.retryUnreadable(appVersion: "1.1 (400)"))
+
+            // Still unreadable: set aside again, without fetching everything on every launch.
+            try state.receiveIfReadable(newer, appVersion: "1.1 (400)")
+            XCTAssertFalse(state.retryUnreadable(appVersion: "1.1 (400)"))
+            try state.receiveIfReadable(record(day("known"), directory: directory), appVersion: "1.1 (400)")
+            XCTAssertTrue(state.unreadable.isEmpty)
+            XCTAssertEqual(state.pendingRemoteUpdate.upsertedDays, [day("known")])
+        }
+    }
+
+    /// 数据与同步 counts the records set aside, in the app's language.
+    func testUnreadableRecordsAreCountedInTheAppsLanguage() throws {
+        try withDirectory { directory in
+            var state = CloudLibraryState()
+            for id in ["first", "second"] {
+                try state.receiveIfReadable(futureSchemaRecord(day(id), directory: directory), appVersion: "1.0 (376)")
+            }
+            let url = directory.appendingPathComponent("state.json")
+            try state.write(to: url)
+            XCTAssertNil(CloudLibrarySync(stateURL: directory.appendingPathComponent("empty.json")).unreadableMessage)
+            let sync = CloudLibrarySync(stateURL: url, appVersion: "1.0 (376)")
+            XCTAssertEqual(sync.unreadableCount, 2)
+            try withLanguage("en") {
+                XCTAssertEqual(sync.unreadableMessage, "2 iCloud records can’t be read by this version and may come from a newer version of Days Remember. They will be read again after you update the app; everything else keeps syncing.")
+            }
+            try withLanguage("zh-Hant") {
+                let message = try XCTUnwrap(sync.unreadableMessage)
+                XCTAssertTrue(message.hasPrefix("有 2 筆 iCloud 記錄"), message)
+            }
         }
     }
 

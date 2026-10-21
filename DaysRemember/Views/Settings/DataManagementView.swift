@@ -79,6 +79,9 @@ struct DataManagementView: View {
                 if let error = cloud.errorMessage {
                     Text(error).foregroundStyle(Theme.accent)
                 }
+                if let notice = cloud.unreadableMessage {
+                    Text(notice).foregroundStyle(Theme.accent)
+                }
                 if let date = cloud.lastSentAt {
                     LabeledContent("最近发送") { Text(date, format: .dateTime.month().day().hour().minute()) }
                 }

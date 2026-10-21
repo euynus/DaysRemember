@@ -62,6 +62,20 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
     private(set) var lastFetchedAt: Date?
     private(set) var lastSentAt: Date?
+    /// Fetched records this version set aside as unreadable; a notice, since everything else syncs.
+    private(set) var unreadableCount = 0
+
+    var unreadableMessage: String? {
+        guard unreadableCount > 0 else { return nil }
+        return String(localized: "有 \(unreadableCount) 条 iCloud 记录无法在此版本中读取，可能来自更新版本的「时光」。更新 App 后会重新读取，其他内容照常同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+    }
+
+    /// Names this build, so records it set aside as unreadable are fetched again after an update.
+    /// Debug builds all carry build number 1, so only archived builds tell one another apart.
+    nonisolated static var bundleVersion: String {
+        let info = Bundle.main.infoDictionary
+        return "\(info?["CFBundleShortVersionString"] as? String ?? "") (\(info?["CFBundleVersion"] as? String ?? ""))"
+    }
 
     var isSyncing: Bool { status == .checkingAccount || status == .syncing }
 
@@ -81,6 +95,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
 
     @ObservationIgnored private let containerIdentifier: String
+    @ObservationIgnored private let appVersion: String
     @ObservationIgnored private let stateURL: URL
     @ObservationIgnored private let photoFiles: PhotoFileStore
     @ObservationIgnored private var state = CloudLibraryState()
@@ -100,8 +115,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     private var assetDirectory: URL { stateURL.deletingLastPathComponent().appending(path: "Assets", directoryHint: .isDirectory) }
 
-    init(containerIdentifier: String = "iCloud.com.shiguang.daysremember", stateURL: URL? = nil) {
+    init(containerIdentifier: String = "iCloud.com.shiguang.daysremember", stateURL: URL? = nil,
+         appVersion: String = CloudLibrarySync.bundleVersion) {
         self.containerIdentifier = containerIdentifier
+        self.appVersion = appVersion
         self.stateURL = stateURL ?? URL.applicationSupportDirectory
             .appending(path: "CloudLibrarySync", directoryHint: .isDirectory)
             .appending(path: containerIdentifier, directoryHint: .isDirectory)
@@ -114,6 +131,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             state = try CloudLibraryState.read(from: readURL, photoFiles: photoFiles)
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
+            unreadableCount = state.unreadable.count
             if state.accountChangePending { showAccountChange() }
             else if state.zoneWasDeleted { showDeletedZone() }
         } catch {
@@ -255,6 +273,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
 
     private func makeEngine(in container: CKContainer) -> CKSyncEngine {
+        // Before the engine exists, since its first state update would restore the token.
+        if state.retryUnreadable(appVersion: appVersion) { _ = persist() }
         var configuration = CKSyncEngine.Configuration(database: container.privateCloudDatabase,
                                                        stateSerialization: state.engineState, delegate: self)
         configuration.automaticallySync = true
@@ -285,7 +305,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: CloudLibraryRecord.zoneID))])
         }
         let pending: [CKSyncEngine.PendingRecordZoneChange] = state.records.compactMap { name, entry in
-            guard entry.dirty else { return nil }
+            // An edit to a record set aside as unreadable waits for a version that can read it.
+            guard entry.dirty, entry.value == nil || state.unreadable[name] == nil else { return nil }
             let id = CKRecord.ID(recordName: name, zoneID: CloudLibraryRecord.zoneID)
             return entry.value == nil ? .deleteRecord(id) : .saveRecord(id)
         }
@@ -300,6 +321,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             try state.write(to: stateURL, photoFiles: photoFiles)
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
+            unreadableCount = state.unreadable.count
             return true
         } catch {
             storageFailed = true
@@ -480,7 +502,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             case .fetchedRecordZoneChanges(let event):
                 var candidate = state
                 for modification in event.modifications where modification.record.recordID.zoneID == CloudLibraryRecord.zoneID {
-                    try candidate.receive(modification.record)
+                    try candidate.receiveIfReadable(modification.record, appVersion: appVersion)
                 }
                 for deletion in event.deletions { candidate.receiveDeletion(deletion.recordID) }
                 state = candidate
@@ -501,7 +523,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 var failed = false
                 for failure in event.failedRecordSaves {
                     if failure.error.code == .serverRecordChanged, let server = failure.error.serverRecord {
-                        try state.receive(server, forceServer: true)
+                        try state.receiveIfReadable(server, forceServer: true, appVersion: appVersion)
                     } else if failure.error.code == .unknownItem {
                         state.receiveDeletion(failure.record.recordID)
                     } else {

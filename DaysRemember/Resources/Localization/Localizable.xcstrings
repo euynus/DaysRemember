@@ -7026,6 +7026,41 @@
         }
       }
     },
+    "有 %lld 条 iCloud 记录无法在此版本中读取，可能来自更新版本的「时光」。更新 App 后会重新读取，其他内容照常同步。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld iCloud record can’t be read by this version and may come from a newer version of Days Remember. It will be read again after you update the app; everything else keeps syncing."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld iCloud records can’t be read by this version and may come from a newer version of Days Remember. They will be read again after you update the app; everything else keeps syncing."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有 %lld 条 iCloud 记录无法在此版本中读取，可能来自更新版本的「时光」。更新 App 后会重新读取，其他内容照常同步。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有 %lld 筆 iCloud 記錄無法在此版本中讀取，可能來自較新版本的「時光」。更新 App 後會重新讀取，其他內容照常同步。"
+          }
+        }
+      }
+    },
     "有 %lld 条提醒未能更新，请重试；页面仅显示系统已安排的提醒。" : {
       "extractionState" : "manual",
       "localizations" : {
