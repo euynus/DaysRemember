@@ -70,6 +70,42 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         return String(localized: "有 \(unreadableCount) 条 iCloud 记录无法在此版本中读取，可能来自更新版本的「时光」。更新 App 后会重新读取，其他内容照常同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
+    /// Days iCloud holds that the library came up without at launch. Their deletions wait for the
+    /// user (`restoreMissing` or `confirmMissingDeletions`); everything else keeps syncing.
+    private(set) var missingDayCount = 0
+
+    var missingMessage: String? {
+        guard missingDayCount > 0 else { return nil }
+        return String(localized: "这台设备缺少 \(missingDayCount) 个已同步到 iCloud 的日子。为防误删，删除暂未同步到其他设备。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+    }
+
+    /// The sync checkpoint couldn't be read; `resetUnreadableCheckpoint` starts from an empty one.
+    private(set) var checkpointUnreadable = false
+
+    /// A word or two for the 数据与同步 row while sync needs the user; nil while all is well.
+    var attentionSummary: String? {
+        if missingDayCount > 0 || checkpointUnreadable {
+            return String(localized: "需要处理", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        }
+        switch status {
+        case .accountChanged, .zoneDeleted:
+            return String(localized: "同步已暂停", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .accountUnavailable:
+            return String(localized: "iCloud 不可用", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .failed, .configurationError:
+            // Simulator builds never sync; that isn't something to fix.
+            if case .other(let error) = problem, error is ConfigurationError { return nil }
+            return String(localized: "同步未完成", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        default:
+            return nil
+        }
+    }
+
+    /// Whether a first download from iCloud may still bring days, so an empty library isn't final yet.
+    var isFirstDownloadPending: Bool {
+        started && !state.hasFetched && (status == .idle || isSyncing)
+    }
+
     /// Names this build, so records it set aside as unreadable are fetched again after an update.
     /// Debug builds all carry build number 1, so only archived builds tell one another apart.
     nonisolated static var bundleVersion: String {
@@ -103,6 +139,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     @ObservationIgnored private var engine: CKSyncEngine?
     @ObservationIgnored private var onRemoteChange: ((CloudLibraryUpdate) throws -> Void)?
     @ObservationIgnored private var started = false
+    @ObservationIgnored private var missingRecords: [String] = []
+    /// The latest local snapshot while deletions are held, for `confirmMissingDeletions`.
+    @ObservationIgnored private var heldLocal: (days: [Day], categories: [CategoryDefinition])?
+    @ObservationIgnored private var checkpointURL: URL
     @ObservationIgnored private var storageFailed = false
     @ObservationIgnored private var localSnapshotKnown = false
     @ObservationIgnored private var canSend = false
@@ -124,11 +164,11 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             .appending(path: containerIdentifier, directoryHint: .isDirectory)
             .appending(path: "state-v2.json")
         self.photoFiles = PhotoFileStore(directory: self.stateURL.deletingLastPathComponent().appending(path: "Photos", directoryHint: .isDirectory))
+        let legacyURL = self.stateURL.deletingLastPathComponent().appending(path: "state-v1.json")
+        checkpointURL = stateURL == nil && !FileManager.default.fileExists(atPath: self.stateURL.path(percentEncoded: false))
+            ? legacyURL : self.stateURL
         do {
-            let legacyURL = self.stateURL.deletingLastPathComponent().appending(path: "state-v1.json")
-            let readURL = stateURL == nil && !FileManager.default.fileExists(atPath: self.stateURL.path(percentEncoded: false))
-                ? legacyURL : self.stateURL
-            state = try CloudLibraryState.read(from: readURL, photoFiles: photoFiles)
+            state = try CloudLibraryState.read(from: checkpointURL, photoFiles: photoFiles)
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             unreadableCount = state.unreadable.count
@@ -136,9 +176,26 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             else if state.zoneWasDeleted { showDeletedZone() }
         } catch {
             storageFailed = true
+            checkpointUnreadable = true
             status = .failed
             problem = .other(CloudLibraryRecord.RecordError.corruptState)
         }
+    }
+
+    /// Sets an unreadable checkpoint aside and starts from an empty one; call `start` again after.
+    /// The next sync compares every record with iCloud again, keeping the versions it replaces.
+    func resetUnreadableCheckpoint() throws {
+        guard checkpointUnreadable else { return }
+        let aside = checkpointURL.deletingPathExtension().appendingPathExtension("unreadable.json")
+        try? FileManager.default.removeItem(at: aside)
+        try FileManager.default.moveItem(at: checkpointURL, to: aside)
+        checkpointURL = stateURL
+        state = CloudLibraryState()
+        storageFailed = false
+        checkpointUnreadable = false
+        localSnapshotKnown = false
+        problem = nil
+        status = .idle
     }
 
     /// Throw if recovery values or remote changes cannot be durably saved by ID.
@@ -158,6 +215,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             categories = categories.filter { !replacedCategories.contains($0.id) } + update.upsertedCategories
             guard deliverRemoteUpdate() else { return }
         }
+        if state.hasFetched {
+            missingRecords = state.missingMost(days: days, categories: categories)
+            heldLocal = missingRecords.isEmpty ? nil : (days, categories)
+        }
         updateLocal(days: days, categories: categories)
         guard !wasStarted else { return }
         startTask = Task { [weak self] in await self?.syncNow() }
@@ -166,13 +227,54 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     func updateLocal(days: [Day], categories: [CategoryDefinition]) {
         guard !storageFailed else { return }
         do {
+            if !missingRecords.isEmpty {
+                heldLocal = (days, categories)
+                let names = Set(days.map { CloudLibraryRecord.day($0).recordName }
+                                + categories.map { CloudLibraryRecord.category($0).recordName })
+                missingRecords.removeAll { names.contains($0) || state.records[$0]?.value == nil }
+            }
+            refreshMissingCount()
             try state.updateLocal(days: days, categories: categories,
-                                  inferDeletions: localSnapshotKnown || state.hasFetched)
+                                  inferDeletions: localSnapshotKnown || state.hasFetched, keeping: Set(missingRecords))
             localSnapshotKnown = true
             guard persist() else { return }
             enqueuePendingChanges()
             refreshStatus()
         } catch { fail(error, stop: true) }
+    }
+
+    /// Brings back the days the library came up without, from the copies iCloud holds.
+    func restoreMissing() {
+        guard !missingRecords.isEmpty, !storageFailed else { return }
+        for name in missingRecords {
+            if let value = state.records[name]?.value { state.pendingRemoteUpdate.upsert(value) }
+        }
+        missingRecords = []
+        heldLocal = nil
+        refreshMissingCount()
+        guard persist(), deliverRemoteUpdate() else { return }
+        enqueuePendingChanges()
+        refreshStatus()
+    }
+
+    /// Deletes the days the library came up without from iCloud and every device, as the user asked.
+    func confirmMissingDeletions() {
+        guard !missingRecords.isEmpty, let local = heldLocal else { return }
+        missingRecords = []
+        heldLocal = nil
+        updateLocal(days: local.days, categories: local.categories)
+    }
+
+    private func refreshMissingCount() {
+        missingDayCount = missingRecords.count { $0.hasPrefix("LibraryDay.") }
+    }
+
+    /// Starts again after what sync couldn't get past by itself: no iCloud account when it started,
+    /// or a failure that stopped it. A running engine retries and follows pushes on its own.
+    func resumeIfNeeded() async {
+        guard started, engine == nil, !storageFailed,
+              [.idle, .accountUnavailable, .failed].contains(status) else { return }
+        await syncNow()
     }
 
     func syncNow() async {
@@ -525,7 +627,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                     if failure.error.code == .serverRecordChanged, let server = failure.error.serverRecord {
                         try state.receiveIfReadable(server, forceServer: true, appVersion: appVersion)
                     } else if failure.error.code == .unknownItem {
-                        state.receiveDeletion(failure.record.recordID)
+                        state.receiveMissing(failure.record.recordID)
                     } else {
                         fail(failure.error)
                         failed = true

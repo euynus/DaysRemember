@@ -13,11 +13,26 @@ struct CloudLibraryState: Codable {
         var serverFingerprint: String?
         var sentRevision: String?
         var sentFingerprint: String?
+        /// The server's version as last seen (`serverFingerprint` names it), which a local edit
+        /// is merged from when the server changes underneath it. Nil in older checkpoints.
+        var base: CloudLibraryRecord?
+        /// What the last batch sent, which becomes `base` once the server takes it.
+        var sentValue: CloudLibraryRecord?
 
         init(_ value: CloudLibraryRecord) {
             id = value.id
             recordType = value.recordType
             self.value = value
+        }
+
+        /// Forgets everything about the server's copy, as for a record it doesn't hold.
+        mutating func forgetServer() {
+            systemFields = nil
+            serverFingerprint = nil
+            sentRevision = nil
+            sentFingerprint = nil
+            base = nil
+            sentValue = nil
         }
     }
 
@@ -44,7 +59,9 @@ struct CloudLibraryState: Codable {
         set { unreadableRecords = newValue.isEmpty ? nil : newValue }
     }
 
-    mutating func updateLocal(days: [Day], categories: [CategoryDefinition], inferDeletions: Bool) throws {
+    /// `keeping` names records missing from the snapshot whose deletion isn't inferred.
+    mutating func updateLocal(days: [Day], categories: [CategoryDefinition], inferDeletions: Bool,
+                              keeping: Set<String> = []) throws {
         let values = days.map(CloudLibraryRecord.day) + categories.map(CloudLibraryRecord.category)
         guard Set(values.map(\.recordName)).count == values.count else {
             throw CloudLibraryRecord.RecordError.invalidRecord
@@ -59,7 +76,7 @@ struct CloudLibraryState: Codable {
             records[value.recordName] = entry
         }
         if inferDeletions {
-            for name in records.keys where !names.contains(name) && records[name]?.value != nil {
+            for name in records.keys where !names.contains(name) && !keeping.contains(name) && records[name]?.value != nil {
                 records[name]?.value = nil
                 records[name]?.revision = UUID().uuidString
                 // A never-sent insertion can be cancelled without deleting anything remotely.
@@ -67,6 +84,20 @@ struct CloudLibraryState: Codable {
                 records[name]?.dirty = needsDeletion
             }
         }
+    }
+
+    /// The records iCloud holds that `days` and `categories` leave out, when they are most of what
+    /// it holds: a library that comes up that way was more likely unreadable than emptied on
+    /// purpose, so its deletions wait for the user. Empty when the snapshot looks like a library.
+    func missingMost(days: [Day], categories: [CategoryDefinition]) -> [String] {
+        let names = Set(days.map { CloudLibraryRecord.day($0).recordName }
+                        + categories.map { CloudLibraryRecord.category($0).recordName })
+        let held = records.filter { $0.value.value != nil && $0.value.systemFields != nil }
+        let heldDays = held.filter { $0.value.recordType == "LibraryDay" }.count
+        let missing = held.keys.filter { !names.contains($0) }
+        let missingDays = missing.filter { held[$0]?.recordType == "LibraryDay" }.count
+        let most = days.isEmpty ? missingDays > 0 : missingDays >= 5 && missingDays * 2 >= heldDays
+        return most ? missing.sorted() : []
     }
 
     mutating func receive(_ record: CKRecord, forceServer: Bool = false) throws {
@@ -79,17 +110,37 @@ struct CloudLibraryState: Codable {
         let keepLocalEdit = !forceServer && entry.dirty
             && (entry.serverFingerprint == fingerprint || isOwnSend)
         if !keepLocalEdit {
-            if entry.value != value { pendingRemoteUpdate.recover(entry.value) }
-            // Deliver even equal records: DayStore may be recovering a previously interrupted apply.
-            pendingRemoteUpdate.upsert(value)
-            entry.value = value
-            entry.dirty = false
+            if entry.dirty, let merged = Self.merging(entry.value, from: entry.base, onto: value) {
+                // What the local edit changed and the server left alone survives, and goes up again.
+                if merged.conflicted { pendingRemoteUpdate.recover(entry.value) }
+                pendingRemoteUpdate.upsert(merged.value)
+                entry.value = merged.value
+                entry.revision = UUID().uuidString
+            } else {
+                if entry.value != value { pendingRemoteUpdate.recover(entry.value) }
+                // Deliver even equal records: DayStore may be recovering a previously interrupted apply.
+                pendingRemoteUpdate.upsert(value)
+                entry.value = value
+                entry.dirty = false
+            }
         } else if entry.value == value {
             entry.dirty = false
         }
         entry.serverFingerprint = fingerprint
+        entry.base = value
         entry.systemFields = CloudLibraryRecord.systemFields(of: record)
         records[name] = entry
+    }
+
+    /// A local day edit, made from `base`, merged onto the server's newer version by the groups
+    /// `DayStore.merging` uses; where both changed a group the server's version wins, and
+    /// `conflicted` says the local one is kept aside. Nil when nothing of the edit survives, or
+    /// there's no base to tell what it changed.
+    static func merging(_ local: CloudLibraryRecord?, from base: CloudLibraryRecord?,
+                        onto server: CloudLibraryRecord) -> (value: CloudLibraryRecord, conflicted: Bool)? {
+        guard case .day(let edit)? = local, case .day(let original)? = base, case .day(let current) = server else { return nil }
+        let (merged, conflicted) = DayStore.merging(edit, from: original, onto: current, editWins: false)
+        return merged == current ? nil : (.day(merged), conflicted)
     }
 
     /// Receives a server record, setting aside one this version can't read (a newer schema, value
@@ -127,11 +178,19 @@ struct CloudLibraryState: Codable {
         pendingRemoteUpdate.delete(id: entry.id, recordType: entry.recordType)
         entry.value = nil
         entry.dirty = false
-        entry.systemFields = nil
-        entry.serverFingerprint = nil
-        entry.sentRevision = nil
-        entry.sentFingerprint = nil
+        entry.forgetServer()
         records[recordID.recordName] = entry
+    }
+
+    /// A save the server answered with "unknown item": a record it held was deleted there, but
+    /// one it never held is sent again as new.
+    mutating func receiveMissing(_ recordID: CKRecord.ID) {
+        guard let entry = records[recordID.recordName], entry.systemFields == nil, entry.value != nil else {
+            receiveDeletion(recordID)
+            return
+        }
+        records[recordID.recordName]?.forgetServer()
+        records[recordID.recordName]?.dirty = true
     }
 
     mutating func acknowledgeSave(_ record: CKRecord) throws {
@@ -142,6 +201,8 @@ struct CloudLibraryState: Codable {
         }
         entry.systemFields = CloudLibraryRecord.systemFields(of: record)
         entry.serverFingerprint = fingerprint
+        entry.base = entry.sentValue
+        entry.sentValue = nil
         if entry.revision == revision { entry.dirty = false }
         records[record.recordID.recordName] = entry
     }
@@ -149,20 +210,23 @@ struct CloudLibraryState: Codable {
     mutating func acknowledgeDeletion(_ id: CKRecord.ID) {
         unreadable[id.recordName] = nil
         guard var entry = records[id.recordName] else { return }
-        entry.systemFields = nil
-        entry.serverFingerprint = nil
-        entry.sentFingerprint = nil
-        entry.sentRevision = nil
+        entry.forgetServer()
         entry.dirty = entry.value != nil
         records[id.recordName] = entry
     }
 
     mutating func acknowledgeRemoteUpdate() {
         // Local edits made after a failed apply are backed up by the callback before this replay wins.
+        // A value the server doesn't hold yet (a merge, or a day brought back) still goes up.
         for value in pendingRemoteUpdate.upsertedDays.map(CloudLibraryRecord.day)
             + pendingRemoteUpdate.upsertedCategories.map(CloudLibraryRecord.category) {
+            guard let serverFingerprint = records[value.recordName]?.serverFingerprint else {
+                records[value.recordName]?.value = value
+                records[value.recordName]?.dirty = false
+                continue
+            }
             records[value.recordName]?.value = value
-            records[value.recordName]?.dirty = false
+            records[value.recordName]?.dirty = (try? value.fingerprint()) != serverFingerprint
         }
         let deletions = pendingRemoteUpdate.deletedDayIDs.map { ("LibraryDay", $0) }
             + pendingRemoteUpdate.deletedCategoryIDs.map { ("LibraryCategory", $0) }
@@ -201,6 +265,7 @@ struct CloudLibraryState: Codable {
                 }
                 entry.sentRevision = entry.revision
                 entry.sentFingerprint = try value.fingerprint()
+                entry.sentValue = value
                 records[id.recordName] = entry
                 saves.append(record)
             case .deleteRecord(let id):
@@ -243,10 +308,7 @@ struct CloudLibraryState: Codable {
         lastSentAt = nil
         unreadable = [:]
         for name in records.keys {
-            records[name]?.systemFields = nil
-            records[name]?.serverFingerprint = nil
-            records[name]?.sentRevision = nil
-            records[name]?.sentFingerprint = nil
+            records[name]?.forgetServer()
             let hasLocalValue = records[name]?.value != nil
             records[name]?.dirty = hasLocalValue
             records[name]?.revision = UUID().uuidString

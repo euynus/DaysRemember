@@ -234,16 +234,20 @@ final class DayStore {
     /// A three-way merge of `edit`, made from `base`, onto `current`. Fields that only mean something
     /// together (the date and its calendar, a photo and its framing, a category and its label, the
     /// reminders and their time) move as one group; `conflicted` is true when both sides changed a
-    /// group differently, and there the edit wins.
+    /// group differently, and there the edit wins, or `current` does when `editWins` is false.
     ///
     /// Nonisolated, as it reads no store state: Swift 6.2 rejects the nested `group` capturing its
     /// closures in a Release build when the merge is main-actor isolated.
-    nonisolated static func merging(_ edit: Day, from base: Day, onto current: Day) -> (day: Day, conflicted: Bool) {
+    nonisolated static func merging(_ edit: Day, from base: Day, onto current: Day,
+                                    editWins: Bool = true) -> (day: Day, conflicted: Bool) {
         var merged = current
         var conflicted = false
         func group(_ same: (Day, Day) -> Bool, _ copy: (inout Day, Day) -> Void) {
             guard !same(edit, base) else { return }
-            if !same(current, base) && !same(current, edit) { conflicted = true }
+            if !same(current, base) && !same(current, edit) {
+                conflicted = true
+                guard editWins else { return }
+            }
             copy(&merged, edit)
         }
         group({ $0.title == $1.title }) { $0.title = $1.title }
@@ -563,13 +567,25 @@ final class DayStore {
             try keepMigrationBackup()
             syncPreparationFailure = nil
             cloudSyncEnabled = true
-            CloudLibrarySync.shared.start(days: days, categories: categories) { [weak self] update in
-                guard let self else { throw DayBackup.BackupError.unreadable }
-                try self.applyCloudUpdate(update)
-            }
+            startCloudSync()
         } catch {
             syncPreparationFailure = error
         }
+    }
+
+    private func startCloudSync() {
+        CloudLibrarySync.shared.start(days: days, categories: categories) { [weak self] update in
+            guard let self else { throw DayBackup.BackupError.unreadable }
+            try self.applyCloudUpdate(update)
+        }
+    }
+
+    /// Starts iCloud sync again from an empty checkpoint, after the old one couldn't be read. Local
+    /// days stay; the next sync compares each with iCloud, keeping replaced versions in 同步保留版本.
+    func resetCloudSync() throws {
+        guard cloudSyncEnabled else { return }
+        try CloudLibrarySync.shared.resetUnreadableCheckpoint()
+        startCloudSync()
     }
 
     func category(for id: String) -> CategoryDefinition {

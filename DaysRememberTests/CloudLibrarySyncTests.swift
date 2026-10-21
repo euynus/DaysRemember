@@ -160,11 +160,15 @@ final class CloudLibrarySyncTests: XCTestCase {
             XCTAssertTrue(state.pendingRemoteUpdate.isEmpty)
             XCTAssertNotNil(state.records[name]?.systemFields)
 
+            // Both changed the title, and the server's wins; the photo only this device changed survives.
             let changed = day(title: "Concurrent server edit")
             try state.receive(record(changed, directory: directory))
+            var merged = changed
+            merged.photoData = edited.photoData
             XCTAssertEqual(state.pendingRemoteUpdate.recoveryDays, [edited])
-            XCTAssertEqual(state.pendingRemoteUpdate.upsertedDays, [changed])
-            XCTAssertFalse(state.records[name]?.dirty ?? true)
+            XCTAssertEqual(state.pendingRemoteUpdate.upsertedDays, [merged])
+            XCTAssertEqual(state.records[name]?.value, .day(merged))
+            XCTAssertTrue(state.records[name]?.dirty == true)
         }
     }
 
@@ -593,12 +597,223 @@ final class CloudLibrarySyncTests: XCTestCase {
             XCTAssertNil(CloudLibrarySync(stateURL: directory.appendingPathComponent("empty.json")).unreadableMessage)
             let sync = CloudLibrarySync(stateURL: url, appVersion: "1.0 (376)")
             XCTAssertEqual(sync.unreadableCount, 2)
-            try withLanguage("en") {
+            withLanguage("en") {
                 XCTAssertEqual(sync.unreadableMessage, "2 iCloud records can’t be read by this version and may come from a newer version of Days Remember. They will be read again after you update the app; everything else keeps syncing.")
             }
             try withLanguage("zh-Hant") {
                 let message = try XCTUnwrap(sync.unreadableMessage)
                 XCTAssertTrue(message.hasPrefix("有 2 筆 iCloud 記錄"), message)
+            }
+        }
+    }
+
+    // MARK: Merging, missing records and the deletion hold
+
+    /// A day as the server holds it, received and applied, with a local edit made from it.
+    private func syncedState(_ server: Day, directory: URL) throws -> CloudLibraryState {
+        var state = CloudLibraryState()
+        try state.receive(record(server, directory: directory))
+        state.acknowledgeRemoteUpdate()
+        state.hasFetched = true
+        return state
+    }
+
+    func testServerChangeKeepsTheLocalEditToAnotherField() throws {
+        try withDirectory { directory in
+            let original = day()
+            var edited = original
+            edited.note = "Written offline"
+            var moved = original
+            moved.date = Date(timeIntervalSince1970: 1_800_000_000)
+            var state = try syncedState(original, directory: directory)
+            try state.updateLocal(days: [edited], categories: [], inferDeletions: true)
+            let name = CloudLibraryRecord.day(original).recordName
+            let sentBefore = state.records[name]?.revision
+
+            try state.receive(record(moved, directory: directory))
+            var merged = moved
+            merged.note = edited.note
+            XCTAssertEqual(state.records[name]?.value, .day(merged))
+            XCTAssertTrue(state.records[name]?.dirty == true, "The merge still has to go up")
+            XCTAssertNotEqual(state.records[name]?.revision, sentBefore)
+            XCTAssertEqual(state.pendingRemoteUpdate.upsertedDays, [merged])
+            XCTAssertTrue(state.pendingRemoteUpdate.recoveryDays.isEmpty, "Nothing of the edit was lost")
+            XCTAssertEqual(state.records[name]?.base, .day(moved))
+
+            // Applying the merge locally doesn't mark it as what the server holds.
+            state.acknowledgeRemoteUpdate()
+            XCTAssertTrue(state.records[name]?.dirty == true)
+        }
+    }
+
+    func testServerChangeWithoutALocalEditStaysClean() throws {
+        try withDirectory { directory in
+            let original = day()
+            var state = try syncedState(original, directory: directory)
+            let changed = day(title: "Changed elsewhere")
+            try state.receive(record(changed, directory: directory))
+            state.acknowledgeRemoteUpdate()
+            let name = CloudLibraryRecord.day(original).recordName
+            XCTAssertEqual(state.records[name]?.value, .day(changed))
+            XCTAssertFalse(state.hasPendingChanges)
+        }
+    }
+
+    func testRejectedSaveMergesOntoTheServersVersion() throws {
+        try withDirectory { directory in
+            let original = day()
+            var state = try syncedState(original, directory: directory)
+            var edited = original
+            edited.location = "Kyoto"
+            try state.updateLocal(days: [edited], categories: [], inferDeletions: true)
+            let name = CloudLibraryRecord.day(original).recordName
+            let batch = try state.prepareBatch([.saveRecord(CloudLibraryRecord.day(edited).recordID)], assetDirectory: directory)
+            XCTAssertEqual(batch.saves.count, 1)
+            XCTAssertEqual(state.records[name]?.sentValue, .day(edited))
+
+            // Another device renamed it first, so the server refuses the save and returns its copy.
+            let renamed = day(title: "Renamed elsewhere")
+            try state.receive(record(renamed, directory: directory), forceServer: true)
+            var merged = renamed
+            merged.location = "Kyoto"
+            XCTAssertEqual(state.records[name]?.value, .day(merged))
+            XCTAssertTrue(state.records[name]?.dirty == true)
+        }
+    }
+
+    func testAcknowledgedSaveBecomesTheMergeBase() throws {
+        try withDirectory { directory in
+            let first = day()
+            var state = CloudLibraryState()
+            try state.updateLocal(days: [first], categories: [], inferDeletions: false)
+            let name = CloudLibraryRecord.day(first).recordName
+            let batch = try state.prepareBatch([.saveRecord(CloudLibraryRecord.day(first).recordID)], assetDirectory: directory)
+            try state.acknowledgeSave(try XCTUnwrap(batch.saves.first))
+            XCTAssertEqual(state.records[name]?.base, .day(first))
+            XCTAssertNil(state.records[name]?.sentValue)
+        }
+    }
+
+    func testUnknownItemResendsANewRecordButDeletesAKnownOne() throws {
+        try withDirectory { directory in
+            let unsent = day("unsent")
+            let known = day("known")
+            var state = try syncedState(known, directory: directory)
+            try state.updateLocal(days: [known, unsent], categories: [], inferDeletions: true)
+            let unsentID = CloudLibraryRecord.day(unsent).recordID
+            _ = try state.prepareBatch([.saveRecord(unsentID)], assetDirectory: directory)
+
+            state.receiveMissing(unsentID)
+            XCTAssertEqual(state.records[unsentID.recordName]?.value, .day(unsent))
+            XCTAssertTrue(state.records[unsentID.recordName]?.dirty == true)
+            XCTAssertNil(state.records[unsentID.recordName]?.sentRevision)
+            XCTAssertTrue(state.pendingRemoteUpdate.deletedDayIDs.isEmpty)
+
+            state.receiveMissing(CloudLibraryRecord.day(known).recordID)
+            XCTAssertEqual(state.pendingRemoteUpdate.deletedDayIDs, [known.id])
+        }
+    }
+
+    func testOnlyALibraryMissingMostOfICloudHoldsItsDeletions() throws {
+        try withDirectory { directory in
+            let days = (1...10).map { day("day-\($0)") }
+            var state = CloudLibraryState()
+            for day in days { try state.receive(record(day, directory: directory)) }
+            state.acknowledgeRemoteUpdate()
+            XCTAssertEqual(state.missingMost(days: [], categories: []).count, 10)
+            XCTAssertTrue(state.missingMost(days: days, categories: []).isEmpty)
+            XCTAssertTrue(state.missingMost(days: Array(days.dropFirst(4)), categories: []).isEmpty,
+                          "Four of ten could have been deleted on purpose")
+            XCTAssertEqual(state.missingMost(days: Array(days.prefix(5)), categories: []).count, 5)
+            XCTAssertTrue(CloudLibraryState().missingMost(days: [], categories: []).isEmpty)
+        }
+    }
+
+    func testEmptyLibraryAtLaunchHoldsDeletionsUntilTheUserDecides() throws {
+        try withDirectory { directory in
+            let days = [day("first"), day("second")]
+            var state = CloudLibraryState()
+            for day in days { try state.receive(record(day, directory: directory)) }
+            state.acknowledgeRemoteUpdate()
+            state.hasFetched = true
+            state.accountChangePending = true // No test is allowed to create a CloudKit connection.
+            let url = directory.appendingPathComponent("state.json")
+            try state.write(to: url)
+
+            let sync = CloudLibrarySync(stateURL: url)
+            var applied: [CloudLibraryUpdate] = []
+            sync.start(days: [], categories: []) { applied.append($0) }
+            XCTAssertEqual(sync.missingDayCount, 2)
+            XCTAssertNotNil(sync.missingMessage)
+            XCTAssertNotNil(sync.attentionSummary)
+            var persisted = try CloudLibraryState.read(from: url)
+            XCTAssertFalse(persisted.hasPendingChanges, "No deletion is queued while it's held")
+
+            // A day added meanwhile still syncs.
+            let added = day("added")
+            sync.updateLocal(days: [added], categories: [])
+            persisted = try CloudLibraryState.read(from: url)
+            XCTAssertTrue(persisted.records[CloudLibraryRecord.day(added).recordName]?.dirty == true)
+            XCTAssertEqual(persisted.records.values.filter { $0.value == nil }.count, 0)
+
+            sync.restoreMissing()
+            XCTAssertEqual(Set(applied.last?.upsertedDays.map(\.id) ?? []), ["first", "second"])
+            XCTAssertEqual(sync.missingDayCount, 0)
+            persisted = try CloudLibraryState.read(from: url)
+            XCTAssertFalse(persisted.records[CloudLibraryRecord.day(days[0]).recordName]?.dirty ?? true)
+        }
+    }
+
+    func testConfirmingTheMissingDaysDeletesThemEverywhere() throws {
+        try withDirectory { directory in
+            let days = [day("first"), day("second")]
+            var state = CloudLibraryState()
+            for day in days { try state.receive(record(day, directory: directory)) }
+            state.acknowledgeRemoteUpdate()
+            state.hasFetched = true
+            state.accountChangePending = true
+            let url = directory.appendingPathComponent("state.json")
+            try state.write(to: url)
+
+            let sync = CloudLibrarySync(stateURL: url)
+            sync.start(days: [], categories: []) { _ in }
+            sync.confirmMissingDeletions()
+            XCTAssertEqual(sync.missingDayCount, 0)
+            let persisted = try CloudLibraryState.read(from: url)
+            for day in days {
+                let entry = persisted.records[CloudLibraryRecord.day(day).recordName]
+                XCTAssertNil(entry?.value)
+                XCTAssertTrue(entry?.dirty == true)
+            }
+        }
+    }
+
+    func testUnreadableCheckpointCanBeReset() throws {
+        try withDirectory { directory in
+            let url = directory.appendingPathComponent("state.json")
+            try Data("not a checkpoint".utf8).write(to: url)
+            let sync = CloudLibrarySync(stateURL: url)
+            XCTAssertTrue(sync.checkpointUnreadable)
+            withLanguage("zh-Hans") { XCTAssertEqual(sync.attentionSummary, "需要处理") }
+            try sync.resetUnreadableCheckpoint()
+            XCTAssertFalse(sync.checkpointUnreadable)
+            XCTAssertEqual(try Data(contentsOf: directory.appendingPathComponent("state.unreadable.json")),
+                           Data("not a checkpoint".utf8))
+            sync.updateLocal(days: [day()], categories: [])
+            XCTAssertEqual(sync.status, .pending)
+            XCTAssertTrue(try CloudLibraryState.read(from: url).hasPendingChanges)
+        }
+    }
+
+    func testPausedSyncIsSummarisedForTheMeTab() throws {
+        try withDirectory { directory in
+            var state = CloudLibraryState()
+            state.accountChangePending = true
+            let url = directory.appendingPathComponent("state.json")
+            try state.write(to: url)
+            withLanguage("en") {
+                XCTAssertEqual(CloudLibrarySync(stateURL: url).attentionSummary, "Sync Paused")
+                XCTAssertNil(CloudLibrarySync(stateURL: directory.appendingPathComponent("new.json")).attentionSummary)
             }
         }
     }

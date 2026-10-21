@@ -17,6 +17,8 @@ struct DataManagementView: View {
     @State private var hasLegacyData = false
     @State private var confirmAccountChange = false
     @State private var confirmReupload = false
+    @State private var confirmMissingDeletion = false
+    @State private var confirmCheckpointReset = false
     @State private var message: String?
 
     var body: some View {
@@ -81,6 +83,28 @@ struct DataManagementView: View {
                 }
                 if let notice = cloud.unreadableMessage {
                     Text(notice).foregroundStyle(Theme.accent)
+                }
+                if let notice = cloud.missingMessage {
+                    Text(notice).foregroundStyle(Theme.accent)
+                    Button("从 iCloud 恢复这些日子", systemImage: "icloud.and.arrow.down") { cloud.restoreMissing() }
+                    Button("在所有设备上删除", systemImage: "trash", role: .destructive) { confirmMissingDeletion = true }
+                        .confirmationDialog("在所有设备上删除这些日子？", isPresented: $confirmMissingDeletion, titleVisibility: .visible) {
+                            Button("删除", role: .destructive) { cloud.confirmMissingDeletions() }
+                            Button("取消", role: .cancel) {}
+                        } message: {
+                            Text("其他设备上的这些日子会移到「最近删除」，保留 30 天。")
+                        }
+                }
+                if cloud.checkpointUnreadable {
+                    Button("重置同步状态", systemImage: "arrow.counterclockwise.icloud") { confirmCheckpointReset = true }
+                        .confirmationDialog("重置同步状态？", isPresented: $confirmCheckpointReset, titleVisibility: .visible) {
+                            Button("重置并同步") {
+                                do { try store.resetCloudSync() } catch { message = error.localizedDescription }
+                            }
+                            Button("取消", role: .cancel) {}
+                        } message: {
+                            Text("本机日子不受影响。下次同步会与 iCloud 逐条重新比对，被替换的版本保留在「同步保留版本」。")
+                        }
                 }
                 if let date = cloud.lastSentAt {
                     LabeledContent("最近发送") { Text(date, format: .dateTime.month().day().hour().minute()) }

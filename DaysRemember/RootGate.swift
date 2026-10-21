@@ -34,7 +34,8 @@ struct RootGate: View {
     private var onboarding: some View {
         OnboardingView(onFinish: {
             router.dayID = nil
-            creatingFirstDay = store.days.isEmpty
+            // On a new device the library may still be on its way from iCloud.
+            creatingFirstDay = store.days.isEmpty && !CloudLibrarySync.shared.isFirstDownloadPending
             settings.hasOnboarded = true
         })
     }

@@ -11,6 +11,7 @@ struct MeView: View {
     @State private var showingLanguage = false
     @State private var showingWidgets = false
     @State private var showingData = false
+    @State private var cloud = CloudLibrarySync.shared
 
     var body: some View {
         let infos = store.days.map { ($0, DayInfo.compute($0, today: today)) }
@@ -50,6 +51,7 @@ struct MeView: View {
                         MeDivider()
                         row(String(localized: "数据与同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                             systemImage: "icloud", tint: Theme.noteBlue, ink: Theme.catTravel,
+                            value: cloud.attentionSummary, valueColor: Theme.danger,
                             identifier: "settings.data") { showingData = true }
                         MeDivider()
                         row(String(localized: "语言", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
@@ -112,9 +114,9 @@ struct MeView: View {
     }
 
     private func row(_ title: String, systemImage: String, tint: Color, ink: Color, value: String? = nil,
-                     identifier: String, action: @escaping () -> Void) -> some View {
+                     valueColor: Color = Theme.muted, identifier: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            MeRowLabel(title: title, systemImage: systemImage, tint: tint, ink: ink, value: value)
+            MeRowLabel(title: title, systemImage: systemImage, tint: tint, ink: ink, value: value, valueColor: valueColor)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(identifier)

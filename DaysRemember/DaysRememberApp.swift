@@ -1,3 +1,4 @@
+import CloudKit
 import SwiftUI
 import UIKit
 import WidgetKit
@@ -86,7 +87,12 @@ struct DaysRememberApp: App {
                     if phase == .active {
                         refreshCurrentDay()
                         store.rescheduleNotifications()
+                        Task { await CloudLibrarySync.shared.resumeIfNeeded() }
                     }
+                }
+                // Signing in to iCloud after launch, for one, starts sync without a relaunch.
+                .onReceive(NotificationCenter.default.publisher(for: .CKAccountChanged).receive(on: RunLoop.main)) { _ in
+                    Task { await CloudLibrarySync.shared.resumeIfNeeded() }
                 }
                 .onChange(of: language) {
                     store.rescheduleNotifications()

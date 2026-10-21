@@ -7,6 +7,7 @@ struct MeRowLabel: View {
     let tint: Color
     let ink: Color
     var value: String? = nil
+    var valueColor = Theme.muted
     var showsChevron = true
     var trailingSymbol = "chevron.right"
 
@@ -25,7 +26,7 @@ struct MeRowLabel: View {
             if let value {
                 Text(verbatim: value)
                     .font(Theme.sans(15))
-                    .foregroundStyle(Theme.muted)
+                    .foregroundStyle(valueColor)
                     .multilineTextAlignment(.trailing)
             }
             if showsChevron {

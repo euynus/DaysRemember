@@ -5,6 +5,7 @@ struct HomeView: View {
     @Environment(\.currentDay) private var today
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var face: HomeFace = HomeFace.initial()
+    @State private var cloud = CloudLibrarySync.shared
     @State private var heroPage: String?
     @State private var isSearching = false
     @State private var searchText = ""
@@ -152,10 +153,22 @@ struct HomeView: View {
 
     private var emptyLibrary: some View {
         VStack(spacing: 12) {
-            ContentUnavailableView(String(localized: "这里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                                   systemImage: "calendar.badge.plus",
-                                   description: Text(String(localized: "值得记住的，从这一天开始。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)))
+            if cloud.isFirstDownloadPending {
+                ContentUnavailableView {
+                    Label(String(localized: "正在从 iCloud 下载", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                          systemImage: "icloud.and.arrow.down")
+                } description: {
+                    Text(String(localized: "在其他设备上记下的日子马上就到。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                } actions: {
+                    ProgressView()
+                }
                 .foregroundStyle(Theme.muted)
+            } else {
+                ContentUnavailableView(String(localized: "这里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                                       systemImage: "calendar.badge.plus",
+                                       description: Text(String(localized: "值得记住的，从这一天开始。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)))
+                    .foregroundStyle(Theme.muted)
+            }
             Button("记录第一个日子", systemImage: "plus", action: onAdd)
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
