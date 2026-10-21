@@ -4,14 +4,12 @@
 
 ## 基本信息
 
-- **名称**：时光
-- **副标题（建议）**：温柔记住每一个重要的日子
+- **名称**：主屏幕上显示「时光」（`CFBundleDisplayName`）；App Store 名称、副标题与其他文案见下文「商店文案」
 - **分类**：生活 / 效率
 - **Bundle ID**：`com.shiguang.daysremember`（Widget：`.widget`）
 - **版本 / 构建号**：版本取 `project.yml` 的 `MARKETING_VERSION`（现为 1.0），App 与小组件共用；构建号由 `scripts/archive.sh` 按提交数生成，每次从新的提交上传都会更大
 - **支持设备**：iPhone，竖屏，iOS 26+
 - **语言**：简体中文、繁體中文、English
-- **名称是否可用**：App Store 名称全局唯一，「时光」很可能已被占用。被占用时可改用「时光 · 纪念日倒数」这类名称，主屏幕上显示的仍是 `CFBundleDisplayName` 里的「时光」。
 
 ## 网址
 
@@ -25,74 +23,206 @@
 
 App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开同样的页面（`SettingsView.siteURL`）。换域名时两处一起改。
 
-## 描述（草稿，可编辑）
+## 商店文案
 
-时光是一款温暖的纪念日与倒数应用。记录结婚纪念、宝宝出生、一场旅行、考试倒数……让重要的日子从容到来。
+> 依据产品网站（`docs/`）与 App 里的实际功能和界面用词写成；功能或网站文案改了，这里一起改。每个字段放在一个代码块里，直接复制到 App Store Connect 对应语言的同名字段。
 
-- 将至与已过：「将至」为还没到的日子倒数，最近的五个排在最前；不重复的日子过去以后，在「已过」里一天天正数
-- 整数纪念：「已过」里的日子会预告下一个整数纪念——1000 天以内每满 100 天，之后每满 500 天，或者满一整年
-- 农历支持：按公历或农历每年重复，日历显示农历日期、二十四节气与传统节日
-- 轻点切换单位：在日子详情里轻点数字，在天、周、月、小时之间切换
-- 彩色卡片：每个日子都是一张分类颜色的卡片，配一张自己的照片，或从 12 张扁平插图里挑一张
-- 自定义分类：在「我的」里，除了爱情、家人、旅行、工作、生活，还能新建自己的分类，图标与颜色随心搭配
-- 贴心提醒：提前 7/3/1 天或当天提醒，提醒时间自选；每日问候与时光回忆可分别打开
-- 小组件：主屏幕小 / 中 / 大三种尺寸，用和 App 里一样的彩色卡片，另有三种锁定屏幕样式；每个小组件可单独选一个日子
-- iCloud 同步：日子、分类和照片在你的设备间自动同步，误删的日子 30 天内可以恢复
-- 分享卡片：照片、手记、极简、双栏四种模板，可导出 3:4 竖图，一键保存或分享
+- **长度上限**：名称、副标题各 30 字符，宣传文本 170，关键词 100，描述 4000。下面的草稿都在上限内（`python3` 数过）。
+- **名称**全局唯一，单独的「时光」多半已被占用，所以名称带上了「纪念日倒数」；它也是搜索词。备选名称也被占用时，再换一个组合，主屏幕上显示的始终是「时光」。
+- **关键词**用英文逗号分隔、逗号后不加空格；名称和副标题里的词已经会被搜索到，关键词里不再重复。关键词按重要程度排列，App Store Connect 提示超长时从末尾删。中文两种语言的末尾带上英文的 anniversary、countdown，方便在中国大陆和台湾的商店里用英文搜到。没有用「倒数日」「Days Matter」这类其他 App 的名称（审核指南 2.3.7）。
+- **描述**里不写价格（商店页会显示）和其他平台。宣传文本可以随时修改、不用审核；其余字段随版本提交审核。
 
-免费使用。所有数据都保存在你的设备与你自己的 iCloud 中——不收集、不上传、无广告、无追踪。
+### 简体中文
 
-**关键词（建议）**：纪念日,倒数日,倒计时,生日提醒,农历,节日,纪念,Anniversary,Countdown,Widget
+**名称**（备选：时光 · 纪念日与倒计时）
 
-**宣传文本（建议）**：把重要的日子放在主屏，温柔提醒，从容相聚。
+```text
+时光 · 纪念日倒数
+```
 
-## 繁體中文（草稿）
+**副标题**
 
-- **名稱**：時光
-- **副標題**：溫柔記住每一個重要的日子
+```text
+温柔记住每一个重要的日子
+```
 
-時光是一款溫暖的紀念日與倒數 App。記錄結婚紀念、寶寶出生、一場旅行、考試倒數……讓重要的日子從容到來。
+**宣传文本**
 
-- 將至與已過：「將至」為還沒到的日子倒數，最近的五個排在最前；不重複的日子過去以後，在「已過」裡一天天正數
-- 整數紀念：「已過」裡的日子會預告下一個整數紀念——1000 天以內每滿 100 天，之後每滿 500 天，或者滿一整年
-- 農曆支援：按國曆或農曆每年重複，日曆顯示農曆日期、二十四節氣與傳統節日
-- 輕點切換單位：在日子詳情裡輕點數字，在天、週、月、小時之間切換
-- 彩色卡片：每個日子都是一張分類顏色的卡片，配一張自己的照片，或從 12 張扁平插圖裡挑一張
-- 自訂分類：在「我的」裡，除了愛情、家人、旅行、工作、生活，還能新增自己的分類，圖示與顏色隨心搭配
-- 貼心提醒：提前 7/3/1 天或當天提醒，提醒時間自選；每日問候與時光回憶可分別開啟
-- 小工具：主畫面小 / 中 / 大三種尺寸，用和 App 裡一樣的彩色卡片，另有三種鎖定畫面樣式；每個小工具可單獨選一個日子
-- iCloud 同步：日子、分類和照片在你的裝置間自動同步，誤刪的日子 30 天內可以還原
-- 分享卡片：照片、手記、極簡、雙欄四種範本，可匯出 3:4 直圖，一鍵儲存或分享
+```text
+记录结婚纪念、宝宝出生、一场旅行、考试倒数。按公历或农历每年重复，放进主屏与锁屏小组件，提前提醒不错过。无需账号，无广告，不收集任何数据。
+```
 
-免費使用。所有資料都儲存在你的裝置與你自己的 iCloud 中——不蒐集、不上傳、無廣告、無追蹤。
+**关键词**
 
-**關鍵字**：紀念日,倒數日,倒數計時,生日提醒,農曆,節日,紀念,小工具,Anniversary,Countdown
+```text
+倒计时,农历,生日,恋爱,在一起,情侣,结婚,宝宝,周年,节气,考试,考研,旅行,假期,提醒,小组件,锁屏,日历,正数,天数,节日,百日,分享卡片,anniversary,countdown
+```
 
-**宣傳文字**：把重要的日子放在主畫面，溫柔提醒，從容相聚。
+**描述**
 
-## English (draft)
+```text
+时光帮你温柔记住每一个重要的日子：结婚纪念、宝宝出生、一场旅行、考试倒数。未来的值得期待，过去的可以回望。
 
-- **Name**: Days Remember
-- **Subtitle**: Anniversaries and countdowns
+【将至与已过】
+首页分成两面。「将至」为还没到的日子倒数，最近的五个排在最前；每年的日子刚过去的一周里，首页还会留着它，方便你写下这一天。不重复的日子过去以后移到「已过」，一天天正数。
 
-Days Remember is a warm anniversary and countdown app. Keep track of a wedding anniversary, a baby’s birth, a trip or an exam, and let the days that matter arrive without a rush.
+【整数纪念】
+「已过」里的日子会预告下一个整数纪念：1000 天以内每满 100 天，之后每满 500 天，或者满一整年。
 
-- Ahead and Past: Ahead counts down to the days still to come, with the five nearest at the top; one-time days that have gone by move to Past, where they count up day by day
-- Round numbers: days under Past show their next round number — every 100 days up to 1,000, every 500 after that, or a whole year
-- Lunar calendar: repeat a day every year by the Gregorian or lunar calendar; the calendar shows lunar dates, the 24 solar terms and traditional festivals
-- Tap to change units: in a day’s detail, tap the number to switch between days, weeks, months and hours
-- Colored cards: every day is a card in its category’s color; give it a photo of your own, or pick one of 12 flat illustrations
-- Custom categories: in Me, besides Love, Family, Travel, Work and Life, create categories of your own, each with its own icon and color
-- Reminders: 7, 3 or 1 day ahead, or on the day, at a time you choose; the Daily Greeting and Memories can be turned on separately
-- Widgets: small, medium and large on the Home Screen, in the same colored cards as the app, plus three Lock Screen styles; each widget can show a day of its own
-- iCloud sync: days, categories and photos sync across your devices, and a deleted day can be restored for 30 days
-- Share cards: Photo, Journal, Minimal and Split templates, with a 3:4 portrait export, ready to save or share
+【农历与节气】
+日子可以按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。
 
-Free to use. Everything stays on your devices and in your own iCloud. No data collection, no uploads, no ads, no tracking.
+【轻点切换单位】
+在日子详情里轻点数字，就在天、周、月、小时之间切换。下面列出这个日子的节点：每年的日子有上一次和下一次周年，已过的日子有下一个整数纪念。
 
-**Keywords**: anniversary,countdown,birthday,reminder,lunar,calendar,widget,days since,days until,events
+【贴心提醒】
+提前 7 天、3 天、1 天或当天提醒，时间自选，每个日子也可以单独设置。「每日问候」每天在你选的时间送上一句问候；「时光回忆」会在已过日子的周年那天，提醒你想起这一天。两项可以分别打开。
 
-**Promotional text**: Keep the days that matter on your Home Screen, with gentle reminders.
+【封面与分类】
+每个日子都是一张分类颜色的卡片。配一张自己的照片，或从 12 张扁平插图里挑一张；新建的日子会按分类先配好封面。除了爱情、家人、旅行、工作、生活，还能在「我的」里新建自己的分类，图标和颜色自己挑。
+
+【小组件】
+主屏幕小、中、大三种尺寸，用和 App 里一样的彩色卡片；锁定屏幕另有三种样式。每个小组件都可以单独选一个日子。
+
+【分享卡片】
+照片、手记、极简、双栏四种模板，可以导出 3:4 竖图，保存到相册或分享出去。笔记默认不出现在图片上。
+
+【iCloud 同步与备份】
+日子、分类和照片通过你自己的 iCloud 在设备间同步。误删的日子在「最近删除」里保留 30 天；两台设备改了同一个日子，被替换的那一版也会在「同步保留版本」里保留 30 天，都可以恢复。还可以导出备份文件，在新设备上从文件恢复。
+
+【隐私】
+不收集任何数据。日子、照片和设置只保存在你的设备和你自己的 iCloud 中，不会上传给开发者。无需账号，无广告，无追踪，无第三方 SDK。
+
+支持简体中文、繁體中文和 English，可以在「我的 › 语言」里切换。倒数和提醒按北京时间计算。
+```
+
+### 繁體中文
+
+**名稱**（備選：時光 · 紀念日與倒數計時）
+
+```text
+時光 · 紀念日倒數
+```
+
+**副標題**
+
+```text
+溫柔記住每一個重要的日子
+```
+
+**宣傳文字**
+
+```text
+記錄結婚紀念、寶寶出生、一場旅行、考試倒數。按國曆或農曆每年重複，放進主畫面與鎖定畫面小工具，提前提醒不錯過。無需帳號，無廣告，不收集任何資料。
+```
+
+**關鍵字**
+
+```text
+倒數計時,農曆,生日,戀愛,在一起,情侶,結婚,寶寶,週年,節氣,考試,旅行,假期,提醒,小工具,鎖定畫面,日曆,正數,天數,節日,百日,分享卡片,anniversary,countdown
+```
+
+**描述**
+
+```text
+時光幫你溫柔記住每一個重要的日子：結婚紀念、寶寶出生、一場旅行、考試倒數。未來的值得期待，過去的可以回望。
+
+【將至與已過】
+首頁分成兩面。「將至」為還沒到的日子倒數，最近的五個排在最前；每年的日子剛過去的一週裡，首頁還會留著它，方便你寫下這一天。不重複的日子過去以後移到「已過」，一天天正數。
+
+【整數紀念】
+「已過」裡的日子會預告下一個整數紀念：1000 天以內每滿 100 天，之後每滿 500 天，或者滿一整年。
+
+【農曆與節氣】
+日子可以按國曆或農曆每年重複。日曆裡標出農曆日期、二十四節氣和傳統節日，農曆支援 1900 至 2100 年。
+
+【輕點切換單位】
+在日子詳情裡輕點數字，就在天、週、月、小時之間切換。下面列出這個日子的節點：每年的日子有上一次和下一次週年，已過的日子有下一個整數紀念。
+
+【貼心提醒】
+提前 7 天、3 天、1 天或當天提醒，時間自選，每個日子也可以單獨設定。「每日問候」每天在你選的時間送上一句問候；「時光回憶」會在已過日子的週年那天，提醒你想起這一天。兩項可以分別開啟。
+
+【封面與分類】
+每個日子都是一張分類顏色的卡片。配一張自己的照片，或從 12 張扁平插圖裡挑一張；新建的日子會依分類先配好封面。除了愛情、家人、旅行、工作、生活，還能在「我的」裡新增自己的分類，圖示和顏色自己挑。
+
+【小工具】
+主畫面小、中、大三種尺寸，用和 App 裡一樣的彩色卡片；鎖定畫面另有三種樣式。每個小工具都可以單獨選一個日子。
+
+【分享卡片】
+照片、手記、極簡、雙欄四種範本，可以匯出 3:4 直圖，儲存到相簿或分享出去。筆記預設不會出現在圖片上。
+
+【iCloud 同步與備份】
+日子、分類和照片透過你自己的 iCloud 在裝置間同步。誤刪的日子在「最近刪除」裡保留 30 天；兩台裝置改了同一個日子，被取代的那一版也會在「同步保留版本」裡保留 30 天，都可以還原。還可以匯出備份檔案，在新裝置上從檔案還原。
+
+【隱私】
+不收集任何資料。日子、照片和設定只儲存在你的裝置和你自己的 iCloud 中，不會上傳給開發者。無需帳號，無廣告，無追蹤，無第三方 SDK。
+
+支援簡體中文、繁體中文和 English，可以在「我的 › 語言」裡切換。倒數和提醒以北京時間計算。
+```
+
+### English
+
+**Name** (fallback: Days Remember: Countdown)
+
+```text
+Days Remember
+```
+
+**Subtitle**
+
+```text
+Anniversaries and countdowns
+```
+
+**Promotional text**
+
+```text
+Keep a wedding anniversary, a birth, a trip or an exam in view. Repeat by the Gregorian or lunar calendar, add Home and Lock Screen widgets, get reminded ahead.
+```
+
+**Keywords**
+
+```text
+birthday,lunar,chinese,calendar,widget,reminder,since,until,wedding,baby,love,dating,exam,trip
+```
+
+**Description**
+
+```text
+Days Remember gently keeps track of the days that matter: a wedding anniversary, a baby's birth, a trip, an exam. Look forward to what's ahead, and look back on what has passed.
+
+AHEAD AND PAST
+The Days tab has two sides. Ahead counts down to the days still to come, with the five nearest at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.
+
+ROUND NUMBERS
+Days under Past show their next round number: every 100 days up to 1,000, every 500 after that, or a whole year.
+
+LUNAR CALENDAR AND SOLAR TERMS
+Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.
+
+TAP TO CHANGE UNITS
+In a day's detail, tap the number to switch between days, weeks, months and hours. Below it are the day's marks: the last and next anniversaries of a yearly day, or the next round number of a past day.
+
+REMINDERS
+Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose, and give any day reminders of its own. The Daily Greeting sends a short note each day at the time you pick, and Memories brings back a past day on its anniversary. Each can be turned on separately.
+
+COVERS AND CATEGORIES
+Every day is a card in its category's color. Give it a photo of your own, or pick one of 12 flat illustrations; a new day starts with a cover that suits its category. Besides Love, Family, Travel, Work and Life, create categories of your own in Me, each with its own icon and color.
+
+WIDGETS
+Small, medium and large on the Home Screen, in the same colored cards as the app, plus three Lock Screen styles. Each widget can show a day of its own.
+
+SHARE CARDS
+Photo, Journal, Minimal and Split templates, with a 3:4 portrait export to save to Photos or share. Notes stay off the image unless you include them.
+
+ICLOUD SYNC AND BACKUPS
+Days, categories and photos sync across your devices through your own iCloud. A deleted day stays in Recently Deleted for 30 days, and when two devices change the same day, the replaced version stays in Saved Sync Versions for 30 days, so either can be restored. You can also export a backup and restore it from the file on a new device.
+
+PRIVACY
+No data collected. Your days, photos and settings stay on your devices and in your own iCloud, and nothing is sent to the developer. No account, no ads, no tracking, no third-party SDKs.
+
+In English, Simplified Chinese and Traditional Chinese; switch in Me › Language. Countdowns and reminders follow Beijing time (UTC+8).
+```
 
 ## 隐私（App 隐私问卷答案）
 
@@ -143,13 +273,13 @@ Free to use. Everything stays on your devices and in your own iCloud. No data co
 
 **App Store Connect**
 
-- [ ] 新建 App 记录：先确认名称可用（见上文「名称是否可用」），SKU、主语言简体中文、Bundle ID
-- [ ] App 信息：副标题、分类（生活 / 效率）、年龄分级问卷（4+）、版权；为繁體中文与英文添加本地化，填入上面的草稿
+- [ ] 新建 App 记录：先确认名称可用（见上文「商店文案」），SKU、主语言简体中文、Bundle ID
+- [ ] App 信息：名称、副标题、分类（生活 / 效率）、年龄分级问卷（4+）、版权；为繁體中文与英文添加本地化，填入「商店文案」
 - [ ] 价格与销售范围：免费。中国大陆需要 App 备案号（ICP），备案通过接入商（如阿里云、腾讯云）办理，需要 Bundle ID 与签名证书信息，通常要一到几周；暂未备案就先不选中国大陆
 - [ ] 欧盟上架需要声明「交易商身份」（DSA）。声明为交易商时，地址、电话与邮箱会公开显示在商店页
 - [ ] App 隐私问卷按上文填写，隐私政策网址见上表
 - [ ] 内容权利：图标和 12 张扁平封面由仓库里的脚本绘制（`scripts/app-icon.py`、`scripts/flat-covers.py`）；作为照片后备保留的位图封面（`Cover*`）由 AI 生成，按实际情况回答
-- [ ] 版本信息：首次发布的「新内容」、推广文本、关键词、描述、支持与营销网址、截图
+- [ ] 版本信息：宣传文本、关键词、描述（见「商店文案」）、支持与营销网址、截图；首个版本没有「此版本的新内容」一栏
 - [ ] 审核信息：联系人与审核备注（见上文），无需演示账号
 
 **构建与回归**
