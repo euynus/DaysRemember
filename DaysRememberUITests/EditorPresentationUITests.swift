@@ -10,14 +10,24 @@ final class EditorPresentationUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// On 2026-07-20 the hero is 北海道旅行 (`japan`); a simulated midnight makes it 入职周年 (`work`).
+    /// On 2026-07-20, with the sample wedding unpinned, the hero is 北海道旅行 (`japan`); a simulated
+    /// midnight makes it 入职周年 (`work`).
     private func launchAcrossMidnight(after seconds: Int) -> (XCUIApplication, Date) {
         let app = XCUIApplication()
         app.launchEnvironment["DR_PIN_TODAY"] = "2026-07-20"
         app.launchEnvironment["DR_ADVANCE_DAY_AFTER_SECONDS"] = String(seconds)
         app.launchArguments = ["--tab", "home", "--seed-sample-data"]
         app.launch()
-        return (app, Date())
+        let launched = Date()
+        // Pinned, the wedding would hold the hero whatever the date.
+        let wedding = day("upcomingDay.wedding", in: app)
+        XCTAssertTrue(wedding.waitForExistence(timeout: 10))
+        wedding.press(forDuration: 1.0)
+        let unpin = app.buttons["取消置顶"]
+        XCTAssertTrue(unpin.waitForExistence(timeout: 5))
+        unpin.tap()
+        XCTAssertTrue(day("upcomingDay.japan", in: app).waitForExistence(timeout: 5), app.debugDescription)
+        return (app, launched)
     }
 
     private func day(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
@@ -90,9 +100,9 @@ final class EditorPresentationUITests: XCTestCase {
         app.launchEnvironment["DR_PIN_TODAY"] = "1"
         app.launchArguments = ["--tab", "home", "--seed-sample-data"]
         app.launch()
-        let wedding = day("dayRow.wedding", in: app)
+        // Pinned, the wedding leads the hero.
+        let wedding = day("upcomingDay.wedding", in: app)
         XCTAssertTrue(wedding.waitForExistence(timeout: 10))
-        for _ in 0..<4 where !wedding.isHittable { app.swipeUp() }
         wedding.tap()
         let more = app.buttons["detail.moreActions"]
         XCTAssertTrue(more.waitForExistence(timeout: 5))
@@ -109,8 +119,9 @@ final class EditorPresentationUITests: XCTestCase {
         save(title, in: app)
         XCTAssertTrue(app.staticTexts["小年糕出生"].waitForExistence(timeout: 5), "the link's day is open")
         app.buttons["返回"].firstMatch.tap()
-        XCTAssertTrue(day("dayRow.wedding", in: app).label.contains("结婚纪念日 draft") ||
-                      day("upcomingDay.wedding", in: app).label.contains("结婚纪念日 draft"))
+        let hero = day("upcomingDay.wedding", in: app)
+        XCTAssertTrue(hero.waitForExistence(timeout: 5))
+        XCTAssertTrue(hero.label.contains("结婚纪念日 draft"), hero.label)
     }
 
     func testLinkClosesSettingsToShowItsDay() {

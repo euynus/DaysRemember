@@ -60,7 +60,8 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         app.buttons["home.clearSearch"].tap()
         XCTAssertEqual(search.value as? String, search.placeholderValue)
         app.buttons["home.search"].tap()
-        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "upcomingDay.ui-polish-featured")
+        // The pinned sample wedding leads the 将至 hero.
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "upcomingDay.wedding")
             .firstMatch.waitForExistence(timeout: 5))
         attach(app, name: "Home search and face recovery")
     }

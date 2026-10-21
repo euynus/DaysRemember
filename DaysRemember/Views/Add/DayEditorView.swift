@@ -82,6 +82,10 @@ struct DayEditorView: View {
                 draft.selectedCategory = category
             }
         }
+        // The keyboard would stay up behind a sheet.
+        .onChange(of: showDatePicker || showTemplateGallery || showReminderSettings) { _, presenting in
+            if presenting { titleFocused = false }
+        }
         .sheet(isPresented: $showDatePicker) {
             DayEditorDatePickerSheet(solar: draft.solar, draftDate: $draftDate,
                                      onCancel: { showDatePicker = false }, onConfirm: confirmDraftDate)
@@ -162,9 +166,10 @@ struct DayEditorView: View {
             .accessibilityLabel("日子名称")
             .accessibilityIdentifier("dayTitleField")
             .focused($titleFocused)
-            // A new day starts with its name; the keyboard goes as the form scrolls.
+            // A new day starts with its name; the keyboard goes as the form scrolls. At accessibility
+            // sizes the keyboard would cover nearly all of the form, so it waits for a tap.
             .onAppear {
-                guard editingDay == nil else { return }
+                guard editingDay == nil, !dynamicTypeSize.isAccessibilitySize else { return }
                 Task { @MainActor in titleFocused = true }
             }
     }

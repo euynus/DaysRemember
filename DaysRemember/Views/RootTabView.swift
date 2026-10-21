@@ -13,6 +13,9 @@ struct RootTabView: View {
     @State private var calendarPath = NavigationPath()
     @State private var mePath = NavigationPath()
     @State private var newDay: NewDayRequest?
+    @State private var cloud = CloudLibrarySync.shared
+    /// A first day to start once iCloud's first download has brought nothing.
+    @State private var firstDayAfterDownload = false
     /// The library's size when the new day's editor opened, to tell whether it added one.
     @State private var dayCountBeforeAdding = 0
 
@@ -23,7 +26,10 @@ struct RootTabView: View {
     }
 
     init(startWithNewDay: Bool = false) {
-        _newDay = State(initialValue: startWithNewDay ? NewDayRequest() : nil)
+        // On a new device the library may still be downloading; the editor would hide it arriving.
+        let waits = startWithNewDay && CloudLibrarySync.shared.isFirstDownloadPending
+        _newDay = State(initialValue: startWithNewDay && !waits ? NewDayRequest() : nil)
+        _firstDayAfterDownload = State(initialValue: waits)
     }
 
     /// Allows `xcrun simctl launch ... --tab calendar` for screenshotting.
@@ -67,6 +73,11 @@ struct RootTabView: View {
             }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { openPendingLink() }
+            }
+            .onChange(of: cloud.isFirstDownloadPending) { _, pending in
+                guard !pending, firstDayAfterDownload else { return }
+                firstDayAfterDownload = false
+                if store.days.isEmpty && newDay == nil { startNewDay() }
             }
             .onChange(of: router.dayID) { _, id in routePending(id) }
             // Also catch a tap that set the id before this view began observing

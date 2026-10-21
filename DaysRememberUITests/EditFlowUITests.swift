@@ -118,11 +118,12 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertFalse(app.textFields["日子名称"].exists)
 
         app.buttons["添加日子"].tap()
-        XCTAssertTrue(app.segmentedControls.buttons["一次"].waitForExistence(timeout: 5))
-        app.segmentedControls.buttons["一次"].tap()
+        // A new day in 生活 starts as a one-time day, so choosing 每年 is the change.
+        XCTAssertTrue(app.segmentedControls.buttons["每年"].waitForExistence(timeout: 5))
+        app.segmentedControls.buttons["每年"].tap()
         dragSheetDown()
         XCTAssertTrue(app.textFields["日子名称"].exists)
-        XCTAssertTrue(app.segmentedControls.buttons["一次"].isSelected)
+        XCTAssertTrue(app.segmentedControls.buttons["每年"].isSelected)
         app.buttons["取消"].tap()
         app.buttons["放弃修改"].tap()
         expectation(for: NSPredicate { _, _ in app.buttons["添加日子"].isHittable }, evaluatedWith: app)
@@ -678,7 +679,8 @@ final class EditFlowUITests: XCTestCase {
 
     func testShareNotesDefaultOffAndDetailShowsElapsedDays() {
         let app = launchApp()
-        let wedding = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "结婚纪念日")).firstMatch
+        // Pinned, it leads the hero, whose label starts with 即将到来.
+        let wedding = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "结婚纪念日")).firstMatch
         reveal(wedding, in: app)
         wedding.tap()
         XCTAssertTrue(app.buttons["更多操作"].waitForExistence(timeout: 5))

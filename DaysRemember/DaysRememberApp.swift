@@ -25,6 +25,11 @@ struct DaysRememberApp: App {
         // Before launch finishes, as the system requires, so the tap on a reminder that launched
         // the app reaches the router.
         NotificationManager.shared.configureDelegate(router: router)
+        // Before any view asks for a tip. Tips would cover what UI tests and screenshots tap and capture.
+        #if DEBUG
+        if DebugLaunch.isAutomated || DebugLaunch.isUnitTesting { Tips.hideAllTipsForTesting() }
+        #endif
+        try? Tips.configure()
     }
 
     var body: some Scene {
@@ -78,11 +83,9 @@ struct DaysRememberApp: App {
                         try? store.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [remote], recoveryDays: [local]))
                     }
                     #endif
-                    // Tips would cover what UI tests and screenshots tap and capture.
-                    if automated { Tips.hideAllTipsForTesting() }
-                    try? Tips.configure()
                     ReviewPrompt.noteUse()
                     QuickActions.install()
+                    DaysShortcuts.updateAppShortcutParameters()
                     if !automated {
                         store.enableCloudSync()
                         settings.enableCloudSync {
