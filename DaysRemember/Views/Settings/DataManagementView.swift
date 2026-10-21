@@ -217,7 +217,7 @@ struct DataManagementView: View {
     }
 
     /// Dated on the device's clock; the ISO 8601 style alone would use UTC.
-    static func filename(_ name: String, on date: Date, in zone: TimeZone = .current) -> String {
+    static func filename(_ name: String, on date: Date, in zone: TimeZone = .autoupdatingCurrent) -> String {
         let day = Date.ISO8601FormatStyle(timeZone: zone).year().month().day().dateSeparator(.dash)
         return name + "-" + date.formatted(day)
     }

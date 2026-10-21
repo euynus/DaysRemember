@@ -14,21 +14,21 @@ enum CNDate {
     private static let wallClock: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second, .nanosecond]
 
     /// The app-calendar time that reads the same on a clock as `instant` does in `zone`.
-    static func appTime(_ instant: Date, in zone: TimeZone = .current) -> Date {
+    static func appTime(_ instant: Date, in zone: TimeZone = .autoupdatingCurrent) -> Date {
         var local = calendar
         local.timeZone = zone
         return calendar.date(from: local.dateComponents(wallClock, from: instant)) ?? instant
     }
 
     /// When an app-calendar time comes round on a clock in `zone`; the inverse of `appTime`.
-    static func instant(_ appTime: Date, in zone: TimeZone = .current) -> Date {
+    static func instant(_ appTime: Date, in zone: TimeZone = .autoupdatingCurrent) -> Date {
         var local = calendar
         local.timeZone = zone
         return local.date(from: calendar.dateComponents(wallClock, from: appTime)) ?? appTime
     }
 
     /// The moments the next `count` days begin in `zone`.
-    static func localDayStarts(after instant: Date, count: Int, in zone: TimeZone = .current) -> [Date] {
+    static func localDayStarts(after instant: Date, count: Int, in zone: TimeZone = .autoupdatingCurrent) -> [Date] {
         dayStarts(after: appTime(instant, in: zone), count: count).map { self.instant($0, in: zone) }
     }
 
