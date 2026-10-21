@@ -8,10 +8,10 @@ struct DaysWidgetEntryView: View {
     var body: some View {
         Group {
             if let accessoryStyle {
-                DayAccessoryWidget(day: entry.day, style: accessoryStyle, today: entry.date,
+                DayAccessoryWidget(day: entry.day, style: accessoryStyle, today: entry.today,
                                    selectionMissing: entry.selectionMissing)
             } else if let day = entry.day {
-                DayWidgetCard(day: day, size: cardSize, today: entry.date, colorToken: entry.colorToken)
+                DayWidgetCard(day: day, size: cardSize, today: entry.today, colorToken: entry.colorToken)
             } else {
                 DayWidgetEmptyState(selectionMissing: entry.selectionMissing)
             }

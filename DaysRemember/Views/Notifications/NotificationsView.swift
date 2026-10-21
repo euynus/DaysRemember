@@ -141,11 +141,11 @@ struct NotificationsView: View {
 
     private var greetingTimeRow: some View {
         HStack(spacing: 14) {
-            Text("问候时间（北京时间）")
+            Text("问候时间")
                 .font(Theme.sans(15))
                 .foregroundStyle(Theme.ink)
             Spacer(minLength: 8)
-            DatePicker("问候时间（北京时间）", selection: greetingTime, displayedComponents: .hourAndMinute)
+            DatePicker("问候时间", selection: greetingTime, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .environment(\.calendar, CNDate.calendar)
                 .environment(\.timeZone, CNDate.calendar.timeZone)
@@ -161,7 +161,7 @@ struct NotificationsView: View {
     private var timeRow: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("提醒时间（北京时间）")
+                Text("提醒时间")
                     .font(Theme.sans(15, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                 Text("当天、提前提醒与年度回忆")
@@ -169,7 +169,7 @@ struct NotificationsView: View {
                     .foregroundStyle(Theme.muted)
             }
             Spacer(minLength: 8)
-            DatePicker("提醒时间（北京时间）", selection: reminderTime, displayedComponents: .hourAndMinute)
+            DatePicker("提醒时间", selection: reminderTime, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .environment(\.calendar, CNDate.calendar)
                 .environment(\.timeZone, CNDate.calendar.timeZone)

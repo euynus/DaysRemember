@@ -93,10 +93,10 @@ struct DayReminderSettingsView: View {
                     }
                 }
 
-                Section("提醒时间（北京时间）") {
+                Section("提醒时间") {
                     Toggle("使用全局时间", isOn: usesGlobalTime)
                         .accessibilityIdentifier("dayReminderUsesGlobalTime")
-                    DatePicker("提醒时间（北京时间）", selection: reminderTime,
+                    DatePicker("提醒时间", selection: reminderTime,
                                displayedComponents: .hourAndMinute)
                         .datePickerStyle(.compact)
                         .labelsHidden()

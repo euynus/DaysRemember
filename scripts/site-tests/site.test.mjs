@@ -2,13 +2,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { beijingNoon, el, runSite } from "./dom.mjs";
+import { localNoon, el, runSite } from "./dom.mjs";
 
 const docs = new URL("../../docs/", import.meta.url);
 const read = (path) => readFileSync(new URL(path, docs), "utf8");
 
 function heroDate(lang, date) {
-  const site = runSite({ lang, now: beijingNoon(date), body: [el("p", { class: "today", "data-today": "" })] });
+  const site = runSite({ lang, now: localNoon(date), body: [el("p", { class: "today", "data-today": "" })] });
   return site.$("[data-today]").textContent;
 }
 
@@ -54,6 +54,20 @@ function contrast(foreground, background) {
   return (light + 0.05) / (dark + 0.05);
 }
 
+test("days turn over at midnight on the visitor's clock", () => {
+  const zone = process.env.TZ;
+  try {
+    // 02:00 UTC on 12 October is still the evening of the 11th in New York.
+    process.env.TZ = "America/New_York";
+    const site = runSite({ lang: "en", now: Date.parse("2026-10-12T02:00:00Z"),
+                           body: [el("p", { class: "today", "data-today": "" })] });
+    assert.ok(site.$("[data-today]").textContent.startsWith("Sunday, October 11"), site.$("[data-today]").textContent);
+  } finally {
+    if (zone === undefined) delete process.env.TZ;
+    else process.env.TZ = zone;
+  }
+});
+
 // 16px semibold text is not large text, so WCAG 1.4.3 asks for 4.5:1.
 test("the coming-soon badge has enough contrast", () => {
   const badge = rule(".cta.is-soon");
@@ -93,7 +107,7 @@ function demo() {
 
 // Print never scrolls anything into view, and a reveal that just started is still transparent.
 test("printing shows every section with its final figures", () => {
-  const site = runSite({ motion: true, now: beijingNoon("2026-10-12"), body: [features(), ...demo()] });
+  const site = runSite({ motion: true, now: localNoon("2026-10-12"), body: [features(), ...demo()] });
   const figures = site.$$(".tile .figure b");
   assert.deepEqual(figures.map((figure) => figure.textContent), ["0", "0"], "figures wait for their rows");
   const card = site.$("[data-demo-card]");
@@ -101,7 +115,7 @@ test("printing shows every section with its final figures", () => {
   site.flushFrames();
   const days = card.querySelector(".figure b").textContent;
 
-  const counting = runSite({ motion: true, now: beijingNoon("2026-10-12"), body: [features(), ...demo()] });
+  const counting = runSite({ motion: true, now: localNoon("2026-10-12"), body: [features(), ...demo()] });
   counting.intersect(counting.$("[data-demo-card]"));
   counting.window.dispatchEvent({ type: "beforeprint" });
   assert.deepEqual(counting.$$(".tile .figure b").map((figure) => figure.textContent), ["24", "30"]);
@@ -124,7 +138,7 @@ test("the demo counts a past one-time day up toward its next round number", () =
     const body = demo();
     const figure = body[1].querySelector(".figure");
     figure.insertBefore(el("span", { "data-lead": "" }), figure.querySelector("b"));
-    const site = runSite({ lang, now: beijingNoon("2026-10-17"), body });
+    const site = runSite({ lang, now: localNoon("2026-10-17"), body });
     const form = site.$("[data-demo]");
     const card = site.$("[data-demo-card]");
     const enter = (date, recurring) => {

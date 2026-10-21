@@ -1,13 +1,36 @@
 import Foundation
 import Synchronization
 
-/// Display follows the app language; day boundaries remain in the stored calendar.
+/// Display follows the app language. Days are stored as dates on this calendar, so a birthday stays
+/// on its day wherever the device is; the device's own time zone decides which day is today and
+/// when a reminder arrives (`appTime` and `instant` convert between the two).
 enum CNDate {
     static let calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = TimeZone(identifier: "Asia/Shanghai") ?? .current
         return c
     }()
+
+    private static let wallClock: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second, .nanosecond]
+
+    /// The app-calendar time that reads the same on a clock as `instant` does in `zone`.
+    static func appTime(_ instant: Date, in zone: TimeZone = .current) -> Date {
+        var local = calendar
+        local.timeZone = zone
+        return calendar.date(from: local.dateComponents(wallClock, from: instant)) ?? instant
+    }
+
+    /// When an app-calendar time comes round on a clock in `zone`; the inverse of `appTime`.
+    static func instant(_ appTime: Date, in zone: TimeZone = .current) -> Date {
+        var local = calendar
+        local.timeZone = zone
+        return local.date(from: calendar.dateComponents(wallClock, from: appTime)) ?? appTime
+    }
+
+    /// The moments the next `count` days begin in `zone`.
+    static func localDayStarts(after instant: Date, count: Int, in zone: TimeZone = .current) -> [Date] {
+        dayStarts(after: appTime(instant, in: zone), count: count).map { self.instant($0, in: zone) }
+    }
 
     private static let lastDayStart = Mutex<(date: Date, start: Date)?>(nil)
 

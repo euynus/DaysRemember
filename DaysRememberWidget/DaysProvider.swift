@@ -17,17 +17,17 @@ struct DaysProvider: AppIntentTimelineProvider {
         let now = Date.now
         var photos = PhotoLoader(library: SharedStorage.loadLibrary(), family: context.family)
         let categories = SharedStorage.loadCategories()
-        let entries = ([now] + CNDate.dayStarts(after: now, count: 7)).map {
+        let entries = ([now] + CNDate.localDayStarts(after: now, count: 7)).map {
             makeEntry(configuration: configuration, photos: &photos, categories: categories, asOf: $0)
         }
         return Timeline(entries: entries, policy: .atEnd)
     }
 
     private func makeEntry(configuration: SelectWidgetDay, photos: inout PhotoLoader,
-                           categories: [CategoryDefinition], asOf today: Date) -> DaysEntry {
+                           categories: [CategoryDefinition], asOf date: Date) -> DaysEntry {
         let days = photos.library.days
-        let day = WidgetDay.resolve(in: days, selectedID: configuration.day?.id, today: today)
-        return DaysEntry(date: today, day: day.map { photos.load($0) },
+        let day = WidgetDay.resolve(in: days, selectedID: configuration.day?.id, today: CNDate.appTime(date))
+        return DaysEntry(date: date, day: day.map { photos.load($0) },
                          selectionMissing: configuration.day != nil && day == nil,
                          colorToken: day.map { CategoryDefinition.colorToken(for: $0, in: categories) })
     }

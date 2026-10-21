@@ -120,7 +120,7 @@ final class NotificationPlanningTests: XCTestCase {
         XCTAssertTrue(NotificationManager.plan(days: [unsupported], settings: config, now: date(2026, 1, 1)).isEmpty)
     }
 
-    func testPendingPreviewUsesActualTriggerAndContentWithExplicitTimeZone() throws {
+    func testPendingPreviewUsesActualTriggerAndContentOnTheDevicesClock() throws {
         let config = try settings()
         let plans = NotificationManager.plan(days: [day("later", date(2099, 7, 20)), day("first", date(2099, 7, 19))],
                                             settings: config, now: date(2099, 1, 1))
@@ -130,8 +130,11 @@ final class NotificationPlanningTests: XCTestCase {
         XCTAssertEqual(pending.first?.date, date(2099, 7, 19, 9))
         XCTAssertEqual(pending.first?.request.content.body, "今天是「first」")
         let trigger = try XCTUnwrap(pending.first?.request.trigger as? UNCalendarNotificationTrigger)
-        XCTAssertEqual(trigger.dateComponents.timeZone, CNDate.calendar.timeZone)
-        XCTAssertEqual(trigger.dateComponents.year, 2099)
+        // No time zone, so the reminder arrives at 09:00 wherever the device is.
+        XCTAssertNil(trigger.dateComponents.timeZone)
+        XCTAssertEqual(trigger.dateComponents.calendar?.identifier, .gregorian)
+        XCTAssertEqual([trigger.dateComponents.year, trigger.dateComponents.month, trigger.dateComponents.day,
+                        trigger.dateComponents.hour, trigger.dateComponents.minute], [2099, 7, 19, 9, 0])
         XCTAssertFalse(trigger.repeats)
         let unrelated = UNNotificationRequest(identifier: "another.feature", content: requests[0].content, trigger: trigger)
         XCTAssertTrue(NotificationManager.scheduledReminders(from: [unrelated]).isEmpty)

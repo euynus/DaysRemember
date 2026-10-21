@@ -4,7 +4,7 @@
 
 Facts stated on this site:
 
-- Days are counted in Beijing time, and turn over at midnight Beijing time.
+- Days are counted on the device’s clock, and turn over at local midnight; the lunar calendar and solar terms follow Beijing time.
 - Home has two sides: 将至 (Ahead) counts down, with the five nearest days at the top; one-time days that have passed move to 已过 (Past) and count up. A yearly day stays on home for a week after it passes.
 - Round-number milestones for past days: every 100 days up to 1,000 days, every 500 days after that, or a whole year.
 - In a day's detail, tapping the number switches between days, weeks, months and hours.

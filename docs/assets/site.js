@@ -1,9 +1,8 @@
 // Today's date line, the countdown demo and the page's motion. Like the app, days turn over at
-// midnight Beijing time.
+// midnight on the visitor's own clock.
 (function () {
   "use strict";
 
-  var TIME_ZONE = "Asia/Shanghai";
   var DAY = 86400000;
   var root = document.documentElement;
   var lang = root.lang;
@@ -71,12 +70,9 @@
     return function () { cancelAnimationFrame(frame); };
   }
 
-  function beijingToday() {
-    var parts = {};
-    new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, year: "numeric", month: "numeric", day: "numeric" })
-      .formatToParts(new Date())
-      .forEach(function (part) { parts[part.type] = Number(part.value); });
-    return { y: parts.year, m: parts.month, d: parts.day };
+  function localToday() {
+    var now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
   }
 
   function dayNumber(y, m, d) { return Math.round(Date.UTC(y, m - 1, d) / DAY); }
@@ -169,7 +165,7 @@
   }
 
   function lunarToday() {
-    var today = beijingToday();
+    var today = localToday();
     var lunar = lunarDate(today.y, today.m, today.d);
     if (!lunar) return "";
     if (lang === "en") return (lunar.leap ? "Leap month " : "Month ") + lunar.month + ", Day " + lunar.day;
@@ -181,9 +177,9 @@
     if (!target) return;
     var now = new Date();
     var solar = lang === "en"
-      ? new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, weekday: "long", month: "long", day: "numeric" }).format(now)
-      : new Intl.DateTimeFormat(TEXT.locale, { timeZone: TIME_ZONE, month: "long", day: "numeric" }).format(now) + " " +
-        new Intl.DateTimeFormat(TEXT.locale, { timeZone: TIME_ZONE, weekday: "long" }).format(now);
+      ? new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(now)
+      : new Intl.DateTimeFormat(TEXT.locale, { month: "long", day: "numeric" }).format(now) + " " +
+        new Intl.DateTimeFormat(TEXT.locale, { weekday: "long" }).format(now);
     var lunar = lunarToday();
     target.textContent = lunar ? solar + " · " + lunar : solar;
   }
@@ -231,7 +227,7 @@
       if (!match) return;
       var y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
       if (y < 1900 || y > 2100) return;
-      var today = beijingToday();
+      var today = localToday();
       var t = dayNumber(today.y, today.m, today.d);
       var original = dayNumber(y, m, d);
       var target = original;

@@ -593,12 +593,12 @@
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "每天 %@" } }
       }
     },
-    "问候时间（北京时间）" : {
+    "问候时间" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Greeting Time (Beijing)" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "问候时间（北京时间）" } },
-        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "問候時間（北京時間）" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Greeting Time" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "问候时间" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "問候時間" } }
       }
     },
     "今天也要好好生活，珍惜每一个值得记住的日子。" : {
@@ -5853,25 +5853,25 @@
         }
       }
     },
-    "提醒时间（北京时间）" : {
+    "提醒时间" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reminder Time (Beijing)"
+            "value" : "Reminder Time"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "提醒时间（北京时间）"
+            "value" : "提醒时间"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "提醒時間（北京時間）"
+            "value" : "提醒時間"
           }
         }
       }

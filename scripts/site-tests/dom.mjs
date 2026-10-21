@@ -195,5 +195,5 @@ export function runSite({ lang = "zh-Hans", motion = false, now = Date.now(), bo
   };
 }
 
-/// Noon in Beijing on a calendar date, as a timestamp.
-export function beijingNoon(date) { return Date.parse(date + "T12:00:00+08:00"); }
+/// Noon on a calendar date on this machine's clock, as a timestamp.
+export function localNoon(date) { return new Date(date + "T12:00:00").getTime(); }

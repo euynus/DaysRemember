@@ -93,7 +93,7 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 【隐私】
 不收集任何数据。日子、照片和设置只保存在你的设备和你自己的 iCloud 中，不会上传给开发者。无需账号，无广告，无追踪，无第三方 SDK。
 
-支持简体中文、繁體中文和 English，可以在「我的 › 语言」里切换。倒数和提醒按北京时间计算。
+支持简体中文、繁體中文和 English，可以在「我的 › 语言」里切换。倒数和提醒跟随设备所在的时区。
 ```
 
 ### 繁體中文
@@ -157,7 +157,7 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 【隱私】
 不收集任何資料。日子、照片和設定只儲存在你的裝置和你自己的 iCloud 中，不會上傳給開發者。無需帳號，無廣告，無追蹤，無第三方 SDK。
 
-支援簡體中文、繁體中文和 English，可以在「我的 › 語言」裡切換。倒數和提醒以北京時間計算。
+支援簡體中文、繁體中文和 English，可以在「我的 › 語言」裡切換。倒數和提醒跟隨裝置所在的時區。
 ```
 
 ### English
@@ -221,7 +221,7 @@ Days, categories and photos sync across your devices through your own iCloud. A 
 PRIVACY
 No data collected. Your days, photos and settings stay on your devices and in your own iCloud, and nothing is sent to the developer. No account, no ads, no tracking, no third-party SDKs.
 
-In English, Simplified Chinese and Traditional Chinese; switch in Me › Language. Countdowns and reminders follow Beijing time (UTC+8).
+In English, Simplified Chinese and Traditional Chinese; switch in Me › Language. Countdowns and reminders follow your device’s time zone.
 ```
 
 ## 隐私（App 隐私问卷答案）

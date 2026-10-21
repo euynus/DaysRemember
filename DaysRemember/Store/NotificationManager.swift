@@ -82,7 +82,7 @@ final class NotificationManager {
         let pending = await center.pendingNotificationRequests()
         let otherCount = pending.count { !$0.identifier.hasPrefix("dr.") }
         let plan = Self.canDeliver(status)
-            ? await Self.planInBackground(days: days, settings: settings, now: Date.now,
+            ? await Self.planInBackground(days: days, settings: settings, now: CNDate.appTime(.now),
                                           capacity: Self.pendingLimit - otherCount)
             : []
         let wanted = Set(plan.map(\.id))
@@ -106,7 +106,7 @@ final class NotificationManager {
         }
         await readPending()
         let actual = Set(pendingReminders.map(\.id))
-        failed.formUnion(plan.filter { $0.date > Date.now && !actual.contains($0.id) }.map(\.id))
+        failed.formUnion(plan.filter { $0.date > CNDate.appTime(.now) && !actual.contains($0.id) }.map(\.id))
         failed.formUnion(actual.subtracting(wanted))
         if !failed.isEmpty {
             lastError = String(localized: "有 \(failed.count) 条提醒未能更新，请重试；页面仅显示系统已安排的提醒。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
@@ -131,6 +131,7 @@ final class NotificationManager {
 
     struct PendingReminder: Identifiable, Equatable {
         let request: UNNotificationRequest
+        /// On the app calendar, as planned dates are.
         let date: Date
         var id: String { request.identifier }
         var dayID: String? { request.content.userInfo["dayID"] as? String }
@@ -150,7 +151,7 @@ final class NotificationManager {
             guard request.identifier.hasPrefix("dr."),
                   let trigger = request.trigger as? UNCalendarNotificationTrigger,
                   let date = trigger.nextTriggerDate() else { return nil }
-            return PendingReminder(request: request, date: date)
+            return PendingReminder(request: request, date: CNDate.appTime(date))
         }.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date < $1.date }
     }
 
@@ -189,6 +190,7 @@ final class NotificationManager {
 
     struct PlannedReminder: Identifiable {
         let id: String
+        /// The delivery time on the app calendar; the request asks for that time on the device's clock.
         let date: Date
         let title: String
         let body: String
@@ -202,11 +204,12 @@ final class NotificationManager {
             content.sound = .default
             content.threadIdentifier = dayID.map { "dr.day.\($0)" } ?? "dr.daily"
             if let dayID { content.userInfo = ["dayID": dayID] }
-            let calendar = CNDate.calendar
             let fields: Set<Calendar.Component> = repeats ? [.hour, .minute] : [.year, .month, .day, .hour, .minute]
-            var components = calendar.dateComponents(fields, from: date)
-            components.calendar = calendar
-            components.timeZone = calendar.timeZone
+            // Without a time zone the trigger follows the device's, including when it travels.
+            var components = CNDate.calendar.dateComponents(fields, from: date)
+            var gregorian = Calendar(identifier: .gregorian)
+            gregorian.timeZone = .autoupdatingCurrent
+            components.calendar = gregorian
             components.second = 0
             return UNNotificationRequest(identifier: id, content: content,
                                          trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: repeats))
@@ -229,7 +232,8 @@ final class NotificationManager {
         let kind: Kind
     }
 
-    /// Finite, deterministic planning; never depends on the DEBUG display clock.
+    /// Finite, deterministic planning; never depends on the DEBUG display clock. `now` and every
+    /// planned date are on the app calendar (`CNDate.appTime`).
     nonisolated static func plan(days: [Day], settings: AppSettingsSnapshot, now: Date,
                                  capacity: Int = pendingLimit) -> [PlannedReminder] {
         let calendar = CNDate.calendar

@@ -206,7 +206,7 @@ final class EditFlowUITests: XCTestCase {
         app.buttons["PopoverDismissRegion"].tap()
         XCTAssertEqual(app.buttons["时间选择器"].value as? String, "14:35")
         let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = "Multiple day reminders and Beijing time"
+        attachment.name = "Multiple day reminders and their time"
         attachment.lifetime = .keepAlways
         add(attachment)
         app.buttons["confirmDayReminders"].tap()
@@ -723,11 +723,11 @@ final class EditFlowUITests: XCTestCase {
         let onMyiPhone = app.cells.matching(NSPredicate(format: "label BEGINSWITH %@", "我的iPhone")).firstMatch
 
         openDataManagement()
-        // The name DataManagementView gives the backup, dated in Beijing time. The test runs on a
-        // disposable simulator, so naming it in the picker (whose name field and keyboard differ by
-        // iOS version) isn't needed.
-        let beijing = Date.ISO8601FormatStyle(timeZone: TimeZone(identifier: "Asia/Shanghai")!)
-        let backupName = "时光备份-" + Date.now.formatted(beijing.year().month().day().dateSeparator(.dash))
+        // The name DataManagementView gives the backup, dated on the simulator's clock. The test runs
+        // on a disposable simulator, so naming it in the picker (whose name field and keyboard differ
+        // by iOS version) isn't needed.
+        let local = Date.ISO8601FormatStyle(timeZone: .current)
+        let backupName = "时光备份-" + Date.now.formatted(local.year().month().day().dateSeparator(.dash))
         app.buttons["导出备份"].tap()
         // iOS 27 identifies the picker's save button; iOS 26 only labels it.
         let save = app.buttons.matching(NSPredicate(

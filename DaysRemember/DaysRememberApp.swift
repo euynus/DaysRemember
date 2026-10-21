@@ -92,9 +92,11 @@ struct DaysRememberApp: App {
                     store.rescheduleNotifications()
                     WidgetCenter.shared.reloadTimelines(ofKind: "DaysRememberWidget")
                 }
+                // Includes a change of time zone, which moves the day boundary widgets count from.
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
                     refreshCurrentDay()
                     store.rescheduleNotifications()
+                    WidgetCenter.shared.reloadTimelines(ofKind: "DaysRememberWidget")
                 }
                 .task { await refreshAtMidnight() }
         }
@@ -116,7 +118,7 @@ struct DaysRememberApp: App {
         #endif
         while !Task.isCancelled {
             let now = Date.now
-            let next = CNDate.dayStarts(after: now, count: 1).first ?? now.addingTimeInterval(21600)
+            let next = CNDate.localDayStarts(after: now, count: 1).first ?? now.addingTimeInterval(21600)
             do { try await Task.sleep(for: .seconds(max(1, next.timeIntervalSinceNow))) }
             catch { return }
             refreshCurrentDay()

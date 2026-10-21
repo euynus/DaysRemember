@@ -1,7 +1,7 @@
 import Foundation
 
-/// Today reference — production uses `Date.now`, but DEBUG can pin to the prototype's
-/// 2026-04-23 so previews and screenshots line up with the design.
+/// Today reference — production uses the device's clock on the app calendar (`CNDate.appTime`), but
+/// DEBUG can pin to the prototype's 2026-04-23 so previews and screenshots line up with the design.
 enum Today {
     static var date: Date {
         #if DEBUG
@@ -19,6 +19,6 @@ enum Today {
             if let d = f.date(from: raw) { return d }
         }
         #endif
-        return Date.now
+        return CNDate.appTime(.now)
     }
 }
