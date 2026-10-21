@@ -56,6 +56,9 @@ targets:
       - path: DaysRemember/Lunar
       - path: DaysRemember/Theme
       - path: DaysRemember/Store/SharedStorage.swift
+      # The intent behind the Control Center button opens the app through a pending link.
+      - path: DaysRemember/Intents/NewDayIntent.swift
+      - path: DaysRemember/Intents/PendingLink.swift
       # Shared photo rendering keeps widget crops identical to the app.
       - path: DaysRemember/Views/Components/PhotoTile.swift
       - path: DaysRemember/Views/Components/PhotoDecodeCache.swift

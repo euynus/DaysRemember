@@ -81,10 +81,36 @@ struct WidgetsPreviewView: View {
                 } else {
                     ContentUnavailableView(selectedID == nil ? "还没有日子" : "日子已删除", systemImage: "calendar")
                 }
+                if !lockScreen && size != .small {
+                    listPreview
+                }
             }
             .frame(maxWidth: .infinity)
         }
         .background(Theme.bg)
+    }
+
+    /// The days-list widget, which lists the next few days rather than one.
+    private var listPreview: some View {
+        let large = size == .large
+        let days = WidgetDay.list(in: store.days, today: today, limit: DayListWidgetCard.capacity(large: large))
+        return VStack(spacing: 10) {
+            Text("日子列表")
+                .font(Theme.sans(15, weight: .heavy))
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+            DayListWidgetCard(days: days, large: large, today: today,
+                              colorTokens: Dictionary(uniqueKeysWithValues: days.map { ($0.id, store.category(for: $0).colorToken) }))
+                .frame(width: 320, height: large ? 340 : 160)
+                .background(Theme.bg)
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 24)
+                        .strokeBorder(Theme.hairline, lineWidth: 1)
+                }
+                .accessibilityIdentifier("listWidgetPreview")
+        }
+        .padding(.bottom, 24)
     }
 
     private var accessorySize: CGSize { Self.accessorySize(for: accessoryStyle) }

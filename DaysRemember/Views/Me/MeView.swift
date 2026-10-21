@@ -11,6 +11,7 @@ struct MeView: View {
     @State private var showingLanguage = false
     @State private var showingWidgets = false
     @State private var showingData = false
+    @State private var importingBirthdays = false
     @State private var cloud = CloudLibrarySync.shared
 
     var body: some View {
@@ -48,6 +49,10 @@ struct MeView: View {
                         row(String(localized: "小组件", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                             systemImage: "rectangle.3.group", tint: Theme.noteGreen, ink: Theme.catWork,
                             identifier: "settings.widgets") { showingWidgets = true }
+                        MeDivider()
+                        row(String(localized: "导入通讯录生日", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                            systemImage: "gift", tint: Theme.notePink, ink: Theme.catLove,
+                            identifier: "settings.contacts") { importingBirthdays = true }
                         MeDivider()
                         row(String(localized: "数据与同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                             systemImage: "icloud", tint: Theme.noteBlue, ink: Theme.catTravel,
@@ -87,12 +92,14 @@ struct MeView: View {
         .sheet(isPresented: $showingLanguage) { LanguageSettingsView() }
         .sheet(isPresented: $showingWidgets) { WidgetsPreviewView() }
         .sheet(isPresented: $showingData) { DataManagementView() }
+        .sheet(isPresented: $importingBirthdays) { ContactBirthdaysView() }
         // A widget or reminder link opens its day on 日子; close the settings open here. A category
         // editor (categoryEditorHost) stays on top with its draft, and the day opens beneath it.
         .onChange(of: router.linkOpenCount) {
             showingLanguage = false
             showingWidgets = false
             showingData = false
+            importingBirthdays = false
         }
     }
 

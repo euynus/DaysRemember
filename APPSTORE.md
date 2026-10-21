@@ -64,13 +64,13 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 时光帮你温柔记住每一个重要的日子：结婚纪念、宝宝出生、一场旅行、考试倒数。未来的值得期待，过去的可以回望。
 
 【将至与已过】
-首页分成两面。「将至」为还没到的日子倒数，最近的五个排在最前；每年的日子刚过去的一周里，首页还会留着它，方便你写下这一天。不重复的日子过去以后移到「已过」，一天天正数。
+首页分成两面。「将至」为还没到的日子倒数，置顶的和最近的日子排在最前；每年的日子刚过去的一周里，首页还会留着它，方便你写下这一天。不重复的日子过去以后移到「已过」，一天天正数。
 
 【整数纪念】
 「已过」里的日子会预告下一个整数纪念：1000 天以内每满 100 天，之后每满 500 天，或者满一整年。
 
 【农历与节气】
-日子可以按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。
+日子可以按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。联系人的生日可以从通讯录一次导入，农历生日也照样按农历重复。
 
 【轻点切换单位】
 在日子详情里轻点数字，就在天、周、月、小时之间切换。下面列出这个日子的节点：每年的日子有上一次和下一次周年，已过的日子有下一个整数纪念。
@@ -82,7 +82,10 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 每个日子都是一张分类颜色的卡片。配一张自己的照片，或从 12 张扁平插图里挑一张；新建的日子会按分类先配好封面。除了爱情、家人、旅行、工作、生活，还能在「我的」里新建自己的分类，图标和颜色自己挑。
 
 【小组件】
-主屏幕小、中、大三种尺寸，用和 App 里一样的彩色卡片；锁定屏幕另有三种样式。每个小组件都可以单独选一个日子。
+主屏幕小、中、大三种尺寸，用和 App 里一样的彩色卡片；日子列表小组件一次列出接下来几个日子；锁定屏幕另有三种样式。每个小组件都可以单独选一个日子，不选就先显示置顶的日子。
+
+【快捷入口】
+控制中心和主屏幕图标都可以一键新建日子；问 Siri「某个日子还有几天」，不用打开 App 就有答案。
 
 【分享卡片】
 照片、手记、极简、双栏四种模板，可以导出 3:4 竖图，保存到相册或分享出去。笔记默认不出现在图片上。
@@ -128,13 +131,13 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 時光幫你溫柔記住每一個重要的日子：結婚紀念、寶寶出生、一場旅行、考試倒數。未來的值得期待，過去的可以回望。
 
 【將至與已過】
-首頁分成兩面。「將至」為還沒到的日子倒數，最近的五個排在最前；每年的日子剛過去的一週裡，首頁還會留著它，方便你寫下這一天。不重複的日子過去以後移到「已過」，一天天正數。
+首頁分成兩面。「將至」為還沒到的日子倒數，置頂的和最近的日子排在最前；每年的日子剛過去的一週裡，首頁還會留著它，方便你寫下這一天。不重複的日子過去以後移到「已過」，一天天正數。
 
 【整數紀念】
 「已過」裡的日子會預告下一個整數紀念：1000 天以內每滿 100 天，之後每滿 500 天，或者滿一整年。
 
 【農曆與節氣】
-日子可以按國曆或農曆每年重複。日曆裡標出農曆日期、二十四節氣和傳統節日，農曆支援 1900 至 2100 年。
+日子可以按國曆或農曆每年重複。日曆裡標出農曆日期、二十四節氣和傳統節日，農曆支援 1900 至 2100 年。聯絡人的生日可以從通訊錄一次匯入，農曆生日也照樣按農曆重複。
 
 【輕點切換單位】
 在日子詳情裡輕點數字，就在天、週、月、小時之間切換。下面列出這個日子的節點：每年的日子有上一次和下一次週年，已過的日子有下一個整數紀念。
@@ -146,7 +149,10 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 每個日子都是一張分類顏色的卡片。配一張自己的照片，或從 12 張扁平插圖裡挑一張；新建的日子會依分類先配好封面。除了愛情、家人、旅行、工作、生活，還能在「我的」裡新增自己的分類，圖示和顏色自己挑。
 
 【小工具】
-主畫面小、中、大三種尺寸，用和 App 裡一樣的彩色卡片；鎖定畫面另有三種樣式。每個小工具都可以單獨選一個日子。
+主畫面小、中、大三種尺寸，用和 App 裡一樣的彩色卡片；日子列表小工具一次列出接下來幾個日子；鎖定畫面另有三種樣式。每個小工具都可以單獨選一個日子，不選就先顯示置頂的日子。
+
+【快捷入口】
+控制中心和主畫面圖示都可以一鍵新增日子；問 Siri「某個日子還有幾天」，不用打開 App 就有答案。
 
 【分享卡片】
 照片、手記、極簡、雙欄四種範本，可以匯出 3:4 直圖，儲存到相簿或分享出去。筆記預設不會出現在圖片上。
@@ -192,13 +198,13 @@ birthday,lunar,chinese,calendar,widget,reminder,since,until,wedding,baby,love,da
 Days Remember gently keeps track of the days that matter: a wedding anniversary, a baby's birth, a trip, an exam. Look forward to what's ahead, and look back on what has passed.
 
 AHEAD AND PAST
-The Days tab has two sides. Ahead counts down to the days still to come, with the five nearest at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.
+The Days tab has two sides. Ahead counts down to the days still to come, with pinned and the nearest days at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.
 
 ROUND NUMBERS
 Days under Past show their next round number: every 100 days up to 1,000, every 500 after that, or a whole year.
 
 LUNAR CALENDAR AND SOLAR TERMS
-Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.
+Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100. Import your contacts' birthdays in one go; lunar birthdays repeat by the lunar calendar too.
 
 TAP TO CHANGE UNITS
 In a day's detail, tap the number to switch between days, weeks, months and hours. Below it are the day's marks: the last and next anniversaries of a yearly day, or the next round number of a past day.
@@ -210,7 +216,10 @@ COVERS AND CATEGORIES
 Every day is a card in its category's color. Give it a photo of your own, or pick one of 12 flat illustrations; a new day starts with a cover that suits its category. Besides Love, Family, Travel, Work and Life, create categories of your own in Me, each with its own icon and color.
 
 WIDGETS
-Small, medium and large on the Home Screen, in the same colored cards as the app, plus three Lock Screen styles. Each widget can show a day of its own.
+Small, medium and large on the Home Screen, in the same colored cards as the app, a day list that shows the next few at once, plus three Lock Screen styles. Each widget can show a day of its own, or your pinned day first.
+
+SHORTCUTS
+Start a new day from Control Center or the Home Screen icon, and ask Siri how many days are left until a day without opening the app.
 
 SHARE CARDS
 Photo, Journal, Minimal and Split templates, with a 3:4 portrait export to save to Photos or share. Notes stay off the image unless you include them.
@@ -235,6 +244,7 @@ In English, Simplified Chinese and Traditional Chinese; switch in Me › Languag
 ## 权限用途（Info.plist 文案）
 
 - **相册添加**（`NSPhotoLibraryAddUsageDescription`）：用于把分享卡片保存到相册。
+- **通讯录**（`NSContactsUsageDescription`）：只在「我的 › 导入通讯录生日」时读取联系人的姓名和生日；选中的生日存为日子，其余不保存、不上传，所以隐私问卷仍为「不收集数据」。
 - **通知**：本地通知，用于日子提醒、每日问候与时光回忆（保存一个带提醒的日子、或在「我的 › 提醒设置」里打开开关时才请求授权；拒绝后该页会显示「去设置」的提示）。
 
 ## 审核备注（App Review Notes，建议）

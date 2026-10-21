@@ -9,6 +9,14 @@
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "時光" } }
       }
     },
+    "NSContactsUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Days Remember reads your contacts’ names and birthdays only when you import birthdays." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "「时光」只在你导入生日时读取联系人的姓名和生日。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "「時光」只在你匯入生日時讀取聯絡人的姓名和生日。" } }
+      }
+    },
     "NSPhotoLibraryAddUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {

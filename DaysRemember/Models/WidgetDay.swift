@@ -18,6 +18,19 @@ struct WidgetDay: AppEntity {
         return day
     }
 
+    /// The days a list widget shows, in the feed's order: pinned days first, then those ahead,
+    /// nearest first, then those behind, most recent first.
+    static func list(in days: [Day], today: Date, limit: Int) -> [Day] {
+        days.map { ($0, DayInfo.compute($0, today: today)) }
+            .sorted { lhs, rhs in
+                if lhs.0.pinned != rhs.0.pinned { return lhs.0.pinned }
+                if lhs.1.isPast != rhs.1.isPast { return !lhs.1.isPast }
+                return lhs.1.days < rhs.1.days
+            }
+            .prefix(limit)
+            .map(\.0)
+    }
+
     /// A selected day, or else the nearest upcoming day, of the pinned days when there are any.
     /// When nothing is ahead, the most recent past day ("已过去 N 天") keeps the widget useful
     /// instead of empty.

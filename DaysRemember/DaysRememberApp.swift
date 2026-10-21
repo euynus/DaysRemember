@@ -6,6 +6,7 @@ import WidgetKit
 
 @main
 struct DaysRememberApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     #if DEBUG
     @State private var store = DebugLaunch.makeStore()
@@ -81,6 +82,7 @@ struct DaysRememberApp: App {
                     if automated { Tips.hideAllTipsForTesting() }
                     try? Tips.configure()
                     ReviewPrompt.noteUse()
+                    QuickActions.install()
                     if !automated {
                         store.enableCloudSync()
                         settings.enableCloudSync {
@@ -97,6 +99,8 @@ struct DaysRememberApp: App {
                         Task { await CloudLibrarySync.shared.resumeIfNeeded() }
                     } else if phase == .background {
                         ReminderRefresh.schedule()
+                        // Siri learns the days' names for phrases like 「…还有几天」.
+                        DaysShortcuts.updateAppShortcutParameters()
                     }
                 }
                 // Signing in to iCloud after launch, for one, starts sync without a relaunch.
@@ -104,14 +108,15 @@ struct DaysRememberApp: App {
                     Task { await CloudLibrarySync.shared.resumeIfNeeded() }
                 }
                 .onChange(of: language) {
+                    QuickActions.install()
                     store.rescheduleNotifications()
-                    WidgetCenter.shared.reloadTimelines(ofKind: "DaysRememberWidget")
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
                 // Includes a change of time zone, which moves the day boundary widgets count from.
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
                     refreshCurrentDay()
                     store.rescheduleNotifications()
-                    WidgetCenter.shared.reloadTimelines(ofKind: "DaysRememberWidget")
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
                 .task { await refreshAtMidnight() }
         }

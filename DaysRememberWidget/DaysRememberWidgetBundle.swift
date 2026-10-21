@@ -5,5 +5,7 @@ import SwiftUI
 struct DaysRememberWidgetBundle: WidgetBundle {
     var body: some Widget {
         DaysRememberWidget()
+        DaysListWidget()
+        NewDayControl()
     }
 }

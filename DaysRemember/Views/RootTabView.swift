@@ -7,6 +7,7 @@ struct RootTabView: View {
     @Environment(DeepLinkRouter.self) private var router
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.scenePhase) private var scenePhase
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
@@ -60,10 +61,20 @@ struct RootTabView: View {
                 DayEditorView(categoryID: $0.categoryID).environment(store)
             }
             .onOpenURL { handleDeepLink($0) }
+            // Intents, controls and quick actions leave their link to be taken here.
+            .onReceive(NotificationCenter.default.publisher(for: PendingLink.notification).receive(on: RunLoop.main)) { _ in
+                openPendingLink()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { openPendingLink() }
+            }
             .onChange(of: router.dayID) { _, id in routePending(id) }
             // Also catch a tap that set the id before this view began observing
             // (cold launch from a notification).
-            .task { routePending(router.dayID) }
+            .task {
+                routePending(router.dayID)
+                openPendingLink()
+            }
     }
 
     private func startNewDay(categoryID: String? = nil) {
@@ -136,9 +147,16 @@ struct RootTabView: View {
     private func handleDeepLink(_ url: URL) {
         switch DeepLink(url) {
         case .day(let id): if !openDay(id: id) { openHome() }
+        case .newDay:
+            openHome()
+            if newDay == nil { startNewDay() }
         case .home: openHome()
         case nil: break
         }
+    }
+
+    private func openPendingLink() {
+        if let url = PendingLink.take() { handleDeepLink(url) }
     }
 
     private func openHome() {

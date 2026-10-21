@@ -1,0 +1,108 @@
+{
+  "sourceLanguage" : "zh-Hans",
+  "strings" : {
+    "${applicationName}里${day}还有几天" : {
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "How many days until ${day} in ${applicationName}",
+              "${applicationName} days until ${day}"
+            ]
+          }
+        },
+        "zh-Hant" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "${applicationName}裡${day}還有幾天"
+            ]
+          }
+        }
+      }
+    },
+    "用${applicationName}看${day}还有几天" : {
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "Check ${day} in ${applicationName}"
+            ]
+          }
+        },
+        "zh-Hant" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "用${applicationName}看${day}還有幾天"
+            ]
+          }
+        }
+      }
+    },
+    "用${applicationName}新建日子" : {
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "New day in ${applicationName}",
+              "Add a day in ${applicationName}"
+            ]
+          }
+        },
+        "zh-Hant" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "用${applicationName}新增日子"
+            ]
+          }
+        }
+      }
+    },
+    "在${applicationName}里记一个日子" : {
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "Save a day in ${applicationName}"
+            ]
+          }
+        },
+        "zh-Hant" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "在${applicationName}裡記一個日子"
+            ]
+          }
+        }
+      }
+    },
+    "在${applicationName}里打开${target}" : {
+      "localizations" : {
+        "en" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "Open ${target} in ${applicationName}"
+            ]
+          }
+        },
+        "zh-Hant" : {
+          "stringSet" : {
+            "state" : "translated",
+            "values" : [
+              "在${applicationName}裡打開${target}"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

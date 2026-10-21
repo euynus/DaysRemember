@@ -204,6 +204,16 @@ final class DayStore {
         persistDeletedDays()
         return true
     }
+    /// Adds several new days in one write, as an import does.
+    @discardableResult
+    func add(contentsOf newDays: [Day]) -> Bool {
+        saveFailure = nil
+        let fresh = newDays.filter { day in !days.contains { $0.id == day.id } }
+        guard loadError == nil, !fresh.isEmpty else { return loadError == nil }
+        days.insert(contentsOf: fresh.map(normalized), at: 0)
+        return saveError == nil
+    }
+
     @discardableResult
     func update(_ day: Day) -> Bool {
         saveFailure = nil
