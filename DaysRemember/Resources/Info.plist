@@ -53,7 +53,12 @@
   <false/>
   <key>UIBackgroundModes</key>
   <array>
+    <string>fetch</string>
     <string>remote-notification</string>
+  </array>
+  <key>BGTaskSchedulerPermittedIdentifiers</key>
+  <array>
+    <string>com.shiguang.daysremember.reminders</string>
   </array>
   <key>CFBundleURLTypes</key>
   <array>

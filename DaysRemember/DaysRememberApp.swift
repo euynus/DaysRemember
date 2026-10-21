@@ -26,6 +26,8 @@ struct DaysRememberApp: App {
     }
 
     var body: some Scene {
+        let store = store
+        let settings = settings
         WindowGroup {
             LocalizedRootView(language: language)
                 .environment(store)
@@ -88,6 +90,8 @@ struct DaysRememberApp: App {
                         refreshCurrentDay()
                         store.rescheduleNotifications()
                         Task { await CloudLibrarySync.shared.resumeIfNeeded() }
+                    } else if phase == .background {
+                        ReminderRefresh.schedule()
                     }
                 }
                 // Signing in to iCloud after launch, for one, starts sync without a relaunch.
@@ -105,6 +109,9 @@ struct DaysRememberApp: App {
                     WidgetCenter.shared.reloadTimelines(ofKind: "DaysRememberWidget")
                 }
                 .task { await refreshAtMidnight() }
+        }
+        .backgroundTask(.appRefresh(ReminderRefresh.identifier)) {
+            await ReminderRefresh.run(store: store, settings: settings)
         }
     }
 

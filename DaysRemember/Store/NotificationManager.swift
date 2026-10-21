@@ -293,7 +293,7 @@ final class NotificationManager {
                                             matchingPolicy: .nextTime) {
             candidates.append(Candidate(id: "dr.daily.greeting", date: greeting, kind: .greeting))
         }
-        // ponytail: finite five-year window; reopening the app replenishes it, not a background recurrence engine.
+        // A finite five-year window; opening the app or a background refresh (`ReminderRefresh`) replenishes it.
         let kept = candidates.sorted { $0.date == $1.date ? $0.id < $1.id : $0.date < $1.date }
             .prefix(min(pendingLimit, capacity))
         let appName = String(localized: "时光", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
