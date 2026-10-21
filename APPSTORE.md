@@ -262,7 +262,7 @@ In English, Simplified Chinese and Traditional Chinese; switch in Me › Languag
 
 **待补的信息**
 
-- [ ] Team ID：填进 `project.yml` 的 `DEVELOPMENT_TEAM`（或运行时 `TEAM_ID=…`），然后 `xcodegen generate`。`project.yml` 里的值会覆盖 Xcode 中手动选的团队
+- [x] Team ID：`V9KCA3SG7G`（个人账号 Yue Sun），已填进 `project.yml` 的 `DEVELOPMENT_TEAM`。`project.yml` 里的值会覆盖 Xcode 中手动选的团队；临时换团队用 `TEAM_ID=…`
 - [x] 支持邮箱 `support@gooday.dev`：已写在三种语言的支持页「联系我们」和隐私政策的联系方式里；也可以填作 App Store Connect 的审核联系邮箱
 
 **开发者账号与 CloudKit**
