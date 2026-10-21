@@ -13,7 +13,6 @@ Facts stated on this site:
 - Reminders 7, 3 or 1 day ahead, or on the day, at a chosen time; a daily greeting and yearly memories can be turned on separately.
 - Widgets: small, medium and large on the Home Screen, a day list (medium and large) showing the next few days, plus three Lock Screen styles; each widget can show a day of its own, chosen with Edit Widget, or the pinned day first.
 - Shortcuts: a Control Center button starts a new day; Siri, Shortcuts and Spotlight can say how many days are left until a day, open a day, or start a new one; a Home Screen quick action starts a new day.
-- Contacts: birthdays can be imported from Contacts as yearly days, lunar birthdays repeating by the lunar calendar; only names and birthdays are read, when the user imports.
 - Share cards: Photo, Journal, Minimal and Split templates, with a 3:4 portrait export.
 - Categories: Love, Family, Travel, Work and Life, plus custom categories with their own icon and color (five colors).
 - iCloud sync: days, categories and photos sync through the user's own iCloud (CloudKit private database). Deleted days stay in Recently Deleted on each device for 30 days. Backups can be exported to a file of up to 100 MB.

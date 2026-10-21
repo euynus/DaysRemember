@@ -70,7 +70,7 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 「已过」里的日子会预告下一个整数纪念：1000 天以内每满 100 天，之后每满 500 天，或者满一整年。
 
 【农历与节气】
-日子可以按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。联系人的生日可以从通讯录一次导入，农历生日也照样按农历重复。
+日子可以按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。
 
 【轻点切换单位】
 在日子详情里轻点数字，就在天、周、月、小时之间切换。下面列出这个日子的节点：每年的日子有上一次和下一次周年，已过的日子有下一个整数纪念。
@@ -137,7 +137,7 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 「已過」裡的日子會預告下一個整數紀念：1000 天以內每滿 100 天，之後每滿 500 天，或者滿一整年。
 
 【農曆與節氣】
-日子可以按國曆或農曆每年重複。日曆裡標出農曆日期、二十四節氣和傳統節日，農曆支援 1900 至 2100 年。聯絡人的生日可以從通訊錄一次匯入，農曆生日也照樣按農曆重複。
+日子可以按國曆或農曆每年重複。日曆裡標出農曆日期、二十四節氣和傳統節日，農曆支援 1900 至 2100 年。
 
 【輕點切換單位】
 在日子詳情裡輕點數字，就在天、週、月、小時之間切換。下面列出這個日子的節點：每年的日子有上一次和下一次週年，已過的日子有下一個整數紀念。
@@ -204,7 +204,7 @@ ROUND NUMBERS
 Days under Past show their next round number: every 100 days up to 1,000, every 500 after that, or a whole year.
 
 LUNAR CALENDAR AND SOLAR TERMS
-Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100. Import your contacts' birthdays in one go; lunar birthdays repeat by the lunar calendar too.
+Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.
 
 TAP TO CHANGE UNITS
 In a day's detail, tap the number to switch between days, weeks, months and hours. Below it are the day's marks: the last and next anniversaries of a yearly day, or the next round number of a past day.
@@ -244,7 +244,6 @@ In English, Simplified Chinese and Traditional Chinese; switch in Me › Languag
 ## 权限用途（Info.plist 文案）
 
 - **相册添加**（`NSPhotoLibraryAddUsageDescription`）：用于把分享卡片保存到相册。
-- **通讯录**（`NSContactsUsageDescription`）：只在「我的 › 导入通讯录生日」时读取联系人的姓名和生日；选中的生日存为日子，其余不保存、不上传，所以隐私问卷仍为「不收集数据」。
 - **通知**：本地通知，用于日子提醒、每日问候与时光回忆（保存一个带提醒的日子、或在「我的 › 提醒设置」里打开开关时才请求授权；拒绝后该页会显示「去设置」的提示）。
 
 ## 审核备注（App Review Notes，建议）
