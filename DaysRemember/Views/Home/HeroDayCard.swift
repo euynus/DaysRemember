@@ -21,7 +21,8 @@ struct HeroDayCard: View {
         Button { onOpen(day) } label: {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .center, spacing: 8) {
-                    Text(info.isPast ? category.displayName
+                    Text(day.pinned ? String(localized: "置顶 · \(category.displayName)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                         : info.isPast ? category.displayName
                          : String(localized: "下一个 · \(category.displayName)", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                         .font(Theme.sans(12, weight: .bold))
                         .foregroundStyle(ink)
