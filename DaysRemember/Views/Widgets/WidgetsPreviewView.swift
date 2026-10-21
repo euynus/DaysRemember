@@ -31,7 +31,7 @@ struct WidgetsPreviewView: View {
             .padding(.horizontal, 22)
             .padding(.bottom, 16)
             Picker("日子", selection: $selectedID) {
-                Text("最近的日子").tag(String?.none)
+                Text("置顶或最近的日子").tag(String?.none)
                 ForEach(store.days) { day in
                     Text(day.title).tag(Optional(day.id))
                 }

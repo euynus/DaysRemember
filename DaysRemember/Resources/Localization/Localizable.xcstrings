@@ -1952,27 +1952,12 @@
         }
       }
     },
-    "不选择时，自动显示最近的日子。" : {
+    "不选择时，自动显示置顶或最近的日子。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leave unselected to automatically show the next event."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不选择时，自动显示最近的日子。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不選擇時，自動顯示最近的日子。"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Leave unselected to automatically show your pinned or next event." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不选择时，自动显示置顶或最近的日子。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "不選擇時，自動顯示置頂或最近的日子。" } }
       }
     },
     "中" : {
@@ -7002,27 +6987,12 @@
         }
       }
     },
-    "最近的日子" : {
+    "置顶或最近的日子" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Next Event"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近的日子"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近的日子"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pinned or Next Event" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "置顶或最近的日子" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "置頂或最近的日子" } }
       }
     },
     "月" : {
@@ -9603,27 +9573,12 @@
         }
       }
     },
-    "选择一个重要日子，或自动显示最近的日子。" : {
+    "选择一个重要日子，不选时显示置顶或最近的日子。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose an important event, or automatically show the next one."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "选择一个重要日子，或自动显示最近的日子。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "選擇一個重要日子，或自動顯示最近的日子。"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose an important event, or show your pinned or next one." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择一个重要日子，不选时显示置顶或最近的日子。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "選擇一個重要日子，不選時顯示置頂或最近的日子。" } }
       }
     },
     "选择农历日期" : {
