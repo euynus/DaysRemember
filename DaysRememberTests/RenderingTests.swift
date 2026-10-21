@@ -32,8 +32,6 @@ final class RenderingTests: XCTestCase {
         XCTAssertNil(PhotoDecodeCache.decoded(Data("corrupt".utf8), maximumPixelSize: 192))
         XCTAssertNil(PhotoDecodeCache.downsample(red, maximumPixelSize: 0))
         XCTAssertNil(PhotoDecodeCache.downsample(red, maximumPixelSize: .nan))
-        let cover = try XCTUnwrap(PhotoDecodeCache.bundled("CoverFlowers", maximumPixelSize: 192))
-        XCTAssertTrue(cover === PhotoDecodeCache.bundled("CoverFlowers", maximumPixelSize: 192))
     }
 
     func testDownsamplingAppliesPhotoOrientation() throws {
@@ -169,9 +167,8 @@ final class RenderingTests: XCTestCase {
     func testDefaultIllustrationsFitWithoutCropping() throws {
         for size in [CGSize(width: 300, height: 120), CGSize(width: 62, height: 72)] {
             for style in PhotoStyle.pickerOptions {
-                let image = try XCTUnwrap(UIImage(named: style.assetName))
-                let expected = try render(Image(uiImage: image).resizable().scaledToFit()
-                    .mask { PhotoTile.featheredEdges }
+                let expected = try render(Image(style.assetName).resizable().scaledToFit()
+                    .padding(min(size.width, size.height) * PhotoTile.presetInset)
                     .frame(width: size.width, height: size.height)
                     .background(Theme.coverPaper))
                 let actual = try render(PhotoTile(style: style, flat: true, cornerRadius: 0)
@@ -189,11 +186,11 @@ final class RenderingTests: XCTestCase {
         XCTAssertEqual(Set(PhotoStyle.allCases.map(\.assetName)), Set(PhotoStyle.pickerOptions.map(\.assetName)))
 
         let legacyAssets: [String: [String]] = [
-            "CoverFlowers": ["systemDefault", "wedding", "memorial", "health", "sketchLove", "sketchGarden"],
-            "CoverCelebration": ["baby", "birthday", "sketchFamily"],
-            "CoverCoast": ["japan", "sketchTravel", "sketchMountain", "sketchSea"],
-            "CoverJournal": ["study", "work", "sketchWork", "sketchCafe"],
-            "CoverEveryday": ["pet", "home", "sketchLife"],
+            "FlatFlowers": ["systemDefault", "wedding", "memorial", "health", "sketchLove", "sketchGarden"],
+            "FlatCelebration": ["baby", "birthday", "sketchFamily"],
+            "FlatCoast": ["japan", "sketchTravel", "sketchMountain", "sketchSea"],
+            "FlatJournal": ["study", "work", "sketchWork", "sketchCafe"],
+            "FlatEveryday": ["pet", "home", "sketchLife"],
         ]
         for (asset, identifiers) in legacyAssets {
             for identifier in identifiers {
@@ -223,16 +220,13 @@ final class RenderingTests: XCTestCase {
     func testEveryTemplateAssetIsAvailableInAppAndWidget() throws {
         let plugins = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
         let widget = try XCTUnwrap(Bundle(url: plugins.appendingPathComponent("DaysRememberWidget.appex")))
-        // The widget decodes covers at no more than 720 px, so it ships smaller copies.
-        for (bundle, minimumSide) in [(Bundle.main, CGFloat(1024)), (widget, 720)] {
-            for style in PhotoStyle.pickerOptions {
-                let image = try XCTUnwrap(UIImage(named: style.assetName, in: bundle, compatibleWith: nil),
-                                          "\(style.assetName) in \(bundle.bundleURL.lastPathComponent)")
-                XCTAssertGreaterThanOrEqual(image.size.width, minimumSide)
-                XCTAssertGreaterThanOrEqual(image.size.height, minimumSide)
-                let thumbnail = try XCTUnwrap(PhotoTile.thumbnail(image, maximumPixelSize: 512)?.cgImage)
-                XCTAssertLessThanOrEqual(max(thumbnail.width, thumbnail.height), 512)
+        for bundle in [Bundle.main, widget] {
+            for style in PhotoStyle.allCases {
+                XCTAssertNotNil(UIImage(named: style.assetName, in: bundle, compatibleWith: nil),
+                                "\(style.assetName) in \(bundle.bundleURL.lastPathComponent)")
             }
+            // The flat vectors replaced the bitmap covers, which made up most of the download.
+            XCTAssertNil(UIImage(named: "CoverFlowers", in: bundle, compatibleWith: nil))
         }
     }
 
@@ -457,19 +451,19 @@ final class RenderingTests: XCTestCase {
         // Left: decoded asynchronously; middle: synchronously; right: blank paper.
         func apart(_ a: [UInt8], _ b: [UInt8]) -> Bool { zip(a, b).contains { abs(Int($0) - Int($1)) > 24 } }
         var drawn = 0
-        var differing = 0
+        var blank = 0
         for x in stride(from: 4, to: 120, by: 8) {
             for y in stride(from: 4, to: 120, by: 8) {
-                let async = pixel(snapshot, x: x, y: y)
-                let sync = pixel(snapshot, x: x + 120, y: y)
-                guard apart(sync, pixel(snapshot, x: x + 240, y: y)) else { continue }
+                let paper = pixel(snapshot, x: x + 240, y: y)
+                guard apart(pixel(snapshot, x: x + 120, y: y), paper) else { continue }
                 drawn += 1
-                if apart(async, sync) { differing += 1 }
+                if !apart(pixel(snapshot, x: x, y: y), paper) { blank += 1 }
             }
         }
-        // Blank paper would differ wherever the preset draws; anti-aliased edges may differ slightly.
+        // Where the preset draws, the asynchronous tile must too; the flat art's crisp edges can
+        // fall a sample either side, so a few points are allowed.
         XCTAssertGreaterThanOrEqual(drawn, 10, "the preset draws more than paper")
-        XCTAssertLessThanOrEqual(differing * 10, drawn, "\(differing) of \(drawn) drawn points differ")
+        XCTAssertLessThanOrEqual(blank * 10, drawn, "\(blank) of \(drawn) drawn points are blank")
     }
 
     private struct UnreadablePhotoHost: View {

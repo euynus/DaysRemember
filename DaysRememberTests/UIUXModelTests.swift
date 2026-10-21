@@ -56,7 +56,7 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertEqual(covers.count, DayCategory.allCases.count)
         XCTAssertEqual(Set(covers.map(\.assetName)).count, covers.count)
         XCTAssertTrue(covers.allSatisfy(PhotoStyle.pickerOptions.contains))
-        XCTAssertEqual(PhotoStyle.defaultCover(forCategoryID: "travel")?.assetName, "CoverCoast")
+        XCTAssertEqual(PhotoStyle.defaultCover(forCategoryID: "travel")?.assetName, "FlatCoast")
         XCTAssertNil(PhotoStyle.defaultCover(forCategoryID: "custom.trip"))
     }
 

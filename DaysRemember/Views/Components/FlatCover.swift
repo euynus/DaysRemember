@@ -5,7 +5,7 @@ struct FlatCover: View {
     let style: PhotoStyle
 
     var body: some View {
-        Image(style.flatAssetName)
+        Image(style.assetName)
             .resizable()
             .scaledToFit()
             .accessibilityHidden(true)

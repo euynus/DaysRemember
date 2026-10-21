@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import WidgetKit
 
-/// User photos take precedence over bundled covers; both obey the same clipping bounds.
+/// User photos take precedence over the preset's flat illustration; both obey the same clipping bounds.
 struct PhotoTile: View {
     let style: PhotoStyle
     var imageData: Data? = nil
@@ -50,7 +50,6 @@ struct PhotoTile: View {
                 : PhotoDecodeCache.decoded(data, digest: digest, maximumPixelSize: maximumPixelSize)
         }
         let awaitingPhoto = imageData != nil && pickedImage == nil && decodesAsynchronously && !decodeFailed
-        let image = pickedImage ?? PhotoDecodeCache.bundled(style.assetName, maximumPixelSize: maximumPixelSize)
         // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
         let scrimStartY = pickedImage != nil ? 0.25 : 0.35
@@ -62,16 +61,15 @@ struct PhotoTile: View {
                 } else if let pickedImage {
                     focusedImage(pickedImage, in: geometry.size)
                         .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-                } else if let image {
-                    Self.tintable(Image(uiImage: image).resizable())
+                } else {
+                    // A preset, or a photo that can't be decoded: the flat illustration on paper.
+                    Image(style.assetName)
+                        .resizable()
                         .scaledToFit()
-                        .mask { Self.featheredEdges }
+                        .padding(min(geometry.size.width, geometry.size.height) * Self.presetInset)
                         .frame(width: geometry.size.width, height: geometry.size.height)
                         // Drawn in one tint, the paper would be a solid block around the artwork.
                         .background(renderingMode == .fullColor ? Theme.coverPaper : Color.clear)
-                } else {
-                    style.background()
-                        .frame(width: geometry.size.width, height: geometry.size.height)
                 }
                 if !flat {
                     LinearGradient(
@@ -103,16 +101,8 @@ struct PhotoTile: View {
         }
     }
 
-    /// Feathers the artwork's paper texture into the letterbox fill, so a fitted
-    /// illustration never shows a hard rectangular edge in wider or taller frames.
-    static var featheredEdges: some View {
-        let stops: [Gradient.Stop] = [
-            .init(color: .clear, location: 0), .init(color: .black, location: 0.06),
-            .init(color: .black, location: 0.94), .init(color: .clear, location: 1),
-        ]
-        return LinearGradient(stops: stops, startPoint: .leading, endPoint: .trailing)
-            .mask { LinearGradient(stops: stops, startPoint: .top, endPoint: .bottom) }
-    }
+    /// The margin around a preset's illustration, as a share of the frame's shorter side.
+    static let presetInset: CGFloat = 0.08
 
     nonisolated static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {
         guard maximumPixelSize.isFinite, maximumPixelSize >= 1,

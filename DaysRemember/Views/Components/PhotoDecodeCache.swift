@@ -45,15 +45,6 @@ enum PhotoDecodeCache {
         return "photo:\(digest):\(maximumPixelSize)" as NSString
     }
 
-    static func bundled(_ name: String, maximumPixelSize: CGFloat) -> UIImage? {
-        let key = "asset:\(name):\(maximumPixelSize)" as NSString
-        if let cached = storage.object(forKey: key) { return cached }
-        guard let original = UIImage(named: name),
-              let image = PhotoTile.thumbnail(original, maximumPixelSize: maximumPixelSize) else { return nil }
-        store(image, forKey: key)
-        return image
-    }
-
     /// Drops every entry, as memory pressure may.
     static func removeAll() { storage.removeAllObjects() }
 

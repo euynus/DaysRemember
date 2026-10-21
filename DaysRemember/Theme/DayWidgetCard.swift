@@ -75,7 +75,7 @@ struct DayWidgetCard: View {
         if day.photoData != nil {
             photo
         } else {
-            Image(day.photo.flatAssetName)
+            Image(day.photo.assetName)
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

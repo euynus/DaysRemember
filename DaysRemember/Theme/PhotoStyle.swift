@@ -48,32 +48,22 @@ enum PhotoStyle: String, Codable, CaseIterable, Hashable {
         }
     }
 
+    /// The flat illustration, in both the app's and the widget's catalogs. Legacy styles share
+    /// one with the picker option that replaced them.
     var assetName: String {
         switch self {
-        case .baby, .birthday, .sketchFamily: return "CoverCelebration"
-        case .japan, .sketchTravel, .sketchMountain, .sketchSea: return "CoverCoast"
-        case .study, .work, .sketchWork, .sketchCafe: return "CoverJournal"
-        case .home, .pet, .sketchLife: return "CoverEveryday"
-        case .mountains: return "CoverMountains"
-        case .cafe: return "CoverCafe"
-        case .garden: return "CoverGarden"
-        case .camping: return "CoverCamping"
-        case .homecoming: return "CoverHomecoming"
-        case .companionship: return "CoverCompanionship"
-        case .voyage: return "CoverVoyage"
-        default: return "CoverFlowers"
+        case .baby, .birthday, .sketchFamily: return "FlatCelebration"
+        case .japan, .sketchTravel, .sketchMountain, .sketchSea: return "FlatCoast"
+        case .study, .work, .sketchWork, .sketchCafe: return "FlatJournal"
+        case .home, .pet, .sketchLife: return "FlatEveryday"
+        case .mountains: return "FlatMountains"
+        case .cafe: return "FlatCafe"
+        case .garden: return "FlatGarden"
+        case .camping: return "FlatCamping"
+        case .homecoming: return "FlatHomecoming"
+        case .companionship: return "FlatCompanionship"
+        case .voyage: return "FlatVoyage"
+        default: return "FlatFlowers"
         }
-    }
-
-    /// The flat illustration drawn straight onto a pastel card, in both the app's and the
-    /// widget's catalogs; the bitmap `assetName` covers remain for `PhotoTile` fallbacks.
-    var flatAssetName: String {
-        "Flat" + assetName.dropFirst("Cover".count)
-    }
-
-    func background() -> some View {
-        Image(assetName)
-            .resizable()
-            .scaledToFill()
     }
 }
