@@ -10,6 +10,7 @@ struct CalendarMonthGrid: View {
     let eventsByDay: [Int: [Day]]
     var onShowMonth: (_ offset: Int) -> Void = { _ in }
     var onOpenCell: (_ events: [Day], _ date: Date) -> Void = { _, _ in }
+    var onAddOnDate: (_ date: Date) -> Void = { _ in }
 
     var body: some View {
         let cal = CNDate.calendar
@@ -43,7 +44,8 @@ struct CalendarMonthGrid: View {
                     ZStack {
                         if inMonth {
                             CalendarDayCell(year: year, month: month, dayNumber: d, events: eventsByDay[d] ?? [],
-                                            isToday: isCurrentMonth && d == todayDay, onOpen: onOpenCell)
+                                            isToday: isCurrentMonth && d == todayDay, onOpen: onOpenCell,
+                                            onAdd: onAddOnDate)
                         } else {
                             Color.clear.aspectRatio(0.85, contentMode: .fit)
                         }

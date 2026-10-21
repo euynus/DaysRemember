@@ -38,6 +38,7 @@ struct MilestoneStrip: View {
                         .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     }
                     .buttonStyle(PressableTileStyle())
+                    .dayContextMenu(day: day)
                 }
             }
         }

@@ -4,7 +4,10 @@ struct HomeView: View {
     @Environment(DayStore.self) var store
     @Environment(\.currentDay) private var today
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var face: HomeFace = HomeFace.initial()
+    @State private var face: HomeFace = HomeFace.launchArgument ?? .upcoming
+    /// Set once the feed has opened on the face its days call for; until then a change of face
+    /// isn't the user's, so it makes no haptic.
+    @State private var openedFace = HomeFace.launchArgument != nil
     @State private var cloud = CloudLibrarySync.shared
     @State private var heroPage: String?
     @State private var isSearching = false
@@ -61,7 +64,12 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
-        .sensoryFeedback(.selection, trigger: face)
+        .sensoryFeedback(.selection, trigger: face) { _, _ in openedFace }
+        .onAppear {
+            guard !openedFace else { return }
+            face = HomeFace.opening(upcoming: upcoming, past: past)
+            Task { @MainActor in openedFace = true }
+        }
     }
 
     // MARK: Header

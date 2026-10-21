@@ -1,6 +1,7 @@
 import SwiftUI
+import TipKit
 
-/// 将至: a pager of the nearest days, a day that just recurred, then the rest of the days ahead.
+/// 将至: a pager of the pinned and nearest days, a day that just recurred, then the rest of the days ahead.
 struct UpcomingFace: View {
     @Environment(DayStore.self) private var store
     @Environment(\.currentDay) private var today
@@ -18,8 +19,10 @@ struct UpcomingFace: View {
                            detail: String(localized: "每年重复的日子和未来的日子会出现在这里。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         } else {
             let heroes = days.map { ($0, DayInfo.compute($0, today: today).days) }
-                .sorted { $0.1 < $1.1 }.prefix(5).map(\.0)
+                .sorted { $0.0.pinned != $1.0.pinned ? $0.0.pinned : $0.1 < $1.1 }.prefix(5).map(\.0)
             heroPager(heroes)
+            TipView(DayMenuTip())
+                .tint(Theme.accent)
             if let recent = recentOccurrence {
                 RecentOccurrenceBanner(day: recent.day, occurrence: recent.occurrence, onOpen: onOpen)
                     .dayContextMenu(day: recent.day)

@@ -12,6 +12,8 @@ struct DayDraft: Equatable {
     /// New days follow the selected category's cover until a template or photo is picked.
     var coverChosen: Bool
     var recurring: Bool
+    /// New days follow the selected category's repeat until the user picks one.
+    var recurringChosen: Bool
     var solar: Bool
     var reminderOffsets: [Int]?
     var reminderTime: DayReminderTime?
@@ -21,15 +23,16 @@ struct DayDraft: Equatable {
     var coverFocusX: Double
     var coverFocusY: Double
 
-    /// Edits `day`, or starts a new day on `date`.
-    init(editing day: Day?, date: Date) {
-        let original = day ?? Self.newDay(date: date)
+    /// Edits `day`, or starts a new day on `date`, in `categoryID` when given.
+    init(editing day: Day?, date: Date, categoryID: String? = nil) {
+        let original = day ?? Self.newDay(date: date, categoryID: categoryID)
         self.original = original
         title = original.title
         photo = original.photo
         photoData = original.photoData
         coverChosen = day != nil
         recurring = original.recurring
+        recurringChosen = day != nil
         solar = !original.lunar
         reminderOffsets = original.reminderOffsets
         reminderTime = original.reminderTime
@@ -40,10 +43,31 @@ struct DayDraft: Equatable {
         coverFocusY = original.coverFocusY
     }
 
-    /// A new day starts in 生活, with the cover choosing 生活 would give it.
-    static func newDay(date: Date) -> Day {
-        Day(id: "", title: "", date: date, recurring: true, category: .life,
-            photo: PhotoStyle.defaultCover(forCategoryID: DayCategory.life.rawValue) ?? .systemDefault)
+    /// A new day starts in `categoryID`, or 生活, with the cover and repeat choosing it would give.
+    static func newDay(date: Date, categoryID: String? = nil) -> Day {
+        let id = categoryID ?? DayCategory.life.rawValue
+        return Day(id: "", title: "", date: date, recurring: repeatsByDefault(categoryID: id) ?? false,
+                   category: DayCategory(rawValue: id) ?? .life,
+                   photo: PhotoStyle.defaultCover(forCategoryID: id) ?? .systemDefault, categoryID: id)
+    }
+
+    /// Whether a new day in a system category usually repeats: anniversaries and birthdays do;
+    /// trips, deadlines and one-off moments don't. Nil for a custom category.
+    static func repeatsByDefault(categoryID: String) -> Bool? {
+        switch DayCategory(rawValue: categoryID) {
+        case .love, .family: return true
+        case .travel, .work, .life: return false
+        case nil: return nil
+        }
+    }
+
+    /// The repeat as the user sets it, which stops it following the category.
+    var repeats: Bool {
+        get { recurring }
+        set {
+            recurring = newValue
+            recurringChosen = true
+        }
     }
 
     var categoryID: String { selectedCategory?.id ?? original.categoryID }
@@ -102,12 +126,16 @@ struct DayDraft: Equatable {
         resetFocus()
     }
 
-    /// Until a template or photo is chosen, a new day's cover follows its category.
+    /// Until a template or photo is chosen, a new day's cover follows its category, and so does
+    /// its repeat until one is picked.
     mutating func selectCategory(_ category: CategoryDefinition) {
         selectedCategory = category
         if !coverChosen, photoData == nil,
            let cover = PhotoStyle.defaultCover(forCategoryID: category.id) {
             photo = cover
+        }
+        if !recurringChosen, let repeats = Self.repeatsByDefault(categoryID: category.id) {
+            recurring = repeats
         }
     }
 

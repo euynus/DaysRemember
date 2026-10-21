@@ -11,6 +11,14 @@ struct EditDayAction {
 
 extension EnvironmentValues {
     @Entry var editDay = EditDayAction()
+    @Entry var addDay = AddDayAction()
+}
+
+/// Starts a new day, in a category when given, from the editor `RootTabView` presents: a sheet on a
+/// pushed list would be rebuilt, losing its draft, when a link switches tabs.
+struct AddDayAction {
+    var add: (_ categoryID: String?) -> Void = { _ in }
+    func callAsFunction(categoryID: String? = nil) { add(categoryID) }
 }
 
 private struct EditorRequest: Identifiable {

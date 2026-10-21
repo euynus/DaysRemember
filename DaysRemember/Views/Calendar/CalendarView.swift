@@ -8,6 +8,8 @@ struct CalendarMonthView: View {
     @State private var year: Int
     @State private var selectedDay: CalendarDaySelection?
     @State private var newDayDate: CalendarDaySelection?
+    /// A new day asked for from the day picker, opened once the picker has gone.
+    @State private var pendingNewDayDate: CalendarDaySelection?
     var onOpen: (Day) -> Void
 
     init(onOpen: @escaping (Day) -> Void = { _ in }) {
@@ -65,7 +67,8 @@ struct CalendarMonthView: View {
                 LazyVStack(alignment: .leading, spacing: 12) {
                     CalendarMonthGrid(year: year, month: month, eventsByDay: eventsByDay,
                                       onShowMonth: { showMonth(offset: $0) },
-                                      onOpenCell: { events, date in openCell(events: events, date: date) })
+                                      onOpenCell: { events, date in openCell(events: events, date: date) },
+                                      onAddOnDate: { newDayDate = CalendarDaySelection(date: $0) })
                         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     Text("本月日子")
                         .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
@@ -83,6 +86,7 @@ struct CalendarMonthView: View {
                         ForEach(Self.monthEntries(eventsByDay)) { entry in
                             CalendarMonthRow(day: entry.day, year: year, month: month, dayNumber: entry.dayNumber,
                                              onOpen: onOpen)
+                                .dayContextMenu(day: entry.day)
                         }
                     }
                 }
@@ -103,8 +107,14 @@ struct CalendarMonthView: View {
                 month = calendar.component(.month, from: new) - 1
             }
         }
-        .sheet(item: $selectedDay) { selection in
-            CalendarEventPicker(selection: selection, onOpen: onOpen)
+        .sheet(item: $selectedDay, onDismiss: {
+            newDayDate = pendingNewDayDate
+            pendingNewDayDate = nil
+        }) { selection in
+            CalendarEventPicker(selection: selection, onOpen: onOpen, onAdd: { date in
+                pendingNewDayDate = CalendarDaySelection(date: date)
+                selectedDay = nil
+            })
         }
         .sheet(item: $newDayDate) { selection in
             DayEditorView(date: selection.date).environment(store)

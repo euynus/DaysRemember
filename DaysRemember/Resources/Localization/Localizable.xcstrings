@@ -11930,6 +11930,75 @@
           }
         }
       }
+    },
+    "在这一天添加日子" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a Day on This Date"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在这一天添加日子"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在這一天新增日子"
+          }
+        }
+      }
+    },
+    "长按日子卡片" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch and Hold a Day"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "长按日子卡片"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "長按日子卡片"
+          }
+        }
+      }
+    },
+    "可以置顶、编辑、分享或删除。置顶的日子排在最前面，小组件也优先显示它。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pin, edit, share or delete it. Pinned days come first, and widgets show them first too."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以置顶、编辑、分享或删除。置顶的日子排在最前面，小组件也优先显示它。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以置頂、編輯、分享或刪除。置頂的日子排在最前面，小工具也優先顯示它。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -92,6 +92,42 @@ final class DayDraftTests: XCTestCase {
         XCTAssertEqual(draft.photo, .memorial)
     }
 
+    // MARK: - Repeat
+
+    func testANewDaysRepeatFollowsItsCategoryUntilOneIsPicked() {
+        var draft = DayDraft(editing: nil, date: Today.date)
+        XCTAssertFalse(draft.recurring, "A new day starts in 生活, which doesn't repeat")
+        draft.selectCategory(category(.love))
+        XCTAssertTrue(draft.recurring)
+        draft.selectCategory(category(.travel))
+        XCTAssertFalse(draft.recurring)
+
+        draft.repeats = true
+        draft.selectCategory(category(.work))
+        XCTAssertTrue(draft.recurring, "The user's choice stays")
+
+        var custom = DayDraft(editing: nil, date: Today.date)
+        custom.selectCategory(category(.family))
+        custom.selectCategory(CategoryDefinition(id: "custom.trip", name: "旅程", icon: "tag", colorToken: .sage, isSystem: false))
+        XCTAssertTrue(custom.recurring, "A custom category keeps the current repeat")
+
+        var edited = DayDraft(editing: stored(), date: Today.date)
+        edited.selectCategory(category(.travel))
+        XCTAssertTrue(edited.recurring, "An existing day's repeat isn't changed for it")
+    }
+
+    func testANewDayCanStartInACategory() {
+        let draft = DayDraft(editing: nil, date: Today.date, categoryID: DayCategory.family.rawValue)
+        XCTAssertEqual(draft.categoryID, DayCategory.family.rawValue)
+        XCTAssertTrue(draft.recurring)
+        XCTAssertEqual(draft.photo, PhotoStyle.defaultCover(forCategoryID: DayCategory.family.rawValue))
+        XCTAssertFalse(draft.hasChanges)
+
+        let custom = DayDraft(editing: nil, date: Today.date, categoryID: "custom.trip")
+        XCTAssertEqual(custom.categoryID, "custom.trip")
+        XCTAssertFalse(custom.hasChanges)
+    }
+
     /// Tapping the template already shown still counts as choosing it.
     func testChoosingTheCurrentTemplateStopsTheCoverFollowing() {
         var draft = DayDraft(editing: nil, date: Today.date)

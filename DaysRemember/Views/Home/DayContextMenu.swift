@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 /// Long-press context menu for a day tile — quick pin / edit / share / delete
 /// without opening Detail. Self-contained: owns its sheet + dialog state. Callers pass
@@ -19,6 +20,7 @@ struct DayContextMenu: ViewModifier {
         content
             .contextMenu {
                 Button {
+                    found()
                     var updated = current
                     updated.pinned.toggle()
                     store.update(updated)
@@ -26,14 +28,14 @@ struct DayContextMenu: ViewModifier {
                     Label(day.pinned ? String(localized: "取消置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                           systemImage: day.pinned ? "pin.slash" : "pin")
                 }
-                Button { editDay(current) } label: {
+                Button { found(); editDay(current) } label: {
                     Label("编辑", systemImage: "pencil")
                 }
-                Button { sharing = current } label: {
+                Button { found(); sharing = current } label: {
                     Label("分享", systemImage: "square.and.arrow.up")
                 }
                 Divider()
-                Button(role: .destructive) { deleting = current } label: {
+                Button(role: .destructive) { found(); deleting = current } label: {
                     Label("删除", systemImage: "trash")
                 }
             }
@@ -54,6 +56,11 @@ struct DayContextMenu: ViewModifier {
                 deleting = nil
             }
             .sensoryFeedback(.impact(flexibility: .soft), trigger: day.pinned)
+    }
+
+    /// Whichever action is chosen, the menu has been found, so its tip can go.
+    private func found() {
+        DayMenuTip().invalidate(reason: .actionPerformed)
     }
 }
 

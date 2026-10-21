@@ -100,6 +100,20 @@ final class WidgetTests: XCTestCase {
         XCTAssertNil(WidgetDay.resolve(in: [], selectedID: nil, today: today))
     }
 
+    func testAutomaticSelectionPrefersPinnedDays() {
+        let today = CNDate.calendar.date(from: DateComponents(year: 2026, month: 10, day: 2))!
+        let near = Day(id: "near", title: "近", date: today.addingTimeInterval(86400), category: .life, photo: .home)
+        var pinnedFar = Day(id: "far", title: "远", date: today.addingTimeInterval(86400 * 90), category: .life, photo: .home)
+        pinnedFar.pinned = true
+        var pinnedPast = Day(id: "past", title: "过去", date: today.addingTimeInterval(-86400 * 10), category: .love, photo: .home)
+        pinnedPast.pinned = true
+        XCTAssertEqual(WidgetDay.resolve(in: [near, pinnedFar], selectedID: nil, today: today)?.id, "far")
+        XCTAssertEqual(WidgetDay.resolve(in: [near, pinnedFar, pinnedPast], selectedID: nil, today: today)?.id, "far")
+        XCTAssertEqual(WidgetDay.resolve(in: [near, pinnedPast], selectedID: nil, today: today)?.id, "past",
+                       "A pinned day counting up still beats an unpinned one ahead")
+        XCTAssertEqual(WidgetDay.resolve(in: [near, pinnedFar], selectedID: "near", today: today)?.id, "near")
+    }
+
     func testDayStartsAcrossYearBoundary() {
         let now = CNDate.calendar.date(from: DateComponents(year: 2026, month: 12, day: 31,
                                                             hour: 23, minute: 59, second: 59))!

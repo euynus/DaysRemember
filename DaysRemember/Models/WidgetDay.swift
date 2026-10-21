@@ -18,11 +18,13 @@ struct WidgetDay: AppEntity {
         return day
     }
 
-    /// A selected day, or else the nearest upcoming day. When nothing is ahead, the most
-    /// recent past day ("已过去 N 天") keeps the widget useful instead of empty.
+    /// A selected day, or else the nearest upcoming day, of the pinned days when there are any.
+    /// When nothing is ahead, the most recent past day ("已过去 N 天") keeps the widget useful
+    /// instead of empty.
     static func resolve(in days: [Day], selectedID: String?, today: Date) -> Day? {
         if let selectedID { return days.first { $0.id == selectedID } }
-        let candidates = days.map { ($0, DayInfo.compute($0, today: today)) }
+        let pinned = days.filter(\.pinned)
+        let candidates = (pinned.isEmpty ? days : pinned).map { ($0, DayInfo.compute($0, today: today)) }
         let upcoming = candidates.filter { !$0.1.isPast }
         return (upcoming.isEmpty ? candidates : upcoming).min { $0.1.days < $1.1.days }?.0
     }

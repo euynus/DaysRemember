@@ -11,6 +11,8 @@ struct CalendarDayCell: View {
     let events: [Day]
     let isToday: Bool
     var onOpen: (_ events: [Day], _ date: Date) -> Void = { _, _ in }
+    /// Starts another day on a date that already has some.
+    var onAdd: (_ date: Date) -> Void = { _ in }
 
     var body: some View {
         let d = dayNumber
@@ -65,6 +67,16 @@ struct CalendarDayCell: View {
 
         return Button { onOpen(events, cellDate) } label: { cell }
             .buttonStyle(PressScale(scale: 0.92))
+            .contextMenu {
+                if hasEvents {
+                    Button("在这一天添加日子", systemImage: "plus") { onAdd(cellDate) }
+                }
+            }
+            .accessibilityActions {
+                if hasEvents {
+                    Button("在这一天添加日子") { onAdd(cellDate) }
+                }
+            }
             .accessibilityLabel(hasEvents
                 ? String(localized: "\(cellLabel)，\(events.count) 个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                 : cellLabel)

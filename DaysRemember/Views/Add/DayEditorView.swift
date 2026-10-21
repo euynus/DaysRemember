@@ -19,11 +19,12 @@ struct DayEditorView: View {
     @State private var showDatePicker = false
     @State private var confirmDiscard = false
     @State private var saveError: String?
+    @FocusState private var titleFocused: Bool
 
-    /// `date` prefills a new day, e.g. from an empty calendar cell.
-    init(day: Day? = nil, date: Date? = nil) {
+    /// `date` and `categoryID` prefill a new day, e.g. from a calendar cell or a category's list.
+    init(day: Day? = nil, date: Date? = nil, categoryID: String? = nil) {
         editingDay = day
-        let draft = DayDraft(editing: day, date: date ?? Today.date)
+        let draft = DayDraft(editing: day, date: date ?? Today.date, categoryID: categoryID)
         _draft = State(initialValue: draft)
         _draftDate = State(initialValue: draft.date)
     }
@@ -44,7 +45,7 @@ struct DayEditorView: View {
                         .padding(.top, 8)
                         .padding(.bottom, 12)
                     titleField.padding(.bottom, 12)
-                    DayEditorForm(selectedDate: draft.date, solar: $draft.solar, recurring: $draft.recurring,
+                    DayEditorForm(selectedDate: draft.date, solar: $draft.solar, recurring: $draft.repeats,
                                   reminderOffsets: draft.reminderOffsets, reminderTime: draft.reminderTime,
                                   location: $draft.location,
                                   onPickDate: {
@@ -160,6 +161,12 @@ struct DayEditorView: View {
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .accessibilityLabel("日子名称")
             .accessibilityIdentifier("dayTitleField")
+            .focused($titleFocused)
+            // A new day starts with its name; the keyboard goes as the form scrolls.
+            .onAppear {
+                guard editingDay == nil else { return }
+                Task { @MainActor in titleFocused = true }
+            }
     }
 
     // MARK: - Cover picker

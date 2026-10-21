@@ -1,18 +1,28 @@
 import Accessibility
+import StoreKit
 import SwiftUI
 
 struct RootTabView: View {
     @Environment(DayStore.self) private var store
     @Environment(DeepLinkRouter.self) private var router
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.requestReview) private var requestReview
     @State private var tab: AppTab = Self.initialTab()
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
     @State private var mePath = NavigationPath()
-    @State private var addingDay: Bool
+    @State private var newDay: NewDayRequest?
+    /// The library's size when the new day's editor opened, to tell whether it added one.
+    @State private var dayCountBeforeAdding = 0
+
+    /// A new day's editor; `categoryID` starts it in that category.
+    private struct NewDayRequest: Identifiable {
+        let id = UUID()
+        var categoryID: String?
+    }
 
     init(startWithNewDay: Bool = false) {
-        _addingDay = State(initialValue: startWithNewDay)
+        _newDay = State(initialValue: startWithNewDay ? NewDayRequest() : nil)
     }
 
     /// Allows `xcrun simctl launch ... --tab calendar` for screenshotting.
@@ -25,6 +35,7 @@ struct RootTabView: View {
 
     var body: some View {
         content
+            .environment(\.addDay, AddDayAction { startNewDay(categoryID: $0) })
             .dayEditorHost()
             .categoryEditorHost()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -45,12 +56,29 @@ struct RootTabView: View {
                     .background(Theme.bg)
                 }
             }
-            .sheet(isPresented: $addingDay) { AddDayView().environment(store) }
+            .sheet(item: $newDay, onDismiss: askForReviewAfterAdding) {
+                DayEditorView(categoryID: $0.categoryID).environment(store)
+            }
             .onOpenURL { handleDeepLink($0) }
             .onChange(of: router.dayID) { _, id in routePending(id) }
             // Also catch a tap that set the id before this view began observing
             // (cold launch from a notification).
             .task { routePending(router.dayID) }
+    }
+
+    private func startNewDay(categoryID: String? = nil) {
+        dayCountBeforeAdding = store.days.count
+        newDay = NewDayRequest(categoryID: categoryID)
+    }
+
+    /// Once the editor has gone, a day just added is a good moment to ask for a rating, now and then.
+    private func askForReviewAfterAdding() {
+        #if DEBUG
+        guard !DebugLaunch.isAutomated, !DebugLaunch.isUnitTesting else { return }
+        #endif
+        guard store.days.count > dayCountBeforeAdding,
+              ReviewPrompt.takeTurn(dayCount: store.days.count) else { return }
+        requestReview()
     }
 
     /// Floats above the active tab's tab bar. An overlay rather than an inset, so screens
@@ -149,7 +177,7 @@ struct RootTabView: View {
         NavigationStack(path: $homePath) {
             HomeView(
                 onOpen: { day in homePath.append(DayRoute(id: day.id)) },
-                onAdd: { addingDay = true }
+                onAdd: { startNewDay() }
             )
             .toolbarVisibility(.hidden, for: .navigationBar)
             .dayDetailDestination()

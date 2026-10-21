@@ -5,10 +5,16 @@ enum HomeFace: String, Hashable {
     case upcoming, past
 
     /// Allows `xcrun simctl launch ... --face past` for screenshotting.
-    static func initial() -> HomeFace {
+    static var launchArgument: HomeFace? {
         let args = ProcessInfo.processInfo.arguments
-        if let i = args.firstIndex(of: "--face"), i + 1 < args.count,
-           let face = HomeFace(rawValue: args[i + 1]) { return face }
+        guard let i = args.firstIndex(of: "--face"), i + 1 < args.count else { return nil }
+        return HomeFace(rawValue: args[i + 1])
+    }
+
+    /// The face the feed opens on: the first pinned day's, else 将至 unless only 已过 has days.
+    static func opening(upcoming: [Day], past: [Day]) -> HomeFace {
+        if upcoming.contains(where: \.pinned) { return .upcoming }
+        if past.contains(where: \.pinned) || upcoming.isEmpty && !past.isEmpty { return .past }
         return .upcoming
     }
 }

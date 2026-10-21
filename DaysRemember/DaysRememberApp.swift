@@ -1,5 +1,6 @@
 import CloudKit
 import SwiftUI
+import TipKit
 import UIKit
 import WidgetKit
 
@@ -76,6 +77,10 @@ struct DaysRememberApp: App {
                         try? store.applyCloudUpdate(CloudLibraryUpdate(upsertedDays: [remote], recoveryDays: [local]))
                     }
                     #endif
+                    // Tips would cover what UI tests and screenshots tap and capture.
+                    if automated { Tips.hideAllTipsForTesting() }
+                    try? Tips.configure()
+                    ReviewPrompt.noteUse()
                     if !automated {
                         store.enableCloudSync()
                         settings.enableCloudSync {

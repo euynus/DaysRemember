@@ -6,6 +6,7 @@ struct CalendarEventPicker: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let selection: CalendarDaySelection
     var onOpen: (Day) -> Void
+    var onAdd: (Date) -> Void = { _ in }
 
     var body: some View {
         let events = selection.events(in: store.days)
@@ -42,6 +43,13 @@ struct CalendarEventPicker: View {
                             CalendarEventRow(day: event, onOpen: openDay)
                             RowDivider().accessibilityHidden(true)
                         }
+                        Button("在这一天添加日子", systemImage: "plus") { onAdd(selection.date) }
+                            .font(Theme.sans(15, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                            .contentShape(Rectangle())
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("calendarPicker.add")
                     }
                     .padding(.horizontal, 22)
                     .padding(.bottom, 24)
