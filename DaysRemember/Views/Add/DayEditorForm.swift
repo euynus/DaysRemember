@@ -44,13 +44,15 @@ struct DayEditorForm: View {
 
             RowDivider()
             row(label: String(localized: "日历", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
-                SegPicker(options: [(true, String(localized: "公历", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
+                SegPicker(title: String(localized: "日历", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                          options: [(true, String(localized: "公历", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
                                     (false, String(localized: "农历", bundle: AppLocalization.bundle, locale: AppLocalization.locale))], selection: $solar)
             }
 
             RowDivider()
             row(label: String(localized: "类型", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
-                SegPicker(options: [(false, String(localized: "一次", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
+                SegPicker(title: String(localized: "类型", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                          options: [(false, String(localized: "一次", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
                                     (true, String(localized: "每年", bundle: AppLocalization.bundle, locale: AppLocalization.locale))], selection: $recurring)
             }
 

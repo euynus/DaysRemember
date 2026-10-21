@@ -63,7 +63,8 @@ struct ShareCardView: View {
             HStack(spacing: 14) {
                 Text("比例").font(Theme.sans(15)).foregroundStyle(Theme.ink)
                 Spacer(minLength: 8)
-                SegPicker(options: [(Ratio.natural, String(localized: "卡片", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
+                SegPicker(title: String(localized: "比例", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                          options: [(Ratio.natural, String(localized: "卡片", bundle: AppLocalization.bundle, locale: AppLocalization.locale)),
                                     (Ratio.portrait, "3:4")], selection: $ratio)
                     .accessibilityIdentifier("share.ratio")
             }
