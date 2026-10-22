@@ -125,7 +125,7 @@ Run the same entry point locally with Xcode, XcodeGen, and `jq` installed:
 bash scripts/ci.sh
 ```
 
-The script creates a disposable iPhone 17 simulator and deletes only that device on exit, including test failures. It does not reset existing simulators. Locally it selects the newest installed iOS runtime; `IOS_RUNTIME` and `IOS_DEVICE_TYPE` can select another installed runtime and compatible device type. The workflow pins both for reproducibility.
+The script creates a disposable simulator and deletes only that device on exit, including test failures. It does not reset existing simulators. The UI tests are written for an iPhone 17's screen, so it takes the newest installed iOS runtime that still simulates one, or else the newest numbered iPhone it has, never the folding iPhone Duo; `IOS_RUNTIME` and `IOS_DEVICE_TYPE` can select another installed runtime and compatible device type. On GitHub's runner the workflow pins both for reproducibility; on the self-hosted Mac the script chooses.
 
 Logs, line coverage (`coverage.json`), and test results with XCTest attachments (`Tests.xcresult`) are saved under `build/ci/run.*` and uploaded by CI for 14 days, including failed-test results. Open an `.xcresult` in Xcode to inspect failures and screenshots. Coverage is reported without an arbitrary pass threshold.
 
