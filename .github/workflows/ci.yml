@@ -30,7 +30,7 @@ jobs:
           persist-credentials: false
 
       # GitHub's Mac keeps several Xcodes and runtimes, so it is pinned to Xcode 26.6 and iOS 26.5.
-      # The self-hosted Mac uses the Xcode it has selected, or else the newest in /Applications, and
+      # The self-hosted Mac uses the Xcode it has selected, or else the newest it has, and
       # its newest iOS runtime. (Asking xcodebuild with none selected opens an install prompt there.)
       - name: Choose Xcode
         run: |
@@ -40,10 +40,12 @@ jobs:
           else
             selected="$(xcode-select -p 2>/dev/null || true)"
             if [[ "$selected" != *.app/Contents/Developer ]]; then
-              ls -d /Applications/Xcode*.app 2>/dev/null || true
-              xcode="$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)"
+              # Spotlight finds an Xcode wherever it was put, such as ~/Applications.
+              found="$( (ls -d /Applications/Xcode*.app; mdfind "kMDItemCFBundleIdentifier == 'com.apple.dt.Xcode'") 2>/dev/null | sort -u)"
+              echo "Xcodes found: ${found:-none}"
+              xcode="$(echo "$found" | sort -V | tail -1)"
               if [[ -z "$xcode" ]]; then
-                echo "::error::No Xcode on this runner: install Xcode in /Applications, or select one with xcode-select."
+                echo "::error::No Xcode on this runner: install Xcode, or select one with xcode-select."
                 exit 1
               fi
               echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
