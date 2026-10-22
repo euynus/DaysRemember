@@ -16,7 +16,7 @@ struct SyncConflictsView: View {
         .scrollContentBackground(.hidden)
         .background(Theme.bg)
         .tint(Theme.accent)
-        .navigationTitle("本机保留版本")
+        .navigationTitle("同步保留版本")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

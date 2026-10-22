@@ -76,7 +76,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Event"
+            "value" : "Day"
           }
         },
         "zh-Hans" : {
@@ -122,7 +122,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Event"
+            "value" : "Day"
           }
         },
         "zh-Hans" : {
@@ -353,7 +353,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The cloud data zone was deleted. Sync is paused and nothing was uploaded again. You can export a local backup first, then choose to upload again."
+            "value" : "Days Remember’s data in iCloud was deleted. Sync is paused, and nothing has been uploaded again. You can export a local backup first, then choose to upload again."
           }
         },
         "zh-Hans" : {
@@ -526,7 +526,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "這份資料包含回復備份時被替換的日子和照片，刪除後無法找回。"
+            "value" : "這份資料包含還原備份時被取代的日子和照片，刪除後無法找回。"
           }
         }
       }
@@ -588,7 +588,7 @@
     "每天 %@" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Every Day at %@" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Every day at %@" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每天 %@" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "每天 %@" } }
       }
@@ -620,7 +620,7 @@
     "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gregorian and lunar reminders are scheduled up to %lld years ahead. Only the earliest %lld reminders, including the daily greeting, are kept, so more events shorten the coverage. Lunar dates are limited to 1900–2100." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gregorian and lunar reminders are scheduled up to %lld years ahead. Only the earliest %lld reminders, including the daily greeting, are kept, so more days shorten the coverage. Lunar dates are limited to 1900–2100." } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "公曆與農曆最多預排未來 %lld 年，按時間保留最早 %lld 條（含每日問候）；日子較多時範圍會縮短。農曆日期限於 1900–2100 年。" } }
       }
@@ -713,18 +713,18 @@
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "關於提醒排程" } }
       }
     },
-    "最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。" : {
+    "最近删除和同步保留版本保留 30 天。它们与本机副本都只保存在这台设备。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recently deleted days and saved sync versions are kept for 30 days. They and local recovery copies are stored only on this device." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。" } },
-        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "最近刪除和同步保留版本保留 30 天。它們與本機還原副本都只儲存在這台裝置。" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recently deleted days and saved sync versions are kept for 30 days. They and the local copy are stored only on this device." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "最近删除和同步保留版本保留 30 天。它们与本机副本都只保存在这台设备。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "最近刪除和同步保留版本保留 30 天。它們與本機副本都只儲存在這台裝置。" } }
       }
     },
     "除夕" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Lunar New Year's Eve" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Lunar New Year’s Eve" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "除夕" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "除夕" } }
       }
@@ -800,9 +800,6 @@
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "跟随系统" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "跟隨系統" } }
       }
-    },
-    "" : {
-
     },
     "%@" : {
       "extractionState" : "manual",
@@ -903,7 +900,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ · Local Version"
+            "value" : "%@ · Saved Local Version"
           }
         },
         "zh-Hans" : {
@@ -1075,13 +1072,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%1$@, %2$lld event"
+                      "value" : "%1$@, %2$lld day"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%1$@, %2$lld events"
+                      "value" : "%1$@, %2$lld days"
                     }
                   }
                 }
@@ -1955,7 +1952,7 @@
     "不选择时，自动显示置顶或最近的日子。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Leave unselected to automatically show your pinned or next event." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Leave unselected to automatically show your pinned or next day." } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不选择时，自动显示置顶或最近的日子。" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "不選擇時，自動顯示置頂或最近的日子。" } }
       }
@@ -2426,7 +2423,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Couldn't save"
+            "value" : "Couldn’t Save"
           }
         },
         "zh-Hans" : {
@@ -3139,7 +3136,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Share template"
+            "value" : "Share Template"
           }
         },
         "zh-Hans" : {
@@ -3553,7 +3550,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Settings"
+            "value" : "Open Settings"
           }
         },
         "zh-Hans" : {
@@ -4214,29 +4211,6 @@
         }
       }
     },
-    "天前" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "days ago"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "天前"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "天前"
-          }
-        }
-      }
-    },
     "太阳" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4473,7 +4447,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cover Crop"
+            "value" : "Cover Framing"
           }
         },
         "zh-Hans" : {
@@ -4985,29 +4959,6 @@
         }
       }
     },
-    "已过" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Since"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已过"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已過"
-          }
-        }
-      }
-    },
     "已过 %lld 天" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5043,36 +4994,13 @@
         }
       }
     },
-    "已过去" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Time since"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已过去"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已過去"
-          }
-        }
-      }
-    },
     "开启后才能收到日子提醒" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enable notifications to receive event reminders"
+            "value" : "Turn on notifications to get reminders for your days"
           }
         },
         "zh-Hans" : {
@@ -5118,7 +5046,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This will replace your current collection (%lld) with the collection in this backup (%lld) and sync it to other devices. A local copy will be saved first."
+            "value" : "This will replace the days on this device (%1$lld) with the days in this backup (%2$lld) and sync them to your other devices. A local copy is kept first."
           }
         },
         "zh-Hans" : {
@@ -5187,7 +5115,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Same-day, advance, and annual memory reminders"
+            "value" : "Reminders on the day and before it, and yearly memories"
           }
         },
         "zh-Hans" : {
@@ -5233,7 +5161,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No events on this date"
+            "value" : "No days on this date"
           }
         },
         "zh-Hans" : {
@@ -5256,7 +5184,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Journal"
+            "value" : "Notes"
           }
         },
         "zh-Hans" : {
@@ -5365,19 +5293,19 @@
         }
       }
     },
-    "恢复“%@”的本机保留版本？" : {
+    "恢复「%@」的本机保留版本？" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Restore the saved local version of \"%@\"?"
+            "value" : "Restore the saved local version of “%@”?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "恢复“%@”的本机保留版本？"
+            "value" : "恢复「%@」的本机保留版本？"
           }
         },
         "zh-Hant" : {
@@ -5647,7 +5575,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Open system settings to enable notifications"
+            "value" : "Open Settings to turn on notifications"
           }
         },
         "zh-Hans" : {
@@ -6257,7 +6185,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Unable to request notification access: %@"
+            "value" : "Couldn’t request notification permission: %@"
           }
         },
         "zh-Hans" : {
@@ -6395,7 +6323,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Event\ndeleted"
+            "value" : "Day\ndeleted"
           }
         },
         "zh-Hans" : {
@@ -6441,7 +6369,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Event deleted"
+            "value" : "Day deleted"
           }
         },
         "zh-Hans" : {
@@ -6487,7 +6415,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Could not cancel this event's reminders. Please try again."
+            "value" : "Couldn’t cancel this day’s reminders. Please try again."
           }
         },
         "zh-Hans" : {
@@ -6625,7 +6553,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Days Remember · Events"
+            "value" : "Days Remember · Day"
           }
         },
         "zh-Hans" : {
@@ -6717,7 +6645,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Memories"
+            "value" : "Looking Back"
           }
         },
         "zh-Hans" : {
@@ -6990,7 +6918,7 @@
     "置顶或最近的日子" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pinned or Next Event" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pinned or Next Day" } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "置顶或最近的日子" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "置頂或最近的日子" } }
       }
@@ -7209,7 +7137,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This month's days"
+            "value" : "This Month’s Days"
           }
         },
         "zh-Hans" : {
@@ -7249,25 +7177,25 @@
         }
       }
     },
-    "本机保留版本" : {
+    "同步保留版本" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Saved Local Versions"
+            "value" : "Saved Sync Versions"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本机保留版本"
+            "value" : "同步保留版本"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本機保留版本"
+            "value" : "同步保留版本"
           }
         }
       }
@@ -7732,19 +7660,19 @@
         }
       }
     },
-    "永久删除“%@”的本机保留版本？" : {
+    "永久删除「%@」的本机保留版本？" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permanently delete the saved local version of \"%@\"?"
+            "value" : "Permanently delete the saved local version of “%@”?"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "永久删除“%@”的本机保留版本？"
+            "value" : "永久删除「%@」的本机保留版本？"
           }
         },
         "zh-Hant" : {
@@ -8221,7 +8149,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Couldn't create the image. Try again."
+            "value" : "Couldn’t create the image. Please try again."
           }
         },
         "zh-Hans" : {
@@ -9159,25 +9087,25 @@
         }
       }
     },
-    "请定期打开应用更新排程；长期不打开，日期提醒到期后不会自动续排。单日“不提醒”也不参与年度回忆。" : {
+    "iOS 通常会在后台续排提醒；很久不打开 App 时，打开一次一定能补上。单日「不提醒」也不参与年度回忆。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Open the app regularly to refresh the schedule. Dated reminders do not renew automatically after they run out. Events set to “No reminders” are also excluded from annual memories."
+            "value" : "iOS usually renews the schedule in the background, and opening the app always does. Days set to “No reminders” are also left out of yearly memories."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请定期打开应用更新排程；长期不打开，日期提醒到期后不会自动续排。单日“不提醒”也不参与年度回忆。"
+            "value" : "iOS 通常会在后台续排提醒；很久不打开 App 时，打开一次一定能补上。单日「不提醒」也不参与年度回忆。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "請定期開啟應用程式更新排程；長期不開啟，日期提醒到期後不會自動續排。單日「不提醒」也不參與年度回憶。"
+            "value" : "iOS 通常會在背景續排提醒；很久不開啟 App 時，開啟一次一定能補上。單日「不提醒」也不參與年度回憶。"
           }
         }
       }
@@ -9349,7 +9277,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yearly memories for past events, following the Gregorian or lunar calendar"
+            "value" : "Yearly memories of past days, by the Gregorian or lunar calendar"
           }
         },
         "zh-Hans" : {
@@ -9389,36 +9317,13 @@
         }
       }
     },
-    "还有" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Until"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还有"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "還有"
-          }
-        }
-      }
-    },
     "还没有\n日子" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No\nevents"
+            "value" : "No\ndays"
           }
         },
         "zh-Hans" : {
@@ -9576,7 +9481,7 @@
     "选择一个重要日子，不选时显示置顶或最近的日子。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose an important event, or show your pinned or next one." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose an important day, or show your pinned or next one." } },
         "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择一个重要日子，不选时显示置顶或最近的日子。" } },
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "選擇一個重要日子，不選時顯示置頂或最近的日子。" } }
       }
@@ -9610,7 +9515,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose an Event"
+            "value" : "Choose a Day"
           }
         },
         "zh-Hans" : {
@@ -9886,7 +9791,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Leap "
+            "value" : "Leap"
           }
         },
         "zh-Hans" : {
@@ -10927,13 +10832,13 @@
                   "one" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%lld event"
+                      "value" : "%lld day"
                     }
                   },
                   "other" : {
                     "stringUnit" : {
                       "state" : "translated",
-                      "value" : "%lld events"
+                      "value" : "%lld days"
                     }
                   }
                 }
@@ -11283,7 +11188,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yearly · lunar"
+            "value" : "Yearly · Lunar"
           }
         },
         "zh-Hans" : {
@@ -11557,7 +11462,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ · yearly"
+            "value" : "%@ · Yearly"
           }
         },
         "zh-Hans" : {
@@ -11627,7 +11532,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "從 iCloud 復原這些日子"
+            "value" : "從 iCloud 還原這些日子"
           }
         }
       }
@@ -11983,7 +11888,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pin, edit, share or delete it. Pinned days come first, and widgets show them first too."
+            "value" : "Pin, edit, share or delete it. Pinned days come first, in the app and in widgets."
           }
         },
         "zh-Hans" : {
@@ -12029,7 +11934,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opens Days Remember to save a new day."
+            "value" : "Opens Days Remember to add a new day."
           }
         },
         "zh-Hans" : {
@@ -12121,7 +12026,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tells you how many days are left until a day, or have passed since it."
+            "value" : "Tells you how many days are left until a day, or how many have passed since it."
           }
         },
         "zh-Hans" : {

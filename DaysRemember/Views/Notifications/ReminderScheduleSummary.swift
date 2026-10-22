@@ -20,7 +20,7 @@ struct ReminderScheduleSummary: View {
                         Text("每日问候由系统重复，占用 1 个名额。")
                     }
                     Text("公历与农历最多预排未来 \(NotificationManager.planningYears) 年，按时间保留最早 \(NotificationManager.pendingLimit) 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。")
-                    Text("请定期打开应用更新排程；长期不打开，日期提醒到期后不会自动续排。单日“不提醒”也不参与年度回忆。")
+                    Text("iOS 通常会在后台续排提醒；很久不打开 App 时，打开一次一定能补上。单日「不提醒」也不参与年度回忆。")
                 }
                 .padding(.top, 6)
             } label: {

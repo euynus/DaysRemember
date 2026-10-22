@@ -39,7 +39,7 @@ final class LocalizationTests: XCTestCase {
             XCTAssertEqual(String(localized: "记得最久的是「\(title)」，已经 \(count) 天。", bundle: bundle, locale: locale),
                            "You’ve remembered “\(title)” the longest: \(count) \(expectedUnit).")
             XCTAssertEqual(String(localized: "\(date)，\(count) 个日子", bundle: bundle, locale: locale),
-                           "\(date), \(count) \(count == 1 ? "event" : "events")")
+                           "\(date), \(count) \(count == 1 ? "day" : "days")")
             XCTAssertEqual(String(localized: "其中 \(count) 条日期提醒，最晚至 \(date)", bundle: bundle, locale: locale),
                            "\(count) dated \(count == 1 ? "reminder" : "reminders"), through \(date)")
         }
@@ -149,7 +149,7 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
-    /// One saved version, or the widget's one day, is singular: "Event" and "Category", not the
+    /// One saved version, or the widget's one day, is singular: "Day" and "Category", not the
     /// tab titles "Days" and "Categories".
     func testSingleRecordKindsAreSingular() throws {
         let defaults = SharedStorage.defaults
@@ -157,12 +157,12 @@ final class LocalizationTests: XCTestCase {
         defer { defaults.set(previous, forKey: AppLocalization.languageKey) }
         defaults.set("en", forKey: AppLocalization.languageKey)
         let day = Day(id: "kind", title: "Kind", date: Date(), category: .life, photo: .home)
-        XCTAssertEqual(CloudLibraryRecord.day(day).kindName, "Event")
+        XCTAssertEqual(CloudLibraryRecord.day(day).kindName, "Day")
         XCTAssertEqual(CloudLibraryRecord.category(CategoryDefinition.system[0]).kindName, "Category")
 
         let plugins = try XCTUnwrap(Bundle.main.builtInPlugInsURL)
         let widget = try XCTUnwrap(Bundle(url: plugins.appendingPathComponent("DaysRememberWidget.appex")))
-        XCTAssertEqual(String(localized: "widget.day", bundle: try localizedBundle("en", in: widget)), "Event")
+        XCTAssertEqual(String(localized: "widget.day", bundle: try localizedBundle("en", in: widget)), "Day")
     }
 
     func testBackupErrorsAreAvailableInEveryLanguage() throws {

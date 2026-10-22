@@ -176,7 +176,7 @@ struct DataManagementView: View {
                 }
                 .disabled(store.loadError != nil)
             } footer: {
-                Text("最近删除和同步保留版本保留 30 天。它们与本机恢复副本都只保存在这台设备。")
+                Text("最近删除和同步保留版本保留 30 天。它们与本机副本都只保存在这台设备。")
             }
         }
     }

@@ -64,7 +64,7 @@ struct SyncConflictSection: View {
                 .buttonStyle(.borderless)
                 .accessibilityLabel("恢复\(recordTitle)的本机保留版本")
                 .help("恢复本机保留版本")
-                .confirmationDialog("恢复“\(recordTitle)”的本机保留版本？", isPresented: $confirmRestore,
+                .confirmationDialog("恢复「\(recordTitle)」的本机保留版本？", isPresented: $confirmRestore,
                                     titleVisibility: .visible) {
                     Button("恢复并同步", role: .destructive, action: restore)
                     Button("取消", role: .cancel) {}
@@ -82,7 +82,7 @@ struct SyncConflictSection: View {
                 .buttonStyle(.borderless)
                 .accessibilityLabel("永久删除\(recordTitle)的本机保留版本")
                 .help("永久删除本机保留版本")
-                .confirmationDialog("永久删除“\(recordTitle)”的本机保留版本？", isPresented: $confirmDeletion,
+                .confirmationDialog("永久删除「\(recordTitle)」的本机保留版本？", isPresented: $confirmDeletion,
                                     titleVisibility: .visible) {
                     Button("永久删除", role: .destructive, action: discard)
                     Button("取消", role: .cancel) {}
