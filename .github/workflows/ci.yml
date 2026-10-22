@@ -15,11 +15,12 @@ concurrency:
 jobs:
   test:
     name: Tests and Release Build
-    runs-on: macos-26
+    # The self-hosted Mac runs pushes, manual runs and this repository's own pull requests. A pull
+    # request from a fork runs on GitHub's Mac instead: the repository is public, and a fork's code
+    # must not run on a personal machine.
+    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-26' }}
     timeout-minutes: 75
     env:
-      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
-      IOS_RUNTIME: com.apple.CoreSimulator.SimRuntime.iOS-26-5
       IOS_DEVICE_TYPE: com.apple.CoreSimulator.SimDeviceType.iPhone-17
       HOMEBREW_NO_AUTO_UPDATE: "1"
     steps:
@@ -28,8 +29,32 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      # GitHub's Mac keeps several Xcodes and runtimes, so it is pinned to Xcode 26.6 and iOS 26.5;
+      # the self-hosted Mac uses the Xcode it has selected and its newest iOS runtime.
+      - name: Choose Xcode
+        run: |
+          if [[ "$RUNNER_ENVIRONMENT" == github-hosted ]]; then
+            echo "DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer" >> "$GITHUB_ENV"
+            echo "IOS_RUNTIME=com.apple.CoreSimulator.SimRuntime.iOS-26-5" >> "$GITHUB_ENV"
+          fi
+          # A runner started as a service may not have Homebrew on its PATH.
+          if [[ -d /opt/homebrew/bin ]]; then echo /opt/homebrew/bin >> "$GITHUB_PATH"; fi
+
+      - name: Show the toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes available | grep iOS
+          sysctl -n machdep.cpu.brand_string
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install XcodeGen and jq
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          command -v jq >/dev/null || brew install jq
 
       - name: Check the site and CI script
         run: |
