@@ -29,13 +29,25 @@ jobs:
         with:
           persist-credentials: false
 
-      # GitHub's Mac keeps several Xcodes and runtimes, so it is pinned to Xcode 26.6 and iOS 26.5;
-      # the self-hosted Mac uses the Xcode it has selected and its newest iOS runtime.
+      # GitHub's Mac keeps several Xcodes and runtimes, so it is pinned to Xcode 26.6 and iOS 26.5.
+      # The self-hosted Mac uses the Xcode it has selected, or else the newest in /Applications, and
+      # its newest iOS runtime. (Asking xcodebuild with none selected opens an install prompt there.)
       - name: Choose Xcode
         run: |
           if [[ "$RUNNER_ENVIRONMENT" == github-hosted ]]; then
             echo "DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer" >> "$GITHUB_ENV"
             echo "IOS_RUNTIME=com.apple.CoreSimulator.SimRuntime.iOS-26-5" >> "$GITHUB_ENV"
+          else
+            selected="$(xcode-select -p 2>/dev/null || true)"
+            if [[ "$selected" != *.app/Contents/Developer ]]; then
+              ls -d /Applications/Xcode*.app 2>/dev/null || true
+              xcode="$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)"
+              if [[ -z "$xcode" ]]; then
+                echo "::error::No Xcode on this runner: install Xcode in /Applications, or select one with xcode-select."
+                exit 1
+              fi
+              echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+            fi
           fi
           # A runner started as a service may not have Homebrew on its PATH.
           if [[ -d /opt/homebrew/bin ]]; then echo /opt/homebrew/bin >> "$GITHUB_PATH"; fi
