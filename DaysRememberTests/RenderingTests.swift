@@ -131,6 +131,25 @@ final class RenderingTests: XCTestCase {
         }
     }
 
+    /// A photo has no size of its own; in the detail's scroll view it collapsed to a sliver.
+    func testDetailCoverGivesAPhotoTheCardsHeight() throws {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let photo = try XCTUnwrap(UIGraphicsImageRenderer(size: CGSize(width: 400, height: 300), format: format)
+            .image { context in
+                UIColor(red: 0.1, green: 0.3, blue: 0.9, alpha: 1).setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 400, height: 300))
+            }.jpegData(compressionQuality: 0.9))
+        var day = Day(id: "photo-cover", title: "Photo", date: Date(timeIntervalSince1970: 1_800_000_000),
+                      category: .family, photo: .birthday, photoData: photo)
+        let withPhoto = try render(DetailCover(day: day, tint: .pink).frame(width: 360))
+        XCTAssertEqual(withPhoto.height, 288)
+        XCTAssertGreaterThan(pixel(withPhoto, x: 180, y: 144)[2], 200, "the photo fills the card")
+
+        day.photoData = nil
+        XCTAssertEqual(try render(DetailCover(day: day, tint: .pink).frame(width: 360)).height, 288)
+    }
+
     func testCacheLookupNeverDecodes() throws {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1

@@ -5,7 +5,6 @@ struct DetailView: View {
     @Environment(DayStore.self) var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(DeepLinkRouter.self) private var router
     @Environment(\.editDay) private var editDay
     let dayID: String
@@ -61,7 +60,7 @@ struct DetailView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    cover(day: day, tint: tint)
+                    DetailCover(day: day, tint: tint)
                     titleBlock(day: day, info: info, category: category, tint: tint, ink: ink)
                     DetailCountdown(day: day, info: info, unit: $unit)
                     DetailFacts(day: day, info: info)
@@ -139,15 +138,6 @@ struct DetailView: View {
     }
 
     // MARK: - Cover and title
-
-    private func cover(day: Day, tint: Color) -> some View {
-        CoverArt(day: day, photoCornerRadius: 24, maximumPixelSize: 1600)
-            .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? 160 : 240,
-                   maxHeight: dynamicTypeSize.isAccessibilitySize ? 160 : 240)
-            .padding(.vertical, 24)
-            .frame(maxWidth: .infinity)
-            .background(tint, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-    }
 
     private func titleBlock(day: Day, info: DayInfo, category: CategoryDefinition, tint: Color, ink: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
