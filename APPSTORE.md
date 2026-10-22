@@ -49,7 +49,7 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 **宣传文本**
 
 ```text
-记录结婚纪念、宝宝出生、一场旅行、考试倒数。按公历或农历每年重复，放进主屏与锁屏小组件，提前提醒不错过。无需账号，无广告，不收集任何数据。
+记录结婚纪念、宝宝出生、一场旅行、考试倒数。按公历或农历每年重复，放进主屏幕和锁定屏幕的小组件，提前提醒不错过。无需账号，无广告，不收集任何数据。
 ```
 
 **关键词**
@@ -82,10 +82,10 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 每个日子都是一张分类颜色的卡片。配一张自己的照片，或从 12 张扁平插图里挑一张；新建的日子会按分类先配好封面。除了爱情、家人、旅行、工作、生活，还能在「我的」里新建自己的分类，图标和颜色自己挑。
 
 【小组件】
-主屏幕小、中、大三种尺寸，用和 App 里一样的彩色卡片；日子列表小组件一次列出接下来几个日子；锁定屏幕另有三种样式。每个小组件都可以单独选一个日子，不选就先显示置顶的日子。
+主屏幕有小、中、大三种尺寸，用和 App 里一样的彩色卡片；日子列表小组件一次列出接下来几个日子，置顶的排在前面；锁定屏幕另有三种样式。单个日子的小组件可以单独选一个日子，不选就先显示置顶的日子。
 
 【快捷入口】
-控制中心和主屏幕图标都可以一键新建日子；问 Siri「某个日子还有几天」，不用打开 App 就有答案。
+控制中心可以一键新建日子，长按主屏幕图标也能从快捷操作新建；问 Siri「某个日子还有几天」，不用打开 App 就有答案。
 
 【分享卡片】
 照片、手记、极简、双栏四种模板，可以导出 3:4 竖图，保存到相册或分享出去。笔记默认不出现在图片上。
@@ -149,10 +149,10 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 每個日子都是一張分類顏色的卡片。配一張自己的照片，或從 12 張扁平插圖裡挑一張；新建的日子會依分類先配好封面。除了愛情、家人、旅行、工作、生活，還能在「我的」裡新增自己的分類，圖示和顏色自己挑。
 
 【小工具】
-主畫面小、中、大三種尺寸，用和 App 裡一樣的彩色卡片；日子列表小工具一次列出接下來幾個日子；鎖定畫面另有三種樣式。每個小工具都可以單獨選一個日子，不選就先顯示置頂的日子。
+主畫面有小、中、大三種尺寸，用和 App 裡一樣的彩色卡片；日子列表小工具一次列出接下來幾個日子，置頂的排在前面；鎖定畫面另有三種樣式。單一日子的小工具可以單獨選一個日子，不選就先顯示置頂的日子。
 
 【快捷入口】
-控制中心和主畫面圖示都可以一鍵新增日子；問 Siri「某個日子還有幾天」，不用打開 App 就有答案。
+控制中心可以一鍵新增日子，長按主畫面圖示也能從快捷操作新增；問 Siri「某個日子還有幾天」，不用打開 App 就有答案。
 
 【分享卡片】
 照片、手記、極簡、雙欄四種範本，可以匯出 3:4 直圖，儲存到相簿或分享出去。筆記預設不會出現在圖片上。
@@ -198,7 +198,7 @@ birthday,lunar,chinese,calendar,widget,reminder,since,until,wedding,baby,love,da
 Days Remember gently keeps track of the days that matter: a wedding anniversary, a baby's birth, a trip, an exam. Look forward to what's ahead, and look back on what has passed.
 
 AHEAD AND PAST
-The Days tab has two sides. Ahead counts down to the days still to come, with pinned and the nearest days at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.
+The Days tab has two sides. Ahead counts down to the days still to come, with pinned days and the nearest ones at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.
 
 ROUND NUMBERS
 Days under Past show their next round number: every 100 days up to 1,000, every 500 after that, or a whole year.
@@ -210,22 +210,22 @@ TAP TO CHANGE UNITS
 In a day's detail, tap the number to switch between days, weeks, months and hours. Below it are the day's marks: the last and next anniversaries of a yearly day, or the next round number of a past day.
 
 REMINDERS
-Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose, and give any day reminders of its own. The Daily Greeting sends a short note each day at the time you pick, and Memories brings back a past day on its anniversary. Each can be turned on separately.
+Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose, and give any day reminders of its own. The Daily Greeting sends a short note each day at the time you pick, and the Memories reminder brings back a past day on its anniversary. Each can be turned on separately.
 
 COVERS AND CATEGORIES
 Every day is a card in its category's color. Give it a photo of your own, or pick one of 12 flat illustrations; a new day starts with a cover that suits its category. Besides Love, Family, Travel, Work and Life, create categories of your own in Me, each with its own icon and color.
 
 WIDGETS
-Small, medium and large on the Home Screen, in the same colored cards as the app, a day list that shows the next few at once, plus three Lock Screen styles. Each widget can show a day of its own, or your pinned day first.
+Small, medium and large on the Home Screen, in the same colored cards as the app, a day list that shows the next few at once with pinned days first, plus three Lock Screen styles. Set a single-day widget to any day, or let it show your nearest pinned day.
 
 SHORTCUTS
-Start a new day from Control Center or the Home Screen icon, and ask Siri how many days are left until a day without opening the app.
+Start a new day from Control Center or the Home Screen quick action, and ask Siri how many days are left until a day without opening the app.
 
 SHARE CARDS
 Photo, Journal, Minimal and Split templates, with a 3:4 portrait export to save to Photos or share. Notes stay off the image unless you include them.
 
 ICLOUD SYNC AND BACKUPS
-Days, categories and photos sync across your devices through your own iCloud. A deleted day stays in Recently Deleted for 30 days, and when two devices change the same day, the replaced version stays in Saved Sync Versions for 30 days, so either can be restored. You can also export a backup and restore it from the file on a new device.
+Days, categories and photos sync across your devices through your own iCloud. A deleted day stays in Recently Deleted for 30 days, and when two devices change the same day, the replaced version stays in Saved Sync Versions for 30 days, and both can be restored. You can also export a backup and restore it from the file on a new device.
 
 PRIVACY
 No data collected. Your days, photos and settings stay on your devices and in your own iCloud, and nothing is sent to the developer. No account, no ads, no tracking, no third-party SDKs.
@@ -250,7 +250,9 @@ In English, Simplified Chinese and Traditional Chinese; switch in Me › Languag
 
 - 无账号、无登录、无自有服务器。首次启动为空白资料库：点「日子」页右上角「+」新建一个日子，即可体验倒数、提醒、分享卡片与小组件。
 - 底部三个标签：日子（分「将至」与「已过」两面）、日历、我的。分类、提醒设置、小组件、数据与同步、语言与关于都是「我的」里的条目。
-- 通知为本地通知（`UNUserNotificationCenter`），用于纪念日 / 倒数提醒。
+- 用户看到的通知都是本地通知（`UNUserNotificationCenter`），用于纪念日 / 倒数提醒、每日问候与时光回忆；不发送营销推送。
+- 后台模式：`fetch` 用于每天一次的 `BGAppRefreshTask`，补排 iOS 64 条上限之外的提醒；`remote-notification` 只用于 CloudKit 的静默推送，让同步及时拉取其他设备的更改。
+- 其他入口：Siri 与快捷指令（「某个日子还有几天」、打开日子、新建日子）、控制中心的「新建日子」按钮、长按 App 图标的「新建日子」快捷操作，以及主屏幕的单个日子小组件和日子列表小组件。
 - 分享与「保存到相册」通过系统分享面板与 `PHPhotoLibrary`，无第三方 SDK。
 - iCloud 同步通过 CloudKit 私有数据库（`CKSyncEngine`）与 `NSUbiquitousKeyValueStore`（仅提醒设置），只同步用户自己的数据。
 
@@ -287,7 +289,7 @@ In English, Simplified Chinese and Traditional Chinese; switch in Me › Languag
 - [ ] 价格与销售范围：免费。中国大陆需要 App 备案号（ICP），备案通过接入商（如阿里云、腾讯云）办理，需要 Bundle ID 与签名证书信息，通常要一到几周；暂未备案就先不选中国大陆
 - [ ] 欧盟上架需要声明「交易商身份」（DSA）。声明为交易商时，地址、电话与邮箱会公开显示在商店页
 - [ ] App 隐私问卷按上文填写，隐私政策网址见上表
-- [ ] 内容权利：图标和 12 张扁平封面由仓库里的脚本绘制（`scripts/app-icon.py`、`scripts/flat-covers.py`）；作为照片后备保留的位图封面（`Cover*`）由 AI 生成，按实际情况回答
+- [ ] 内容权利：图标和 12 张扁平封面都由仓库里的脚本绘制（`scripts/app-icon.py`、`scripts/flat-covers.py`），App 不含第三方图片或 AI 生成的图片；字体 Inter 以 SIL OFL 随附
 - [ ] 版本信息：宣传文本、关键词、描述（见「商店文案」）、支持与营销网址、截图；首个版本没有「此版本的新内容」一栏
 - [ ] 审核信息：联系人与审核备注（见上文），无需演示账号
 
