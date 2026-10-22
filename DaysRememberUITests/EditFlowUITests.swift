@@ -714,8 +714,12 @@ final class EditFlowUITests: XCTestCase {
         // something still moving can go unanswered. Tap where it is until `result` appears.
         func tapInPicker(_ element: XCUIElement, until result: XCUIElement, confirming confirm: XCUIElement? = nil) {
             for _ in 0..<3 where element.exists && !result.exists {
-                _ = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: element)],
-                                   timeout: 5)
+                // Asking an element off screen whether it is hittable fails the test on iOS 27, so wait for
+                // it to have a frame on screen instead.
+                for _ in 0..<10 {
+                    if let frame = try? element.snapshot().frame, !frame.isEmpty, frame.minX.isFinite { break }
+                    _ = XCTWaiter.wait(for: [XCTestExpectation()], timeout: 0.5)
+                }
                 // The element can leave the picker while it moves; then this tap misses and is retried.
                 app.tapWhereItIs(element)
                 if let confirm, confirm.waitForExistence(timeout: 1) { app.tapWhereItIs(confirm) }
