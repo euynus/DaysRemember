@@ -117,7 +117,7 @@ Use a dedicated test simulator: UI fixtures deliberately reset its library. Back
 
 ### Continuous integration
 
-[iOS CI](.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatches with Xcode 26.6 on a macOS 26 runner. It generates the Xcode project, runs unit tests and application UI tests with coverage, then builds the app and widget in Release for the simulator. No signing certificates or cloud credentials are required; simulator ad-hoc signing remains enabled.
+[iOS CI](.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatches. Pushes to `main` run on a self-hosted Mac with its own Xcode; pull requests and other branches run on GitHub's macOS 26 runner with Xcode 26.6, and a manual run can choose the self-hosted Mac. It generates the Xcode project, runs unit tests and application UI tests with coverage, then builds the app and widget in Release for the simulator. No signing certificates or cloud credentials are required; simulator ad-hoc signing remains enabled.
 
 Run the same entry point locally with Xcode, XcodeGen, and `jq` installed:
 
