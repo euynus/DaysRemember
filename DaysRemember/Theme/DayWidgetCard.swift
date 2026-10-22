@@ -95,6 +95,7 @@ struct DayWidgetCard: View {
              : info.isPast ? String(localized: "时光记忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "即将到来", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             .font(Theme.sans(11, weight: .heavy))
             .foregroundStyle(palette.ink)
+            .lineLimit(1)
             .widgetAccentable()
     }
 
@@ -128,10 +129,15 @@ struct DayWidgetCard: View {
         }
     }
 
+    /// Always at its full width: beside the eyebrow, WidgetKit could leave the row's spacer the
+    /// room the date needed and cut it to 「1月…」, though the row had space to spare.
     private var date: some View {
         Text(CNDate.short(info.isPast ? day.date : info.displayDate))
             .font(Theme.sans(11, weight: .bold))
             .foregroundStyle(palette.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     private var accessibilitySummary: String {
