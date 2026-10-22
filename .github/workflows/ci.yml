@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      self_hosted:
+        description: Run on the self-hosted Mac
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,10 +20,10 @@ concurrency:
 jobs:
   test:
     name: Tests and Release Build
-    # The self-hosted Mac runs pushes, manual runs and this repository's own pull requests. A pull
-    # request from a fork runs on GitHub's Mac instead: the repository is public, and a fork's code
-    # must not run on a personal machine.
-    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-26' }}
+    # The self-hosted Mac runs pushes to main, and manual runs that ask for it; pull requests and
+    # other branches run on GitHub's Mac. (The repository is public: a fork's pull request must
+    # never reach a personal machine.)
+    runs-on: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.self_hosted)) && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-26' }}
     timeout-minutes: 75
     env:
       IOS_DEVICE_TYPE: com.apple.CoreSimulator.SimDeviceType.iPhone-17
