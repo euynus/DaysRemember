@@ -40,21 +40,26 @@ trap 'exit 143' TERM
 } 2>&1 | tee "$output_dir/setup.log"
 
 # Keep assignments outside logging pipelines so the EXIT trap owns the ID.
-runtime="${IOS_RUNTIME:-$(xcrun simctl list runtimes --json | jq -er '
+# The UI tests are written against an iPhone 17's screen. Unless the environment names them, the run
+# takes the newest iOS runtime that still simulates one (a newer runtime can drop it), or else the
+# newest runtime and its newest numbered iPhone or iPhone Pro, then any iPhone it supports.
+wanted_device="${IOS_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17}"
+runtimes="$(xcrun simctl list runtimes --json)"
+runtime="${IOS_RUNTIME:-$(jq -er --arg wanted "$wanted_device" '
     [.runtimes[]
      | select(.isAvailable and (.identifier | startswith("com.apple.CoreSimulator.SimRuntime.iOS-")))]
     | sort_by(.version | split(".") | map(tonumber))
-    | last.identifier // error("No available iOS simulator runtime")
-')}"
-# A runtime supports only some models (a newer one can drop iPhone 17), so without IOS_DEVICE_TYPE
-# the run takes the newest plain-numbered iPhone the runtime supports, or else any iPhone it does.
-device_type="${IOS_DEVICE_TYPE:-$(xcrun simctl list runtimes --json | jq -er --arg runtime "$runtime" '
-    [.runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes[]
+    | (map(select(any(.supportedDeviceTypes[]?; .identifier == $wanted))) | last.identifier)
+      // last.identifier // error("No available iOS simulator runtime")
+' <<<"$runtimes")}"
+device_type="${IOS_DEVICE_TYPE:-$(jq -er --arg runtime "$runtime" --arg wanted "$wanted_device" '
+    [.runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes[]?
      | select(.productFamily == "iPhone")] as $iphones
-    | ([$iphones[] | select(.name | test("^iPhone [0-9]+$"))]
-       | sort_by(.name | ltrimstr("iPhone ") | tonumber) | last.identifier)
+    | ([$iphones[] | select(.identifier == $wanted)] | first.identifier)
+      // ([$iphones[] | select(.name | test("^iPhone [0-9]+( Pro)?$"))]
+          | sort_by(.name | capture("(?<n>[0-9]+)").n | tonumber) | last.identifier)
       // $iphones[0].identifier // error("No iPhone simulator for \($runtime)")
-')}"
+' <<<"$runtimes")}"
 printf 'Runtime: %s\nDevice type: %s\n' "$runtime" "$device_type" | tee -a "$output_dir/setup.log"
 simulator_id="$(xcrun simctl create "DaysRememberCI-$(basename "$output_dir")" "$device_type" "$runtime")"
 printf 'CI simulator: %s\n' "$simulator_id" | tee -a "$output_dir/setup.log"
