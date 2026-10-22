@@ -30,12 +30,13 @@ struct DayWidgetCard: View {
                 }
             case .medium:
                 HStack(spacing: 12) {
+                    // The date shares the eyebrow's row: under the count it would leave the column
+                    // taller than a medium widget, and be cut short.
                     VStack(alignment: .leading, spacing: 4) {
-                        eyebrow
+                        HStack(spacing: 6) { eyebrow; Spacer(minLength: 0); date }
                         title
                         Spacer(minLength: 0)
                         countdown
-                        date
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     cover
