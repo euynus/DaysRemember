@@ -26,7 +26,6 @@ jobs:
     runs-on: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.self_hosted)) && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-26' }}
     timeout-minutes: 75
     env:
-      IOS_DEVICE_TYPE: com.apple.CoreSimulator.SimDeviceType.iPhone-17
       HOMEBREW_NO_AUTO_UPDATE: "1"
     steps:
       - name: Check out source
@@ -34,14 +33,16 @@ jobs:
         with:
           persist-credentials: false
 
-      # GitHub's Mac keeps several Xcodes and runtimes, so it is pinned to Xcode 26.6 and iOS 26.5.
-      # The self-hosted Mac uses the Xcode it has selected, or else the newest it has, and
-      # its newest iOS runtime. (Asking xcodebuild with none selected opens an install prompt there.)
+      # GitHub's Mac keeps several Xcodes and runtimes, so it is pinned to Xcode 26.6, iOS 26.5 and
+      # an iPhone 17. The self-hosted Mac uses the Xcode it has selected, or else the newest it has,
+      # its newest iOS runtime and an iPhone that runtime supports (ci.sh picks it). (Asking
+      # xcodebuild with no Xcode selected opens an install prompt there.)
       - name: Choose Xcode
         run: |
           if [[ "$RUNNER_ENVIRONMENT" == github-hosted ]]; then
             echo "DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer" >> "$GITHUB_ENV"
             echo "IOS_RUNTIME=com.apple.CoreSimulator.SimRuntime.iOS-26-5" >> "$GITHUB_ENV"
+            echo "IOS_DEVICE_TYPE=com.apple.CoreSimulator.SimDeviceType.iPhone-17" >> "$GITHUB_ENV"
           else
             selected="$(xcode-select -p 2>/dev/null || true)"
             if [[ "$selected" != *.app/Contents/Developer ]]; then

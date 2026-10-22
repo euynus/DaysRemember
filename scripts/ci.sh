@@ -46,7 +46,15 @@ runtime="${IOS_RUNTIME:-$(xcrun simctl list runtimes --json | jq -er '
     | sort_by(.version | split(".") | map(tonumber))
     | last.identifier // error("No available iOS simulator runtime")
 ')}"
-device_type="${IOS_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17}"
+# A runtime supports only some models (a newer one can drop iPhone 17), so without IOS_DEVICE_TYPE
+# the run takes the newest plain-numbered iPhone the runtime supports, or else any iPhone it does.
+device_type="${IOS_DEVICE_TYPE:-$(xcrun simctl list runtimes --json | jq -er --arg runtime "$runtime" '
+    [.runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes[]
+     | select(.productFamily == "iPhone")] as $iphones
+    | ([$iphones[] | select(.name | test("^iPhone [0-9]+$"))]
+       | sort_by(.name | ltrimstr("iPhone ") | tonumber) | last.identifier)
+      // $iphones[0].identifier // error("No iPhone simulator for \($runtime)")
+')}"
 printf 'Runtime: %s\nDevice type: %s\n' "$runtime" "$device_type" | tee -a "$output_dir/setup.log"
 simulator_id="$(xcrun simctl create "DaysRememberCI-$(basename "$output_dir")" "$device_type" "$runtime")"
 printf 'CI simulator: %s\n' "$simulator_id" | tee -a "$output_dir/setup.log"
