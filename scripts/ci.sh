@@ -69,6 +69,8 @@ printf 'CI simulator: %s\n' "$simulator_id" | tee -a "$output_dir/setup.log"
 xcrun simctl boot "$simulator_id" 2>&1 | tee -a "$output_dir/setup.log"
 xcrun simctl bootstatus "$simulator_id" -b 2>&1 | tee -a "$output_dir/setup.log"
 
+# Diagnostics aren't collected: on Xcode 27 the simulator can leave xcodebuild waiting its full ten
+# minutes for them after every test has passed, and the logs and result bundle are kept anyway.
 # A test that fails is run up to twice more, so a UI interaction that misses once (the system
 # document picker is another process) doesn't fail the run; one that fails all three times does.
 run_tests() {
@@ -89,6 +91,7 @@ run_tests() {
         -maximum-test-execution-time-allowance 300 \
         -retry-tests-on-failure \
         -test-iterations 3 \
+        -collect-test-diagnostics never \
         "$@" \
         2>&1 | tee -a "$output_dir/tests.log"
 }
