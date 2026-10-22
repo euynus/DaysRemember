@@ -42,21 +42,24 @@ trap 'exit 143' TERM
 # Keep assignments outside logging pipelines so the EXIT trap owns the ID.
 # The UI tests are written against an iPhone 17's screen. Unless the environment names them, the run
 # takes the newest iOS runtime that still simulates one (a newer runtime can drop it), or else the
-# newest runtime and its newest numbered iPhone or iPhone Pro, then any iPhone it supports.
+# newest runtime with a numbered iPhone or iPhone Pro, and its newest one. A folding iPhone Duo is never
+# picked: its inner display lays the app out like an iPad, with a sidebar in place of the tab bar.
 wanted_device="${IOS_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17}"
 runtimes="$(xcrun simctl list runtimes --json)"
-runtime="${IOS_RUNTIME:-$(jq -er --arg wanted "$wanted_device" '
+numbered='^iPhone [0-9]+( Pro)?$'
+runtime="${IOS_RUNTIME:-$(jq -er --arg wanted "$wanted_device" --arg numbered "$numbered" '
     [.runtimes[]
      | select(.isAvailable and (.identifier | startswith("com.apple.CoreSimulator.SimRuntime.iOS-")))]
     | sort_by(.version | split(".") | map(tonumber))
     | (map(select(any(.supportedDeviceTypes[]?; .identifier == $wanted))) | last.identifier)
+      // (map(select(any(.supportedDeviceTypes[]?; .name | test($numbered)))) | last.identifier)
       // last.identifier // error("No available iOS simulator runtime")
 ' <<<"$runtimes")}"
-device_type="${IOS_DEVICE_TYPE:-$(jq -er --arg runtime "$runtime" --arg wanted "$wanted_device" '
+device_type="${IOS_DEVICE_TYPE:-$(jq -er --arg runtime "$runtime" --arg wanted "$wanted_device" --arg numbered "$numbered" '
     [.runtimes[] | select(.identifier == $runtime) | .supportedDeviceTypes[]?
-     | select(.productFamily == "iPhone")] as $iphones
+     | select(.productFamily == "iPhone" and (.name | test("Duo") | not))] as $iphones
     | ([$iphones[] | select(.identifier == $wanted)] | first.identifier)
-      // ([$iphones[] | select(.name | test("^iPhone [0-9]+( Pro)?$"))]
+      // ([$iphones[] | select(.name | test($numbered))]
           | sort_by(.name | capture("(?<n>[0-9]+)").n | tonumber) | last.identifier)
       // $iphones[0].identifier // error("No iPhone simulator for \($runtime)")
 ' <<<"$runtimes")}"
