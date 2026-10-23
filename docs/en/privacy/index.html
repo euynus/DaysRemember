@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Privacy Policy – Days Remember</title>
-  <meta name="description" content="Days Remember collects no data: your days stay on your devices and in your own iCloud.">
+  <meta name="description" content="Days Remember sends none of your data to the developer: your days stay on your device, and in your own iCloud if you choose to sync.">
   <meta name="theme-color" content="#F6F6F3">
   <link rel="canonical" href="https://days.gooday.dev/en/privacy/">
   <link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/privacy/">
@@ -15,7 +15,7 @@
   <meta property="og:site_name" content="Days Remember">
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Privacy Policy – Days Remember">
-  <meta property="og:description" content="Days Remember collects no data: your days stay on your devices and in your own iCloud.">
+  <meta property="og:description" content="Days Remember sends none of your data to the developer: your days stay on your device, and in your own iCloud if you choose to sync.">
   <meta property="og:url" content="https://days.gooday.dev/en/privacy/">
   <meta property="og:image" content="https://days.gooday.dev/assets/og/en.jpg">
   <meta property="og:image:width" content="1200">
@@ -42,36 +42,56 @@
     <main class="doc">
       <div class="doc-head">
         <h1>Privacy Policy</h1>
-        <p>Days Remember collects no data.</p>
+        <p>Days Remember sends none of your data to the developer.</p>
       </div>
 
       <article>
         <h2>Days Remember Privacy Policy</h2>
-        <p class="meta">Effective October 22, 2026</p>
-        <p>Days Remember (时光) is an anniversary and countdown app. We do not collect or sell any of your personal information; your data stays on your devices and in your own iCloud.</p>
-        <h3>Data we collect</h3>
-        <p>None. Days Remember has no account and no server of its own. It contains no advertising, analytics or tracking code, and no third-party SDKs.</p>
+        <p class="meta">Effective October 23, 2026</p>
+        <p>Days Remember (时光) is an anniversary and countdown app. This policy explains what data the app handles, where it is kept, and how you control and delete it. We do not sell any personal information.</p>
+        <h3>The app sends nothing to the developer</h3>
+        <p>Days Remember has no account and no server of its own. It contains no advertising, analytics or tracking code, and no third-party SDKs. What you record in the app stays on your device, and in your own iCloud if you choose to sync; the developer never receives it and cannot read it.</p>
         <h3>Where your data is stored</h3>
         <ul>
           <li>The days, categories, notes, places and photos you add are stored on your iPhone, where the app and its widgets read them.</li>
-          <li>If your device is signed in to iCloud, they sync through Apple’s CloudKit to the private database of your own iCloud account, and your reminder settings sync through iCloud key-value storage. The developer cannot access this data in your iCloud.</li>
-          <li>Recently deleted days, and versions replaced during sync, are kept on each device rather than in iCloud, and are removed with their photos after 30 days.</li>
-          <li>Before restoring a backup or applying changes from sync, the app keeps a copy of your data as it was on the device, for Restore Previous Local Copy, until the next one replaces it.</li>
+          <li>When you first use the app, it explains what syncing involves and asks you to choose Sync with iCloud or Keep on This Device. If you sync, they are kept through Apple’s CloudKit in the private database of your own iCloud account, and your reminder settings sync through iCloud key-value storage. Apple stores and carries them under Apple’s privacy policy; the developer cannot access them. With Keep on This Device, nothing is uploaded to iCloud.</li>
+          <li>While sync is on, Apple’s push notification service tells this device when your other devices have changes to fetch from iCloud. These pushes are handled by Apple, contain none of your days, and are never shown as notifications.</li>
+          <li>You can turn iCloud sync on or off at any time in Me › Data and Sync. Turned off, this device stops syncing and deletes the records it kept on the device for syncing; your data in iCloud is kept until you delete it.</li>
           <li>Backup files you export are saved wherever you choose. They are not encrypted, so keep them somewhere you trust.</li>
         </ul>
+        <h3>Copies on your device and how long they are kept</h3>
+        <p>So that you can get back days deleted or replaced by mistake, the app keeps these copies on your device. None of them is uploaded to iCloud:</p>
+        <ul>
+          <li><strong>Recently Deleted</strong>: deleted days and their photos are kept for 30 days, then removed; you can delete them permanently sooner.</li>
+          <li><strong>Saved Sync Versions</strong>: versions replaced during sync are kept for 30 days, then removed; you can discard them sooner.</li>
+          <li><strong>Previous local copy</strong>: before restoring a backup, importing legacy data or applying changes from sync, the app keeps a copy of your data as it was, for Restore Previous Local Copy, until the next one replaces it or you clear it.</li>
+          <li><strong>Pre-migration backup</strong>: when you first turn on iCloud sync with days already on the device, the app keeps a copy of your data from before, until you clear it.</li>
+          <li><strong>Raw data from before a restore</strong>: if your data could not be fully read when you restored a backup, the app keeps the original raw data until you delete it.</li>
+          <li><strong>Sync records</strong>: while sync is on, the app records on the device how each item stands with iCloud; they are deleted when you turn sync off.</li>
+        </ul>
+        <p>Photos are stored as files and deleted only once none of these copies uses them. So when a day expires from Recently Deleted while the previous local copy or the pre-migration backup still holds it, the day and its photo stay with that copy. Deleting a day permanently in Recently Deleted removes it and its photo from Recently Deleted, Saved Sync Versions, the previous local copy and the pre-migration backup, and Clear Internal Copies in Data and Sync deletes the previous local copy, the pre-migration backup, raw data from before a restore, and data in the old storage format.</p>
         <h3>Permissions</h3>
         <ul>
-          <li><strong>Notifications</strong>: used only to schedule anniversary reminders and the daily greeting on your device. Nothing goes through a server.</li>
+          <li><strong>Notifications</strong>: used only to schedule anniversary reminders and the daily greeting, which iOS shows on your device. Nothing goes through a server.</li>
           <li><strong>Add to Photos</strong>: used only when you tap Save, to add a share card to your photo library. The app does not read your library.</li>
           <li><strong>Photos</strong>: through the system photo picker, only the photo you choose is given to the app, as a cover.</li>
           <li><strong>Siri and Shortcuts</strong>: when you ask about or open a day with Siri, Shortcuts or Spotlight, the app reads that day on your device to answer.</li>
         </ul>
         <h3>Crash reports</h3>
         <p>If you choose to share with app developers in iOS Settings › Privacy &amp; Security › Analytics &amp; Improvements, Apple may provide the developer with anonymous crash reports. Whether to share is up to you; the app itself does not collect them.</p>
+        <h3>When you contact us</h3>
+        <p>When you email support@gooday.dev, the developer receives your email address, your message and any files you attach, such as screenshots or backup files. They are used only to reply and solve your problem, never for marketing, and are not given to anyone else; you can ask us at any time to delete the correspondence. A backup file holds everything you have recorded, so please attach one only when it is really needed. What you post on GitHub is public and covered by GitHub’s privacy policy.</p>
+        <h3>Visiting this website</h3>
+        <p>This website is hosted by Cloudflare. To serve and protect it, Cloudflare processes technical information from each request, such as your IP address and browser type, under its own privacy policy. The pages contain no analytics or tracking code.</p>
         <h3>Deleting your data</h3>
-        <p>When you delete a day in the app, it is also deleted from your iCloud and your other devices if your device is signed in to iCloud. Each device keeps it in its own Recently Deleted for 30 days, and the devices that receive the deletion also keep it in Saved Sync Versions, which are cleared after 30 days too. Deleting the app removes all of its data from the device, but not the copy in your iCloud; to remove that, delete the days in the app first, or delete Days Remember’s data from iCloud storage in iOS Settings.</p>
+        <ul>
+          <li>Deleting a day in the app: while sync is on, it is also deleted from your iCloud and your other syncing devices. Each device keeps it in its own Recently Deleted for 30 days, and the devices that receive the deletion also keep it in Saved Sync Versions, which are cleared after 30 days too.</li>
+          <li>Deleting your data in iCloud: Delete Data in iCloud, in Me › Data and Sync, deletes Days Remember’s days, categories, photos and settings from your iCloud and switches this device to Keep on This Device. Your other devices keep their days but pause syncing. You can also delete Days Remember’s data from iCloud storage in iOS Settings.</li>
+          <li>Legacy iCloud data: early versions kept another copy of your days and categories in iCloud key-value storage. If you used one, Clear Legacy iCloud Data in Data and Sync deletes it, and Delete Data in iCloud deletes it too.</li>
+          <li>Deleting the app removes all of its data from the device, but not your data in iCloud.</li>
+        </ul>
         <h3>Children</h3>
-        <p>Days Remember collects no personal information from anyone, including children.</p>
+        <p>Days Remember sends no one’s personal information to the developer, including children’s.</p>
         <h3>Changes</h3>
         <p>If this policy changes, we will update this page and its effective date.</p>
         <h3>Contact</h3>

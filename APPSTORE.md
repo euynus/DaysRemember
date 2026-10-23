@@ -91,10 +91,10 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 照片、手记、极简、双栏四种模板，可以导出 3:4 竖图，保存到相册或分享出去。笔记默认不出现在图片上。
 
 【iCloud 同步与备份】
-日子、分类和照片通过你自己的 iCloud 在设备间同步。误删的日子在「最近删除」里保留 30 天；两台设备改了同一个日子，被替换的那一版也会在「同步保留版本」里保留 30 天，都可以恢复。还可以导出备份文件，在新设备上从文件恢复。
+日子、分类和照片可以选择通过你自己的 iCloud 在设备间同步，也可以只保存在本机。误删的日子在「最近删除」里保留 30 天；两台设备改了同一个日子，被替换的那一版也会在「同步保留版本」里保留 30 天，都可以恢复。还可以导出备份文件，在新设备上从文件恢复。
 
 【隐私】
-不收集任何数据。日子、照片和设置只保存在你的设备和你自己的 iCloud 中，不会上传给开发者。无需账号，无广告，无追踪，无第三方 SDK。
+不收集任何数据。日子、照片和设置只保存在你的设备上，以及你选择同步时你自己的 iCloud 中，不会上传给开发者。无需账号，无广告，无追踪，无第三方 SDK。
 
 支持简体中文、繁體中文和 English，可以在「我的 › 语言」里切换。倒数和提醒跟随设备所在的时区。
 ```
@@ -158,10 +158,10 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 照片、手記、極簡、雙欄四種範本，可以匯出 3:4 直圖，儲存到相簿或分享出去。筆記預設不會出現在圖片上。
 
 【iCloud 同步與備份】
-日子、分類和照片透過你自己的 iCloud 在裝置間同步。誤刪的日子在「最近刪除」裡保留 30 天；兩台裝置改了同一個日子，被取代的那一版也會在「同步保留版本」裡保留 30 天，都可以還原。還可以匯出備份檔案，在新裝置上從檔案還原。
+日子、分類和照片可以選擇透過你自己的 iCloud 在裝置間同步，也可以只儲存在本機。誤刪的日子在「最近刪除」裡保留 30 天；兩台裝置改了同一個日子，被取代的那一版也會在「同步保留版本」裡保留 30 天，都可以還原。還可以匯出備份檔案，在新裝置上從檔案還原。
 
 【隱私】
-不收集任何資料。日子、照片和設定只儲存在你的裝置和你自己的 iCloud 中，不會上傳給開發者。無需帳號，無廣告，無追蹤，無第三方 SDK。
+不收集任何資料。日子、照片和設定只儲存在你的裝置上，以及你選擇同步時你自己的 iCloud 中，不會上傳給開發者。無需帳號，無廣告，無追蹤，無第三方 SDK。
 
 支援簡體中文、繁體中文和 English，可以在「我的 › 語言」裡切換。倒數和提醒跟隨裝置所在的時區。
 ```
@@ -225,10 +225,10 @@ SHARE CARDS
 Photo, Journal, Minimal and Split templates, with a 3:4 portrait export to save to Photos or share. Notes stay off the image unless you include them.
 
 ICLOUD SYNC AND BACKUPS
-Days, categories and photos sync across your devices through your own iCloud. A deleted day stays in Recently Deleted for 30 days, and when two devices change the same day, the replaced version stays in Saved Sync Versions for 30 days, and both can be restored. You can also export a backup and restore it from the file on a new device.
+Choose to sync days, categories and photos across your devices through your own iCloud, or keep them on this device only. A deleted day stays in Recently Deleted for 30 days, and when two devices change the same day, the replaced version stays in Saved Sync Versions for 30 days, and both can be restored. You can also export a backup and restore it from the file on a new device.
 
 PRIVACY
-No data collected. Your days, photos and settings stay on your devices and in your own iCloud, and nothing is sent to the developer. No account, no ads, no tracking, no third-party SDKs.
+No data collected. Your days, photos and settings stay on your devices, and in your own iCloud if you choose to sync, and nothing is sent to the developer. No account, no ads, no tracking, no third-party SDKs.
 
 In English, Simplified Chinese and Traditional Chinese; switch in Me › Language. Countdowns and reminders follow your device’s time zone.
 ```

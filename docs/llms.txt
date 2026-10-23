@@ -15,9 +15,9 @@ Facts stated on this site:
 - Shortcuts: a Control Center button starts a new day; Siri, Shortcuts and Spotlight can say how many days are left until a day, open a day, or start a new one; a Home Screen quick action starts a new day.
 - Share cards: Photo, Journal, Minimal and Split templates, with a 3:4 portrait export.
 - Categories: Love, Family, Travel, Work and Life, plus custom categories with their own icon and color (five colors).
-- iCloud sync: days, categories and photos sync through the user's own iCloud (CloudKit private database). Deleted days stay in Recently Deleted on each device for 30 days. Backups can be exported to a file of up to 100 MB.
+- iCloud sync, chosen on each device (or keep everything on the device only): days, categories and photos sync through the user's own iCloud (CloudKit private database). Deleted days stay in Recently Deleted on each device for 30 days. Backups can be exported to a file of up to 100 MB.
 - Languages: Simplified Chinese, Traditional Chinese and English.
-- Privacy: no account, no ads, no tracking, no third-party SDKs; data stays on the device and in the user's own iCloud and is not sent to the developer.
+- Privacy: no account, no ads, no tracking, no third-party SDKs; data stays on the device, and in the user's own iCloud if they choose to sync, and is not sent to the developer.
 - Contact: support@gooday.dev, or an issue on GitHub.
 
 ## Pages
