@@ -2,9 +2,19 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    var onFinish: () -> Void = {}
+    /// Ends with the sync choice, which starts iCloud sync before the tabs ask whether it is downloading.
+    var onFinish: (SyncChoice) -> Void = { _ in }
+    @State private var choosingSync = false
 
     var body: some View {
+        if choosingSync {
+            SyncChoiceView(onChoose: onFinish)
+        } else {
+            welcome
+        }
+    }
+
+    private var welcome: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 Text("时光")
@@ -26,7 +36,7 @@ struct OnboardingView: View {
             .padding(.bottom, 24)
         }
         .safeAreaInset(edge: .bottom) {
-            PillButton(title: String(localized: "开始记录", bundle: AppLocalization.bundle, locale: AppLocalization.locale), trailingSystemName: "arrow.right", fill: true, height: 56, action: onFinish)
+            PillButton(title: String(localized: "开始记录", bundle: AppLocalization.bundle, locale: AppLocalization.locale), trailingSystemName: "arrow.right", fill: true, height: 56) { choosingSync = true }
                 .padding(20)
                 .background(Theme.bg)
         }

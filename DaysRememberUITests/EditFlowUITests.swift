@@ -617,6 +617,11 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(start.waitForExistence(timeout: 10))
         XCTAssertTrue(start.isHittable)
         start.tap()
+        // Onboarding ends by asking whether to sync; automated launches never reach iCloud either way.
+        let localOnly = app.buttons["syncChoice.localOnly"]
+        XCTAssertTrue(localOnly.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["syncChoice.iCloud"].exists)
+        localOnly.tap()
 
         let titleField = app.textFields["日子名称"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 5), "Real onboarding should open the first-day editor")

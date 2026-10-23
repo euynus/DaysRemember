@@ -19,6 +19,9 @@ final class AppSettings {
     var notificationMinute: Int { didSet { persist(notificationMinute, "notif.minute"); scheduleCloudPush() } }
     var greetingHour: Int { didSet { persist(greetingHour, "notif.greeting.hour"); scheduleCloudPush() } }
     var greetingMinute: Int { didSet { persist(greetingMinute, "notif.greeting.minute"); scheduleCloudPush() } }
+    /// Nil until the user has chosen; nothing reaches iCloud before then. Kept out of the synced
+    /// snapshot, since one device turning sync off mustn't turn it off on the others.
+    var syncChoice: SyncChoice? { didSet { defaults.set(syncChoice?.rawValue, forKey: "sync.choice.v1") } }
 
     @ObservationIgnored private let defaults = UserDefaults.standard
     @ObservationIgnored private let cloud = ICloudSyncStore.shared
@@ -41,6 +44,7 @@ final class AppSettings {
         notificationMinute = d.object(forKey: "notif.minute") as? Int ?? 0
         greetingHour = d.object(forKey: "notif.greeting.hour") as? Int ?? 8
         greetingMinute = d.object(forKey: "notif.greeting.minute") as? Int ?? 0
+        syncChoice = d.string(forKey: "sync.choice.v1").flatMap(SyncChoice.init(rawValue:))
     }
 
     private func persist(_ value: Bool, _ key: String) { defaults.set(value, forKey: key) }
@@ -55,6 +59,16 @@ final class AppSettings {
             self?.pullSettingsIfNewer()
         }
         reconcileSettingsWithCloud()
+    }
+
+    /// Stops sending and receiving settings; they keep their local values.
+    func disableCloudSync() {
+        guard cloudSyncEnabled else { return }
+        cloudSyncEnabled = false
+        pushTask?.cancel()
+        pushTask = nil
+        if let cloudChangeToken { cloud.removeChangeHandler(cloudChangeToken) }
+        cloudChangeToken = nil
     }
 
     /// Debounced iCloud push, triggered from each setting's didSet (replaces the old

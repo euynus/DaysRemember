@@ -50,6 +50,34 @@ final class ICloudSyncStore {
         return token
     }
 
+    func removeChangeHandler(_ token: UUID) {
+        handlers[token] = nil
+    }
+
+    /// Whether the pre-CloudKit builds' copies of days and categories are still in iCloud.
+    var hasLegacyData: Bool {
+        store.synchronize()
+        return store.object(forKey: Key.days) != nil || store.object(forKey: Key.categories) != nil
+    }
+
+    /// Removes the pre-CloudKit builds' copies of days and categories. Those builds read only these.
+    func removeLegacyData() {
+        remove([Key.days, Key.categories])
+    }
+
+    /// Removes everything this app keeps in iCloud key-value storage, settings included.
+    func removeAll() {
+        remove([Key.days, Key.categories, Key.settings])
+    }
+
+    private func remove(_ keys: [String]) {
+        for key in keys {
+            store.removeObject(forKey: key)
+            defaults.removeObject(forKey: localTimestampKey(for: key))
+        }
+        store.synchronize()
+    }
+
     func localTimestamp(for key: String) -> TimeInterval {
         defaults.double(forKey: localTimestampKey(for: key))
     }

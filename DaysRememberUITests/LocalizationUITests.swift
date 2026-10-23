@@ -13,6 +13,12 @@ final class LocalizationUITests: XCTestCase {
         XCTAssertTrue(start.waitForExistence(timeout: 10))
         capture("English onboarding", app: app)
         start.tap()
+        let localOnly = app.buttons["syncChoice.localOnly"]
+        XCTAssertTrue(localOnly.waitForExistence(timeout: 5))
+        XCTAssertEqual(localOnly.label, "Keep on This Device")
+        XCTAssertEqual(app.buttons["syncChoice.iCloud"].label, "Sync with iCloud")
+        capture("English sync choice", app: app)
+        localOnly.tap()
         let title = "L10n-100% My Day"
         let field = app.textFields["dayTitleField"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))

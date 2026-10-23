@@ -309,6 +309,8 @@ final class DayStore {
         add(entry.day)
     }
 
+    /// Deletes the day from every copy this device keeps of it: 最近删除, 同步保留版本, the
+    /// recovery copy and the pre-migration backup. Its photo goes with the last of them.
     func permanentlyDeleteDay(id: String) {
         guard loadError == nil else { return }
         let previous = deletedDays
@@ -319,6 +321,32 @@ final class DayStore {
             saveFailure = .library
             return
         }
+        // Still seen, so that 导入旧版 iCloud 数据 can't bring it back.
+        let seen = defaults.stringArray(forKey: legacyDayIDsKey) ?? []
+        if !seen.contains(id) { defaults.set(seen + [id], forKey: legacyDayIDsKey) }
+        let conflicts = syncConflicts.filter { !Self.isVersion(of: id, $0) }
+        if conflicts != syncConflicts, let data = try? (photoFiles?.encoder() ?? JSONEncoder()).encode(conflicts) {
+            defaults.set(data, forKey: conflictsKey)
+            syncConflicts = conflicts
+        }
+        for key in [recoveryKey, migrationKey] { removeDay(id, fromBackupAt: key) }
+        removeUnusedPhotos()
+    }
+
+    private static func isVersion(of dayID: String, _ conflict: SyncConflict) -> Bool {
+        if case .day(let day) = conflict.record { return day.id == dayID }
+        return false
+    }
+
+    private func removeDay(_ id: String, fromBackupAt key: String) {
+        guard let data = defaults.data(forKey: key), var backup = try? decodeLocalBackup(data) else { return }
+        let count = backup.days.count + backup.deletedDays.count + backup.syncConflicts.count
+        backup.days.removeAll { $0.id == id }
+        backup.deletedDays.removeAll { $0.id == id }
+        backup.syncConflicts.removeAll { Self.isVersion(of: id, $0) }
+        guard backup.days.count + backup.deletedDays.count + backup.syncConflicts.count < count,
+              let encoded = try? localBackupData(backup) else { return }
+        defaults.set(encoded, forKey: key)
     }
 
     @discardableResult
@@ -359,6 +387,38 @@ final class DayStore {
 
     var hasRecoveryBackup: Bool { defaults.data(forKey: recoveryKey) != nil }
     var hasUnreadableDataCopy: Bool { defaults.data(forKey: unreadableKey) != nil }
+
+    /// Copies of the library this device keeps besides the library itself, 最近删除 and 同步保留版本:
+    /// the recovery copy, the pre-migration backup, the raw data a restore replaced, the first
+    /// storage format's days, and checkpoints sync no longer uses.
+    var hasInternalCopies: Bool {
+        [recoveryKey, migrationKey, unreadableKey].contains { defaults.data(forKey: $0) != nil }
+            || staleLegacyDays != nil || CloudLibrarySync.shared.hasStaleCheckpoints
+    }
+
+    /// The first format's days, left in place when the current one was first written. Stores
+    /// without a photo directory still use that key for the library itself.
+    private var staleLegacyDays: Data? {
+        guard storageKey != SharedStorage.legacyDaysKey, defaults.data(forKey: storageKey) != nil else { return nil }
+        return defaults.data(forKey: SharedStorage.legacyDaysKey)
+    }
+
+    /// Deletes every internal copy, and the photos only they still used. The library, 最近删除
+    /// and 同步保留版本 stay.
+    func clearInternalCopies() throws {
+        guard loadError == nil else { throw DayBackup.BackupError.unreadable }
+        try CloudLibrarySync.shared.removeStaleCheckpoints()
+        if staleLegacyDays != nil { defaults.removeObject(forKey: SharedStorage.legacyDaysKey) }
+        // The pre-migration backup's records stay seen, so 导入旧版 iCloud 数据 can't bring back
+        // the ones deleted since.
+        let seen = seenLegacyIDs()
+        defaults.set(Array(seen.days), forKey: legacyDayIDsKey)
+        defaults.set(Array(seen.categories), forKey: legacyCategoryIDsKey)
+        for key in [recoveryKey, migrationKey, unreadableKey] { defaults.removeObject(forKey: key) }
+        // Decided, so starting sync again doesn't keep a new one.
+        defaults.set(true, forKey: migrationDecidedKey)
+        removeUnusedPhotos()
+    }
 
     func deleteUnreadableDataCopy() {
         defaults.removeObject(forKey: unreadableKey)
@@ -571,6 +631,14 @@ final class DayStore {
         } catch {
             syncPreparationFailure = error
         }
+    }
+
+    /// Stops iCloud sync and removes what this device kept for it. The library is untouched.
+    func disableCloudSync() {
+        cloudSyncRequested = false
+        cloudSyncEnabled = false
+        syncPreparationFailure = nil
+        CloudLibrarySync.shared.stop()
     }
 
     private func startCloudSync() {

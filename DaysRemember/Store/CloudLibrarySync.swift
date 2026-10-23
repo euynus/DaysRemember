@@ -21,6 +21,14 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         }
     }
 
+    private enum DeletionError: LocalizedError {
+        case accountUnavailable
+
+        var errorDescription: String? {
+            String(localized: "iCloud 账户不可用，iCloud 中的数据未删除。请检查 iCloud 登录和网络后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        }
+    }
+
     private(set) var status: Status = .idle
     /// What went wrong, kept as a value rather than text so its message follows a language change.
     private enum Problem {
@@ -133,7 +141,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     @ObservationIgnored private let containerIdentifier: String
     @ObservationIgnored private let appVersion: String
     @ObservationIgnored private let stateURL: URL
-    @ObservationIgnored private let photoFiles: PhotoFileStore
+    @ObservationIgnored private var photoFiles: PhotoFileStore
     @ObservationIgnored private var state = CloudLibraryState()
     @ObservationIgnored private var container: CKContainer?
     @ObservationIgnored private var engine: CKSyncEngine?
@@ -186,7 +194,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     /// The next sync compares every record with iCloud again, keeping the versions it replaces.
     func resetUnreadableCheckpoint() throws {
         guard checkpointUnreadable else { return }
-        let aside = checkpointURL.deletingPathExtension().appendingPathExtension("unreadable.json")
+        let aside = Self.setAside(checkpointURL)
         try? FileManager.default.removeItem(at: aside)
         try FileManager.default.moveItem(at: checkpointURL, to: aside)
         checkpointURL = stateURL
@@ -196,6 +204,68 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         localSnapshotKnown = false
         problem = nil
         status = .idle
+    }
+
+    /// Stops syncing and forgets what this device knew of iCloud: the checkpoint, the copies of
+    /// days and photos it keeps, and pending uploads. Starting again compares every record with
+    /// iCloud afresh, as after `resetUnreadableCheckpoint`.
+    func stop() {
+        startTask?.cancel()
+        startTask = nil
+        stopEngine()
+        started = false
+        onRemoteChange = nil
+        missingRecords = []
+        heldLocal = nil
+        refreshMissingCount()
+        localSnapshotKnown = false
+        let directory = stateURL.deletingLastPathComponent()
+        let checkpoints = [stateURL, checkpointURL, directory.appending(path: "state-v1.json")]
+        for url in Set(checkpoints + checkpoints.map(Self.setAside) + [assetDirectory, photoFiles.directory]) {
+            try? FileManager.default.removeItem(at: url)
+        }
+        checkpointURL = stateURL
+        // A store that remembers its deleted files would take them for damaged ones.
+        photoFiles = PhotoFileStore(directory: photoFiles.directory)
+        state = CloudLibraryState()
+        storageFailed = false
+        checkpointUnreadable = false
+        problem = nil
+        status = .idle
+        lastFetchedAt = nil
+        lastSentAt = nil
+        unreadableCount = 0
+    }
+
+    /// Checkpoints no longer in use: one set aside as unreadable, or the first version's, which the
+    /// current one replaced without deleting.
+    private var staleCheckpoints: [URL] {
+        let legacy = stateURL.deletingLastPathComponent().appending(path: "state-v1.json")
+        return ([Self.setAside(stateURL), Self.setAside(legacy)] + (checkpointURL == legacy ? [] : [legacy]))
+            .filter { FileManager.default.fileExists(atPath: $0.path(percentEncoded: false)) }
+    }
+
+    var hasStaleCheckpoints: Bool { !staleCheckpoints.isEmpty }
+
+    func removeStaleCheckpoints() throws {
+        for url in staleCheckpoints { try FileManager.default.removeItem(at: url) }
+    }
+
+    private static func setAside(_ checkpoint: URL) -> URL {
+        checkpoint.deletingPathExtension().appendingPathExtension("unreadable.json")
+    }
+
+    /// Stops sync here and deletes this app's zone, with every day, category and photo in it, from
+    /// the user's iCloud. Other devices keep their days and pause, as for a zone deleted in Settings.
+    func deleteCloudData() async throws {
+        stop()
+        let container = try cloudContainer()
+        guard try await container.accountStatus() == .available else { throw DeletionError.accountUnavailable }
+        do {
+            _ = try await container.privateCloudDatabase.deleteRecordZone(withID: CloudLibraryRecord.zoneID)
+        } catch let error as CKError where error.code == .zoneNotFound {
+            // Nothing was ever uploaded from this account.
+        }
     }
 
     /// Throw if recovery values or remote changes cannot be durably saved by ID.
@@ -295,7 +365,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         do {
             guard deliverRemoteUpdate() else { return }
             let container = try cloudContainer()
-            guard let account = try await availableAccount(in: container) else { return }
+            // Sync may have been turned off while the account was checked.
+            guard let account = try await availableAccount(in: container), started else { return }
             guard state.acceptAccount(account) else {
                 _ = persist()
                 stopEngine()
@@ -359,6 +430,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     private func availableAccount(in container: CKContainer) async throws -> String? {
         let accountStatus = try await container.accountStatus()
+        guard started else { return nil }
         guard accountStatus == .available else {
             if state.accountRecordName != nil && accountStatus == .noAccount {
                 state.accountChangePending = true

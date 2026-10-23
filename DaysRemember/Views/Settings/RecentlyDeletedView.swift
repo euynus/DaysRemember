@@ -50,7 +50,7 @@ struct RecentlyDeletedView: View {
             }
             Button("取消", role: .cancel) { deletion = nil }
         } message: {
-            Text("删除后无法从最近删除恢复。已导出的备份不受影响。")
+            Text("这个日子和它的照片会从最近删除、同步保留版本、上一次本机副本和迁移前备份中删除，无法找回。已导出的备份文件不受影响。")
         }
     }
 }

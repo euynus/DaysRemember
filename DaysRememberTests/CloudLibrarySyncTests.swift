@@ -317,6 +317,39 @@ final class CloudLibrarySyncTests: XCTestCase {
         XCTAssertNil(entry?.systemFields)
     }
 
+    func testStoppingForgetsTheCheckpointAndTheCopiesItKept() throws {
+        try withDirectory { directory in
+            let url = directory.appendingPathComponent("state.json")
+            let photos = directory.appendingPathComponent("Photos")
+            let aside = directory.appendingPathComponent("state.unreadable.json")
+            let local = day(photo: Data([7, 8, 9]))
+            var state = CloudLibraryState()
+            XCTAssertTrue(state.acceptAccount("account"))
+            try state.updateLocal(days: [local], categories: [], inferDeletions: false)
+            try state.write(to: url)
+            try Data("set aside".utf8).write(to: aside)
+
+            let sync = CloudLibrarySync(stateURL: url)
+            XCTAssertTrue(sync.hasStaleCheckpoints)
+            sync.start(days: [local], categories: []) { _ in }
+            sync.stop()
+
+            for item in [url, photos, aside] {
+                XCTAssertFalse(FileManager.default.fileExists(atPath: item.path), item.lastPathComponent)
+            }
+            XCTAssertEqual(sync.status, .idle)
+            XCTAssertFalse(sync.isFirstDownloadPending)
+            XCTAssertFalse(sync.hasStaleCheckpoints)
+
+            // Starting again begins from an empty checkpoint that uploads the library afresh.
+            sync.start(days: [local], categories: []) { _ in }
+            let restarted = try CloudLibraryState.read(from: url)
+            XCTAssertNil(restarted.accountRecordName)
+            XCTAssertEqual(restarted.records[CloudLibraryRecord.day(local).recordName]?.dirty, true)
+            sync.stop()
+        }
+    }
+
     private func withLanguage(_ language: String, _ body: () throws -> Void) rethrows {
         let defaults = SharedStorage.defaults
         let previous = defaults.object(forKey: AppLocalization.languageKey)

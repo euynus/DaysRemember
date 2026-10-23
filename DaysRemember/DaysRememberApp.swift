@@ -46,9 +46,7 @@ struct DaysRememberApp: App {
                 .tint(Theme.accent)
                 .task {
                     store.settings = settings
-                    var automated = false
                     #if DEBUG
-                    automated = DebugLaunch.isAutomated || DebugLaunch.isUnitTesting
                     if ProcessInfo.processInfo.arguments.contains("--seed-sample-data") {
                         store.resetToSamples()
                         if ProcessInfo.processInfo.arguments.contains("--localized-samples") {
@@ -86,13 +84,8 @@ struct DaysRememberApp: App {
                     ReviewPrompt.noteUse()
                     QuickActions.install()
                     DaysShortcuts.updateAppShortcutParameters()
-                    if !automated {
-                        store.enableCloudSync()
-                        settings.enableCloudSync {
-                            store.rescheduleNotifications()
-                        }
-                        UIApplication.shared.registerForRemoteNotifications()
-                    }
+                    // Nothing reaches iCloud until the user has chosen it, on onboarding or in 数据与同步.
+                    CloudSyncControl.resume(store: store, settings: settings)
                     store.rescheduleNotifications()
                 }
                 .onChange(of: scenePhase) { _, phase in

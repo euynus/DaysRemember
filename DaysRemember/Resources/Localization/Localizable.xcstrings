@@ -3360,29 +3360,6 @@
         }
       }
     },
-    "删除后无法从最近删除恢复。已导出的备份不受影响。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This day can no longer be restored from Recently Deleted. Exported backups are not affected."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删除后无法从最近删除恢复。已导出的备份不受影响。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "刪除後將無法從「最近刪除」還原。已匯出的備份不受影響。"
-          }
-        }
-      }
-    },
     "删除这个日子？" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4023,29 +4000,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "備份包含無效或重複的記錄，原有資料未變更。"
-          }
-        }
-      }
-    },
-    "备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Backups include days, photos, categories, recently deleted days, and saved sync versions. Files are not encrypted, so keep them in a trusted location. Restoring does not change system notification permissions."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "備份包含日子、照片、分類、最近刪除和同步保留版本。檔案未加密，請儲存在可信的位置。還原不會變更系統通知權限。"
           }
         }
       }
@@ -12200,6 +12154,696 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "置頂 · %@"
+          }
+        }
+      }
+    },
+    "iCloud 账户不可用，iCloud 中的数据未删除。请检查 iCloud 登录和网络后重试。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud isn’t available, so your data in iCloud wasn’t deleted. Check your iCloud sign-in and network connection, then try again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 账户不可用，iCloud 中的数据未删除。请检查 iCloud 登录和网络后重试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 帳號無法使用，iCloud 中的資料未刪除。請檢查 iCloud 登入和網路後再試一次。"
+          }
+        }
+      }
+    },
+    "要用 iCloud 同步吗？" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync with iCloud?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要用 iCloud 同步吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要用 iCloud 同步嗎？"
+          }
+        }
+      }
+    },
+    "同步的内容：日子、分类、笔记、地点、照片和提醒设置。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What syncs: your days, categories, notes, places, photos and reminder settings."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步的内容：日子、分类、笔记、地点、照片和提醒设置。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步的內容：日子、分類、筆記、地點、照片和提醒設定。"
+          }
+        }
+      }
+    },
+    "保存在你自己 iCloud 账户的私有空间，由 Apple 存储和传输，开发者无法访问。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It’s kept in the private space of your own iCloud account, stored and carried by Apple. The developer can’t access it."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存在你自己 iCloud 账户的私有空间，由 Apple 存储和传输，开发者无法访问。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存在你自己 iCloud 帳號的私人空間，由 Apple 儲存和傳輸，開發者無法存取。"
+          }
+        }
+      }
+    },
+    "选择「仅本机使用」，所有内容只保存在这台设备上。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose Keep on This Device to store everything on this device only."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择「仅本机使用」，所有内容只保存在这台设备上。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇「僅本機使用」，所有內容只儲存在這台裝置上。"
+          }
+        }
+      }
+    },
+    "之后可以在「我的 › 数据与同步」中随时更改，或删除 iCloud 中的数据。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can change this at any time in Me › Data and Sync, or delete your data in iCloud there."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "之后可以在「我的 › 数据与同步」中随时更改，或删除 iCloud 中的数据。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "之後可以在「我的 › 資料與同步」中隨時更改，或刪除 iCloud 中的資料。"
+          }
+        }
+      }
+    },
+    "使用 iCloud 同步" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync with iCloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 iCloud 同步"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 iCloud 同步"
+          }
+        }
+      }
+    },
+    "仅本机使用" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep on This Device"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅本机使用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅本機使用"
+          }
+        }
+      }
+    },
+    "仅本机" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This Device Only"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅本机"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅本機"
+          }
+        }
+      }
+    },
+    "iCloud 同步" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud Sync"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 同步"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 同步"
+          }
+        }
+      }
+    },
+    "关闭 iCloud 同步？" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn Off iCloud Sync?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭 iCloud 同步？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉 iCloud 同步？"
+          }
+        }
+      }
+    },
+    "关闭同步" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn Off Sync"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭同步"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉同步"
+          }
+        }
+      }
+    },
+    "这台设备不再与 iCloud 同步，本机日子不受影响，iCloud 中的数据会保留。重新开启后，本机与 iCloud 中的日子会合并；两边都改过的日子以 iCloud 中的为准，本机的版本留在「同步保留版本」。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This device will stop syncing with iCloud. Its days stay as they are, and your data in iCloud is kept. If you turn sync back on, the days here and in iCloud are merged; where a day changed in both, iCloud’s version is used and this device’s goes to Saved Sync Versions."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这台设备不再与 iCloud 同步，本机日子不受影响，iCloud 中的数据会保留。重新开启后，本机与 iCloud 中的日子会合并；两边都改过的日子以 iCloud 中的为准，本机的版本留在「同步保留版本」。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這台裝置不再與 iCloud 同步，本機日子不受影響，iCloud 中的資料會保留。重新開啟後，本機與 iCloud 中的日子會合併；兩邊都改過的日子以 iCloud 中的為準，本機的版本留在「同步保留版本」。"
+          }
+        }
+      }
+    },
+    "删除 iCloud 中的数据" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Data in iCloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除 iCloud 中的数据"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除 iCloud 中的資料"
+          }
+        }
+      }
+    },
+    "删除 iCloud 中的数据？" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Data in iCloud?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除 iCloud 中的数据？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除 iCloud 中的資料？"
+          }
+        }
+      }
+    },
+    "将从你的 iCloud 中删除时光的日子、分类、照片和设置，并让这台设备改为仅本机使用。本机日子不受影响；其他设备保留各自的日子，但会暂停同步。删除后无法撤销。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days Remember’s days, categories, photos and settings will be deleted from your iCloud, and this device will keep its days on this device only. The days on this device stay; your other devices keep theirs but pause syncing. This can’t be undone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将从你的 iCloud 中删除时光的日子、分类、照片和设置，并让这台设备改为仅本机使用。本机日子不受影响；其他设备保留各自的日子，但会暂停同步。删除后无法撤销。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將從你的 iCloud 中刪除時光的日子、分類、照片和設定，並讓這台裝置改為僅本機使用。本機日子不受影響；其他裝置保留各自的日子，但會暫停同步。刪除後無法復原。"
+          }
+        }
+      }
+    },
+    "正在删除 iCloud 中的数据" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting Data in iCloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在删除 iCloud 中的数据"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在刪除 iCloud 中的資料"
+          }
+        }
+      }
+    },
+    "清除旧版 iCloud 数据" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Legacy iCloud Data"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除旧版 iCloud 数据"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除舊版 iCloud 資料"
+          }
+        }
+      }
+    },
+    "清除旧版 iCloud 数据？" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Legacy iCloud Data?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除旧版 iCloud 数据？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除舊版 iCloud 資料？"
+          }
+        }
+      }
+    },
+    "早期版本把日子和分类另存了一份在 iCloud 键值存储中。清除后，仍在使用早期版本的设备将读不到这些日子；本机日子不受影响。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Early versions kept another copy of your days and categories in iCloud key-value storage. Once it’s cleared, devices still on an early version can’t read those days. The days on this device are not affected."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "早期版本把日子和分类另存了一份在 iCloud 键值存储中。清除后，仍在使用早期版本的设备将读不到这些日子；本机日子不受影响。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "早期版本把日子和分類另存了一份在 iCloud 鍵值儲存中。清除後，仍在使用早期版本的裝置將讀不到這些日子；本機日子不受影響。"
+          }
+        }
+      }
+    },
+    "日子、分类、笔记、地点、照片和提醒设置同步到你自己 iCloud 账户的私有空间，开发者无法访问。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days, categories, notes, places, photos and reminder settings sync to the private space of your own iCloud account. The developer can’t access them."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日子、分类、笔记、地点、照片和提醒设置同步到你自己 iCloud 账户的私有空间，开发者无法访问。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日子、分類、筆記、地點、照片和提醒設定同步到你自己 iCloud 帳號的私人空間，開發者無法存取。"
+          }
+        }
+      }
+    },
+    "仅本机使用：内容只保存在这台设备上，不会上传到 iCloud。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept on this device: everything is stored here only and nothing is uploaded to iCloud."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅本机使用：内容只保存在这台设备上，不会上传到 iCloud。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅本機使用：內容只儲存在這台裝置上，不會上傳到 iCloud。"
+          }
+        }
+      }
+    },
+    "iCloud 中的数据已删除，这台设备已改为仅本机使用。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your data in iCloud has been deleted, and this device now keeps its days on this device only."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 中的数据已删除，这台设备已改为仅本机使用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 中的資料已刪除，這台裝置已改為僅本機使用。"
+          }
+        }
+      }
+    },
+    "清除本机内部副本" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Internal Copies"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除本机内部副本"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除本機內部副本"
+          }
+        }
+      }
+    },
+    "清除本机内部副本？" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Internal Copies?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除本机内部副本？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除本機內部副本？"
+          }
+        }
+      }
+    },
+    "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和旧格式的数据，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This deletes the previous local copy, the pre-migration backup, raw data from before a restore and data in the old storage format, along with photos only they still use. Your current days, Recently Deleted and saved sync versions are not affected. This can’t be recovered, so export anything you need first."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和旧格式的数据，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將刪除「上一次本機副本」、移轉前備份、替換前的原始資料和舊格式的資料，以及只有它們還在使用的照片。目前的日子、最近刪除和同步保留版本不受影響。刪除後無法找回，需要的話請先匯出。"
+          }
+        }
+      }
+    },
+    "本机内部副本已清除。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Internal copies cleared."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本机内部副本已清除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本機內部副本已清除。"
+          }
+        }
+      }
+    },
+    "备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。「上一次本机副本」保留到被下一次恢复或同步更改替换，或你清除它为止。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backups include days, photos, categories, recently deleted days, and saved sync versions. Files are not encrypted, so keep them in a trusted location. Restoring does not change system notification permissions. The previous local copy is kept until the next restore or synced change replaces it, or you clear it."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。「上一次本机副本」保留到被下一次恢复或同步更改替换，或你清除它为止。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "備份包含日子、照片、分類、最近刪除和同步保留版本。檔案未加密，請儲存在可信的位置。還原不會變更系統通知權限。「上一次本機副本」保留到被下一次還原或同步更改取代，或你清除它為止。"
+          }
+        }
+      }
+    },
+    "这个日子和它的照片会从最近删除、同步保留版本、上一次本机副本和迁移前备份中删除，无法找回。已导出的备份文件不受影响。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This day and its photo will be deleted from Recently Deleted, saved sync versions, the previous local copy and the pre-migration backup, and can’t be recovered. Exported backup files are not affected."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个日子和它的照片会从最近删除、同步保留版本、上一次本机副本和迁移前备份中删除，无法找回。已导出的备份文件不受影响。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這個日子和它的照片會從最近刪除、同步保留版本、上一次本機副本和移轉前備份中刪除，無法找回。已匯出的備份檔案不受影響。"
+          }
+        }
+      }
+    },
+    "日子、照片和设置只保存在这台设备上，不会上传给开发者。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your days, photos, and settings stay on this device. Nothing is sent to the developer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日子、照片和设置只保存在这台设备上，不会上传给开发者。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日子、照片和設定只儲存在這台裝置上，不會上傳給開發者。"
           }
         }
       }

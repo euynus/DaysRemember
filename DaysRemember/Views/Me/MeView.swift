@@ -51,7 +51,10 @@ struct MeView: View {
                         MeDivider()
                         row(String(localized: "数据与同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                             systemImage: "icloud", tint: Theme.noteBlue, ink: Theme.catTravel,
-                            value: cloud.attentionSummary, valueColor: Theme.danger,
+                            value: settings.syncChoice == .localOnly
+                                ? String(localized: "仅本机", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                                : cloud.attentionSummary,
+                            valueColor: settings.syncChoice == .localOnly ? Theme.muted : Theme.danger,
                             identifier: "settings.data") { showingData = true }
                         MeDivider()
                         row(String(localized: "语言", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
@@ -71,7 +74,9 @@ struct MeView: View {
                         link(String(localized: "帮助与反馈", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                              systemImage: "questionmark.circle", page: "support/", identifier: "settings.support")
                     }
-                    Text("日子、照片和设置只保存在这台设备和你自己的 iCloud 中，不会上传给开发者。")
+                    Text(settings.syncChoice == .localOnly
+                         ? "日子、照片和设置只保存在这台设备上，不会上传给开发者。"
+                         : "日子、照片和设置只保存在这台设备和你自己的 iCloud 中，不会上传给开发者。")
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.muted)
                         .padding(.horizontal, 4)

@@ -70,6 +70,7 @@ enum DebugLaunch {
 
     enum Screen: String {
         case onboarding, detail, add, share, widgets, settings
+        case syncChoice = "sync-choice"
 
         @MainActor
         @ViewBuilder
@@ -77,6 +78,8 @@ enum DebugLaunch {
             switch self {
             case .onboarding:
                 OnboardingView()
+            case .syncChoice:
+                SyncChoiceView { _ in }
             case .detail:
                 NavigationStack { DetailView(day: DebugLaunch.day(store: store)) }.dayEditorHost()
             case .add:
