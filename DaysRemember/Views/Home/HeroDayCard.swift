@@ -12,6 +12,13 @@ struct HeroDayCard: View {
     var milestone: Milestone? = nil
     var onOpen: (Day) -> Void = { _ in }
 
+    private static let coverSide: CGFloat = 128
+    private static let coverInset: CGFloat = 14
+    /// The title, date and count stop 8pt short of the cover's whole frame (less the card's 20pt
+    /// padding), which a photo fills and which spans their height: a long English date or a
+    /// four-digit count ran into it.
+    private static let coverClearance = coverSide + coverInset - 20 + 8
+
     var body: some View {
         let info = DayInfo.compute(day, today: today)
         let category = store.category(for: day)
@@ -34,23 +41,24 @@ struct HeroDayCard: View {
                         PageDots(index: position.index, count: position.count, color: ink)
                     }
                 }
-                Text(verbatim: day.title)
-                    .font(Theme.sans(24, weight: .heavy, relativeTo: .title2))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(compact ? nil : 2)
-                    .multilineTextAlignment(.leading)
-                    .padding(.top, 6)
-                    .padding(.trailing, compact ? 0 : 110)
-                Text(DayCardText.heroDate(day, info: info))
-                    .font(Theme.sans(13))
-                    .foregroundStyle(Theme.onPastel)
-                    .lineLimit(compact ? nil : 2)
-                    .padding(.trailing, compact ? 0 : 110)
-                Spacer(minLength: 10)
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    if !info.isToday { CountLabel(info: info) }
-                    CountValue(info: info, size: 68)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(verbatim: day.title)
+                        .font(Theme.sans(24, weight: .heavy, relativeTo: .title2))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(compact ? nil : 2)
+                        .multilineTextAlignment(.leading)
+                        .padding(.top, 6)
+                    Text(DayCardText.heroDate(day, info: info))
+                        .font(Theme.sans(13))
+                        .foregroundStyle(Theme.onPastel)
+                        .lineLimit(compact ? nil : 2)
+                    Spacer(minLength: 10)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        if !info.isToday { CountLabel(info: info) }
+                        CountValue(info: info, size: 68)
+                    }
                 }
+                .padding(.trailing, compact ? 0 : Self.coverClearance)
                 if let milestone {
                     MilestoneProgress(milestone: milestone, ink: ink)
                         .padding(.top, 6)
@@ -61,9 +69,9 @@ struct HeroDayCard: View {
             .background(alignment: .bottomTrailing) {
                 if !compact {
                     CoverArt(day: day, photoCornerRadius: 18, maximumPixelSize: 512)
-                        .frame(width: 150, height: 150)
-                        .padding(.trailing, 14)
-                        .padding(.bottom, milestone == nil ? 14 : 44)
+                        .frame(width: Self.coverSide, height: Self.coverSide)
+                        .padding(.trailing, Self.coverInset)
+                        .padding(.bottom, milestone == nil ? Self.coverInset : 44)
                 }
             }
             .background(tint, in: RoundedRectangle(cornerRadius: 30, style: .continuous))

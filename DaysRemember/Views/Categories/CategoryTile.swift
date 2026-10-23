@@ -17,7 +17,8 @@ struct CategoryTile: View {
     var body: some View {
         NavigationLink(value: CategoryRoute.category(category.id)) {
             VStack(alignment: .leading, spacing: 1) {
-                Spacer(minLength: dynamicTypeSize.isAccessibilitySize ? 0 : 36)
+                // Room for the edit button, which large text would otherwise put over the icon.
+                Spacer(minLength: dynamicTypeSize.isAccessibilitySize && category.isSystem ? 0 : 36)
                 Label {
                     Text(category.displayName)
                 } icon: {
@@ -67,6 +68,8 @@ struct CategoryTile: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // The pencil stays inside its circle and the space the tile leaves it.
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .accessibilityLabel("编辑\(category.displayName)")
                 .accessibilityIdentifier("editCategory-\(category.id)")
                 .help("编辑分类")

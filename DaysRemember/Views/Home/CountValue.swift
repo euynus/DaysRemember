@@ -20,6 +20,7 @@ struct CountValue: View {
         }
         .foregroundStyle(Theme.ink)
         .lineLimit(1)
-        .minimumScaleFactor(0.5)
+        // Far enough for a five-digit English count beside the hero's cover at XXXL on a 16e.
+        .minimumScaleFactor(0.35)
     }
 }
