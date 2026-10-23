@@ -13,11 +13,10 @@ struct HeroDayCard: View {
     var onOpen: (Day) -> Void = { _ in }
 
     private static let coverSide: CGFloat = 128
-    private static let coverInset: CGFloat = 14
-    /// The title, date and count stop 8pt short of the cover's whole frame (less the card's 20pt
-    /// padding), which a photo fills and which spans their height: a long English date or a
-    /// four-digit count ran into it.
-    private static let coverClearance = coverSide + coverInset - 20 + 8
+    /// How far the cover reaches past the card's 20pt padding, to sit 14pt from its edges.
+    private static let coverOverhang: CGFloat = 6
+    /// The date and count stop 8pt short of the cover's whole frame, which a photo fills.
+    private static let coverClearance = coverSide - coverOverhang + 8
 
     var body: some View {
         let info = DayInfo.compute(day, today: today)
@@ -41,13 +40,14 @@ struct HeroDayCard: View {
                         PageDots(index: position.index, count: position.count, color: ink)
                     }
                 }
+                // The title spans the card above the cover; a pager's fixed height has room for one line.
+                Text(verbatim: day.title)
+                    .font(Theme.sans(24, weight: .heavy, relativeTo: .title2))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(compact ? nil : position == nil ? 2 : 1)
+                    .multilineTextAlignment(.leading)
+                    .padding(.top, 6)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(verbatim: day.title)
-                        .font(Theme.sans(24, weight: .heavy, relativeTo: .title2))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(compact ? nil : 2)
-                        .multilineTextAlignment(.leading)
-                        .padding(.top, 6)
                     Text(DayCardText.heroDate(day, info: info))
                         .font(Theme.sans(13))
                         .foregroundStyle(Theme.onPastel)
@@ -59,6 +59,16 @@ struct HeroDayCard: View {
                     }
                 }
                 .padding(.trailing, compact ? 0 : Self.coverClearance)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(alignment: .bottomTrailing) {
+                    // Beside the date and count, and no taller than they are, so it never reaches the title.
+                    if !compact {
+                        CoverArt(day: day, photoCornerRadius: 18, maximumPixelSize: 512)
+                            .frame(maxWidth: Self.coverSide, maxHeight: Self.coverSide)
+                            .aspectRatio(1, contentMode: .fit)
+                            .padding([.trailing, .bottom], -Self.coverOverhang)
+                    }
+                }
                 if let milestone {
                     MilestoneProgress(milestone: milestone, ink: ink)
                         .padding(.top, 6)
@@ -66,14 +76,6 @@ struct HeroDayCard: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(alignment: .bottomTrailing) {
-                if !compact {
-                    CoverArt(day: day, photoCornerRadius: 18, maximumPixelSize: 512)
-                        .frame(width: Self.coverSide, height: Self.coverSide)
-                        .padding(.trailing, Self.coverInset)
-                        .padding(.bottom, milestone == nil ? Self.coverInset : 44)
-                }
-            }
             .background(tint, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         }
