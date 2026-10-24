@@ -4,7 +4,7 @@ import WidgetKit
 
 /// A Control Center, Lock Screen and Action button control that opens a new day's editor.
 struct NewDayControl: ControlWidget {
-    static let kind = "com.shiguang.daysremember.newDay"
+    static let kind = "dev.gooday.days.newDay"
 
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: Self.kind) {

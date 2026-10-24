@@ -6,7 +6,7 @@
 
 - **名称**：主屏幕上显示「时光」（`CFBundleDisplayName`）；App Store 名称、副标题与其他文案见下文「商店文案」
 - **分类**：生活 / 效率
-- **Bundle ID**：`com.shiguang.daysremember`（Widget：`.widget`）
+- **Bundle ID**：`dev.gooday.days`（Widget：`.widget`）
 - **版本 / 构建号**：版本取 `project.yml` 的 `MARKETING_VERSION`（现为 1.0），App 与小组件共用；构建号由 `scripts/archive.sh` 按提交数生成，每次从新的提交上传都会更大
 - **支持设备**：iPhone，竖屏，iOS 26+
 - **语言**：简体中文、繁體中文、English
@@ -278,13 +278,13 @@ In English, Simplified Chinese and Traditional Chinese; switch in Me › Languag
 
 **开发者账号与 CloudKit**
 
-- [ ] 为 App ID（`com.shiguang.daysremember`）与 Widget App ID（`.widget`）启用 App Groups（`group.com.shiguang.daysremember`），为 App ID 启用 iCloud（CloudKit 容器 `iCloud.com.shiguang.daysremember`）与推送
+- [ ] 为 App ID（`dev.gooday.days`）与 Widget App ID（`.widget`）启用 App Groups（`group.dev.gooday.days`），为 App ID 启用 iCloud（CloudKit 容器 `iCloud.dev.gooday.days`）与推送
 - [ ] CloudKit：用真机 Development 环境完成一次同步，确认 `DaysRememberLibrary` 区域里有 `LibraryDay` / `LibraryCategory` 记录，再在 CloudKit Console 把 Schema **部署到 Production**（否则 App Store 用户的同步全部失败；模拟器不会连接 CloudKit）
 - [ ] 不要删掉 `remote-notification` 后台模式与 `registerForRemoteNotifications`：CloudKit 用静默推送通知同步变化
 
 **App Store Connect**
 
-- [ ] 新建 App 记录：先确认名称可用（见上文「商店文案」），SKU、主语言简体中文、Bundle ID
+- [ ] 新建 App 记录：先确认名称可用（见上文「商店文案」），SKU、主语言简体中文、Bundle ID `dev.gooday.days`。用旧 Bundle ID `com.shiguang.daysremember` 建的记录占着「时光」这个名字，先给它改名或移除；它的 TestFlight 构建和测试员不会转到新记录，要重新邀请
 - [ ] App 信息：名称、副标题、分类（生活 / 效率）、年龄分级问卷（4+）、版权；为繁體中文与英文添加本地化，填入「商店文案」
 - [ ] 价格与销售范围：免费。中国大陆需要 App 备案号（ICP），备案通过接入商（如阿里云、腾讯云）办理，需要 Bundle ID 与签名证书信息，通常要一到几周；暂未备案就先不选中国大陆
 - [ ] 欧盟上架需要声明「交易商身份」（DSA）。声明为交易商时，地址、电话与邮箱会公开显示在商店页

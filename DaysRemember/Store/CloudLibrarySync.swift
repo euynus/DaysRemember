@@ -163,7 +163,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     private var assetDirectory: URL { stateURL.deletingLastPathComponent().appending(path: "Assets", directoryHint: .isDirectory) }
 
-    init(containerIdentifier: String = "iCloud.com.shiguang.daysremember", stateURL: URL? = nil,
+    init(containerIdentifier: String = "iCloud.dev.gooday.days", stateURL: URL? = nil,
          appVersion: String = CloudLibrarySync.bundleVersion) {
         self.containerIdentifier = containerIdentifier
         self.appVersion = appVersion
@@ -632,7 +632,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             referenced.insert(CloudLibraryRecord.assetURL(recordName: name, revision: entry.revision, directory: assetDirectory))
         }
         do { try CloudLibraryRecord.removeUnusedAssets(in: assetDirectory, keeping: referenced) }
-        catch { Logger(subsystem: "com.shiguang.daysremember", category: "CloudLibrarySync").error("Asset cleanup failed: \(error.localizedDescription, privacy: .public)") }
+        catch { Logger(subsystem: "dev.gooday.days", category: "CloudLibrarySync").error("Asset cleanup failed: \(error.localizedDescription, privacy: .public)") }
     }
 
     func handleEvent(_ event: CKSyncEngine.Event, syncEngine: CKSyncEngine) async {

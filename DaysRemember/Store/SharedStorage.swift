@@ -6,7 +6,7 @@ import Foundation
 /// running unit tests, or before code-signing has wired up the group capability) so the
 /// app stays functional even without the widget — the widget just won't see fresh data.
 enum SharedStorage {
-    static let appGroupID = "group.com.shiguang.daysremember"
+    static let appGroupID = "group.dev.gooday.days"
     static let daysKey = "days.v2"
     static let legacyDaysKey = "days.v1"
     static let categoriesKey = "categories.v1"

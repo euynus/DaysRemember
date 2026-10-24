@@ -9,7 +9,7 @@ final class NotificationManager {
     static let shared = NotificationManager()
     nonisolated static let pendingLimit = 64
     nonisolated static let planningYears = 5
-    private static let logger = Logger(subsystem: "com.shiguang.daysremember", category: "Notifications")
+    private static let logger = Logger(subsystem: "dev.gooday.days", category: "Notifications")
 
     private(set) var authorizationStatus: UNAuthorizationStatus?
     private(set) var pendingReminders: [PendingReminder] = []

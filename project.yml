@@ -1,6 +1,6 @@
 name: DaysRemember
 options:
-  bundleIdPrefix: com.shiguang
+  bundleIdPrefix: dev.gooday
   developmentLanguage: zh-Hans
   deploymentTarget:
     iOS: "26.0"
@@ -32,7 +32,7 @@ targets:
       - target: DaysRememberWidget
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.shiguang.daysremember
+        PRODUCT_BUNDLE_IDENTIFIER: dev.gooday.days
         PRODUCT_NAME: 时光
         PRODUCT_MODULE_NAME: DaysRemember
         INFOPLIST_FILE: DaysRemember/Resources/Info.plist
@@ -72,7 +72,7 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.shiguang.daysremember.widget
+        PRODUCT_BUNDLE_IDENTIFIER: dev.gooday.days.widget
         PRODUCT_NAME: DaysRememberWidget
         INFOPLIST_FILE: DaysRememberWidget/Info.plist
         CODE_SIGN_ENTITLEMENTS: DaysRememberWidget/DaysRememberWidget.entitlements
@@ -90,7 +90,7 @@ targets:
       - target: DaysRemember
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.shiguang.daysremember.tests
+        PRODUCT_BUNDLE_IDENTIFIER: dev.gooday.days.tests
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/时光.app/时光"
         BUNDLE_LOADER: "$(TEST_HOST)"
         GENERATE_INFOPLIST_FILE: YES
@@ -103,7 +103,7 @@ targets:
       - target: DaysRemember
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.shiguang.daysremember.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: dev.gooday.days.uitests
         TEST_TARGET_NAME: DaysRemember
         GENERATE_INFOPLIST_FILE: YES
 schemes:

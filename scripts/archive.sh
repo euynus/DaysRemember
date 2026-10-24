@@ -112,7 +112,7 @@ codesign -d --entitlements - --xml "$app/PlugIns/DaysRememberWidget.appex" > "$o
 [[ "$(entitlement "$output/app.entitlements" com.apple.developer.icloud-container-environment)" == "Production" ]] \
     || fail "the iCloud container environment isn't Production"
 for file in app widget; do
-    entitlement "$output/$file.entitlements" com.apple.security.application-groups | grep -q group.com.shiguang.daysremember \
+    entitlement "$output/$file.entitlements" com.apple.security.application-groups | grep -q group.dev.gooday.days \
         || fail "the $file is missing the App Group"
 done
 printf 'Exported and checked: %s\n' "$ipa"

@@ -17,7 +17,7 @@ done
 
 output_dir="$PWD/build/screenshots"
 docs_dir="$PWD/docs/screenshots"
-bundle_id=com.shiguang.daysremember
+bundle_id=dev.gooday.days
 simulator_id=""
 
 cleanup() {

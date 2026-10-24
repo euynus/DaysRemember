@@ -3,7 +3,7 @@ import UIKit
 /// The Home Screen quick action that starts a new day. UIKit hands quick actions to the scene
 /// delegate, which SwiftUI doesn't surface, so `AppDelegate` installs one that passes them on.
 enum QuickActions {
-    static let newDay = "com.shiguang.daysremember.newDay"
+    static let newDay = "dev.gooday.days.newDay"
 
     /// Set at each launch and language change, so the title follows the app's language.
     @MainActor static func install() {

@@ -60,7 +60,7 @@ Native String Catalogs under `Resources/Localization` are shared by the app and 
 |---|---|
 | **Local notifications** | `Store/NotificationManager.swift` schedules date-specific requests via `UNUserNotificationCenter`. Permission is requested when saving a day with reminders or explicitly enabling reminders, not on launch. Gregorian/lunar occurrences are planned up to five years ahead, retaining the earliest 64 requests including the optional daily greeting. The reminder page reads actual pending requests and their latest date; opening the app, or a daily background refresh, replenishes this finite schedule. Reminders fire at the chosen time on their own day; the optional daily greeting has its own time (08:00 by default). |
 | **iCloud / backup** | Each device chooses iCloud sync or local-only use on onboarding (`CloudSyncControl`), and can change it or delete its iCloud data in Data and Sync. `CloudLibrarySync` uses native `CKSyncEngine`, a private custom zone, separate day/category records, and `CKAsset` photos. Pending edits, record change tags, and the engine cursor are checkpointed locally. Data management (Settings › Data and Sync) offers JSON export/import, a pre-replacement recovery copy, local recently deleted records, and clearing of internal copies. |
-| **WidgetKit** | `DaysRememberWidget/` supports Small / Medium / Large Home Screen widgets and Circular / Rectangular / Inline Lock Screen widgets. Native configuration selects a specific day (including past days), or defaults to the nearest pinned or upcoming day, falling back to the most recent past day when nothing is ahead. A medium or large day list widget shows the next few days, pinned first. Reads day metadata through the `group.com.shiguang.daysremember` App Group and loads only the photos of displayed days (none for Lock Screen layouts); each timeline includes the next seven midnights and resolves automatic selection for each date. The app reloads timelines when records change. Tapping a widget opens its day. |
+| **WidgetKit** | `DaysRememberWidget/` supports Small / Medium / Large Home Screen widgets and Circular / Rectangular / Inline Lock Screen widgets. Native configuration selects a specific day (including past days), or defaults to the nearest pinned or upcoming day, falling back to the most recent past day when nothing is ahead. A medium or large day list widget shows the next few days, pinned first. Reads day metadata through the `group.dev.gooday.days` App Group and loads only the photos of displayed days (none for Lock Screen layouts); each timeline includes the next seven midnights and resolves automatic selection for each date. The app reloads timelines when records change. Tapping a widget opens its day. |
 | **Shortcuts and Siri** | `DaysShortcuts` offers 「…还有几天」, opening a day and starting a new one; a Control Center button and a Home Screen quick action also start a new day. |
 | **PhotosPicker** | `DayEditorView` offers artwork presets and a photo picker. Photos are JPEG-compressed (max 1600px), stored on `Day.photoData`, and framed using `coverFocusX/Y`. `PhotoTile(day:)` shares that crop across the app and widget. |
 | **Share sheet** | `ShareCardView` renders one of four templates via `ImageRenderer`, at the card's own height or as a 3:4 portrait image, at no less than 3x; private notes are excluded unless explicitly enabled. 分享图片 opens `UIActivityViewController`; 保存 writes to Photos via `PHPhotoLibrary` (requires `NSPhotoLibraryAddUsageDescription`). |
@@ -103,7 +103,7 @@ Cloud updates merge by record ID. Before replacing conflicting local content, th
 
 Local versions replaced by cloud records are retained separately by record and version for 30 days, so later remote changes cannot overwrite them. Deleted days and these versions store photos in the same file-backed format as active days rather than inline in shared defaults. Data management can preview, restore, or discard a single saved version without rolling back other records. Backup format v2 includes these device-local versions and still imports v1 backups.
 
-For real iCloud operation, set `DEVELOPMENT_TEAM` in `project.yml`, enable the App Group, iCloud/CloudKit and Push Notifications capabilities, and associate `iCloud.com.shiguang.daysremember` with the app identifier. The project includes remote-notification background mode. Follow Apple's [CKSyncEngine sample setup](https://github.com/apple/sample-cloudkit-sync-engine), then deploy the CloudKit schema to Production before distributing a production build. Simulator builds intentionally do not connect to CloudKit and display a configuration notice; local features remain available. Simulator/unit checks do not verify provisioning, APNs, production schema, or two-device delivery; validate these on signed devices using the intended iCloud account.
+For real iCloud operation, set `DEVELOPMENT_TEAM` in `project.yml`, enable the App Group, iCloud/CloudKit and Push Notifications capabilities, and associate `iCloud.dev.gooday.days` with the app identifier `dev.gooday.days`. The project includes remote-notification background mode. Follow Apple's [CKSyncEngine sample setup](https://github.com/apple/sample-cloudkit-sync-engine), then deploy the CloudKit schema to Production before distributing a production build. Simulator builds intentionally do not connect to CloudKit and display a configuration notice; local features remain available. Simulator/unit checks do not verify provisioning, APNs, production schema, or two-device delivery; validate these on signed devices using the intended iCloud account.
 
 ## UI and tests
 
@@ -142,23 +142,23 @@ For inspecting individual screens without manual navigation, the app reads a few
 ```sh
 # Pin "today" to 2026-04-23 (the prototype's reference date) so countdowns match the design.
 # (`SIMCTL_CHILD_*` env vars are forwarded to the launched app by simctl.)
-SIMCTL_CHILD_DR_PIN_TODAY=1 xcrun simctl launch <device> com.shiguang.daysremember
+SIMCTL_CHILD_DR_PIN_TODAY=1 xcrun simctl launch <device> dev.gooday.days
 
 # Open a specific tab on launch
-xcrun simctl launch <device> com.shiguang.daysremember --tab calendar         # home | calendar | categories | notifications
+xcrun simctl launch <device> dev.gooday.days --tab calendar         # home | calendar | categories | notifications
 
 # Dedicated test simulators only: replace the library with explicit fixtures
-xcrun simctl launch <device> com.shiguang.daysremember --seed-sample-data --tab home
+xcrun simctl launch <device> dev.gooday.days --seed-sample-data --tab home
 # …with the samples translated into the app's current language (store screenshots only)
-xcrun simctl launch <device> com.shiguang.daysremember -AppleLanguages "(en)" --seed-sample-data --localized-samples
-xcrun simctl launch <device> com.shiguang.daysremember --empty-library --show-onboarding
+xcrun simctl launch <device> dev.gooday.days -AppleLanguages "(en)" --seed-sample-data --localized-samples
+xcrun simctl launch <device> dev.gooday.days --empty-library --show-onboarding
 
 # Open a specific screen directly (bypasses the tab shell)
-xcrun simctl launch <device> com.shiguang.daysremember --screen detail --day wedding
-xcrun simctl launch <device> com.shiguang.daysremember --screen add
-xcrun simctl launch <device> com.shiguang.daysremember --screen share --day japan
-xcrun simctl launch <device> com.shiguang.daysremember --screen widgets --widget-size large   # small | medium | large
-xcrun simctl launch <device> com.shiguang.daysremember --screen onboarding
+xcrun simctl launch <device> dev.gooday.days --screen detail --day wedding
+xcrun simctl launch <device> dev.gooday.days --screen add
+xcrun simctl launch <device> dev.gooday.days --screen share --day japan
+xcrun simctl launch <device> dev.gooday.days --screen widgets --widget-size large   # small | medium | large
+xcrun simctl launch <device> dev.gooday.days --screen onboarding
 ```
 
 `--day` accepts any sample id from `Models/SampleData.swift` (`wedding`, `baby`, `birthday`, `midautumn`, `japan`, `kaoyan`, `firstmet`, `work`, `dog`, `moved`).

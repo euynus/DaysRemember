@@ -5,7 +5,7 @@ import Foundation
 /// more than that runs out unless they're planned again. A daily background refresh does it
 /// without waiting for the app to be opened.
 enum ReminderRefresh {
-    static let identifier = "com.shiguang.daysremember.reminders"
+    static let identifier = "dev.gooday.days.reminders"
 
     /// Asks for the next refresh, about a day from now. iOS decides when, or whether, it runs.
     static func schedule() {

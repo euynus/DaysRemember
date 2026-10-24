@@ -58,13 +58,13 @@
   </array>
   <key>BGTaskSchedulerPermittedIdentifiers</key>
   <array>
-    <string>com.shiguang.daysremember.reminders</string>
+    <string>dev.gooday.days.reminders</string>
   </array>
   <key>CFBundleURLTypes</key>
   <array>
     <dict>
       <key>CFBundleURLName</key>
-      <string>com.shiguang.daysremember</string>
+      <string>dev.gooday.days</string>
       <key>CFBundleURLSchemes</key>
       <array>
         <string>daysremember</string>

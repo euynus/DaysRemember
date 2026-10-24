@@ -5,7 +5,7 @@ import Foundation
 /// until `RootTabView` takes it.
 enum PendingLink {
     static let newDay = URL(string: "daysremember://new")!
-    static let notification = Notification.Name("com.shiguang.daysremember.pendingLink")
+    static let notification = Notification.Name("dev.gooday.days.pendingLink")
     private static let key = "pendingLink.v1"
 
     static func request(_ url: URL, defaults: UserDefaults = SharedStorage.defaults) {
