@@ -43,7 +43,8 @@ final class DeviceTimeZoneTests: XCTestCase {
     func testRemindersArriveAtTheChosenLocalTime() throws {
         let config = try JSONDecoder().decode(AppSettingsSnapshot.self, from: Data("""
         {"hasOnboarded":true,"notifPre7":false,"notifPre3":false,"notifPre1":false,"notifDay0":true,
-         "memoryEnabled":false,"momentsEnabled":false,"notificationHour":9,"notificationMinute":0}
+         "memoryEnabled":false,"momentsEnabled":false,"notificationHour":9,"notificationMinute":0,
+         "greetingHour":8,"greetingMinute":0}
         """.utf8))
         let day = Day(id: "event", title: "Event", date: appDate(2026, 7, 20), category: .life, photo: .systemDefault,
                       reminderOffsets: [0])

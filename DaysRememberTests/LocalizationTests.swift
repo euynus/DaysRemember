@@ -126,7 +126,8 @@ final class LocalizationTests: XCTestCase {
     func testCurrentLanguageLocalizesNotificationPayloadWithoutChangingItsIdentity() throws {
         let settings = try JSONDecoder().decode(AppSettingsSnapshot.self, from: Data("""
         {"hasOnboarded":true,"notifPre7":false,"notifPre3":false,"notifPre1":false,"notifDay0":true,
-         "memoryEnabled":false,"momentsEnabled":false,"quietHours":true,"notificationHour":9,"notificationMinute":0}
+         "memoryEnabled":false,"momentsEnabled":false,"notificationHour":9,"notificationMinute":0,
+         "greetingHour":8,"greetingMinute":0}
         """.utf8))
         let date = try XCTUnwrap(CNDate.calendar.date(from: DateComponents(year: 2026, month: 4, day: 23)))
         let day = Day(id: "stable-day-id", title: "My Day", date: date, category: .life, photo: .home,

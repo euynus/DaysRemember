@@ -183,7 +183,8 @@ final class DayReminderTests: XCTestCase {
     private func settings() throws -> AppSettingsSnapshot {
         try JSONDecoder().decode(AppSettingsSnapshot.self, from: Data("""
         {"hasOnboarded":true,"notifPre7":false,"notifPre3":false,"notifPre1":false,"notifDay0":true,
-         "memoryEnabled":false,"momentsEnabled":false,"quietHours":true,"notificationHour":9,"notificationMinute":0}
+         "memoryEnabled":false,"momentsEnabled":false,"notificationHour":9,"notificationMinute":0,
+         "greetingHour":8,"greetingMinute":0}
         """.utf8))
     }
 

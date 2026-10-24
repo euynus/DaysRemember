@@ -135,7 +135,8 @@ final class HotPathPerformanceTests: XCTestCase {
         try prepare()
         let settings = try JSONDecoder().decode(AppSettingsSnapshot.self, from: Data("""
         {"hasOnboarded":true,"notifPre7":true,"notifPre3":true,"notifPre1":false,"notifDay0":true,
-         "memoryEnabled":true,"momentsEnabled":true,"quietHours":false,"notificationHour":9,"notificationMinute":0}
+         "memoryEnabled":true,"momentsEnabled":true,"notificationHour":9,"notificationMinute":0,
+         "greetingHour":8,"greetingMinute":0}
         """.utf8))
         benchmark("notification_plan") {
             NotificationManager.plan(days: store.days, settings: settings, now: today).count

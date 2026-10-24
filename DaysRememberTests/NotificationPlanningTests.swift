@@ -19,7 +19,6 @@ final class NotificationPlanningTests: XCTestCase {
 
     func testLateReminderTimeKeepsEachReminderOnItsOwnDay() throws {
         var config = try settings()
-        XCTAssertFalse(config.quietHours, "Older snapshots no longer enable quiet hours")
         config.notificationHour = 23
         config.notificationMinute = 15
         let event = day("event", date(2026, 7, 20), offsets: [7, 1, 0])
@@ -168,7 +167,6 @@ final class NotificationPlanningTests: XCTestCase {
 
     func testDailyGreetingUsesItsOwnTimeAndMorningWording() throws {
         var config = try settings()
-        XCTAssertEqual(config.greetingHour, 8, "Snapshots without a greeting time keep 08:00")
         config.momentsEnabled = true
         config.greetingHour = 20
         config.greetingMinute = 30
@@ -189,7 +187,8 @@ final class NotificationPlanningTests: XCTestCase {
     private func settings() throws -> AppSettingsSnapshot {
         try JSONDecoder().decode(AppSettingsSnapshot.self, from: Data("""
         {"hasOnboarded":true,"notifPre7":false,"notifPre3":false,"notifPre1":false,"notifDay0":true,
-         "memoryEnabled":false,"momentsEnabled":false,"quietHours":true,"notificationHour":9,"notificationMinute":0}
+         "memoryEnabled":false,"momentsEnabled":false,"notificationHour":9,"notificationMinute":0,
+         "greetingHour":8,"greetingMinute":0}
         """.utf8))
     }
 

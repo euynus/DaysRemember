@@ -8,7 +8,7 @@ final class StoreRegressionTests: XCTestCase {
         let sharedKeys = ["days.v2", "categories.v1", "deletedDays.v1", "syncConflicts.v1",
                           "pendingRestore.v1", "icloud.localTimestamp.icloud.settings.v1"]
         let settingsKeys = ["hasOnboarded", "notif.pre7", "notif.pre3", "notif.pre1", "notif.day0",
-                            "notif.memory", "notif.moments", "notif.quiet", "notif.hour", "notif.minute",
+                            "notif.memory", "notif.moments", "notif.hour", "notif.minute",
                             "notif.greeting.hour", "notif.greeting.minute"]
         let savedShared = SharedLibrarySnapshot(keys: sharedKeys)
         let savedSettings = settingsKeys.map { ($0, standard.object(forKey: $0)) }

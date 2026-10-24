@@ -217,9 +217,10 @@ final class UIUXModelTests: XCTestCase {
             "notifDay0": false,
             "memoryEnabled": true,
             "momentsEnabled": false,
-            "quietHours": true,
             "notificationHour": 21,
-            "notificationMinute": 45
+            "notificationMinute": 45,
+            "greetingHour": 7,
+            "greetingMinute": 30
         }
         """
 
@@ -230,6 +231,8 @@ final class UIUXModelTests: XCTestCase {
         XCTAssertEqual(decoded, snapshot)
         XCTAssertEqual(decoded.notificationHour, 21)
         XCTAssertEqual(decoded.notificationMinute, 45)
+        XCTAssertEqual(decoded.greetingHour, 7)
+        XCTAssertEqual(decoded.greetingMinute, 30)
     }
 
     private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
