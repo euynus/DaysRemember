@@ -14,7 +14,8 @@ struct CloudLibraryState: Codable {
         var sentRevision: String?
         var sentFingerprint: String?
         /// The server's version as last seen (`serverFingerprint` names it), which a local edit
-        /// is merged from when the server changes underneath it. Nil in older checkpoints.
+        /// is merged from when the server changes underneath it. Nil until the server's version is
+        /// known: for a record made here, or after `forgetServer`.
         var base: CloudLibraryRecord?
         /// What the last batch sent, which becomes `base` once the server takes it.
         var sentValue: CloudLibraryRecord?
@@ -36,7 +37,7 @@ struct CloudLibraryState: Codable {
         }
     }
 
-    var version = 1
+    var version = 2
     var records: [String: Entry] = [:]
     var engineState: CKSyncEngine.State.Serialization?
     var accountRecordName: String?
@@ -47,7 +48,7 @@ struct CloudLibraryState: Codable {
     var lastFetchedAt: Date?
     var lastSentAt: Date?
     var pendingRemoteUpdate = CloudLibraryUpdate()
-    /// Optional, so a checkpoint written before it existed still decodes.
+    /// Nil when empty, so a checkpoint without any leaves the key out.
     private var unreadableRecords: [String: String]?
 
     var hasPendingChanges: Bool { records.values.contains(where: \.dirty) }
@@ -318,9 +319,7 @@ struct CloudLibraryState: Codable {
     func write(to url: URL, photoFiles: PhotoFileStore? = nil) throws {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appending(path: "Photos", directoryHint: .isDirectory))
-        var checkpoint = self
-        checkpoint.version = 2
-        let data = try files.encoder().encode(checkpoint)
+        let data = try files.encoder().encode(self)
         try data.write(to: url, options: .atomic)
         // The checkpoint is the only record of the photos beside it.
         try? files.removeFiles(unreferencedBy: [data])
@@ -330,7 +329,7 @@ struct CloudLibraryState: Codable {
         guard FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) else { return CloudLibraryState() }
         let files = photoFiles ?? PhotoFileStore(directory: url.deletingLastPathComponent().appending(path: "Photos", directoryHint: .isDirectory))
         let state = try files.decoder().decode(Self.self, from: Data(contentsOf: url))
-        guard (1...2).contains(state.version) else { throw CloudLibraryRecord.RecordError.corruptState }
+        guard state.version == 2 else { throw CloudLibraryRecord.RecordError.corruptState }
         for (name, entry) in state.records {
             guard name == entry.recordType + "." + CloudLibraryRecord.digest(Data(entry.id.utf8)),
                   ["LibraryDay", "LibraryCategory"].contains(entry.recordType) else {

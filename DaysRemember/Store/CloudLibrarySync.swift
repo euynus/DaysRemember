@@ -150,7 +150,6 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     @ObservationIgnored private var missingRecords: [String] = []
     /// The latest local snapshot while deletions are held, for `confirmMissingDeletions`.
     @ObservationIgnored private var heldLocal: (days: [Day], categories: [CategoryDefinition])?
-    @ObservationIgnored private var checkpointURL: URL
     @ObservationIgnored private var storageFailed = false
     @ObservationIgnored private var localSnapshotKnown = false
     @ObservationIgnored private var canSend = false
@@ -172,11 +171,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             .appending(path: containerIdentifier, directoryHint: .isDirectory)
             .appending(path: "state-v2.json")
         self.photoFiles = PhotoFileStore(directory: self.stateURL.deletingLastPathComponent().appending(path: "Photos", directoryHint: .isDirectory))
-        let legacyURL = self.stateURL.deletingLastPathComponent().appending(path: "state-v1.json")
-        checkpointURL = stateURL == nil && !FileManager.default.fileExists(atPath: self.stateURL.path(percentEncoded: false))
-            ? legacyURL : self.stateURL
         do {
-            state = try CloudLibraryState.read(from: checkpointURL, photoFiles: photoFiles)
+            state = try CloudLibraryState.read(from: self.stateURL, photoFiles: photoFiles)
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             unreadableCount = state.unreadable.count
@@ -194,10 +190,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     /// The next sync compares every record with iCloud again, keeping the versions it replaces.
     func resetUnreadableCheckpoint() throws {
         guard checkpointUnreadable else { return }
-        let aside = Self.setAside(checkpointURL)
+        let aside = Self.setAside(stateURL)
         try? FileManager.default.removeItem(at: aside)
-        try FileManager.default.moveItem(at: checkpointURL, to: aside)
-        checkpointURL = stateURL
+        try FileManager.default.moveItem(at: stateURL, to: aside)
         state = CloudLibraryState()
         storageFailed = false
         checkpointUnreadable = false
@@ -219,12 +214,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         heldLocal = nil
         refreshMissingCount()
         localSnapshotKnown = false
-        let directory = stateURL.deletingLastPathComponent()
-        let checkpoints = [stateURL, checkpointURL, directory.appending(path: "state-v1.json")]
-        for url in Set(checkpoints + checkpoints.map(Self.setAside) + [assetDirectory, photoFiles.directory]) {
+        for url in [stateURL, Self.setAside(stateURL), assetDirectory, photoFiles.directory] {
             try? FileManager.default.removeItem(at: url)
         }
-        checkpointURL = stateURL
         // A store that remembers its deleted files would take them for damaged ones.
         photoFiles = PhotoFileStore(directory: photoFiles.directory)
         state = CloudLibraryState()
@@ -237,12 +229,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         unreadableCount = 0
     }
 
-    /// Checkpoints no longer in use: one set aside as unreadable, or the first version's, which the
-    /// current one replaced without deleting.
+    /// Checkpoints no longer in use: the one 重置同步状态 set aside as unreadable.
     private var staleCheckpoints: [URL] {
-        let legacy = stateURL.deletingLastPathComponent().appending(path: "state-v1.json")
-        return ([Self.setAside(stateURL), Self.setAside(legacy)] + (checkpointURL == legacy ? [] : [legacy]))
-            .filter { FileManager.default.fileExists(atPath: $0.path(percentEncoded: false)) }
+        [Self.setAside(stateURL)].filter { FileManager.default.fileExists(atPath: $0.path(percentEncoded: false)) }
     }
 
     var hasStaleCheckpoints: Bool { !staleCheckpoints.isEmpty }
