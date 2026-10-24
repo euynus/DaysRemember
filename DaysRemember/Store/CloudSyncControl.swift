@@ -24,7 +24,7 @@ enum CloudSyncControl {
     }
 
     /// Turns sync off here, then deletes the app's data from the user's iCloud: the CloudKit zone
-    /// with every day, category and photo, and the settings and older copies in key-value storage.
+    /// with every day, category and photo, and the settings in key-value storage.
     static func deleteCloudData(store: DayStore, settings: AppSettings) async throws {
         choose(.localOnly, store: store, settings: settings)
         try await CloudLibrarySync.shared.deleteCloudData()

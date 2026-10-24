@@ -5,8 +5,6 @@ final class ICloudSyncStore {
     static let shared = ICloudSyncStore()
 
     enum Key {
-        static let days = "icloud.days.v1"
-        static let categories = "icloud.categories.v1"
         static let settings = "icloud.settings.v1"
     }
 
@@ -28,8 +26,6 @@ final class ICloudSyncStore {
     private var observer: NSObjectProtocol?
     private var handlers: [UUID: (Set<String>?) -> Void] = [:]
     private init() {}
-
-    func refresh() { store.synchronize() }
 
     var deviceID: String {
         let key = "icloud.deviceID"
@@ -54,27 +50,10 @@ final class ICloudSyncStore {
         handlers[token] = nil
     }
 
-    /// Whether the pre-CloudKit builds' copies of days and categories are still in iCloud.
-    var hasLegacyData: Bool {
-        store.synchronize()
-        return store.object(forKey: Key.days) != nil || store.object(forKey: Key.categories) != nil
-    }
-
-    /// Removes the pre-CloudKit builds' copies of days and categories. Those builds read only these.
-    func removeLegacyData() {
-        remove([Key.days, Key.categories])
-    }
-
-    /// Removes everything this app keeps in iCloud key-value storage, settings included.
+    /// Removes everything this app keeps in iCloud key-value storage: the settings.
     func removeAll() {
-        remove([Key.days, Key.categories, Key.settings])
-    }
-
-    private func remove(_ keys: [String]) {
-        for key in keys {
-            store.removeObject(forKey: key)
-            defaults.removeObject(forKey: localTimestampKey(for: key))
-        }
+        store.removeObject(forKey: Key.settings)
+        defaults.removeObject(forKey: localTimestampKey(for: Key.settings))
         store.synchronize()
     }
 

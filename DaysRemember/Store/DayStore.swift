@@ -78,8 +78,6 @@ final class DayStore {
     private let unreadableKey = "unreadableData.v1"
     private let migrationKey = "preCloudKitBackup.v1"
     private let migrationDecidedKey = "preCloudKitBackupDecided.v1"
-    private let legacyDayIDsKey = "importedLegacyDayIDs.v1"
-    private let legacyCategoryIDsKey = "importedLegacyCategoryIDs.v1"
     private let pendingRestoreKey = "pendingRestore.v1"
     private let defaults: UserDefaults
     private var isRestoring = false
@@ -321,9 +319,6 @@ final class DayStore {
             saveFailure = .library
             return
         }
-        // Still seen, so that 导入旧版 iCloud 数据 can't bring it back.
-        let seen = defaults.stringArray(forKey: legacyDayIDsKey) ?? []
-        if !seen.contains(id) { defaults.set(seen + [id], forKey: legacyDayIDsKey) }
         let conflicts = syncConflicts.filter { !Self.isVersion(of: id, $0) }
         if conflicts != syncConflicts, let data = try? (photoFiles?.encoder() ?? JSONEncoder()).encode(conflicts) {
             defaults.set(data, forKey: conflictsKey)
@@ -409,11 +404,6 @@ final class DayStore {
         guard loadError == nil else { throw DayBackup.BackupError.unreadable }
         try CloudLibrarySync.shared.removeStaleCheckpoints()
         if staleLegacyDays != nil { defaults.removeObject(forKey: SharedStorage.legacyDaysKey) }
-        // The pre-migration backup's records stay seen, so 导入旧版 iCloud 数据 can't bring back
-        // the ones deleted since.
-        let seen = seenLegacyIDs()
-        defaults.set(Array(seen.days), forKey: legacyDayIDsKey)
-        defaults.set(Array(seen.categories), forKey: legacyCategoryIDsKey)
         for key in [recoveryKey, migrationKey, unreadableKey] { defaults.removeObject(forKey: key) }
         // Decided, so starting sync again doesn't keep a new one.
         defaults.set(true, forKey: migrationDecidedKey)
@@ -826,81 +816,6 @@ final class DayStore {
             result.append(systemCategory)
         }
         return result
-    }
-
-    // Legacy KVS has no per-record tombstones. Import only after explicit user action.
-    @discardableResult
-    func importLegacyCloudData() throws -> Int {
-        let legacy = legacyCloudRecords()
-        return try importLegacyData(days: legacy.days, categories: legacy.categories)
-    }
-
-    /// Whether the legacy iCloud keys still hold a day or category this device has not seen.
-    func hasUnseenLegacyCloudData() -> Bool {
-        let legacy = legacyCloudRecords()
-        return hasUnseenLegacyData(days: legacy.days, categories: legacy.categories)
-    }
-
-    func hasUnseenLegacyData(days legacyDays: [Day], categories legacyCategories: [CategoryDefinition]) -> Bool {
-        let seen = seenLegacyIDs()
-        return legacyDays.contains { !seen.days.contains($0.id) }
-            || legacyCategories.contains { !seen.categories.contains($0.id) }
-    }
-
-    private func legacyCloudRecords() -> (days: [Day], categories: [CategoryDefinition]) {
-        let legacy = ICloudSyncStore.shared
-        legacy.refresh()
-        let remoteDays: ICloudSyncStore.RemoteValue<[Day]>? = legacy.remoteValue(for: ICloudSyncStore.Key.days)
-        let remoteCategories: ICloudSyncStore.RemoteValue<[CategoryDefinition]>? = legacy.remoteValue(for: ICloudSyncStore.Key.categories)
-        return (remoteDays?.value ?? [], remoteCategories?.value ?? [])
-    }
-
-    private func seenLegacyIDs() -> (days: Set<String>, categories: Set<String>) {
-        let premigration = migrationBackupIDs()
-        return (Set(defaults.stringArray(forKey: legacyDayIDsKey) ?? []).union(days.map(\.id))
-                    .union(deletedDays.map(\.id)).union(premigration.days),
-                Set(defaults.stringArray(forKey: legacyCategoryIDsKey) ?? []).union(categories.map(\.id))
-                    .union(premigration.categories))
-    }
-
-    /// The library before CloudKit already held the legacy records, without an import recording
-    /// them, so its IDs stay seen after those records are deleted.
-    private func migrationBackupIDs() -> (days: [String], categories: [String]) {
-        guard let data = defaults.data(forKey: migrationKey),
-              let library = try? JSONDecoder().decode(LibraryIDs.self, from: data) else { return ([], []) }
-        return (library.days.map(\.id) + library.deletedDays.map(\.day.id), library.categories.map(\.id))
-    }
-
-    /// Reads only record IDs, so photos aren't loaded.
-    private struct LibraryIDs: Decodable {
-        struct Record: Decodable { let id: String }
-        struct Deleted: Decodable { let day: Record }
-        let days: [Record]
-        let deletedDays: [Deleted]
-        let categories: [Record]
-    }
-
-    @discardableResult
-    func importLegacyData(days legacyDays: [Day], categories legacyCategories: [CategoryDefinition]) throws -> Int {
-        guard loadError == nil else { throw DayBackup.BackupError.unreadable }
-        try DayBackup(days: legacyDays, categories: legacyCategories, deletedDays: []).validate()
-        let (seenDays, seenCategories) = seenLegacyIDs()
-        let additions = legacyDays.filter { !seenDays.contains($0.id) }
-        let categoryAdditions = legacyCategories.filter { !seenCategories.contains($0.id) }
-        if !additions.isEmpty || !categoryAdditions.isEmpty {
-            let backup = DayBackup(days: days + additions, categories: categories + categoryAdditions,
-                                   deletedDays: deletedDays, syncConflicts: syncConflicts)
-            let encoded = try localBackupData(backup)
-            let recovery = try localBackupData(currentBackup)
-            try keepMigrationBackup()
-            try applyBackup(backup, encoded: encoded) { [defaults, recoveryKey] in
-                defaults.set(recovery, forKey: recoveryKey)
-            }
-            if cloudSyncEnabled { CloudLibrarySync.shared.updateLocal(days: days, categories: categories) }
-        }
-        defaults.set(Array(seenDays.union(legacyDays.map(\.id))), forKey: legacyDayIDsKey)
-        defaults.set(Array(seenCategories.union(legacyCategories.map(\.id))), forKey: legacyCategoryIDsKey)
-        return additions.count
     }
 
     func applyCloudUpdate(_ update: CloudLibraryUpdate) throws {

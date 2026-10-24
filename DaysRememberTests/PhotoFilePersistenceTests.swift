@@ -561,8 +561,8 @@ final class PhotoFilePersistenceTests: XCTestCase {
             let original = backup()
             let store = DayStore(defaults: defaults, photoDirectory: directory)
             try store.restoreBackup(original)
-            let imported = day("Legacy addition", photo: Data([10, 11, 12]))
-            XCTAssertEqual(try store.importLegacyData(days: [imported], categories: []), 1)
+            try store.keepMigrationBackup()
+            XCTAssertTrue(store.add(day("Added since", photo: Data([10, 11, 12]))))
 
             let migration = try XCTUnwrap(defaults.data(forKey: "preCloudKitBackup.v1"))
             XCTAssertThrowsError(try JSONDecoder().decode(DayBackup.self, from: migration))

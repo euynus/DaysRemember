@@ -55,8 +55,6 @@ final class LocalCopyDeletionTests: XCTestCase {
             }
             XCTAssertEqual(photoFiles(in: photos), [])
             XCTAssertEqual(store.days, [kept])
-            // Still seen: an import of the legacy iCloud copy can't bring it back.
-            XCTAssertFalse(store.hasUnseenLegacyData(days: [deleted], categories: []))
 
             let relaunched = DayStore(defaults: defaults, photoDirectory: photos)
             XCTAssertNil(relaunched.loadError)
@@ -89,8 +87,6 @@ final class LocalCopyDeletionTests: XCTestCase {
             // The decision stands: turning sync on later doesn't keep a new pre-migration backup.
             try store.keepMigrationBackup()
             XCTAssertFalse(store.hasMigrationBackup)
-            // Records the pre-migration backup held stay seen.
-            XCTAssertFalse(store.hasUnseenLegacyData(days: [replaced], categories: []))
 
             let relaunched = DayStore(defaults: defaults, photoDirectory: photos)
             XCTAssertNil(relaunched.loadError)

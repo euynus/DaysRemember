@@ -14,8 +14,6 @@ struct DataManagementView: View {
     @State private var pendingImport: DayBackup?
     @State private var confirmRecovery = false
     @State private var confirmRawCopyDeletion = false
-    @State private var confirmLegacyImport = false
-    @State private var hasLegacyData = false
     @State private var confirmAccountChange = false
     @State private var confirmReupload = false
     @State private var confirmMissingDeletion = false
@@ -23,8 +21,6 @@ struct DataManagementView: View {
     @State private var confirmSyncOff = false
     @State private var confirmCloudDeletion = false
     @State private var deletingCloudData = false
-    @State private var hasLegacyKeys = false
-    @State private var confirmLegacyRemoval = false
     @State private var confirmInternalCleanup = false
     @State private var message: String?
 
@@ -35,13 +31,6 @@ struct DataManagementView: View {
             .background(Theme.bg)
             .navigationTitle("数据与同步")
             .navigationBarTitleDisplayMode(.inline)
-            // Only devices that used the pre-CloudKit builds have legacy records, which may
-            // still be downloading when this opens.
-            .onAppear { refreshLegacyData() }
-            .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification)
-                .receive(on: RunLoop.main)) { _ in
-                refreshLegacyData()
-            }
             .toolbar {
                 if store.loadError == nil {
                     ToolbarItem(placement: .confirmationAction) {
@@ -137,20 +126,6 @@ struct DataManagementView: View {
                 Text("将从你的 iCloud 中删除时光的日子、分类、照片和设置，并让这台设备改为仅本机使用。本机日子不受影响；其他设备保留各自的日子，但会暂停同步。删除后无法撤销。")
             }
             if deletingCloudData { ProgressView("正在删除 iCloud 中的数据") }
-            if hasLegacyKeys {
-                Button("清除旧版 iCloud 数据", systemImage: "trash", role: .destructive) {
-                    confirmLegacyRemoval = true
-                }
-                .confirmationDialog("清除旧版 iCloud 数据？", isPresented: $confirmLegacyRemoval, titleVisibility: .visible) {
-                    Button("清除", role: .destructive) {
-                        ICloudSyncStore.shared.removeLegacyData()
-                        refreshLegacyData()
-                    }
-                    Button("取消", role: .cancel) {}
-                } message: {
-                    Text("早期版本把日子和分类另存了一份在 iCloud 键值存储中。清除后，仍在使用早期版本的设备将读不到这些日子；本机日子不受影响。")
-                }
-            }
         } header: {
             Text("iCloud")
         } footer: {
@@ -230,30 +205,6 @@ struct DataManagementView: View {
                 Text("iCloud 中时光的资料已被删除。本机日子及照片会重新上传，并同步到你的其他设备。")
             }
         }
-        if hasLegacyData {
-            Button("导入旧版 iCloud 数据", systemImage: "icloud.and.arrow.down") {
-                confirmLegacyImport = true
-            }
-            .disabled(store.loadError != nil)
-            .confirmationDialog("导入旧版 iCloud 数据？", isPresented: $confirmLegacyImport, titleVisibility: .visible) {
-                Button("追加导入") {
-                    do {
-                        let count = try store.importLegacyCloudData()
-                        message = count > 0 ? String(localized: "已导入 \(count) 个日子。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                            : String(localized: "未发现可导入的新日子。旧数据可能仍在下载，请稍后重试。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                    } catch { message = error.localizedDescription }
-                    refreshLegacyData()
-                }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("仅追加本机未见过的记录，不覆盖已有记录。旧版数据可能包含曾在其他设备删除的日子；所有设备请升级后再编辑。")
-            }
-        }
-    }
-
-    private func refreshLegacyData() {
-        hasLegacyData = store.hasUnseenLegacyCloudData()
-        hasLegacyKeys = ICloudSyncStore.shared.hasLegacyData
     }
 
     private func deleteCloudData() {
@@ -264,7 +215,6 @@ struct DataManagementView: View {
                 try await CloudSyncControl.deleteCloudData(store: store, settings: settings)
                 message = String(localized: "iCloud 中的数据已删除，这台设备已改为仅本机使用。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             } catch { message = error.localizedDescription }
-            refreshLegacyData()
         }
     }
 
