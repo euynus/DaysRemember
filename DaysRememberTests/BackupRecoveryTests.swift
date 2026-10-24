@@ -46,14 +46,6 @@ final class BackupRecoveryTests: XCTestCase {
             try store.keepMigrationBackup()
             XCTAssertEqual(try DayBackup.decode(store.exportMigrationBackup()).days, original.days)
         }
-        try withDefaults { defaults, _ in
-            let empty = DayBackup(days: [], categories: CategoryDefinition.system, deletedDays: [])
-            defaults.set(try JSONEncoder().encode(empty), forKey: "preCloudKitBackup.v1")
-            let store = DayStore(defaults: defaults)
-            XCTAssertTrue(store.hasMigrationBackup)
-            try store.keepMigrationBackup()
-            XCTAssertFalse(store.hasMigrationBackup)
-        }
     }
 
     func testBackupRoundTripPreservesPhotosCategoriesAndTrashAfterRelaunch() throws {

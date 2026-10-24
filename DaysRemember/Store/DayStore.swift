@@ -487,12 +487,7 @@ final class DayStore {
     /// nothing. Libraries edited after that already belong to CloudKit.
     func keepMigrationBackup() throws {
         guard !defaults.bool(forKey: migrationDecidedKey) else { return }
-        if let data = defaults.data(forKey: migrationKey) {
-            // Earlier builds also kept one for a fresh, empty library.
-            if let backup = try? decodeLocalBackup(data), !backup.holdsUserData {
-                defaults.removeObject(forKey: migrationKey)
-            }
-        } else if currentBackup.holdsUserData {
+        if currentBackup.holdsUserData {
             defaults.set(try localBackupData(currentBackup), forKey: migrationKey)
         }
         defaults.set(true, forKey: migrationDecidedKey)
