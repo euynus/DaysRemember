@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Says what iCloud sync uploads before anything is, and offers to keep everything on this device.
-/// The last step of onboarding, and shown once to a device that synced before the choice existed.
+/// The last step of onboarding.
 struct SyncChoiceView: View {
     var onChoose: (SyncChoice) -> Void
     /// One width for every symbol, so the lines of text start together.

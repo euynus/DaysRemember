@@ -15,32 +15,17 @@ struct RootGate: View {
             if let override = DebugLaunch.screenOverride {
                 override.makeView(store: store)
             } else if settings.hasOnboarded || (DebugLaunch.isAutomated && !DebugLaunch.showOnboarding) {
-                tabs
+                RootTabView(startWithNewDay: creatingFirstDay)
             } else {
                 onboarding
             }
             #else
             if settings.hasOnboarded {
-                tabs
+                RootTabView(startWithNewDay: creatingFirstDay)
             } else {
                 onboarding
             }
             #endif
-        }
-    }
-
-    /// A device that synced before the choice existed is asked once, and doesn't sync until it answers.
-    @ViewBuilder
-    private var tabs: some View {
-        #if DEBUG
-        let asks = settings.syncChoice == nil && !DebugLaunch.isAutomated
-        #else
-        let asks = settings.syncChoice == nil
-        #endif
-        if asks {
-            SyncChoiceView { CloudSyncControl.choose($0, store: store, settings: settings) }
-        } else {
-            RootTabView(startWithNewDay: creatingFirstDay)
         }
     }
 
