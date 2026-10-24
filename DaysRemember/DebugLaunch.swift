@@ -51,7 +51,7 @@ enum DebugLaunch {
                       category: .life, photo: .systemDefault,
                       photoData: Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII="))
         do {
-            defaults.set(try JSONEncoder().encode([day]), forKey: SharedStorage.legacyDaysKey)
+            defaults.set(try JSONEncoder().encode([day]), forKey: SharedStorage.daysKey)
             try Data("blocked photo directory".utf8).write(to: directory)
         } catch {
             preconditionFailure("Unable to prepare editor save failure: \(error)")

@@ -8,7 +8,6 @@ import Foundation
 enum SharedStorage {
     static let appGroupID = "group.dev.gooday.days"
     static let daysKey = "days.v2"
-    static let legacyDaysKey = "days.v1"
     static let categoriesKey = "categories.v1"
 
     // UserDefaults is thread-safe, though the SDK does not mark it Sendable.
@@ -24,7 +23,7 @@ enum SharedStorage {
 
     static func loadDays(defaults: UserDefaults = SharedStorage.defaults,
                          photoDirectory: URL = SharedStorage.photoDirectory) -> [Day] {
-        guard let data = defaults.data(forKey: daysKey) ?? defaults.data(forKey: legacyDaysKey) else { return [] }
+        guard let data = defaults.data(forKey: daysKey) else { return [] }
         return (try? PhotoFileStore(directory: photoDirectory).decoder().decode([Day].self, from: data)) ?? []
     }
 
@@ -54,7 +53,7 @@ enum SharedStorage {
 
     static func loadLibrary(defaults: UserDefaults = SharedStorage.defaults,
                             photoDirectory: URL = SharedStorage.photoDirectory) -> Library {
-        guard let data = defaults.data(forKey: daysKey) ?? defaults.data(forKey: legacyDaysKey) else { return Library() }
+        guard let data = defaults.data(forKey: daysKey) else { return Library() }
         let files = PhotoFileStore(directory: photoDirectory)
         let references = PhotoFileStore.DeferredReferences()
         guard let days = try? files.metadataDecoder(collecting: references).decode([Day].self, from: data) else {

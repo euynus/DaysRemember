@@ -224,15 +224,20 @@ final class RenderingTests: XCTestCase {
     func testEveryTemplateSurvivesPersistenceAndBackupRoundTrip() throws {
         let suite = "TemplatePersistenceTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(suite)
+        defer {
+            defaults.removePersistentDomain(forName: suite)
+            try? FileManager.default.removeItem(at: directory)
+        }
         let days = PhotoStyle.pickerOptions.map { style in
             Day(id: "template.\(style.rawValue)", title: style.displayName,
                 date: Date(timeIntervalSince1970: 1_777_000_000), category: .life, photo: style)
         }
-        let store = DayStore(defaults: defaults)
+        // A store with a photo directory writes days.v2, which the widget reads.
+        let store = DayStore(defaults: defaults, photoDirectory: directory)
         store.days = days
-        XCTAssertEqual(DayStore(defaults: defaults).days, days)
-        XCTAssertEqual(SharedStorage.loadDays(defaults: defaults), days)
+        XCTAssertEqual(DayStore(defaults: defaults, photoDirectory: directory).days, days)
+        XCTAssertEqual(SharedStorage.loadDays(defaults: defaults, photoDirectory: directory), days)
         XCTAssertEqual(try DayBackup.decode(store.exportBackup()).days, days)
     }
 

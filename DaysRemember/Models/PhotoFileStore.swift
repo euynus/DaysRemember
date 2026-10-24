@@ -60,7 +60,7 @@ final class PhotoFileStore: Sendable {
     }
 
     /// Decodes file-backed photos as `nil` and records their references for `data(for:id:)`.
-    /// Inline photos from legacy records still decode in place.
+    /// Inline photos still decode in place.
     func metadataDecoder(collecting references: DeferredReferences) -> JSONDecoder {
         let decoder = decoder()
         decoder.userInfo[Self.deferredKey] = references

@@ -180,7 +180,7 @@ final class WidgetTests: XCTestCase {
 
     @MainActor
     func testQueryReadsAppWritesAndRemovesDeletedDays() async throws {
-        let original = SharedLibrarySnapshot(keys: ["days.v1", "days.v2", "deletedDays.v1"])
+        let original = SharedLibrarySnapshot(keys: ["days.v2", "deletedDays.v1"])
         defer { original.restore() }
         let store = DayStore()
         store.days = []

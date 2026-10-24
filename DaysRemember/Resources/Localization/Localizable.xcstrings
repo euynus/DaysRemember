@@ -12514,25 +12514,25 @@
         }
       }
     },
-    "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和旧格式的数据，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。" : {
+    "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和不再使用的同步记录，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This deletes the previous local copy, the pre-migration backup, raw data from before a restore and data in the old storage format, along with photos only they still use. Your current days, Recently Deleted and saved sync versions are not affected. This can’t be recovered, so export anything you need first."
+            "value" : "This deletes the previous local copy, the pre-migration backup, raw data from before a restore and sync records no longer in use, along with photos only they still use. Your current days, Recently Deleted and saved sync versions are not affected. This can’t be recovered, so export anything you need first."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和旧格式的数据，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。"
+            "value" : "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和不再使用的同步记录，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "將刪除「上一次本機副本」、移轉前備份、替換前的原始資料和舊格式的資料，以及只有它們還在使用的照片。目前的日子、最近刪除和同步保留版本不受影響。刪除後無法找回，需要的話請先匯出。"
+            "value" : "將刪除「上一次本機副本」、移轉前備份、替換前的原始資料和不再使用的同步記錄，以及只有它們還在使用的照片。目前的日子、最近刪除和同步保留版本不受影響。刪除後無法找回，需要的話請先匯出。"
           }
         }
       }

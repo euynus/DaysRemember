@@ -61,7 +61,7 @@ final class PersistencePerformanceTests: XCTestCase {
         let payload = try autoreleasepool { try JSONEncoder().encode(days) }
         let categories = try JSONEncoder().encode(CategoryDefinition.system)
         var loadTimes: [Double] = []
-        var migrationTimes: [Double] = []
+        var firstSaveTimes: [Double] = []
         var updateTimes: [Double] = []
         var exportTimes: [Double] = []
         var updatedPayloadBytes = 0
@@ -78,15 +78,16 @@ final class PersistencePerformanceTests: XCTestCase {
                     try? FileManager.default.removeItem(at: directory)
                 }
                 // Seed only the UUID suite; never use SharedStorage or enable cloud sync/settings.
-                defaults.set(payload, forKey: "days.v1")
+                // Seeded inline, so the first save writes every photo file.
+                defaults.set(payload, forKey: "days.v2")
                 defaults.set(categories, forKey: "categories.v1")
                 defaults.set(Data("[]".utf8), forKey: "deletedDays.v1")
                 defaults.set(Data("[]".utf8), forKey: "syncConflicts.v1")
 
-                let legacy = DayStore(defaults: defaults, photoDirectory: directory)
-                let migrated = timed { legacy.save() }
-                XCTAssertTrue(migrated.value)
-                migrationTimes.append(migrated.milliseconds)
+                let seeded = DayStore(defaults: defaults, photoDirectory: directory)
+                let firstSave = timed { seeded.save() }
+                XCTAssertTrue(firstSave.value)
+                firstSaveTimes.append(firstSave.milliseconds)
                 let loaded = timed { DayStore(defaults: defaults, photoDirectory: directory) }
                 let store = loaded.value
                 XCTAssertNil(store.loadError)
@@ -149,10 +150,10 @@ final class PersistencePerformanceTests: XCTestCase {
         let summary = "PERSISTENCE_BENCH records=\(recordCount) samples=3 " + photoSummary(days)
             + " initial_days_payload_bytes=\(payload.count) updated_days_payload_bytes=\(updatedPayloadBytes)"
             + " backup_payload_bytes=\(backupPayloadBytes) backup_cap_bytes=\(DayBackup.maximumBytes) "
-            + timingSummary("migration", migrationTimes) + " "
+            + timingSummary("first_save", firstSaveTimes) + " "
             + timingSummary("load", loadTimes) + " " + timingSummary("update", updateTimes) + " "
             + exportSummary + "\n"
-            + "Scope: UUID suite and warm photo files; one-time migration measured separately; "
+            + "Scope: UUID suite and warm photo files; first save of inline photos measured separately; "
             + "synchronous update including widget reload, not fsync; "
             + "settings/cloud sync off. Setup, reload checks and cleanup are untimed."
         report(summary, name: "Photo-heavy persistence (\(recordCount) records)")

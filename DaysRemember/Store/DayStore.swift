@@ -69,6 +69,9 @@ final class DayStore {
     }
 
     private let storageKey: String
+    /// Stores without a photo directory, which only tests and fixtures make, keep their days
+    /// with photos inline under a key of their own.
+    private static let inlineDaysKey = "days.v1"
     private let photoFiles: PhotoFileStore?
     private let categoriesKey = SharedStorage.categoriesKey
     private let deletedKey = "deletedDays.v1"
@@ -98,7 +101,7 @@ final class DayStore {
     init(defaults: UserDefaults, photoDirectory: URL? = nil) {
         self.defaults = defaults
         self.photoFiles = photoDirectory.map(PhotoFileStore.init(directory:))
-        self.storageKey = photoDirectory == nil ? SharedStorage.legacyDaysKey : SharedStorage.daysKey
+        self.storageKey = photoDirectory == nil ? Self.inlineDaysKey : SharedStorage.daysKey
         self.days = []
         self.categories = CategoryDefinition.system
         isRestoring = true
@@ -111,7 +114,7 @@ final class DayStore {
                 try writeBackup(backup)
                 defaults.removeObject(forKey: pendingRestoreKey)
             }
-            if let data = defaults.data(forKey: storageKey) ?? defaults.data(forKey: SharedStorage.legacyDaysKey) {
+            if let data = defaults.data(forKey: storageKey) {
                 let decoded = try (photoFiles?.decoder() ?? JSONDecoder()).decode([Day].self, from: data)
                 try DayBackup.validateDays(decoded)
                 self.days = decoded
@@ -384,18 +387,11 @@ final class DayStore {
     var hasUnreadableDataCopy: Bool { defaults.data(forKey: unreadableKey) != nil }
 
     /// Copies of the library this device keeps besides the library itself, 最近删除 and 同步保留版本:
-    /// the recovery copy, the pre-migration backup, the raw data a restore replaced, the first
-    /// storage format's days, and checkpoints sync no longer uses.
+    /// the recovery copy, the pre-migration backup, the raw data a restore replaced, and
+    /// checkpoints sync no longer uses.
     var hasInternalCopies: Bool {
         [recoveryKey, migrationKey, unreadableKey].contains { defaults.data(forKey: $0) != nil }
-            || staleLegacyDays != nil || CloudLibrarySync.shared.hasStaleCheckpoints
-    }
-
-    /// The first format's days, left in place when the current one was first written. Stores
-    /// without a photo directory still use that key for the library itself.
-    private var staleLegacyDays: Data? {
-        guard storageKey != SharedStorage.legacyDaysKey, defaults.data(forKey: storageKey) != nil else { return nil }
-        return defaults.data(forKey: SharedStorage.legacyDaysKey)
+            || CloudLibrarySync.shared.hasStaleCheckpoints
     }
 
     /// Deletes every internal copy, and the photos only they still used. The library, 最近删除
@@ -403,7 +399,6 @@ final class DayStore {
     func clearInternalCopies() throws {
         guard loadError == nil else { throw DayBackup.BackupError.unreadable }
         try CloudLibrarySync.shared.removeStaleCheckpoints()
-        if staleLegacyDays != nil { defaults.removeObject(forKey: SharedStorage.legacyDaysKey) }
         for key in [recoveryKey, migrationKey, unreadableKey] { defaults.removeObject(forKey: key) }
         // Decided, so starting sync again doesn't keep a new one.
         defaults.set(true, forKey: migrationDecidedKey)
@@ -437,7 +432,7 @@ final class DayStore {
     /// A new raw copy leaves out the previous one, which would otherwise nest inside it, photos
     /// and all, on every repair.
     func exportOriginalData(includingRawCopy: Bool = true) throws -> Data {
-        let keys = Set([storageKey, SharedStorage.legacyDaysKey, categoriesKey, deletedKey, conflictsKey, pendingRestoreKey,
+        let keys = Set([storageKey, categoriesKey, deletedKey, conflictsKey, pendingRestoreKey,
                     recoveryKey, migrationKey] + (includingRawCopy ? [unreadableKey] : []))
         var original = Dictionary(uniqueKeysWithValues: keys.compactMap { key in
             defaults.data(forKey: key).map { (key, $0) }

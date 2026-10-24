@@ -7,31 +7,7 @@ private let recentDate = Date(timeIntervalSinceReferenceDate: (Date.now.timeInte
 
 @MainActor
 final class PhotoFilePersistenceTests: XCTestCase {
-    func testLegacyTitleEditMigratesPhotosWithoutChangingLegacyBytes() throws {
-        try withStorage { defaults, _, directory in
-            let original = day("Legacy photo")
-            let legacy = try JSONEncoder().encode([original])
-            defaults.set(legacy, forKey: "days.v1")
-
-            let store = DayStore(defaults: defaults, photoDirectory: directory)
-            XCTAssertNil(store.loadError)
-            XCTAssertEqual(store.days, [original])
-            var edited = original
-            edited.title = "Edited title"
-            store.update(edited)
-
-            XCTAssertNil(store.loadError)
-            XCTAssertEqual(defaults.data(forKey: "days.v1"), legacy)
-            let metadata = try XCTUnwrap(defaults.data(forKey: "days.v2"))
-            let reference = try photoReference(in: metadata, for: edited)
-            XCTAssertEqual(try Data(contentsOf: directory.appendingPathComponent(reference)), original.photoData)
-            let relaunched = DayStore(defaults: defaults, photoDirectory: directory)
-            XCTAssertNil(relaunched.loadError)
-            XCTAssertEqual(relaunched.days, [edited])
-        }
-    }
-
-    func testDefaultsOnlyStoreKeepsInlineLegacyPersistence() throws {
+    func testStoreWithoutPhotoDirectoryKeepsPhotosInline() throws {
         try withStorage { defaults, _, _ in
             let original = day("Isolated photo")
             let store = DayStore(defaults: defaults)
@@ -137,12 +113,9 @@ final class PhotoFilePersistenceTests: XCTestCase {
         try assertUnreadablePhoto(replacement: Data([99, 98, 97]))
     }
 
-    func testCorruptV2DoesNotFallBackToLegacyData() throws {
+    func testCorruptLibraryBlocksWritesAndKeepsItsOriginalBytes() throws {
         try withStorage { defaults, suite, directory in
-            let original = day("Stale legacy photo")
-            let legacy = try JSONEncoder().encode([original])
             let corrupt = Data("corrupt days.v2".utf8)
-            defaults.set(legacy, forKey: "days.v1")
             defaults.set(corrupt, forKey: "days.v2")
             let before = persisted(defaults, suite: suite)
 
@@ -157,14 +130,12 @@ final class PhotoFilePersistenceTests: XCTestCase {
             XCTAssertTrue(SharedStorage.loadDays(defaults: defaults, photoDirectory: directory).isEmpty)
             let raw = try JSONDecoder().decode([String: Data].self, from: store.exportOriginalData())
             XCTAssertEqual(raw["days.v2"], corrupt)
-            XCTAssertEqual(raw["days.v1"], legacy)
         }
     }
 
     func testPendingRestoreReplayReconstructsPhotoFilesAndMetadata() throws {
         try withStorage { defaults, _, directory in
             let target = backup()
-            defaults.set(try JSONEncoder().encode([day("Stale legacy photo")]), forKey: "days.v1")
             defaults.set(Data("interrupted metadata write".utf8), forKey: "days.v2")
             defaults.set(Data("interrupted categories write".utf8), forKey: "categories.v1")
             defaults.set(try target.encoded(), forKey: "pendingRestore.v1")
@@ -186,22 +157,19 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
-    func testSharedWidgetLoaderPrefersV2PhotoAndSupportsLegacyData() throws {
+    func testSharedWidgetLoaderReadsTheStoresPhotoFiles() throws {
         try withStorage { defaults, _, directory in
-            let original = day("Legacy widget photo")
-            let legacy = try JSONEncoder().encode([original])
-            defaults.set(legacy, forKey: "days.v1")
+            let original = day("Widget photo")
+            let store = DayStore(defaults: defaults, photoDirectory: directory)
+            XCTAssertTrue(store.add(original))
             XCTAssertEqual(SharedStorage.loadDays(defaults: defaults, photoDirectory: directory), [original])
 
-            let store = DayStore(defaults: defaults, photoDirectory: directory)
             var edited = original
             edited.title = "Current widget photo"
             edited.photoData = Data([20, 21, 22])
             store.update(edited)
 
             XCTAssertNil(store.loadError)
-            XCTAssertNotNil(defaults.data(forKey: "days.v2"))
-            XCTAssertEqual(defaults.data(forKey: "days.v1"), legacy)
             XCTAssertEqual(SharedStorage.loadDays(defaults: defaults, photoDirectory: directory), [edited])
         }
     }
@@ -260,11 +228,12 @@ final class PhotoFilePersistenceTests: XCTestCase {
         }
     }
 
-    func testFailedPhotoWritePreservesInMemoryLibraryAndLegacyBytes() throws {
+    func testFailedPhotoWritePreservesInMemoryLibraryAndStoredBytes() throws {
         try withStorage { defaults, suite, directory in
             let original = day("Original photo")
-            let legacy = try JSONEncoder().encode([original])
-            defaults.set(legacy, forKey: "days.v1")
+            // Inline, as the photo directory can't be written.
+            let stored = try JSONEncoder().encode([original])
+            defaults.set(stored, forKey: "days.v2")
             let obstruction = Data("A regular file, not a photo directory".utf8)
             let blockedDirectory = URL(fileURLWithPath: directory.path, isDirectory: false)
             try obstruction.write(to: blockedDirectory)
@@ -281,8 +250,7 @@ final class PhotoFilePersistenceTests: XCTestCase {
             XCTAssertNotNil(store.saveError)
             XCTAssertEqual(store.days, [original])
             XCTAssertEqual(persisted(defaults, suite: suite), before)
-            XCTAssertEqual(defaults.data(forKey: "days.v1"), legacy)
-            XCTAssertNil(defaults.object(forKey: "days.v2"))
+            XCTAssertEqual(defaults.data(forKey: "days.v2"), stored)
             XCTAssertEqual(try Data(contentsOf: blockedDirectory), obstruction)
             store.add(day("Blocked after failure"))
             store.save()
@@ -413,7 +381,7 @@ final class PhotoFilePersistenceTests: XCTestCase {
         try withStorage { defaults, _, directory in
             var original = day("Original without photo")
             original.photoData = nil
-            defaults.set(try JSONEncoder().encode([original]), forKey: "days.v1")
+            defaults.set(try JSONEncoder().encode([original]), forKey: "days.v2")
             try Data("blocked directory".utf8).write(to: directory)
             let store = DayStore(defaults: defaults, photoDirectory: directory)
             let incoming = DayBackup(days: [day("Failed incoming photo")],
@@ -472,7 +440,7 @@ final class PhotoFilePersistenceTests: XCTestCase {
                 original.categoryID = category.id
                 original.categoryLabel = category.name
                 let categories = CategoryDefinition.system + [category]
-                defaults.set(try JSONEncoder().encode([original]), forKey: "days.v1")
+                defaults.set(try JSONEncoder().encode([original]), forKey: "days.v2")
                 defaults.set(try JSONEncoder().encode(categories), forKey: "categories.v1")
                 try Data("blocked directory".utf8).write(to: directory)
                 let store = DayStore(defaults: defaults, photoDirectory: directory)
@@ -667,11 +635,10 @@ final class PhotoFilePersistenceTests: XCTestCase {
         try withStorage { defaults, suite, directory in
             let original = day("Affected photo")
             let survivor = day("Unaffected photo", photo: Data([4, 5, 6]))
-            let legacy = try JSONEncoder().encode([original, survivor])
-            defaults.set(legacy, forKey: "days.v1")
+            defaults.set(try JSONEncoder().encode([original, survivor]), forKey: "days.v2")
             let writer = DayStore(defaults: defaults, photoDirectory: directory)
             var edited = original
-            edited.title = "Migrated title"
+            edited.title = "Edited title"
             writer.update(edited)
             XCTAssertNil(writer.loadError)
             let metadata = try XCTUnwrap(defaults.data(forKey: "days.v2"))
@@ -690,7 +657,6 @@ final class PhotoFilePersistenceTests: XCTestCase {
             XCTAssertThrowsError(try store.exportBackup())
             let raw = try JSONDecoder().decode([String: Data].self, from: store.exportOriginalData())
             XCTAssertEqual(raw["days.v2"], metadata)
-            XCTAssertEqual(raw["days.v1"], legacy)
             XCTAssertEqual(raw["photos/" + reference], replacement)
             XCTAssertEqual(raw["photos/" + survivorReference], survivor.photoData)
             let days = store.days

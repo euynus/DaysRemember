@@ -71,14 +71,13 @@ final class LocalCopyDeletionTests: XCTestCase {
             try store.restoreBackup(library([replaced]))
             try store.keepMigrationBackup()
             try store.restoreBackup(library([current]))
-            defaults.set(Data("[]".utf8), forKey: "days.v1")
             defaults.set(Data("raw".utf8), forKey: "unreadableData.v1")
             XCTAssertTrue(store.hasInternalCopies)
             XCTAssertEqual(photoFiles(in: photos).count, 2)
 
             try store.clearInternalCopies()
 
-            for key in ["recoveryBackup.v1", "preCloudKitBackup.v1", "unreadableData.v1", "days.v1"] {
+            for key in ["recoveryBackup.v1", "preCloudKitBackup.v1", "unreadableData.v1"] {
                 XCTAssertNil(defaults.object(forKey: key), key)
             }
             XCTAssertFalse(store.hasInternalCopies)
@@ -92,18 +91,5 @@ final class LocalCopyDeletionTests: XCTestCase {
             XCTAssertNil(relaunched.loadError)
             XCTAssertEqual(relaunched.days, [current])
         }
-    }
-
-    func testClearingInternalCopiesKeepsTheLibraryOfAStoreWithoutPhotoFiles() throws {
-        let suite = "LocalCopyDeletionTests.\(UUID().uuidString)"
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let store = DayStore(defaults: defaults)
-        let only = day("Only")
-        try store.restoreBackup(library([only]))
-        // Here the first format's key is the library itself.
-        try store.clearInternalCopies()
-        XCTAssertNotNil(defaults.data(forKey: "days.v1"))
-        XCTAssertEqual(DayStore(defaults: defaults).days, [only])
     }
 }
