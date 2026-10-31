@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://days.gooday.dev/</loc>
-    <lastmod>2026-10-18</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/"/>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/"/>
@@ -10,7 +10,7 @@
   </url>
   <url>
     <loc>https://days.gooday.dev/en/</loc>
-    <lastmod>2026-10-18</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/"/>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/"/>
@@ -18,7 +18,7 @@
   </url>
   <url>
     <loc>https://days.gooday.dev/zh-Hant/</loc>
-    <lastmod>2026-10-18</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <xhtml:link rel="alternate" hreflang="zh-Hans" href="https://days.gooday.dev/"/>
     <xhtml:link rel="alternate" hreflang="zh-Hant" href="https://days.gooday.dev/zh-Hant/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://days.gooday.dev/en/"/>

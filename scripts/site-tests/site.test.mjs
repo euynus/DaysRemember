@@ -68,10 +68,10 @@ test("days turn over at midnight on the visitor's clock", () => {
   }
 });
 
-// 16px semibold text is not large text, so WCAG 1.4.3 asks for 4.5:1.
-test("the coming-soon badge has enough contrast", () => {
-  const badge = rule(".cta.is-soon");
-  const ratio = contrast(color(badge.color), color(badge.background));
+// 16px heavy text is not large text, so WCAG 1.4.3 asks for 4.5:1.
+test("the App Store link has enough contrast", () => {
+  const link = rule(".cta");
+  const ratio = contrast(color(link.color), color(link.background));
   assert.ok(ratio >= 4.5, "contrast " + ratio.toFixed(2) + ":1");
 });
 

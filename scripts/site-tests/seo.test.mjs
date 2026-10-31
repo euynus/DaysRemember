@@ -6,6 +6,9 @@ import test from "node:test";
 const docs = new URL("../../docs/", import.meta.url);
 const read = (path) => readFileSync(new URL(path, docs), "utf8");
 const SITE = "https://days.gooday.dev/";
+// The App Store sends this link to the visitor's own storefront.
+const APP_STORE_ID = "6826505500";
+const APP_STORE = "https://apps.apple.com/app/id" + APP_STORE_ID;
 
 const PRODUCT = {
   "index.html": { lang: "zh-Hans", url: SITE, title: "时光 – 纪念日倒数日 App｜农历生日提醒、iPhone 小组件", free: "免费" },
@@ -149,11 +152,16 @@ test("the old section links still reach their language", () => {
   }
 });
 
-// The App Store ID doesn't exist until release; a placeholder in the tag would break Smart App Banners.
-test("no App Store banner tag before there is a real App Store ID", () => {
+// Safari shows a Smart App Banner on the product pages, and each one links to the App Store.
+test("the product pages link to the app on the App Store", () => {
   for (const page of [...Object.keys(PRODUCT), ...Object.keys(DOCUMENTS)]) {
     const banner = /<meta name="apple-itunes-app" content="([^"]*)">/.exec(head(page).replace(/<!--[\s\S]*?-->/g, ""));
-    if (banner) assert.match(banner[1], /^app-id=\d+/, page);
+    if (page in PRODUCT) assert.ok(banner, page + " has no Smart App Banner");
+    if (banner) assert.equal(banner[1], "app-id=" + APP_STORE_ID, page);
+  }
+  for (const page of Object.keys(PRODUCT)) {
+    assert.ok(read(page).includes(`<a class="cta" href="${APP_STORE}">`), page);
+    assert.ok(!read(page).includes("is-soon"), page + " still says the app is coming soon");
   }
 });
 
@@ -171,7 +179,8 @@ test("the product pages describe the app in JSON-LD, as the page does", () => {
     assert.equal(app.isAccessibleForFree, true);
     assert.equal(app.offers["@type"], "Offer");
     assert.equal(app.offers.price, "0", page);
-    for (const invented of ["aggregateRating", "review", "downloadUrl", "installUrl"]) {
+    assert.equal(app.downloadUrl, APP_STORE, page);
+    for (const invented of ["aggregateRating", "review", "installUrl"]) {
       assert.ok(!(invented in app), page + " claims " + invented);
     }
     assert.ok(existsSync(local(app.image)), app.image);
@@ -267,7 +276,7 @@ test("every other address of a page redirects permanently to it, without loops",
 test("llms.txt names the app and links only to pages that exist", () => {
   const llms = read("llms.txt");
   assert.match(llms, /^# 时光 · Days Remember\n\n> /);
-  assert.match(llms, /not on the App Store yet/);
+  assert.ok(llms.includes(APP_STORE), "llms.txt doesn't link to the App Store");
   const links = [...llms.matchAll(/\]\((https:\/\/days\.gooday\.dev\/[^)]*)\)/g)].map((match) => match[1]);
   assert.deepEqual([...links].sort(), [...PAGES].sort());
 });
