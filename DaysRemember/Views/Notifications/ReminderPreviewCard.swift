@@ -19,7 +19,7 @@ struct ReminderPreviewCard: View {
             }
             VStack(alignment: .leading, spacing: 12) {
                 if next != nil {
-                    Label("下一次已安排提醒", systemImage: "bell.badge")
+                    Label("下一条提醒", systemImage: "bell.badge")
                         .font(Theme.sans(12))
                         .foregroundStyle(Theme.accent)
                 }

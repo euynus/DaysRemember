@@ -17,10 +17,10 @@ struct ReminderScheduleSummary: View {
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
                     if manager.pendingReminders.contains(where: \.repeats) {
-                        Text("每日问候由系统重复，占用 1 个名额。")
+                        Text("「每日问候」由系统每天自动重复，占用 1 条提醒名额。")
                     }
-                    Text("公历与农历最多预排未来 \(NotificationManager.planningYears) 年，按时间保留最早 \(NotificationManager.pendingLimit) 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。")
-                    Text("iOS 通常会在后台续排提醒；很久不打开 App 时，打开一次一定能补上。单日「不提醒」也不参与年度回忆。")
+                    Text("受系统限制，每次最多可预先安排 \(NotificationManager.pendingLimit) 条近期提醒（涵盖未来 \(NotificationManager.planningYears) 年内的公历与 1900–2100 年农历日子）；日子较多时预排跨度会相应缩短。")
+                    Text("日常使用或后台刷新时，系统会自动续排后续提醒；若很久未打开 App，打开一次即可自动补齐。设为「不提醒」的日子不会发送年度回忆。")
                 }
                 .padding(.top, 6)
             } label: {

@@ -13,7 +13,7 @@ struct DaysRememberWidget: Widget {
         }
         .contentMarginsDisabled()
         .configurationDisplayName("时光 · 重要日子")
-        .description("选择一个重要日子，不选时显示置顶或最近的日子。")
+        .description("展示一个重要日子的倒数或正数；未指定时自动显示置顶或最近的日子。")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge,
                             .accessoryCircular, .accessoryRectangular, .accessoryInline])
     }

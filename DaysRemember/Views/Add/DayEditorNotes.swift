@@ -7,7 +7,7 @@ struct DayEditorNotes: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             if note.isEmpty {
-                Text("写下这一天的心情…")
+                Text("写下这一天的心情或故事…")
                     .font(Theme.sans(16))
                     .foregroundStyle(Theme.muted)
                     .padding(16)

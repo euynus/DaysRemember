@@ -163,10 +163,10 @@ struct HomeView: View {
         VStack(spacing: 12) {
             if cloud.isFirstDownloadPending {
                 ContentUnavailableView {
-                    Label(String(localized: "正在从 iCloud 下载", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                    Label(String(localized: "正在从 iCloud 同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                           systemImage: "icloud.and.arrow.down")
                 } description: {
-                    Text(String(localized: "在其他设备上记下的日子马上就到。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                    Text(String(localized: "你在其他设备上记录的日子即将呈现。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                 } actions: {
                     ProgressView()
                 }
@@ -174,7 +174,7 @@ struct HomeView: View {
             } else {
                 ContentUnavailableView(String(localized: "这里还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                        systemImage: "calendar.badge.plus",
-                                       description: Text(String(localized: "值得记住的，从这一天开始。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)))
+                                       description: Text(String(localized: "记下值得期盼或回望的一天，让时光替你珍藏。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)))
                     .foregroundStyle(Theme.muted)
             }
             Button("记录第一个日子", systemImage: "plus", action: onAdd)

@@ -14,7 +14,7 @@ struct DaysListWidget: Widget {
         }
         .contentMarginsDisabled()
         .configurationDisplayName("时光 · 日子列表")
-        .description("置顶的日子在前，接着是最近的几个日子。")
+        .description("一眼浏览接下来的多个重要日子，置顶事项优先排列。")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }

@@ -111,7 +111,7 @@ struct NotificationsView: View {
                         }
                         RowDivider()
                         ToggleCell(label: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                                   sub: String(localized: "过往日子的年度回忆，遵循公历或农历", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                                   sub: String(localized: "在已过日子的公历或农历周年当天，提醒你回望那一天", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                    isOn: reactiveBinding(\.memoryEnabled))
                         RowDivider()
                         timeRow

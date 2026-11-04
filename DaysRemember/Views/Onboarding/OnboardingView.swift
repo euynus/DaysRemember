@@ -26,7 +26,7 @@ struct OnboardingView: View {
                         .font(Theme.sans(30, weight: .heavy, relativeTo: .largeTitle))
                         .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("从今天开始。")
+                    Text("未来的满怀期待，走过的温柔回望。")
                         .font(Theme.sans(17))
                         .foregroundStyle(Theme.ink2)
                 }

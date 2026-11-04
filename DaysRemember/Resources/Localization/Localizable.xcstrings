@@ -324,7 +324,7 @@
         }
       }
     },
-    "云端资料区已删除，同步已暂停" : {
+    "云端数据已清空，同步已暂停" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -336,36 +336,36 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "云端资料区已删除，同步已暂停"
+            "value" : "云端数据已清空，同步已暂停"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "雲端資料區已刪除，同步已暫停"
+            "value" : "雲端資料已清空，同步已暫停"
           }
         }
       }
     },
-    "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。" : {
+    "iCloud 中的「时光」数据已被清除，同步已暂停。本机记录完好无损，你可以先导出备份，再选择重新上传。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Days Remember’s data in iCloud was deleted. Sync is paused, and nothing has been uploaded again. You can export a local backup first, then choose to upload again."
+            "value" : "Days Remember’s data in iCloud was cleared and sync is paused. Your local days are intact; you can export a backup first, then choose whether to upload again."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。"
+            "value" : "iCloud 中的「时光」数据已被清除，同步已暂停。本机记录完好无损，你可以先导出备份，再选择重新上传。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "雲端資料區已刪除，同步已暫停，未自動重新上傳。可以先匯出本機備份，再選擇重新上傳。"
+            "value" : "iCloud 中的「時光」資料已被清除，同步已暫停。本機記錄完好無損，你可以先匯出備份，再選擇重新上傳。"
           }
         }
       }
@@ -609,20 +609,20 @@
         "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "今天也要好好生活，珍惜每一個值得記住的日子。" } }
       }
     },
-    "每日问候由系统重复，占用 1 个名额。" : {
+    "「每日问候」由系统每天自动重复，占用 1 条提醒名额。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "The system repeats the daily greeting, using one reminder slot." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每日问候由系统重复，占用 1 个名额。" } },
-        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "每日問候由系統重複，佔用 1 個名額。" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The Daily Greeting repeats automatically each day and uses 1 reminder slot." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "「每日问候」由系统每天自动重复，占用 1 条提醒名额。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "「每日問候」由系統每天自動重複，佔用 1 條提醒名額。" } }
       }
     },
-    "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。" : {
+    "受系统限制，每次最多可预先安排 %lld 条近期提醒（涵盖未来 %lld 年内的公历与 1900–2100 年农历日子）；日子较多时预排跨度会相应缩短。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gregorian and lunar reminders are scheduled up to %lld years ahead. Only the earliest %lld reminders, including the daily greeting, are kept, so more days shorten the coverage. Lunar dates are limited to 1900–2100." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "公历与农历最多预排未来 %lld 年，按时间保留最早 %lld 条（含每日问候）；日子较多时范围会缩短。农历日期限于 1900–2100 年。" } },
-        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "公曆與農曆最多預排未來 %lld 年，按時間保留最早 %lld 條（含每日問候）；日子較多時範圍會縮短。農曆日期限於 1900–2100 年。" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Up to %lld upcoming reminders (including the Daily Greeting) can be scheduled at a time, covering up to %lld years ahead for Gregorian and 1900–2100 lunar dates; having more days shortens the window." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "受系统限制，每次最多可预先安排 %lld 条近期提醒（涵盖未来 %lld 年内的公历与 1900–2100 年农历日子）；日子较多时预排跨度会相应缩短。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "受系統限制，每次最多可預先安排 %lld 條近期提醒（涵蓋未來 %lld 年內的公曆與 1900–2100 年農曆日子）；日子較多時預排跨度會相應縮短。" } }
       }
     },
     "设置" : {
@@ -1857,25 +1857,25 @@
         }
       }
     },
-    "下一次已安排提醒" : {
+    "下一条提醒" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Next Scheduled Reminder"
+            "value" : "Next Reminder"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下一次已安排提醒"
+            "value" : "下一条提醒"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下一次已安排提醒"
+            "value" : "下一條提醒"
           }
         }
       }
@@ -2233,25 +2233,25 @@
         }
       }
     },
-    "从今天开始。" : {
+    "未来的满怀期待，走过的温柔回望。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Start today."
+            "value" : "Look forward to what’s ahead, and look back on what has passed."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "从今天开始。"
+            "value" : "未来的满怀期待，走过的温柔回望。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "從今天開始。"
+            "value" : "未來的滿懷期待，走過的溫柔回望。"
           }
         }
       }
@@ -2463,25 +2463,25 @@
         }
       }
     },
-    "值得记住的，从这一天开始。" : {
+    "记下值得期盼或回望的一天，让时光替你珍藏。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Start with a day worth remembering."
+            "value" : "Save a day to look forward to or look back on."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "值得记住的，从这一天开始。"
+            "value" : "记下值得期盼或回望的一天，让时光替你珍藏。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "值得記住的，從這一天開始。"
+            "value" : "記下值得期盼或回望的一天，讓時光替你珍藏。"
           }
         }
       }
@@ -2784,25 +2784,25 @@
         }
       }
     },
-    "写下这一天的心情…" : {
+    "写下这一天的心情或故事…" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Write about this day..."
+            "value" : "Write a note or story for this day…"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "写下这一天的心情…"
+            "value" : "写下这一天的心情或故事…"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "寫下這一天的心情…"
+            "value" : "寫下這一天的心情或故事…"
           }
         }
       }
@@ -4763,25 +4763,25 @@
         }
       }
     },
-    "已完成本次 iCloud 同步" : {
+    "已与 iCloud 同步" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iCloud sync complete"
+            "value" : "Synced with iCloud"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已完成本次 iCloud 同步"
+            "value" : "已与 iCloud 同步"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已完成本次 iCloud 同步"
+            "value" : "已與 iCloud 同步"
           }
         }
       }
@@ -8914,25 +8914,25 @@
         }
       }
     },
-    "iOS 通常会在后台续排提醒；很久不打开 App 时，打开一次一定能补上。单日「不提醒」也不参与年度回忆。" : {
+    "日常使用或后台刷新时，系统会自动续排后续提醒；若很久未打开 App，打开一次即可自动补齐。设为「不提醒」的日子不会发送年度回忆。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iOS usually renews the schedule in the background, and opening the app always does. Days set to “No reminders” are also left out of yearly memories."
+            "value" : "iOS replenishes upcoming reminders in the background, or whenever you open the app. Days set to “None” are also excluded from Memories."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iOS 通常会在后台续排提醒；很久不打开 App 时，打开一次一定能补上。单日「不提醒」也不参与年度回忆。"
+            "value" : "日常使用或后台刷新时，系统会自动续排后续提醒；若很久未打开 App，打开一次即可自动补齐。设为「不提醒」的日子不会发送年度回忆。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iOS 通常會在背景續排提醒；很久不開啟 App 時，開啟一次一定能補上。單日「不提醒」也不參與年度回憶。"
+            "value" : "日常使用或背景重新整理時，系統會自動續排後續提醒；若很久未打開 App，打開一次即可自動補齊。設為「不提醒」的日子不會發送年度回憶。"
           }
         }
       }
@@ -9098,25 +9098,25 @@
         }
       }
     },
-    "过往日子的年度回忆，遵循公历或农历" : {
+    "在已过日子的公历或农历周年当天，提醒你回望那一天" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yearly memories of past days, by the Gregorian or lunar calendar"
+            "value" : "A yearly reminder on the Gregorian or lunar anniversary of a past day"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "过往日子的年度回忆，遵循公历或农历"
+            "value" : "在已过日子的公历或农历周年当天，提醒你回望那一天"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "過往日子的年度回憶，遵循公曆或農曆"
+            "value" : "在已過日子的國曆或農曆週年當天，提醒你回望那一天"
           }
         }
       }
@@ -9282,12 +9282,12 @@
         }
       }
     },
-    "选择一个重要日子，不选时显示置顶或最近的日子。" : {
+    "展示一个重要日子的倒数或正数；未指定时自动显示置顶或最近的日子。" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose an important day, or show your pinned or next one." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择一个重要日子，不选时显示置顶或最近的日子。" } },
-        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "選擇一個重要日子，不選時顯示置頂或最近的日子。" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows the countdown or count-up for a chosen day, or your nearest pinned or upcoming day." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "展示一个重要日子的倒数或正数；未指定时自动显示置顶或最近的日子。" } },
+        "zh-Hant" : { "stringUnit" : { "state" : "translated", "value" : "顯示一個重要日子的倒數或正數；未指定時自動顯示置頂或最近的日子。" } }
       }
     },
     "选择农历日期" : {
@@ -10321,25 +10321,25 @@
         }
       }
     },
-    "每年重复的日子和未来的日子会出现在这里。" : {
+    "未来的日程与每年重复的纪念日，都会在这里为你倒数。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yearly days and days still to come appear here."
+            "value" : "Future dates and yearly anniversaries will count down here."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每年重复的日子和未来的日子会出现在这里。"
+            "value" : "未来的日程与每年重复的纪念日，都会在这里为你倒数。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每年重複的日子和未來的日子會出現在這裡。"
+            "value" : "未來的日程與每年重複的紀念日，都會在這裡為你倒數。"
           }
         }
       }
@@ -10390,25 +10390,25 @@
         }
       }
     },
-    "不重复的日子过去以后，会在这里一天天记着。" : {
+    "只发生一次的日子跨过当天后，会在这里一天天累积时光。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "One-time days count up here once they pass."
+            "value" : "One-time days move here after they pass, counting up day by day."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "不重复的日子过去以后，会在这里一天天记着。"
+            "value" : "只发生一次的日子跨过当天后，会在这里一天天累积时光。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "不重複的日子過去以後，會在這裡一天天記著。"
+            "value" : "只發生一次的日子跨過當天後，會在這裡一天天累積時光。"
           }
         }
       }
@@ -11237,25 +11237,25 @@
         }
       }
     },
-    "写下这一天的记忆" : {
+    "写下关于这一天的记忆" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Write down a memory of this day"
+            "value" : "Write a memory for this day"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "写下这一天的记忆"
+            "value" : "写下关于这一天的记忆"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "寫下這一天的記憶"
+            "value" : "寫下關於這一天的記憶"
           }
         }
       }
@@ -11594,48 +11594,48 @@
         }
       }
     },
-    "正在从 iCloud 下载" : {
+    "正在从 iCloud 同步" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Downloading from iCloud"
+            "value" : "Syncing with iCloud"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在从 iCloud 下载"
+            "value" : "正在从 iCloud 同步"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在從 iCloud 下載"
+            "value" : "正在從 iCloud 同步"
           }
         }
       }
     },
-    "在其他设备上记下的日子马上就到。" : {
+    "你在其他设备上记录的日子即将呈现。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Days you’ve saved on your other devices will be here shortly."
+            "value" : "The days you saved on your other devices will appear shortly."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在其他设备上记下的日子马上就到。"
+            "value" : "你在其他设备上记录的日子即将呈现。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在其他裝置上記下的日子馬上就到。"
+            "value" : "你在其他裝置上記錄的日子即將呈現。"
           }
         }
       }
@@ -11686,25 +11686,25 @@
         }
       }
     },
-    "可以置顶、编辑、分享或删除。置顶的日子排在最前面，小组件也优先显示它。" : {
+    "长按即可置顶、编辑、分享或删除。置顶的日子会排在首页最前，并优先展示在小组件中。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pin, edit, share or delete it. Pinned days come first, in the app and in widgets."
+            "value" : "Touch and hold to pin, edit, share, or delete. Pinned days stay at the top and appear first in widgets."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "可以置顶、编辑、分享或删除。置顶的日子排在最前面，小组件也优先显示它。"
+            "value" : "长按即可置顶、编辑、分享或删除。置顶的日子会排在首页最前，并优先展示在小组件中。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "可以置頂、編輯、分享或刪除。置頂的日子排在最前面，小工具也優先顯示它。"
+            "value" : "長按即可置頂、編輯、分享或刪除。置頂的日子會排在首頁最前，並優先顯示在小工具中。"
           }
         }
       }
@@ -11939,25 +11939,25 @@
         }
       }
     },
-    "置顶的日子在前，接着是最近的几个日子。" : {
+    "一眼浏览接下来的多个重要日子，置顶事项优先排列。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pinned days first, then the next few."
+            "value" : "See your next several days at a glance, with pinned days first."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "置顶的日子在前，接着是最近的几个日子。"
+            "value" : "一眼浏览接下来的多个重要日子，置顶事项优先排列。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "置頂的日子在前，接著是最近的幾個日子。"
+            "value" : "一眼瀏覽接下來的多個重要日子，置頂事項優先排列。"
           }
         }
       }
@@ -12054,94 +12054,94 @@
         }
       }
     },
-    "同步的内容：日子、分类、笔记、地点、照片和提醒设置。" : {
+    "开启同步后，日子、分类、照片、笔记与提醒设置将在你的设备间保持一致。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "What syncs: your days, categories, notes, places, photos and reminder settings."
+            "value" : "When sync is on, your days, categories, photos, notes, and reminder settings stay in sync across your devices."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "同步的内容：日子、分类、笔记、地点、照片和提醒设置。"
+            "value" : "开启同步后，日子、分类、照片、笔记与提醒设置将在你的设备间保持一致。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "同步的內容：日子、分類、筆記、地點、照片和提醒設定。"
+            "value" : "開啟同步後，日子、分類、照片、筆記與提醒設定將在你的裝置間保持一致。"
           }
         }
       }
     },
-    "保存在你自己 iCloud 账户的私有空间，由 Apple 存储和传输，开发者无法访问。" : {
+    "数据加密保存在你个人的 iCloud 私有空间中，由 Apple 存储与传输，开发者无法访问。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "It’s kept in the private space of your own iCloud account, stored and carried by Apple. The developer can’t access it."
+            "value" : "Stored in your private iCloud database and transmitted by Apple. The developer cannot access your data."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "保存在你自己 iCloud 账户的私有空间，由 Apple 存储和传输，开发者无法访问。"
+            "value" : "数据加密保存在你个人的 iCloud 私有空间中，由 Apple 存储与传输，开发者无法访问。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "儲存在你自己 iCloud 帳號的私人空間，由 Apple 儲存和傳輸，開發者無法存取。"
+            "value" : "資料加密儲存在你個人的 iCloud 私有空間中，由 Apple 儲存與傳輸，開發者無法存取。"
           }
         }
       }
     },
-    "选择「仅本机使用」，所有内容只保存在这台设备上。" : {
+    "若选择「仅本机使用」，所有记录将只保存在当前这台设备上。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose Keep on This Device to store everything on this device only."
+            "value" : "Choose “Keep on This Device” to store everything on this device only."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "选择「仅本机使用」，所有内容只保存在这台设备上。"
+            "value" : "若选择「仅本机使用」，所有记录将只保存在当前这台设备上。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "選擇「僅本機使用」，所有內容只儲存在這台裝置上。"
+            "value" : "若選擇「僅本機使用」，所有記錄將只儲存在目前這台裝置上。"
           }
         }
       }
     },
-    "之后可以在「我的 › 数据与同步」中随时更改，或删除 iCloud 中的数据。" : {
+    "你随时可以在「我的 › 数据与同步」中更改设置，或管理云端数据。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You can change this at any time in Me › Data and Sync, or delete your data in iCloud there."
+            "value" : "You can change this anytime or manage your iCloud data in Me › Data and Sync."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "之后可以在「我的 › 数据与同步」中随时更改，或删除 iCloud 中的数据。"
+            "value" : "你随时可以在「我的 › 数据与同步」中更改设置，或管理云端数据。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "之後可以在「我的 › 資料與同步」中隨時更改，或刪除 iCloud 中的資料。"
+            "value" : "你隨時可以在「我的 › 資料與同步」中變更設定，或管理雲端資料。"
           }
         }
       }
@@ -12284,25 +12284,25 @@
         }
       }
     },
-    "这台设备不再与 iCloud 同步，本机日子不受影响，iCloud 中的数据会保留。重新开启后，本机与 iCloud 中的日子会合并；两边都改过的日子以 iCloud 中的为准，本机的版本留在「同步保留版本」。" : {
+    "关闭后，这台设备将停止与 iCloud 同步，本机与云端现有的数据都会保留。重新开启后，两端记录会自动合并；若同一个日子在两边都有修改，将以 iCloud 版本为准，本机版本会保留在「同步保留版本」中。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This device will stop syncing with iCloud. Its days stay as they are, and your data in iCloud is kept. If you turn sync back on, the days here and in iCloud are merged; where a day changed in both, iCloud’s version is used and this device’s goes to Saved Sync Versions."
+            "value" : "This device will stop syncing with iCloud, while keeping existing data on both this device and iCloud. When you turn sync back on, both sides will merge; if the same day was edited in both places, the iCloud version wins and the local version is kept in Saved Sync Versions."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这台设备不再与 iCloud 同步，本机日子不受影响，iCloud 中的数据会保留。重新开启后，本机与 iCloud 中的日子会合并；两边都改过的日子以 iCloud 中的为准，本机的版本留在「同步保留版本」。"
+            "value" : "关闭后，这台设备将停止与 iCloud 同步，本机与云端现有的数据都会保留。重新开启后，两端记录会自动合并；若同一个日子在两边都有修改，将以 iCloud 版本为准，本机版本会保留在「同步保留版本」中。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "這台裝置不再與 iCloud 同步，本機日子不受影響，iCloud 中的資料會保留。重新開啟後，本機與 iCloud 中的日子會合併；兩邊都改過的日子以 iCloud 中的為準，本機的版本留在「同步保留版本」。"
+            "value" : "關閉後，這台裝置將停止與 iCloud 同步，本機與雲端現有的資料都會保留。重新開啟後，兩端記錄會自動合併；若同一個日子在兩邊都有修改，將以 iCloud 版本為準，本機版本會保留在「同步保留版本」中。"
           }
         }
       }
@@ -12514,25 +12514,25 @@
         }
       }
     },
-    "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和不再使用的同步记录，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。" : {
+    "将清理系统为安全回退留存的内部副本（含「上一次本机副本」、迁移前备份、替换前的原始数据与旧同步记录）及其占用的照片。当前的日子、「最近删除」与「同步保留版本」不受影响。清理后无法恢复，如有需要请先导出。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This deletes the previous local copy, the pre-migration backup, raw data from before a restore and sync records no longer in use, along with photos only they still use. Your current days, Recently Deleted and saved sync versions are not affected. This can’t be recovered, so export anything you need first."
+            "value" : "This removes internal safety copies (the previous local copy, pre-migration backup, raw data from before a restore, and unused sync records) along with any photos only they used. Your current days, Recently Deleted, and Saved Sync Versions are not affected. This cannot be undone, so export first if needed."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "将删除「上一次本机副本」、迁移前备份、替换前的原始数据和不再使用的同步记录，以及只有它们还在使用的照片。当前的日子、最近删除和同步保留版本不受影响。删除后无法找回，需要的话请先导出。"
+            "value" : "将清理系统为安全回退留存的内部副本（含「上一次本机副本」、迁移前备份、替换前的原始数据与旧同步记录）及其占用的照片。当前的日子、「最近删除」与「同步保留版本」不受影响。清理后无法恢复，如有需要请先导出。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "將刪除「上一次本機副本」、移轉前備份、替換前的原始資料和不再使用的同步記錄，以及只有它們還在使用的照片。目前的日子、最近刪除和同步保留版本不受影響。刪除後無法找回，需要的話請先匯出。"
+            "value" : "將清理系統為安全回退留存的內部副本（含「上一次本機副本」、轉移前備份、替換前的原始資料與舊同步記錄）及其佔用的照片。目前的日子、「最近刪除」與「同步保留版本」不受影響。清理後無法還原，如有需要請先匯出。"
           }
         }
       }
@@ -12560,25 +12560,25 @@
         }
       }
     },
-    "备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。「上一次本机副本」保留到被下一次恢复或同步更改替换，或你清除它为止。" : {
+    "备份包含全部日子、照片、分类，以及「最近删除」与「同步保留版本」。文件未加密，请妥善保管。恢复备份不会改变系统通知权限。「上一次本机副本」会一直保留，直到被下一次恢复或同步更新替换，或由你手动清除。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Backups include days, photos, categories, recently deleted days, and saved sync versions. Files are not encrypted, so keep them in a trusted location. Restoring does not change system notification permissions. The previous local copy is kept until the next restore or synced change replaces it, or you clear it."
+            "value" : "A backup includes all days, photos, categories, Recently Deleted, and Saved Sync Versions. The file is unencrypted, so store it somewhere you trust. Restoring does not change notification permissions. The previous local copy is kept until replaced by a later restore or sync update, or cleared by you."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "备份包含日子、照片、分类、最近删除和同步保留版本。文件未加密，请保存在可信的位置。恢复不会改变系统通知权限。「上一次本机副本」保留到被下一次恢复或同步更改替换，或你清除它为止。"
+            "value" : "备份包含全部日子、照片、分类，以及「最近删除」与「同步保留版本」。文件未加密，请妥善保管。恢复备份不会改变系统通知权限。「上一次本机副本」会一直保留，直到被下一次恢复或同步更新替换，或由你手动清除。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "備份包含日子、照片、分類、最近刪除和同步保留版本。檔案未加密，請儲存在可信的位置。還原不會變更系統通知權限。「上一次本機副本」保留到被下一次還原或同步更改取代，或你清除它為止。"
+            "value" : "備份包含全部日子、照片、分類，以及「最近刪除」與「同步保留版本」。檔案未加密，請妥善保管。還原備份不會改變系統通知權限。「上一次本機副本」會一直保留，直到被下一次還原或同步更新取代，或由你手動清除。"
           }
         }
       }

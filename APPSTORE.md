@@ -49,7 +49,7 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 **宣传文本**
 
 ```text
-记录结婚纪念、宝宝出生、一场旅行、考试倒数。按公历或农历每年重复，放进主屏幕和锁定屏幕的小组件，提前提醒不错过。无需账号，无广告，不收集任何数据。
+无论是结婚纪念日、宝宝降生、一场期待已久的旅行，还是重要的考试倒数，都可以放进主屏幕与锁屏小组件。支持公历与农历重复、贴心提前提醒，无账号、无广告、不收集任何数据。
 ```
 
 **关键词**
@@ -61,42 +61,42 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 **描述**
 
 ```text
-时光帮你温柔记住每一个重要的日子：结婚纪念、宝宝出生、一场旅行、考试倒数。未来的值得期待，过去的可以回望。
+「时光」帮你温柔记住每一个重要的日子：无论是结婚纪念日、宝宝降生、一场期待已久的旅行，还是重要的考试倒数。未来的满怀期待，走过的温柔回望。
 
 【将至与已过】
-首页分成两面。「将至」为还没到的日子倒数，置顶的和最近的日子排在最前；每年的日子刚过去的一周里，首页还会留着它，方便你写下这一天。不重复的日子过去以后移到「已过」，一天天正数。
+首页分为两面。「将至」为即将到来的日子倒数，置顶与临近的事项一目了然；每年重复的纪念日刚过去的一周内，仍会留在首页，方便你随时记下当天的故事。只发生一次的日子在跨过当天后会自动移入「已过」，一天天为你累积走过的时光。
 
 【整数纪念】
-「已过」里的日子会预告下一个整数纪念：1000 天以内每满 100 天，之后每满 500 天，或者满一整年。
+「已过」里的日子会自动预告下一个值得庆祝的里程碑：1000 天内每逢百天、此后每满 500 天，以及每一个整年周年，让平淡的日常也闪闪发光。
 
 【农历与节气】
-日子可以按公历或农历每年重复。日历里标出农历日期、二十四节气和传统节日，农历支持 1900 至 2100 年。
+生日与纪念日支持按公历或农历每年重复。内置日历清晰标注农历日期、二十四节气与传统节日，完整涵盖 1900 至 2100 年。
 
 【轻点切换单位】
-在日子详情里轻点数字，就在天、周、月、小时之间切换。下面列出这个日子的节点：每年的日子有上一次和下一次周年，已过的日子有下一个整数纪念。
+在日子详情页轻点天数，即可在天、周、月、小时之间自由切换。下方时间轴清晰罗列上一次与下一次周年，或下一个整数纪念节点。
 
 【贴心提醒】
-提前 7 天、3 天、1 天或当天提醒，时间自选，每个日子也可以单独设置。「每日问候」每天在你选的时间送上一句问候；「时光回忆」会在已过日子的周年那天，提醒你想起这一天。两项可以分别打开。
+支持提前 7 天、3 天、1 天或当天提醒，提醒时间由你决定，每个日子还能单独定制。你也可以分别开启晨间的「每日问候」，或让「时光回忆」在已过日子的周年当天带你回望那一天。
 
 【封面与分类】
-每个日子都是一张分类颜色的卡片。配一张自己的照片，或从 12 张扁平插图里挑一张；新建的日子会按分类先配好封面。除了爱情、家人、旅行、工作、生活，还能在「我的」里新建自己的分类，图标和颜色自己挑。
+每个日子都是一张带有分类色彩的温润卡片。你可以换上珍藏的照片，或从 12 幅手绘感扁平插画中挑选；新建日子时也会按分类自动配好相衬的封面。除了内置的爱情、家人、旅行、工作、生活，还可以在「我的」里创建专属分类，自由搭配图标与 5 种柔和色系。
 
-【小组件】
-主屏幕有小、中、大三种尺寸，用和 App 里一样的彩色卡片；日子列表小组件一次列出接下来几个日子，置顶的排在前面；锁定屏幕另有三种样式。单个日子的小组件可以单独选一个日子，不选就先显示置顶的日子。
+【桌面与锁屏小组件】
+提供小、中、大三种尺寸的主屏幕卡片，以及一次纵览多项日程的「日子列表」与三款锁屏小组件。单日小组件可指定特定日子，也可自动跟随置顶事项。
 
-【快捷入口】
-控制中心可以一键新建日子，长按主屏幕图标也能从快捷操作新建；问 Siri「某个日子还有几天」，不用打开 App 就有答案。
+【快捷入口与 Siri】
+支持从控制中心或长按主屏幕图标一键新建日子；无需打开 App，直接问问 Siri「某个日子还有几天」就能即刻获知。
 
 【分享卡片】
-照片、手记、极简、双栏四种模板，可以导出 3:4 竖图，保存到相册或分享出去。笔记默认不出现在图片上。
+内置照片、手记、极简、双栏四款排版模板，一键导出 3:4 竖版纪念卡片，方便保存到相册或分享给重要的人。个人笔记默认隐藏，仅在你勾选时才会展示在卡片上。
 
 【iCloud 同步与备份】
-日子、分类和照片可以选择通过你自己的 iCloud 在设备间同步，也可以只保存在本机。误删的日子在「最近删除」里保留 30 天；两台设备改了同一个日子，被替换的那一版也会在「同步保留版本」里保留 30 天，都可以恢复。还可以导出备份文件，在新设备上从文件恢复。
+日子、分类与照片可通过你个人的 iCloud 在多台设备间私密同步，也可以选择仅保存在本机。误删的日子会在「最近删除」中保留 30 天；多设备修改同一日子产生冲突时，被替换的版本也会在「同步保留版本」中留存 30 天，随时可以恢复。同时支持导出完整备份文件，换机迁移更安心。
 
-【隐私】
-不收集任何数据。日子、照片和设置只保存在你的设备上，以及你选择同步时你自己的 iCloud 中，不会上传给开发者。无需账号，无广告，无追踪，无第三方 SDK。
+【隐私承诺】
+不收集任何数据。你的日子、照片与设置只保存在你的设备上（开启同步时保存在你个人的 iCloud 私有空间中），绝不经过任何第三方服务器，开发者也无法访问。无需注册账号，无广告，无追踪，无第三方 SDK。
 
-支持简体中文、繁體中文和 English，可以在「我的 › 语言」里切换。倒数和提醒跟随设备所在的时区。
+支持简体中文、繁體中文和 English，可在「我的 › 语言」中随时切换。倒数计算与提醒时间均自动跟随设备当前时区。
 ```
 
 ### 繁體中文
@@ -116,7 +116,7 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 **宣傳文字**
 
 ```text
-記錄結婚紀念、寶寶出生、一場旅行、考試倒數。按國曆或農曆每年重複，放進主畫面與鎖定畫面小工具，提前提醒不錯過。無需帳號，無廣告，不收集任何資料。
+無論是結婚紀念日、寶寶誕生、一場期待已久的旅行，還是重要的考試倒數，都可以放進主畫面與鎖定畫面小工具。支援國曆與農曆重複、貼心提前提醒，無帳號、無廣告、不收集任何資料。
 ```
 
 **關鍵字**
@@ -128,42 +128,42 @@ App 内「我的 › 关于」的「隐私政策」「帮助与反馈」打开�
 **描述**
 
 ```text
-時光幫你溫柔記住每一個重要的日子：結婚紀念、寶寶出生、一場旅行、考試倒數。未來的值得期待，過去的可以回望。
+「時光」幫你溫柔記住每一個重要的日子：無論是結婚紀念日、寶寶誕生、一場期待已久的旅行，還是重要的考試倒數。未來的滿懷期待，走過的溫柔回望。
 
 【將至與已過】
-首頁分成兩面。「將至」為還沒到的日子倒數，置頂的和最近的日子排在最前；每年的日子剛過去的一週裡，首頁還會留著它，方便你寫下這一天。不重複的日子過去以後移到「已過」，一天天正數。
+首頁分為兩面。「將至」為即將到來的日子倒數，置頂與臨近的事項一目了然；每年重複的紀念日剛過去的一週內，仍會留在首頁，方便你隨時記下當天的故事。只發生一次的日子在跨過當天後會自動移入「已過」，一天天為你累積走過的時光。
 
 【整數紀念】
-「已過」裡的日子會預告下一個整數紀念：1000 天以內每滿 100 天，之後每滿 500 天，或者滿一整年。
+「已過」裡的日子會自動預告下一個值得慶祝的里程碑：1000 天內每逢百天、此後每滿 500 天，以及每一個整年週年，讓平淡的日常也閃閃發光。
 
 【農曆與節氣】
-日子可以按國曆或農曆每年重複。日曆裡標出農曆日期、二十四節氣和傳統節日，農曆支援 1900 至 2100 年。
+生日與紀念日支援按國曆或農曆每年重複。內建日曆清晰標註農曆日期、二十四節氣與傳統節日，完整涵蓋 1900 至 2100 年。
 
 【輕點切換單位】
-在日子詳情裡輕點數字，就在天、週、月、小時之間切換。下面列出這個日子的節點：每年的日子有上一次和下一次週年，已過的日子有下一個整數紀念。
+在日子詳情頁輕點天數，即可在天、週、月、小時之間自由切換。下方時間軸清晰羅列上一次與下一次週年，或下一個整數紀念節點。
 
 【貼心提醒】
-提前 7 天、3 天、1 天或當天提醒，時間自選，每個日子也可以單獨設定。「每日問候」每天在你選的時間送上一句問候；「時光回憶」會在已過日子的週年那天，提醒你想起這一天。兩項可以分別開啟。
+支援提前 7 天、3 天、1 天或當天提醒，提醒時間由你決定，每個日子還能單獨自訂。你也可以分別開啟晨間的「每日問候」，或讓「時光回憶」在已過日子的週年當天帶你回望那一天。
 
 【封面與分類】
-每個日子都是一張分類顏色的卡片。配一張自己的照片，或從 12 張扁平插圖裡挑一張；新建的日子會依分類先配好封面。除了愛情、家人、旅行、工作、生活，還能在「我的」裡新增自己的分類，圖示和顏色自己挑。
+每個日子都是一張帶有分類色彩的溫潤卡片。你可以換上珍藏的照片，或從 12 幅手繪感扁平插圖中挑選；新增日子時也會依分類自動配好相襯的封面。除了內建的愛情、家人、旅行、工作、生活，還可以在「我的」裡建立專屬分類，自由搭配圖示與 5 種柔和色系。
 
-【小工具】
-主畫面有小、中、大三種尺寸，用和 App 裡一樣的彩色卡片；日子列表小工具一次列出接下來幾個日子，置頂的排在前面；鎖定畫面另有三種樣式。單一日子的小工具可以單獨選一個日子，不選就先顯示置頂的日子。
+【主畫面與鎖定畫面小工具】
+提供小、中、大三種尺寸的主畫面卡片，以及一次縱覽多項日程的「日子列表」與三款鎖定畫面小工具。單一日子小工具可指定特定日子，也可自動跟隨置頂事項。
 
-【快捷入口】
-控制中心可以一鍵新增日子，長按主畫面圖示也能從快捷操作新增；問 Siri「某個日子還有幾天」，不用打開 App 就有答案。
+【快捷入口與 Siri】
+支援從控制中心或長按主畫面圖示一鍵新增日子；無需打開 App，直接問問 Siri「某個日子還有幾天」就能即刻獲知。
 
 【分享卡片】
-照片、手記、極簡、雙欄四種範本，可以匯出 3:4 直圖，儲存到相簿或分享出去。筆記預設不會出現在圖片上。
+內建照片、手記、極簡、雙欄四款排版範本，一鍵匯出 3:4 直式紀念卡片，方便儲存到相簿或分享給重要的人。個人筆記預設隱藏，僅在你勾選時才會顯示在卡片上。
 
 【iCloud 同步與備份】
-日子、分類和照片可以選擇透過你自己的 iCloud 在裝置間同步，也可以只儲存在本機。誤刪的日子在「最近刪除」裡保留 30 天；兩台裝置改了同一個日子，被取代的那一版也會在「同步保留版本」裡保留 30 天，都可以還原。還可以匯出備份檔案，在新裝置上從檔案還原。
+日子、分類與照片可透過你個人的 iCloud 在多台裝置間私密同步，也可以選擇僅儲存在本機。誤刪的日子會在「最近刪除」中保留 30 天；多裝置修改同一日子產生衝突時，被取代的版本也會在「同步保留版本」中留存 30 天，隨時可以還原。同時支援匯出完整備份檔案，換機轉移更安心。
 
-【隱私】
-不收集任何資料。日子、照片和設定只儲存在你的裝置上，以及你選擇同步時你自己的 iCloud 中，不會上傳給開發者。無需帳號，無廣告，無追蹤，無第三方 SDK。
+【隱私承諾】
+不收集任何資料。你的日子、照片與設定只儲存在你的裝置上（開啟同步時儲存在你個人的 iCloud 私有空間中），絕不經過任何第三方伺服器，開發者也無法存取。無需註冊帳號，無廣告，無追蹤，無第三方 SDK。
 
-支援簡體中文、繁體中文和 English，可以在「我的 › 語言」裡切換。倒數和提醒跟隨裝置所在的時區。
+支援簡體中文、繁體中文和 English，可在「我的 › 語言」中隨時切換。倒數計算與提醒時間均自動跟隨裝置目前時區。
 ```
 
 ### English
@@ -183,7 +183,7 @@ Anniversaries and countdowns
 **Promotional text**
 
 ```text
-Keep a wedding anniversary, a birth, a trip or an exam in view. Repeat by the Gregorian or lunar calendar, add Home and Lock Screen widgets, get reminded ahead.
+Keep wedding anniversaries, baby milestones, trips, and exams in view. Repeat by Gregorian or lunar calendar, add Home and Lock Screen widgets, and get gentle reminders.
 ```
 
 **Keywords**
@@ -195,42 +195,42 @@ birthday,lunar,chinese,calendar,widget,reminder,since,until,wedding,baby,love,da
 **Description**
 
 ```text
-Days Remember gently keeps track of the days that matter: a wedding anniversary, a baby's birth, a trip, an exam. Look forward to what's ahead, and look back on what has passed.
+Days Remember gently keeps track of the days that matter: whether it's a wedding anniversary, a baby's first day, an upcoming trip, or an exam countdown. Look forward to what's ahead, and look back on what has passed.
 
 AHEAD AND PAST
-The Days tab has two sides. Ahead counts down to the days still to come, with pinned days and the nearest ones at the top, and keeps a yearly day there for a week after it passes so you can write it down. One-time days that have gone by move to Past, where they count up day by day.
+The Days tab has two sides. Ahead counts down to upcoming dates with pinned and nearest days first—and keeps yearly anniversaries around for a week after they pass so you have time to write down a memory. One-time days move to Past after they arrive, counting up day by day.
 
 ROUND NUMBERS
-Days under Past show their next round number: every 100 days up to 1,000, every 500 after that, or a whole year.
+Days in Past automatically highlight their next milestone: every 100 days up to 1,000, every 500 days after that, and every full year—making ordinary days worth celebrating.
 
 LUNAR CALENDAR AND SOLAR TERMS
-Repeat a day every year by the Gregorian or the lunar calendar. The calendar shows lunar dates, the 24 solar terms and traditional festivals, with lunar dates from 1900 through 2100.
+Repeat birthdays and anniversaries by either the Gregorian or lunar calendar. The built-in calendar marks lunar dates, the 24 solar terms, and traditional festivals from 1900 through 2100.
 
 TAP TO CHANGE UNITS
-In a day's detail, tap the number to switch between days, weeks, months and hours. Below it are the day's marks: the last and next anniversaries of a yearly day, or the next round number of a past day.
+In any day's detail view, tap the number to switch effortlessly between days, weeks, months, and hours. Below, a clear timeline shows the last and next anniversaries or the next round-number milestone.
 
-REMINDERS
-Get reminded 7, 3 or 1 day ahead, or on the day, at a time you choose, and give any day reminders of its own. The Daily Greeting sends a short note each day at the time you pick, and the Memories reminder brings back a past day on its anniversary. Each can be turned on separately.
+THOUGHTFUL REMINDERS
+Get notified 7, 3, or 1 day ahead, or on the day itself, at a time you choose, or customize reminders for individual days. You can also turn on a morning Daily Greeting or yearly Memories on the anniversary of past days.
 
 COVERS AND CATEGORIES
-Every day is a card in its category's color. Give it a photo of your own, or pick one of 12 flat illustrations; a new day starts with a cover that suits its category. Besides Love, Family, Travel, Work and Life, create categories of your own in Me, each with its own icon and color.
+Every day is a card in its category's soft color palette. Frame it with a favorite photo of your own, or choose from 12 hand-crafted flat illustrations automatically matched to each category. Start with Love, Family, Travel, Work, and Life, or create custom categories in Me with your own icon and color theme.
 
-WIDGETS
-Small, medium and large on the Home Screen, in the same colored cards as the app, a day list that shows the next few at once with pinned days first, plus three Lock Screen styles. Set a single-day widget to any day, or let it show your nearest pinned day.
+HOME AND LOCK SCREEN WIDGETS
+Bring your days to the Home Screen in small, medium, or large cards, view multiple upcoming dates at a glance with the day list widget, or add one of three Lock Screen styles. Pin a specific day or let it follow your top pinned item.
 
-SHORTCUTS
-Start a new day from Control Center or the Home Screen quick action, and ask Siri how many days are left until a day without opening the app.
+SHORTCUTS AND SIRI
+Add a new day quickly from Control Center or the Home Screen quick action, or ask Siri how many days are left without even opening the app.
 
 SHARE CARDS
-Photo, Journal, Minimal and Split templates, with a 3:4 portrait export to save to Photos or share. Notes stay off the image unless you include them.
+Turn any day into a clean 3:4 portrait card with Photo, Journal, Minimal, or Split templates to save to Photos or share. Personal notes stay private by default unless you choose to include them.
 
 ICLOUD SYNC AND BACKUPS
-Choose to sync days, categories and photos across your devices through your own iCloud, or keep them on this device only. A deleted day stays in Recently Deleted for 30 days, and when two devices change the same day, the replaced version stays in Saved Sync Versions for 30 days, and both can be restored. You can also export a backup and restore it from the file on a new device.
+Sync your days, categories, and photos privately across your devices through your own iCloud account, or keep everything on this device only. Deleted days stay in Recently Deleted for 30 days, and if two devices edit the same day, the replaced version is preserved in Saved Sync Versions for 30 days so either can be restored. You can also export a complete backup file for easy device migration.
 
-PRIVACY
-No data collected. Your days, photos and settings stay on your devices, and in your own iCloud if you choose to sync, and nothing is sent to the developer. No account, no ads, no tracking, no third-party SDKs.
+PRIVACY PROMISE
+No data collected. Your days, photos, and settings live on your devices—and in your private iCloud storage if you turn on sync—and never reach the developer. No accounts, no ads, no tracking, and no third-party SDKs.
 
-In English, Simplified Chinese and Traditional Chinese; switch in Me › Language. Countdowns and reminders follow your device’s time zone.
+Available in English, Simplified Chinese, and Traditional Chinese; switch anytime in Me › Language. Countdowns and reminders automatically follow your device’s time zone.
 ```
 
 ## 隐私（App 隐私问卷答案）

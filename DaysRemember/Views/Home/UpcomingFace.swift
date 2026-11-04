@@ -16,7 +16,7 @@ struct UpcomingFace: View {
         if days.isEmpty {
             FeedEmptyState(title: String(localized: "没有将至的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                            symbol: "sun.max",
-                           detail: String(localized: "每年重复的日子和未来的日子会出现在这里。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                           detail: String(localized: "未来的日程与每年重复的纪念日，都会在这里为你倒数。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         } else {
             let heroes = days.map { ($0, DayInfo.compute($0, today: today).days) }
                 .sorted { $0.0.pinned != $1.0.pinned ? $0.0.pinned : $0.1 < $1.1 }.prefix(5).map(\.0)

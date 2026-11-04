@@ -10,7 +10,7 @@ struct DetailMemory: View {
         let location = day.location.trimmingCharacters(in: .whitespacesAndNewlines)
         if note.isEmpty && location.isEmpty {
             Button { onWrite() } label: {
-                Label("写下这一天的记忆", systemImage: "plus")
+                Label("写下关于这一天的记忆", systemImage: "plus")
                     .font(Theme.sans(15, weight: .heavy))
                     .foregroundStyle(Theme.ink2)
                     .frame(maxWidth: .infinity, minHeight: 60)

@@ -54,7 +54,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         case .accountChanged:
             return String(localized: "iCloud 账户已退出或变更。本机数据未删除；确认当前账户后才能继续同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .zoneDeleted:
-            return String(localized: "云端资料区已删除，同步已暂停，未自动重新上传。可以先导出本机备份，再选择重新上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            return String(localized: "iCloud 中的「时光」数据已被清除，同步已暂停。本机记录完好无损，你可以先导出备份，再选择重新上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .accountUnavailable:
             return String(localized: "请检查系统中的 iCloud 登录、账户限制和网络，再重试同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .cloudKit(let error):
@@ -129,10 +129,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         case .checkingAccount: return String(localized: "正在检查 iCloud 账户", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .syncing: return String(localized: "正在与 iCloud 同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .pending: return String(localized: "本机更改等待上传", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        case .synced: return String(localized: "已完成本次 iCloud 同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .synced: return String(localized: "已与 iCloud 同步", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .accountUnavailable: return String(localized: "iCloud 账户暂不可用", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .accountChanged: return String(localized: "iCloud 账户已变更，同步已暂停", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        case .zoneDeleted: return String(localized: "云端资料区已删除，同步已暂停", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        case .zoneDeleted: return String(localized: "云端数据已清空，同步已暂停", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .configurationError: return String(localized: "iCloud 配置未完成", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         case .failed: return String(localized: "同步未完成，本机数据已保留", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }

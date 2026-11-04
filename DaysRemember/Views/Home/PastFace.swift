@@ -12,7 +12,7 @@ struct PastFace: View {
         if days.isEmpty {
             FeedEmptyState(title: String(localized: "还没有走过的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                            symbol: "moon",
-                           detail: String(localized: "不重复的日子过去以后，会在这里一天天记着。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                           detail: String(localized: "只发生一次的日子跨过当天后，会在这里一天天累积时光。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         } else {
             let milestones = days.compactMap { day in Milestone.next(after: day.date, today: today).map { (day, $0) } }
                 .sorted { $0.0.pinned != $1.0.pinned ? $0.0.pinned : $0.1.daysUntil < $1.1.daysUntil }
