@@ -383,9 +383,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             enqueuePendingChanges()
             try await current.sendChanges(.init(scope: .zoneIDs([CloudLibraryRecord.zoneID])))
         } catch {
-            // Turning sync off, a deleted zone or an encrypted-data reset stops this engine, which
-            // ends its exchange with an error; the status they chose stands.
-            if let engine, self.engine !== engine { return }
+            // Turning sync off (even before this engine existed), a deleted zone or an
+            // encrypted-data reset ends this exchange with an error; the status they chose stands.
+            if !started || (engine != nil && self.engine !== engine) { return }
             fail(error)
         }
     }
@@ -402,7 +402,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             problem = nil
             guard persist() else { return }
             await syncNow()
-        } catch { fail(error) }
+        } catch {
+            if started { fail(error) }
+        }
     }
 
     /// Only call after the user explicitly asks to upload this library into a new zone, after the
@@ -618,7 +620,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             inFlightAssets[ObjectIdentifier(syncEngine), default: []].formUnion(batch.saves.compactMap { ($0["photo"] as? CKAsset)?.fileURL })
             return CKSyncEngine.RecordZoneChangeBatch(recordsToSave: batch.saves, recordIDsToDelete: batch.deletions, atomicByZone: false)
         } catch {
-            fail(error, stop: !(error is CKError))
+            if engine === syncEngine { fail(error, stop: !(error is CKError)) }
             return nil
         }
     }
