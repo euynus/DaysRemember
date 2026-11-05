@@ -657,6 +657,29 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertFalse(app.buttons["记录第一个日子"].exists)
     }
 
+    func testOnboardingDropsADayLinkOpenedDuringIt() {
+        let app = launchApp(arguments: ["--empty-library", "--show-onboarding"])
+        let start = app.buttons["开始记录"]
+        XCTAssertTrue(start.waitForExistence(timeout: 10))
+        // A library that's there before onboarding ends, as a restore or an earlier install leaves.
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "--empty-library" }
+        app.launchArguments += ["--seed-sample-data"]
+        app.launch()
+        XCTAssertTrue(start.waitForExistence(timeout: 10))
+        // As a widget opens it; `XCUIApplication.open` would relaunch the app.
+        XCUIDevice.shared.system.open(URL(string: "daysremember://day/wedding")!)
+        XCTAssertTrue(start.waitForExistence(timeout: 10))
+        start.tap()
+        let localOnly = app.buttons["syncChoice.localOnly"]
+        XCTAssertTrue(localOnly.waitForExistence(timeout: 5))
+        localOnly.tap()
+        // A held link pushes the day's detail over the home screen.
+        XCTAssertTrue(app.buttons["home.search"].waitForExistence(timeout: 10), app.debugDescription)
+        // Give a held link the moment it would take to open the detail.
+        XCTAssertFalse(app.staticTexts["detail.title"].waitForExistence(timeout: 3), app.debugDescription)
+    }
+
     func testDeletedDayCanBeRestoredThroughHomeDataManagement() {
         let app = launchApp(arguments: ["--empty-library"])
         XCTAssertTrue(app.staticTexts["这里还没有日子"].waitForExistence(timeout: 10))

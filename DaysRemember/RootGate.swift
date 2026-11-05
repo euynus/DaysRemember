@@ -42,5 +42,8 @@ struct RootGate: View {
             CloudSyncControl.choose(choice, store: store, settings: settings)
             settings.hasOnboarded = true
         })
+        // Without a handler here, SwiftUI holds a URL opened during onboarding and hands it to
+        // RootTabView's `onOpenURL` handler as soon as that view mounts.
+        .onOpenURL { _ in }
     }
 }
