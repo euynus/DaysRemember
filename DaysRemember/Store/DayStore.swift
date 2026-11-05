@@ -34,7 +34,13 @@ final class DayStore {
             reloadWidgetTimelines()
         }
     }
-    private(set) var deletedDays: [DeletedDay] = []
+    private(set) var deletedDays: [DeletedDay] = [] {
+        // Undo only offers a deletion 最近删除 still holds: not one restored, deleted for good,
+        // or replaced by a backup or a sync.
+        didSet {
+            if let id = lastDeleted?.id, !deletedDays.contains(where: { $0.id == id }) { lastDeleted = nil }
+        }
+    }
     /// The most recent deletion, offered for undo until dismissed.
     private(set) var lastDeleted: DeletedDay?
     private(set) var syncConflicts: [SyncConflict] = []

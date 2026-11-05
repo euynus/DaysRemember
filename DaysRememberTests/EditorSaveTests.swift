@@ -46,6 +46,24 @@ final class EditorSaveTests: XCTestCase {
         }
     }
 
+    /// A deletion restored or deleted for good from 最近删除 no longer offers an undo.
+    func testUndoEndsWhenTheDeletionLeavesRecentlyDeleted() throws {
+        try withDefaults { defaults in
+            let store = DayStore(defaults: defaults)
+            let first = day("first")
+            store.add(first)
+            store.delete(first)
+            XCTAssertEqual(store.lastDeleted?.day, first)
+            store.restoreDeletedDay(id: first.id)
+            XCTAssertNil(store.lastDeleted)
+
+            store.delete(first)
+            XCTAssertEqual(store.lastDeleted?.day, first)
+            store.permanentlyDeleteDay(id: first.id)
+            XCTAssertNil(store.lastDeleted)
+        }
+    }
+
     func testUndoRestoresOnlyTheLatestDeletion() throws {
         try withDefaults { defaults in
             let store = DayStore(defaults: defaults)
