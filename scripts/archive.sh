@@ -23,6 +23,14 @@ case "${1:-}" in
 esac
 
 fail() { printf 'archive: %s\n' "$1" >&2; exit 1; }
+# A failed xcodebuild step. The console only shows lines that start with an error, and compiler and
+# linker errors start with a path, so print the log's errors, or its end when it has none.
+step_failed() {
+    local errors
+    errors="$(grep -E 'error:' "$2" | tail -n 20 || true)"
+    printf '%s\n' "${errors:-$(tail -n 30 "$2")}" >&2
+    fail "$1 failed; see $2"
+}
 setting() { sed -nE "s/^[[:space:]]*$1: \"?([^\"]*)\"?[[:space:]]*\$/\1/p" project.yml | head -1; }
 
 team="${TEAM_ID:-$(setting DEVELOPMENT_TEAM)}"
@@ -59,7 +67,7 @@ xcodebuild archive \
     CURRENT_PROJECT_VERSION="$build" \
     "${signing[@]}" \
     2>&1 | tee -a "$output/archive.log" | grep -E '^(\*\*|error:)' || true
-[[ -d "$archive" ]] || fail "archive failed; see $output/archive.log"
+[[ -d "$archive" ]] || step_failed archive "$output/archive.log"
 
 # Checks that hold for any build of the app found at $1.
 check_bundle() {
@@ -98,7 +106,7 @@ xcodebuild -exportArchive \
     -allowProvisioningUpdates \
     2>&1 | tee "$output/export.log" | grep -E '^(\*\*|error:)' || true
 ipa="$(find "$output/export" -maxdepth 1 -name '*.ipa' | head -1)"
-[[ -n "$ipa" ]] || fail "export failed; see $output/export.log"
+[[ -n "$ipa" ]] || step_failed export "$output/export.log"
 
 # Distribution signing turns the source's development entitlements into production ones.
 payload="$output/payload"
@@ -125,6 +133,6 @@ if [[ "$mode" == "upload" ]]; then
         -exportPath "$output/upload" \
         -allowProvisioningUpdates \
         2>&1 | tee "$output/upload.log" | grep -E '^(\*\*|error:)' || true
-    grep -q 'EXPORT SUCCEEDED' "$output/upload.log" || fail "upload failed; see $output/upload.log"
+    grep -q 'EXPORT SUCCEEDED' "$output/upload.log" || step_failed upload "$output/upload.log"
     printf 'Uploaded %s (%s) to App Store Connect\n' "$version" "$build"
 fi
