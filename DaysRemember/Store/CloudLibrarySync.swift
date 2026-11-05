@@ -111,8 +111,12 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     /// Whether a first download from iCloud may still bring days, so an empty library isn't final yet.
     var isFirstDownloadPending: Bool {
-        started && !state.hasFetched && (status == .idle || isSyncing)
+        started && !hasFetched && (status == .idle || isSyncing)
     }
+
+    /// `state.hasFetched`, observed, so the feed stops waiting when the first fetch ends even
+    /// while the upload that follows keeps `status` at syncing.
+    private var hasFetched = false
 
     /// Names this build, so records it set aside as unreadable are fetched again after an update.
     /// Debug builds all carry build number 1, so only archived builds tell one another apart.
@@ -146,7 +150,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     @ObservationIgnored private var container: CKContainer?
     @ObservationIgnored private var engine: CKSyncEngine?
     @ObservationIgnored private var onRemoteChange: ((CloudLibraryUpdate) throws -> Void)?
-    @ObservationIgnored private var started = false
+    private var started = false
     @ObservationIgnored private var missingRecords: [String] = []
     /// The latest local snapshot while deletions are held, for `confirmMissingDeletions`.
     @ObservationIgnored private var heldLocal: (days: [Day], categories: [CategoryDefinition])?
@@ -176,6 +180,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             unreadableCount = state.unreadable.count
+            hasFetched = state.hasFetched
             if state.accountChangePending { showAccountChange() }
             else if state.zoneWasDeleted { showDeletedZone() }
         } catch {
@@ -227,6 +232,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         lastFetchedAt = nil
         lastSentAt = nil
         unreadableCount = 0
+        hasFetched = false
     }
 
     /// Checkpoints no longer in use: the one 重置同步状态 set aside as unreadable.
@@ -485,6 +491,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             unreadableCount = state.unreadable.count
+            hasFetched = state.hasFetched
             return true
         } catch {
             storageFailed = true
