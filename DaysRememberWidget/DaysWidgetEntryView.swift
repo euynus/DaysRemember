@@ -17,7 +17,7 @@ struct DaysWidgetEntryView: View {
             }
         }
         .environment(\.locale, AppLocalization.locale)
-        .widgetURL(entry.day.map { URL(string: "daysremember://day/")!.appending(path: $0.id) }
+        .widgetURL(entry.day.map { DeepLink.url(forDayID: $0.id) }
                    ?? URL(string: "daysremember://home"))
     }
 

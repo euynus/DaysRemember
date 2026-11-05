@@ -59,6 +59,8 @@ targets:
       # The intent behind the Control Center button opens the app through a pending link.
       - path: DaysRemember/Intents/NewDayIntent.swift
       - path: DaysRemember/Intents/PendingLink.swift
+      # Widgets link to a day the way the app reads it.
+      - path: DaysRemember/Views/DeepLink.swift
       # Shared photo rendering keeps widget crops identical to the app.
       - path: DaysRemember/Views/Components/PhotoTile.swift
       - path: DaysRemember/Views/Components/PhotoDecodeCache.swift

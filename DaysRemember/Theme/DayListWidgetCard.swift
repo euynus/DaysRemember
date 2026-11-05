@@ -23,7 +23,7 @@ struct DayListWidgetCard: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ForEach(days.prefix(Self.capacity(large: large))) { day in
-                    Link(destination: URL(string: "daysremember://day/")!.appending(path: day.id)) { row(day) }
+                    Link(destination: DeepLink.url(forDayID: day.id)) { row(day) }
                 }
                 Spacer(minLength: 0)
             }
