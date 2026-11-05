@@ -86,18 +86,15 @@
   }
 
   // The next round number a day that has passed reaches (Milestone.swift): every 100 days up to
-  // 1,000, every 500 after that, or a whole year, whichever comes first. February 29 falls on
-  // February 28 in common years here, as Calendar's adding of years does.
+  // 1,000, every 500 after that, or a whole year, whichever comes first. Whole years use the
+  // anniversary rule, so February 29 reaches them on March 1 in common years.
   function milestone(y, m, d, t) {
     var elapsed = t - dayNumber(y, m, d);
     if (elapsed < 0) return null;
     var step = elapsed < 1000 ? 100 : 500;
     var target = Math.max(step, Math.ceil(elapsed / step) * step);
     var byDays = { count: target, until: dayNumber(y, m, d) + target - t, years: false };
-    function yearsLater(n) {
-      var year = y + n;
-      return m === 2 && d === 29 && !isLeapYear(year) ? dayNumber(year, 2, 28) : dayNumber(year, m, d);
-    }
+    function yearsLater(n) { return anniversaryIn(y + n, m, d); }
     var today = new Date(t * DAY);
     var years = today.getUTCFullYear() - y;
     if (yearsLater(years) > t) years -= 1;

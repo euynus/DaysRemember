@@ -166,6 +166,16 @@ test("the demo counts a past one-time day up toward its next round number", () =
   }
 });
 
+// A February 29 that has passed reaches whole years on March 1 in common years, as in the app
+// (MilestoneTests): from 2027-02-26, 3 years are 3 days away, not 2.
+test("the demo's whole years from February 29 fall on March 1 in common years", () => {
+  const site = runSite({ now: localNoon("2027-02-26"), body: demo() });
+  site.$("#demo-date").value = "2024-02-29";
+  site.$("#demo-recurring").checked = false;
+  site.$("[data-demo]").dispatchEvent({ type: "input" });
+  assert.equal(site.$("[data-demo-card] [data-elapsed]").textContent, "3 天后满 3 年");
+});
+
 // WCAG 2.2.2: an on-page control pauses content that moves on its own for more than 5 s.
 test("the hero slideshow can be paused", () => {
   const phone = el("div", { class: "phone" }, el("img", { src: "home.jpg", alt: "首页" }));
