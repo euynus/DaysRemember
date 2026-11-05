@@ -111,12 +111,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     /// Whether a first download from iCloud may still bring days, so an empty library isn't final yet.
     var isFirstDownloadPending: Bool {
-        started && !hasFetched && (status == .idle || isSyncing)
+        // lastFetchedAt is observed and set with state.hasFetched, so the feed stops waiting when
+        // the first fetch ends even while the upload that follows keeps status at syncing.
+        started && lastFetchedAt == nil && (status == .idle || isSyncing)
     }
-
-    /// `state.hasFetched`, observed, so the feed stops waiting when the first fetch ends even
-    /// while the upload that follows keeps `status` at syncing.
-    private var hasFetched = false
 
     /// Names this build, so records it set aside as unreadable are fetched again after an update.
     /// Debug builds all carry build number 1, so only archived builds tell one another apart.
@@ -180,7 +178,6 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             unreadableCount = state.unreadable.count
-            hasFetched = state.hasFetched
             if state.accountChangePending { showAccountChange() }
             else if state.zoneWasDeleted { showDeletedZone() }
         } catch {
@@ -232,7 +229,6 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         lastFetchedAt = nil
         lastSentAt = nil
         unreadableCount = 0
-        hasFetched = false
     }
 
     /// Checkpoints no longer in use: the one 重置同步状态 set aside as unreadable.
@@ -357,6 +353,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         }
         problem = nil
         status = .checkingAccount
+        var engine: CKSyncEngine?
         do {
             guard deliverRemoteUpdate() else { return }
             let container = try cloudContainer()
@@ -369,22 +366,28 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 return
             }
             guard persist() else { return }
-            let engine = self.engine ?? makeEngine(in: container)
+            let current = self.engine ?? makeEngine(in: container)
+            engine = current
             status = .syncing
             do {
-                try await engine.fetchChanges(.init(scope: .zoneIDs([CloudLibraryRecord.zoneID])))
+                try await current.fetchChanges(.init(scope: .zoneIDs([CloudLibraryRecord.zoneID])))
             } catch let error as CKError where error.code == .zoneNotFound && !state.zoneExists && !state.hasFetched {
                 // First use of this account: no records can be overwritten in an absent zone.
             }
-            guard self.engine === engine, !state.accountChangePending, !state.zoneWasDeleted,
+            guard self.engine === current, !state.accountChangePending, !state.zoneWasDeleted,
                   !storageFailed, !problemHoldsStatus else { return }
             canSend = true
             state.hasFetched = true
             state.lastFetchedAt = Date.now
             guard persist() else { return }
             enqueuePendingChanges()
-            try await engine.sendChanges(.init(scope: .zoneIDs([CloudLibraryRecord.zoneID])))
-        } catch { fail(error) }
+            try await current.sendChanges(.init(scope: .zoneIDs([CloudLibraryRecord.zoneID])))
+        } catch {
+            // Turning sync off, a deleted zone or an encrypted-data reset stops this engine, which
+            // ends its exchange with an error; the status they chose stands.
+            if let engine, self.engine !== engine { return }
+            fail(error)
+        }
     }
 
     /// Only call after a user explicitly approves uploading this local library to the current account.
@@ -491,7 +494,6 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             lastFetchedAt = state.lastFetchedAt
             lastSentAt = state.lastSentAt
             unreadableCount = state.unreadable.count
-            hasFetched = state.hasFetched
             return true
         } catch {
             storageFailed = true
@@ -536,12 +538,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
 
     func fail(_ error: Error, stop: Bool = false) {
-        // Turning sync off, a deleted zone or an encrypted-data reset stops the engine, which
-        // cancels the exchange `syncNow` awaits; that cancellation isn't a failure to report.
-        if (error as? CKError)?.code == .operationCancelled, engine == nil { return }
         if stop { stopEngine() }
         if state.accountChangePending { showAccountChange(); return }
-        if state.zoneWasDeleted { showDeletedZone(); return }
         if error is ConfigurationError {
             status = .configurationError
             problem = .other(error)
