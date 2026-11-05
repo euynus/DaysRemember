@@ -63,7 +63,8 @@ struct DayReminderSettingsView: View {
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("完成") {
-                            onSave(offsets.map { Array(Set($0)).sorted(by: >) }, time)
+                            // No days ticked reads as 不提醒 next time, which has no time of its own.
+                            onSave(offsets.map { Array(Set($0)).sorted(by: >) }, offsets?.isEmpty == true ? nil : time)
                             dismiss()
                         }
                         .accessibilityIdentifier("confirmDayReminders")
@@ -136,7 +137,8 @@ struct DayReminderSettingsView: View {
                 offsets = []
                 time = nil
             case .custom:
-                if offsets == nil { offsets = globalOffsets }
+                // Coming from 不提醒 too, start from the global choices rather than none.
+                if offsets?.isEmpty ?? true { offsets = globalOffsets }
             }
         })
     }

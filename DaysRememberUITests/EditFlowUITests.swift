@@ -239,6 +239,20 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertEqual(app.buttons["时间选择器"].value as? String, "14:35")
     }
 
+    /// 自定义 after 不提醒 starts from the global reminders (7 and 3 days ahead, and on the day, by
+    /// default) rather than with every reminder off.
+    func testCustomRemindersAfterNoneStartFromTheGlobalChoices() {
+        let app = launchApp()
+        app.buttons["添加日子"].tap()
+        app.buttons["dayReminderSettingsButton"].tap()
+        XCTAssertTrue(app.buttons["confirmDayReminders"].waitForExistence(timeout: 5))
+        app.segmentedControls.buttons["不提醒"].tap()
+        app.segmentedControls.buttons["自定义"].tap()
+        XCTAssertTrue(app.switches["dayReminderOffset7"].waitForExistence(timeout: 5))
+        let on = [7, 3, 1, 0].filter { app.switches["dayReminderOffset\($0)"].value as? String == "1" }
+        XCTAssertEqual(on, [7, 3, 0])
+    }
+
     func testCancellingReminderChangesKeepsAnUnchangedEditorClean() {
         let app = launchApp()
         app.buttons["添加日子"].tap()
