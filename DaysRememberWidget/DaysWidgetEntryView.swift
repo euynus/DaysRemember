@@ -17,7 +17,7 @@ struct DaysWidgetEntryView: View {
             }
         }
         .environment(\.locale, AppLocalization.locale)
-        .widgetURL(entry.day.flatMap { URL(string: "daysremember://day/\($0.id)") }
+        .widgetURL(entry.day.map { URL(string: "daysremember://day/")!.appending(path: $0.id) }
                    ?? URL(string: "daysremember://home"))
     }
 
