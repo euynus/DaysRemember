@@ -3498,6 +3498,29 @@
         }
       }
     },
+    "即将到来，%@，%@，已置顶" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upcoming, %@, %@, pinned"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即将到来，%@，%@，已置顶"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即將到來，%@，%@，已置頂"
+          }
+        }
+      }
+    },
     "去设置" : {
       "extractionState" : "manual",
       "localizations" : {

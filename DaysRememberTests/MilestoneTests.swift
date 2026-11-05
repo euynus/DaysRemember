@@ -112,6 +112,14 @@ final class MilestoneTests: XCTestCase {
         let ahead = DayCardText.heroAccessibilityLabel(exam, info: DayInfo.compute(exam, today: today), milestone: nil)
         XCTAssertTrue(ahead.contains("考研"))
         XCTAssertFalse(ahead.contains(DayCardText.milestone(milestone)))
+        XCTAssertFalse(ahead.contains("已置顶"))
+
+        // A pinned upcoming hero says so, as its 置顶 tag does.
+        var pinned = exam
+        pinned.pinned = true
+        let pinnedAhead = DayCardText.heroAccessibilityLabel(pinned, info: DayInfo.compute(pinned, today: today), milestone: nil)
+        XCTAssertTrue(pinnedAhead.hasPrefix(ahead), pinnedAhead)
+        XCTAssertTrue(pinnedAhead.hasSuffix("已置顶"), pinnedAhead)
     }
 
     /// A one-time day's detail shows its round numbers from the day itself; that day reads 今天,

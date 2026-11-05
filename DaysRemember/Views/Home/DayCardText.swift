@@ -18,7 +18,10 @@ enum DayCardText {
     /// The hero card's label replaces its children's, so it carries the milestone it shows.
     static func heroAccessibilityLabel(_ day: Day, info: DayInfo, milestone: Milestone?) -> String {
         guard info.isPast else {
-            return String(localized: "即将到来，\(day.title)，\(countdown(info))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            // A pinned day says so, as its 置顶 tag on the card and the other cards' labels do.
+            return day.pinned
+                ? String(localized: "即将到来，\(day.title)，\(countdown(info))，已置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                : String(localized: "即将到来，\(day.title)，\(countdown(info))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
         let label = accessibilityLabel(day, info: info)
         guard let milestone else { return label }
