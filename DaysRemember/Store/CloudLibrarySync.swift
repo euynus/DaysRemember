@@ -529,8 +529,12 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
 
     func fail(_ error: Error, stop: Bool = false) {
+        // Turning sync off, a deleted zone or an encrypted-data reset stops the engine, which
+        // cancels the exchange `syncNow` awaits; that cancellation isn't a failure to report.
+        if (error as? CKError)?.code == .operationCancelled, engine == nil { return }
         if stop { stopEngine() }
         if state.accountChangePending { showAccountChange(); return }
+        if state.zoneWasDeleted { showDeletedZone(); return }
         if error is ConfigurationError {
             status = .configurationError
             problem = .other(error)

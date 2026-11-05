@@ -365,6 +365,17 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// Stopping the engine cancels the exchange a sync awaits; that cancellation leaves the status
+    /// the stop chose instead of reporting a failure.
+    func testCancellationAfterTheEngineStoppedIsNotAFailure() throws {
+        try withDirectory { directory in
+            let sync = CloudLibrarySync(stateURL: directory.appendingPathComponent("state.json"))
+            sync.fail(CKError(.operationCancelled))
+            XCTAssertEqual(sync.status, .idle)
+            XCTAssertNil(sync.errorMessage)
+        }
+    }
+
     /// The engine retries CloudKit errors itself; a fetch that then succeeds clears the old error.
     /// Problems that need the user stay.
     func testSuccessfulFetchClearsAnEarlierCloudKitError() throws {
