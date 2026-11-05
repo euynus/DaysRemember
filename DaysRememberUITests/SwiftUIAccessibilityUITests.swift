@@ -27,6 +27,8 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         for _ in 0..<3 where !template.exists { app.swipeUp() }
         XCTAssertTrue(template.waitForExistence(timeout: 5))
         XCTAssertEqual(template.value as? String ?? "", "")
+        // Without a photo it is the day's preview, read from its title placeholder and count.
+        XCTAssertTrue(template.label.contains("给这一天起个名字"), template.label)
     }
 
     func testHomeFacesKeepMinimumTargetsAndResetScrolledResults() {

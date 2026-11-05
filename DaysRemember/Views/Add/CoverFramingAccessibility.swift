@@ -10,12 +10,11 @@ struct CoverFramingAccessibility: ViewModifier {
     private func step(_ value: Double, by delta: Double) -> Double { min(1, max(0, value + delta)) }
 
     func body(content: Content) -> some View {
-        let element = content
-            .accessibilityElement()
-            .accessibilityLabel("封面取景")
-            .accessibilityIdentifier("coverFraming")
         if hasPhoto {
-            element
+            content
+                .accessibilityElement()
+                .accessibilityLabel("封面取景")
+                .accessibilityIdentifier("coverFraming")
                 .accessibilityValue(DayEditorView.framingDescription(x: x, y: y))
                 .accessibilityHint(String(localized: "上下轻扫调整照片的垂直位置，用操作调整水平位置", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                 .accessibilityAdjustableAction { direction in
@@ -32,7 +31,11 @@ struct CoverFramingAccessibility: ViewModifier {
                     x = step(x, by: 0.1)
                 }
         } else {
-            element.accessibilityHint(String(localized: "封面预览", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+            // The preview of the day: VoiceOver reads its title, date and count.
+            content
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("coverFraming")
+                .accessibilityHint(String(localized: "封面预览", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
         }
     }
 }
