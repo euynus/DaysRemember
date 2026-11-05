@@ -34,6 +34,8 @@ struct RootGate: View {
     private var onboarding: some View {
         OnboardingView(onFinish: { choice in
             router.dayID = nil
+            // Shortcuts, the control and quick actions leave theirs in shared defaults.
+            _ = PendingLink.take()
             // On a new device the library may still be on its way from iCloud; RootTabView waits,
             // so sync starts first.
             creatingFirstDay = store.days.isEmpty
