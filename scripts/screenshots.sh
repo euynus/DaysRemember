@@ -45,16 +45,23 @@ xcodebuild build \
     -derivedDataPath "$output_dir/DerivedData" \
     -quiet
 
-runtime="${IOS_RUNTIME:-$(xcrun simctl list runtimes --json | jq -er '
-    [.runtimes[]
-     | select(.isAvailable and (.identifier | startswith("com.apple.CoreSimulator.SimRuntime.iOS-")))]
-    | sort_by(.version | split(".") | map(tonumber))
-    | last.identifier // error("No available iOS simulator runtime")
-')}"
 device_type="${IOS_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max}"
+# The newest runtime that simulates it: a newer one, or a device-specific build of the same
+# version, can leave it out.
+runtime="${IOS_RUNTIME:-$(xcrun simctl list runtimes --json | jq -er --arg device "$device_type" '
+    [.runtimes[]
+     | select(.isAvailable and (.identifier | startswith("com.apple.CoreSimulator.SimRuntime.iOS-")))
+     | select(any(.supportedDeviceTypes[]?; .identifier == $device))]
+    | sort_by(.version | split(".") | map(tonumber))
+    | last.identifier // error("No available iOS simulator runtime simulates \($device)")
+')}"
 simulator_id="$(xcrun simctl create "DaysRememberScreenshots" "$device_type" "$runtime")"
 xcrun simctl boot "$simulator_id"
 xcrun simctl bootstatus "$simulator_id" -b >/dev/null
+# A new simulator takes the Mac's 12/24-hour choice; times follow each screenshot's locale instead.
+for key in AppleICUForce24HourTime AppleICUForce12HourTime; do
+    xcrun simctl spawn "$simulator_id" defaults delete -g "$key" >/dev/null 2>&1 || true
+done
 xcrun simctl status_bar "$simulator_id" override --time 9:41 --dataNetwork wifi --wifiMode active \
     --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
 xcrun simctl install "$simulator_id" "$output_dir/DerivedData/Build/Products/Debug-iphonesimulator/时光.app"
