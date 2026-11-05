@@ -458,9 +458,9 @@ func scenes(_ assets: Assets) -> [Scene] {
             canvas.text(canvas.attributed("时光", sansBold(132), ink, kern: 8), y: 800)
             canvas.text(canvas.attributed("温柔记住每一个重要的日子", sansBold(46), ink2, kern: 2), y: 1000)
         }
-        let soon = easeOut(progress(t, from: 0.7, over: 0.8))
-        canvas.layer(alpha: soon, offset: CGPoint(x: 0, y: 24 * (1 - soon))) {
-            chip("即将登陆 App Store", fill: ink, color: card, size: 42, y: 1150, on: canvas)
+        let download = easeOut(progress(t, from: 0.7, over: 0.8))
+        canvas.layer(alpha: download, offset: CGPoint(x: 0, y: 24 * (1 - download))) {
+            chip("在 App Store 下载", fill: ink, color: card, size: 42, y: 1150, on: canvas)
             canvas.text(canvas.attributed("免费 · iPhone · iOS 26 及以上", sans(38), ink2), y: 1290)
             canvas.text(canvas.attributed("days.gooday.dev", sans(36), muted, kern: 1), y: 1360)
         }
