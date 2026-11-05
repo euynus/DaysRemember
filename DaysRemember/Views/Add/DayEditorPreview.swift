@@ -3,6 +3,7 @@ import SwiftUI
 /// The draft as it would look on the feed; a photo cover can be dragged to reframe it.
 struct DayEditorPreview: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.currentDay) private var today
     let title: String
     let date: Date
     let recurring: Bool
@@ -49,7 +50,7 @@ struct DayEditorPreview: View {
     private var summary: some View {
         let draft = Day(id: "editor-preview", title: title, date: date, recurring: recurring,
                         lunar: !solar, category: .life, photo: photo)
-        let info = DayInfo.compute(draft, today: Today.date)
+        let info = DayInfo.compute(draft, today: today)
         let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
         return HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
