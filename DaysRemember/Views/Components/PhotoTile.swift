@@ -20,9 +20,15 @@ struct PhotoTile: View {
     @State private var digestMemo = PhotoDigestMemo()
 
     private struct Loaded {
-        let key: String
+        let key: LoadKey
         /// Nil when the photo can't be decoded, so the preset takes over as it does synchronously.
         let image: UIImage?
+    }
+
+    /// The photo, by its remembered digest, and the size an asynchronous decode is for.
+    private struct LoadKey: Hashable {
+        let digest: String
+        let maximumPixelSize: CGFloat
     }
     @Environment(\.widgetRenderingMode) private var renderingMode
 
@@ -49,15 +55,17 @@ struct PhotoTile: View {
     }
 
     var body: some View {
-        let key = loadKey
-        let current = loaded.flatMap { $0.key == key ? $0 : nil }
-        let pickedImage = imageData.flatMap { data in
-            let digest = digestMemo.digest(of: data)
+        let digest = imageData.map { digestMemo.digest(of: $0) }
+        // Nil when this tile decodes synchronously.
+        let key = decodesAsynchronously ? digest.map { LoadKey(digest: $0, maximumPixelSize: maximumPixelSize) } : nil
+        let current = loaded?.key == key ? loaded : nil
+        let pickedImage = imageData.flatMap { data -> UIImage? in
+            guard let digest else { return nil }
             return decodesAsynchronously
                 ? PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize) ?? current?.image
                 : PhotoDecodeCache.decoded(data, digest: digest, maximumPixelSize: maximumPixelSize)
         }
-        let decodeFailed = current != nil && current?.image == nil
+        let decodeFailed = current.map { $0.image == nil } ?? false
         let awaitingPhoto = imageData != nil && pickedImage == nil && decodesAsynchronously && !decodeFailed
         // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
@@ -99,22 +107,14 @@ struct PhotoTile: View {
         .task(id: key) {
             guard let key, let data = imageData else { return }
             // Keep a reference even to a cached image: the cache may drop it while the tile is shown.
-            let digest = digestMemo.digest(of: data)
-            if let cached = PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize) {
+            if let cached = PhotoDecodeCache.cached(digest: key.digest, maximumPixelSize: key.maximumPixelSize) {
                 loaded = Loaded(key: key, image: cached)
                 return
             }
-            let image = await PhotoDecodeCache.decodedInBackground(data, digest: digest, maximumPixelSize: maximumPixelSize)
+            let image = await PhotoDecodeCache.decodedInBackground(data, digest: key.digest, maximumPixelSize: key.maximumPixelSize)
             guard !Task.isCancelled else { return }
             loaded = Loaded(key: key, image: image)
         }
-    }
-
-    /// The photo and size an asynchronous decode is for; nil when this tile decodes synchronously.
-    /// The digest is remembered, so comparing it is cheaper than comparing the photo's bytes.
-    private var loadKey: String? {
-        guard decodesAsynchronously, let data = imageData else { return nil }
-        return "\(digestMemo.digest(of: data))@\(maximumPixelSize)"
     }
 
     /// The margin around a preset's illustration, as a share of the frame's shorter side.
