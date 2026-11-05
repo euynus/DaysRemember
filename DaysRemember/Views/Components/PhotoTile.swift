@@ -104,18 +104,6 @@ struct PhotoTile: View {
     /// The margin around a preset's illustration, as a share of the frame's shorter side.
     static let presetInset: CGFloat = 0.08
 
-    nonisolated static func thumbnail(_ image: UIImage, maximumPixelSize: CGFloat) -> UIImage? {
-        guard maximumPixelSize.isFinite, maximumPixelSize >= 1,
-              image.size.width > 0, image.size.height > 0 else { return nil }
-        if let bitmap = image.cgImage,
-           CGFloat(max(bitmap.width, bitmap.height)) <= maximumPixelSize, image.imageOrientation == .up {
-            return image
-        }
-        let scale = min(1, maximumPixelSize / (max(image.size.width, image.size.height) * image.scale))
-        return image.preparingThumbnail(of: CGSize(width: image.size.width * scale,
-                                                   height: image.size.height * scale))
-    }
-
     private func focusedImage(_ image: UIImage, in container: CGSize) -> some View {
         let size = fillSize(image: image.size, in: container)
         let xOffset = (container.width - size.width) * CGFloat(min(1, max(0, focusX)))

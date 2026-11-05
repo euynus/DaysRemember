@@ -3,21 +3,19 @@ import UIKit
 @testable import DaysRemember
 
 final class WidgetTests: XCTestCase {
+    /// Widgets draw photos through `PhotoDecodeCache`, at `PhotoTile.maximumPixelSize`.
     func testWidgetPhotosStayBelowArchivePixelLimit() throws {
-        for limit in [512, 720] {
-            for style in PhotoStyle.allCases {
-                let image = try XCTUnwrap(UIImage(named: style.assetName))
-                let thumbnail = try XCTUnwrap(PhotoTile.thumbnail(image, maximumPixelSize: CGFloat(limit))?.cgImage)
-                XCTAssertLessThanOrEqual(max(thumbnail.width, thumbnail.height), limit)
-                XCTAssertLessThanOrEqual(thumbnail.width * thumbnail.height, limit * limit)
-            }
-        }
         let format = UIGraphicsImageRendererFormat()
         format.scale = 3
+        // A Retina rendering: 2400 x 1200 pixels, three times its point size.
         let photo = UIGraphicsImageRenderer(size: CGSize(width: 800, height: 400), format: format)
             .image { context in UIColor.red.setFill(); context.fill(CGRect(x: 0, y: 0, width: 800, height: 400)) }
-        let thumbnail = try XCTUnwrap(PhotoTile.thumbnail(photo, maximumPixelSize: 720)?.cgImage)
-        XCTAssertLessThanOrEqual(max(thumbnail.width, thumbnail.height), 720)
+        let data = try XCTUnwrap(photo.jpegData(compressionQuality: 0.9))
+        for limit in [512, 720] {
+            let decoded = try XCTUnwrap(PhotoDecodeCache.downsample(data, maximumPixelSize: CGFloat(limit))?.cgImage)
+            XCTAssertLessThanOrEqual(max(decoded.width, decoded.height), limit)
+            XCTAssertLessThanOrEqual(decoded.width * decoded.height, limit * limit)
+        }
     }
 
     /// The widget paints a custom category's own colour, read from the shared App Group the
