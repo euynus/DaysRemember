@@ -7,8 +7,10 @@ enum PhotoDecodeCache {
     // NSCache is thread-safe, though the SDK does not mark it Sendable.
     nonisolated(unsafe) private static let storage: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
-        cache.countLimit = 64
-        cache.totalCostLimit = 32 * 1024 * 1024
+        // A widget extension has a few tens of megabytes in all, and a 720 px photo takes 2 MB.
+        let isExtension = Bundle.main.bundleURL.pathExtension == "appex"
+        cache.countLimit = isExtension ? 6 : 64
+        cache.totalCostLimit = (isExtension ? 8 : 32) * 1024 * 1024
         return cache
     }()
 
