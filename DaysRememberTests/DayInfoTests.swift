@@ -158,6 +158,19 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(DayInfo.compute(autumn, today: date(2021, 9, 1)).displayDate, date(2021, 10, 5))
     }
 
+    /// The lunar table ends with lunar 2100, whose 腊月 reaches into Gregorian 2101. Later lunar
+    /// years have no months to convert, so they bring no occurrences instead of invented dates.
+    func testLunarOccurrencesStopWithTheTable() {
+        let newYear = makeDay(date: Lunar.lunarToSolar(year: 2000, month: 1, day: 1), recurring: true, lunar: true)
+        XCTAssertTrue(DayInfo.occurrences(of: newYear, inGregorianYear: 2101).isEmpty)
+        XCTAssertTrue(DayInfo.occurrences(of: newYear, inGregorianYear: 2102).isEmpty)
+
+        let lateMonth = makeDay(date: Lunar.lunarToSolar(year: 2000, month: 12, day: 10), recurring: true, lunar: true)
+        let occurrences = DayInfo.occurrences(of: lateMonth, inGregorianYear: 2101)
+        XCTAssertEqual(occurrences, [Lunar.lunarToSolar(year: 2100, month: 12, day: 10)])
+        XCTAssertTrue(occurrences.allSatisfy { Lunar.supportedSolarDates.contains($0) })
+    }
+
     /// The lunar table starts on 1900-01-31. An earlier lunar yearly day has no lunar date to recur
     /// on, and the reminders already skip it; it must not count down to every 春节.
     func testLunarDayBeforeTableDoesNotRecur() {

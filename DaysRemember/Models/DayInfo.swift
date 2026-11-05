@@ -31,7 +31,8 @@ struct DayInfo {
             let source = Lunar.solarToLunar(day.date)
             // Late lunar months cross into the next Gregorian year; a Gregorian
             // year can contain occurrences from both adjacent lunar years.
-            return ((year - 1)...year).filter { $0 >= 1900 }.map { lunarYear in
+            // Outside the 1900–2100 table there are no real lunar months to convert.
+            return ((year - 1)...year).filter { Lunar.supportedYears.contains($0) }.map { lunarYear in
                 cal.startOfDay(for: Lunar.lunarToSolar(year: lunarYear, month: source.month,
                                                      day: source.day, isLeap: source.isLeap))
             }.filter { cal.component(.year, from: $0) == year && $0 >= original }
