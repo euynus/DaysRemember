@@ -16,7 +16,7 @@ struct SyncChoiceView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
                 VStack(alignment: .leading, spacing: 18) {
-                    point("tray.full", String(localized: "开启同步后，日子、分类、照片、笔记与提醒设置将在你的设备间保持一致。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
+                    point("tray.full", String(localized: "开启同步后，日子、分类、照片、笔记、地点与提醒设置将在你的设备间保持一致。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     point("lock.icloud", String(localized: "数据加密保存在你个人的 iCloud 私有空间中，由 Apple 存储与传输，开发者无法访问。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     point("iphone", String(localized: "若选择「仅本机使用」，所有记录将只保存在当前这台设备上。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     point("gearshape", String(localized: "你随时可以在「我的 › 数据与同步」中更改设置，或管理云端数据。", bundle: AppLocalization.bundle, locale: AppLocalization.locale))

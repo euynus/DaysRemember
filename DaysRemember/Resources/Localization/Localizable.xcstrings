@@ -8920,7 +8920,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iOS replenishes upcoming reminders in the background, or whenever you open the app. Days set to “None” are also excluded from Memories."
+            "value" : "iOS replenishes upcoming reminders in the background, or whenever you open the app. Days set to “Off” are also excluded from Memories."
           }
         },
         "zh-Hans" : {
@@ -12054,25 +12054,25 @@
         }
       }
     },
-    "开启同步后，日子、分类、照片、笔记与提醒设置将在你的设备间保持一致。" : {
+    "开启同步后，日子、分类、照片、笔记、地点与提醒设置将在你的设备间保持一致。" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "When sync is on, your days, categories, photos, notes, and reminder settings stay in sync across your devices."
+            "value" : "When sync is on, your days, categories, photos, notes, locations, and reminder settings stay in sync across your devices."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "开启同步后，日子、分类、照片、笔记与提醒设置将在你的设备间保持一致。"
+            "value" : "开启同步后，日子、分类、照片、笔记、地点与提醒设置将在你的设备间保持一致。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開啟同步後，日子、分類、照片、筆記與提醒設定將在你的裝置間保持一致。"
+            "value" : "開啟同步後，日子、分類、照片、筆記、地點與提醒設定將在你的裝置間保持一致。"
           }
         }
       }
