@@ -14,10 +14,16 @@ struct PhotoTile: View {
     /// Scrolling lists decode uncached photos off the main actor and show plain paper
     /// meanwhile. Widgets and image exports must stay synchronous.
     var decodesAsynchronously = false
-    @State private var loadedImage: UIImage?
-    /// Set when the photo can't be decoded, so the preset takes over as it does synchronously.
-    @State private var decodeFailed = false
+    /// The last asynchronous decode, for the photo and size it was made from: a tile whose photo
+    /// changes shows paper until the new one is ready, not the old picture.
+    @State private var loaded: Loaded?
     @State private var digestMemo = PhotoDigestMemo()
+
+    private struct Loaded {
+        let key: String
+        /// Nil when the photo can't be decoded, so the preset takes over as it does synchronously.
+        let image: UIImage?
+    }
     @Environment(\.widgetRenderingMode) private var renderingMode
 
     init(style: PhotoStyle, imageData: Data? = nil, focusX: Double = 0.5, focusY: Double = 0.5,
@@ -43,12 +49,15 @@ struct PhotoTile: View {
     }
 
     var body: some View {
+        let key = loadKey
+        let current = loaded.flatMap { $0.key == key ? $0 : nil }
         let pickedImage = imageData.flatMap { data in
             let digest = digestMemo.digest(of: data)
             return decodesAsynchronously
-                ? PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize) ?? loadedImage
+                ? PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize) ?? current?.image
                 : PhotoDecodeCache.decoded(data, digest: digest, maximumPixelSize: maximumPixelSize)
         }
+        let decodeFailed = current != nil && current?.image == nil
         let awaitingPhoto = imageData != nil && pickedImage == nil && decodesAsynchronously && !decodeFailed
         // Retain the optional scrim for callers that place white text over a cover.
         let scrimEndOpacity = pickedImage != nil ? 0.85 : 0.55
@@ -87,18 +96,25 @@ struct PhotoTile: View {
         // Clipping pixels does not clip hit testing for a scaled-to-fill image.
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .accessibilityHidden(true)
-        .task(id: decodesAsynchronously ? imageData : nil) {
-            decodeFailed = false
-            guard decodesAsynchronously, let data = imageData else { return }
+        .task(id: key) {
+            guard let key, let data = imageData else { return }
             // Keep a reference even to a cached image: the cache may drop it while the tile is shown.
             let digest = digestMemo.digest(of: data)
-            loadedImage = PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize)
-            guard loadedImage == nil else { return }
+            if let cached = PhotoDecodeCache.cached(digest: digest, maximumPixelSize: maximumPixelSize) {
+                loaded = Loaded(key: key, image: cached)
+                return
+            }
             let image = await PhotoDecodeCache.decodedInBackground(data, digest: digest, maximumPixelSize: maximumPixelSize)
             guard !Task.isCancelled else { return }
-            loadedImage = image
-            decodeFailed = image == nil
+            loaded = Loaded(key: key, image: image)
         }
+    }
+
+    /// The photo and size an asynchronous decode is for; nil when this tile decodes synchronously.
+    /// The digest is remembered, so comparing it is cheaper than comparing the photo's bytes.
+    private var loadKey: String? {
+        guard decodesAsynchronously, let data = imageData else { return nil }
+        return "\(digestMemo.digest(of: data))@\(maximumPixelSize)"
     }
 
     /// The margin around a preset's illustration, as a share of the frame's shorter side.
