@@ -59,7 +59,8 @@ struct DetailCountdown: View {
             .buttonStyle(.plain)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(countdownLabel)
-            .accessibilityValue(info.isToday ? "" : "\(breakdown.value.formatted(.number.locale(AppLocalization.locale))) \(unitText(breakdown))")
+            // In days the label already says the count; other units are read as the value.
+            .accessibilityValue(info.isToday || unit == .days ? "" : "\(breakdown.value.formatted(.number.locale(AppLocalization.locale))) \(unitText(breakdown))")
             .accessibilityHint(info.isToday ? "" : String(localized: "轻点切换单位", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             .accessibilityIdentifier("detail.countdown")
             if !info.isToday { unitPicker }
