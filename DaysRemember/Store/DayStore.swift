@@ -328,7 +328,7 @@ final class DayStore {
             saveFailure = .library
             return
         }
-        let conflicts = syncConflicts.filter { !Self.isVersion(of: id, $0) }
+        let conflicts = syncConflicts.filter { $0.dayID != id }
         if conflicts != syncConflicts, let data = try? (photoFiles?.encoder() ?? JSONEncoder()).encode(conflicts) {
             defaults.set(data, forKey: conflictsKey)
             syncConflicts = conflicts
@@ -337,19 +337,10 @@ final class DayStore {
         removeUnusedPhotos()
     }
 
-    private static func isVersion(of dayID: String, _ conflict: SyncConflict) -> Bool {
-        if case .day(let day) = conflict.record { return day.id == dayID }
-        return false
-    }
-
     private func removeDay(_ id: String, fromBackupAt key: String) {
-        guard let data = defaults.data(forKey: key), var backup = try? decodeLocalBackup(data) else { return }
-        let count = backup.days.count + backup.deletedDays.count + backup.syncConflicts.count
-        backup.days.removeAll { $0.id == id }
-        backup.deletedDays.removeAll { $0.id == id }
-        backup.syncConflicts.removeAll { Self.isVersion(of: id, $0) }
-        guard backup.days.count + backup.deletedDays.count + backup.syncConflicts.count < count,
-              let encoded = try? localBackupData(backup) else { return }
+        guard let data = defaults.data(forKey: key), let backup = try? decodeLocalBackup(data) else { return }
+        let removed = backup.removingDay(id: id)
+        guard removed.dayCopyCount < backup.dayCopyCount, let encoded = try? localBackupData(removed) else { return }
         defaults.set(encoded, forKey: key)
     }
 
@@ -726,15 +717,7 @@ final class DayStore {
             return saveError == nil
         }
         // Copies in 最近删除 and 同步保留版本 take the new name too, as deleteCategory moves them.
-        let updatedDeleted = deletedDays.map { DeletedDay(day: relabeled($0.day), deletedAt: $0.deletedAt) }
-        let updatedConflicts = syncConflicts.map { conflict in
-            guard case .day(let day) = conflict.record else { return conflict }
-            var updated = conflict
-            updated.record = .day(relabeled(day))
-            return updated
-        }
-        commitChange(days: days.map(relabeled), categories: updatedCategories,
-                     deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
+        commitChange(currentBackup.mappingDays(relabeled), categories: updatedCategories)
         return saveError == nil
     }
 
@@ -758,16 +741,14 @@ final class DayStore {
         }
         // Copies in 最近删除 and 同步保留版本 move too, or restoring one would bring back a day
         // whose category no longer exists.
-        let updatedDeleted = deletedDays.map { DeletedDay(day: migrated($0.day), deletedAt: $0.deletedAt) }
-        let updatedConflicts = syncConflicts.map { conflict in
-            guard case .day(let day) = conflict.record else { return conflict }
-            var updated = conflict
-            updated.record = .day(migrated(day))
-            return updated
-        }
-        commitChange(days: days.map(migrated), categories: updatedCategories,
-                     deletedDays: updatedDeleted, syncConflicts: updatedConflicts)
+        commitChange(currentBackup.mappingDays(migrated), categories: updatedCategories)
         return saveError == nil
+    }
+
+    /// Writes every copy of the days in `copies`, with these categories, through the restore journal.
+    private func commitChange(_ copies: DayBackup, categories: [CategoryDefinition]) {
+        commitChange(days: copies.days, categories: categories,
+                     deletedDays: copies.deletedDays, syncConflicts: copies.syncConflicts)
     }
 
     /// Writes several parts of the library at once through the restore journal; `failure` names

@@ -118,3 +118,32 @@ struct DayBackup: Codable {
               }) else { throw BackupError.invalidRecords }
     }
 }
+
+extension DayBackup {
+    /// Rewrites every copy of a day this holds: the library, 最近删除 and 同步保留版本. A change made
+    /// to the library alone would come back with the next restored copy.
+    func mappingDays(_ transform: (Day) -> Day) -> DayBackup {
+        var mapped = self
+        mapped.days = days.map(transform)
+        mapped.deletedDays = deletedDays.map { DeletedDay(day: transform($0.day), deletedAt: $0.deletedAt) }
+        mapped.syncConflicts = syncConflicts.map { conflict in
+            guard case .day(let day) = conflict.record else { return conflict }
+            var updated = conflict
+            updated.record = .day(transform(day))
+            return updated
+        }
+        return mapped
+    }
+
+    /// This without any copy of the day.
+    func removingDay(id: String) -> DayBackup {
+        var removed = self
+        removed.days.removeAll { $0.id == id }
+        removed.deletedDays.removeAll { $0.id == id }
+        removed.syncConflicts.removeAll { $0.dayID == id }
+        return removed
+    }
+
+    /// How many copies of days this holds.
+    var dayCopyCount: Int { days.count + deletedDays.count + syncConflicts.count }
+}
