@@ -7,7 +7,7 @@
 - **名称**：主屏幕上显示「时光」（`CFBundleDisplayName`）；App Store 名称、副标题与其他文案见下文「商店文案」
 - **分类**：生活 / 效率
 - **Bundle ID**：`dev.gooday.days`（Widget：`.widget`）
-- **版本 / 构建号**：版本取 `project.yml` 的 `MARKETING_VERSION`（现为 1.0.1），App 与小组件共用；构建号由 `scripts/archive.sh` 按提交数生成，每次从新的提交上传都会更大
+- **版本 / 构建号**：版本取 `project.yml` 的 `MARKETING_VERSION`（现为 1.0.2），App 与小组件共用；构建号由 `scripts/archive.sh` 按提交数生成，每次从新的提交上传都会更大
 - **支持设备**：iPhone，竖屏，iOS 26+
 - **语言**：简体中文、繁體中文、English
 
