@@ -90,6 +90,8 @@ struct NotificationsView: View {
 
                     SectionHeader(String(localized: "提前提醒", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
                     CardList {
+                        timeRow
+                        RowDivider()
                         ToggleCell(label: String(localized: "提前 7 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: reactiveBinding(\.notifPre7))
                         RowDivider()
                         ToggleCell(label: String(localized: "提前 3 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale), isOn: reactiveBinding(\.notifPre3))
@@ -113,8 +115,6 @@ struct NotificationsView: View {
                         ToggleCell(label: String(localized: "时光回忆", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                    sub: String(localized: "在已过日子的公历或农历周年当天，提醒你回望那一天", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                                    isOn: reactiveBinding(\.memoryEnabled))
-                        RowDivider()
-                        timeRow
                     }
 
                     ReminderScheduleSummary().padding(.top, 18)
@@ -160,13 +160,14 @@ struct NotificationsView: View {
 
     private var timeRow: some View {
         HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
+            // Styled as the toggles beside it.
+            VStack(alignment: .leading, spacing: 4) {
                 Text("提醒时间")
-                    .font(Theme.sans(15, weight: .semibold))
+                    .font(Theme.sans(15))
                     .foregroundStyle(Theme.ink)
                 Text("当天、提前提醒与年度回忆")
-                    .font(Theme.sans(12, weight: .medium))
-                    .foregroundStyle(Theme.muted)
+                    .font(Theme.sans(12))
+                    .foregroundStyle(Theme.ink2)
             }
             Spacer(minLength: 8)
             DatePicker("提醒时间", selection: reminderTime, displayedComponents: .hourAndMinute)
