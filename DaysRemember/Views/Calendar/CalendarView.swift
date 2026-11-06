@@ -58,43 +58,44 @@ struct CalendarMonthView: View {
 
     var body: some View {
         let eventsByDay = computeEventsByDay()
-        return VStack(spacing: 0) {
+        return ScrollView {
+            LazyVStack(alignment: .leading, spacing: 12) {
+                CalendarMonthGrid(year: year, month: month, eventsByDay: eventsByDay,
+                                  onShowMonth: { showMonth(offset: $0) },
+                                  onOpenCell: { events, date in openCell(events: events, date: date) },
+                                  onAddOnDate: { addDay(date: $0) })
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                Text("本月日子")
+                    .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 4)
+                    .padding(.top, 8)
+                    .accessibilityAddTraits(.isHeader)
+                if eventsByDay.isEmpty {
+                    Text("本月没有记录的日子")
+                        .font(Theme.sans(15))
+                        .foregroundStyle(Theme.muted)
+                        .frame(maxWidth: .infinity, minHeight: 60)
+                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                } else {
+                    ForEach(Self.monthEntries(eventsByDay)) { entry in
+                        CalendarMonthRow(day: entry.day, year: year, month: month, dayNumber: entry.dayNumber,
+                                         onOpen: onOpen)
+                            .dayContextMenu(day: entry.day)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
+            .padding(.bottom, 24)
+        }
+        .scrollIndicators(.hidden)
+        // The month passes under its header, which softens it as a navigation bar would.
+        .safeAreaBar(edge: .top, spacing: 0) {
             CalendarMonthHeader(monthDate: monthDate, isShowingCurrentMonth: isShowingCurrentMonth,
                                 onShowMonth: { showMonth(offset: $0) }, onShowCurrentMonth: showCurrentMonth)
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
-                    CalendarMonthGrid(year: year, month: month, eventsByDay: eventsByDay,
-                                      onShowMonth: { showMonth(offset: $0) },
-                                      onOpenCell: { events, date in openCell(events: events, date: date) },
-                                      onAddOnDate: { addDay(date: $0) })
-                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    Text("本月日子")
-                        .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
-                        .foregroundStyle(Theme.ink)
-                        .padding(.horizontal, 4)
-                        .padding(.top, 8)
-                        .accessibilityAddTraits(.isHeader)
-                    if eventsByDay.isEmpty {
-                        Text("本月没有记录的日子")
-                            .font(Theme.sans(15))
-                            .foregroundStyle(Theme.muted)
-                            .frame(maxWidth: .infinity, minHeight: 60)
-                            .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    } else {
-                        ForEach(Self.monthEntries(eventsByDay)) { entry in
-                            CalendarMonthRow(day: entry.day, year: year, month: month, dayNumber: entry.dayNumber,
-                                             onOpen: onOpen)
-                                .dayContextMenu(day: entry.day)
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-                .padding(.bottom, 24)
-            }
-            .scrollIndicators(.hidden)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)

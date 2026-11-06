@@ -34,48 +34,49 @@ struct DayEditorView: View {
     private var hasUnsavedChanges: Bool { isLoadingPhoto || draft.hasChanges }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                DayEditorPreview(title: draft.title, date: draft.date, recurring: draft.recurring, solar: draft.solar,
+                                 photo: draft.photo, photoData: draft.photoData,
+                                 coverFocusX: $draft.coverFocusX, coverFocusY: $draft.coverFocusY, tint: previewTint)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
+                titleField.padding(.bottom, 12)
+                DayEditorForm(selectedDate: draft.date, solar: $draft.solar, recurring: $draft.repeats,
+                              reminderOffsets: draft.reminderOffsets, reminderTime: draft.reminderTime,
+                              location: $draft.location,
+                              onPickDate: {
+                                  draftDate = draft.date
+                                  showDatePicker = true
+                              },
+                              onEditReminders: { showReminderSettings = true })
+                    .padding(.bottom, 22)
+
+                SectionHeader(String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
+                DayEditorCategoryPills(categoryID: draft.categoryID, selectedCategory: draft.selectedCategory,
+                                       storedName: draft.original.categoryDisplayName,
+                                       onSelect: { draft.selectCategory($0) })
+                    .padding(.bottom, 22)
+
+                coverPicker.padding(.bottom, 28)
+
+                SectionHeader(String(localized: "心情笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
+                DayEditorNotes(note: $draft.note)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 40)
+        }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
+        .accessibilityIdentifier("dayEditorScroll")
+        // The form passes under the bar, which softens it as a navigation bar would.
+        .safeAreaBar(edge: .top, spacing: 0) {
             EditorNavBar(title: editingDay == nil
                              ? String(localized: "新的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                              : String(localized: "编辑日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                          canSave: canSave, cancelIdentifier: "cancelDayButton", saveIdentifier: "saveDayButton",
                          onCancel: cancel, onSave: saveDay)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    DayEditorPreview(title: draft.title, date: draft.date, recurring: draft.recurring, solar: draft.solar,
-                                     photo: draft.photo, photoData: draft.photoData,
-                                     coverFocusX: $draft.coverFocusX, coverFocusY: $draft.coverFocusY, tint: previewTint)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
-                    titleField.padding(.bottom, 12)
-                    DayEditorForm(selectedDate: draft.date, solar: $draft.solar, recurring: $draft.repeats,
-                                  reminderOffsets: draft.reminderOffsets, reminderTime: draft.reminderTime,
-                                  location: $draft.location,
-                                  onPickDate: {
-                                      draftDate = draft.date
-                                      showDatePicker = true
-                                  },
-                                  onEditReminders: { showReminderSettings = true })
-                        .padding(.bottom, 22)
-
-                    SectionHeader(String(localized: "分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
-                    DayEditorCategoryPills(categoryID: draft.categoryID, selectedCategory: draft.selectedCategory,
-                                           storedName: draft.original.categoryDisplayName,
-                                           onSelect: { draft.selectCategory($0) })
-                        .padding(.bottom, 22)
-
-                    coverPicker.padding(.bottom, 28)
-
-                    SectionHeader(String(localized: "心情笔记", bundle: AppLocalization.bundle, locale: AppLocalization.locale)).padding(.bottom, 10)
-                    DayEditorNotes(note: $draft.note)
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
-            .accessibilityIdentifier("dayEditorScroll")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)

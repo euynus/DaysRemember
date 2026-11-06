@@ -79,26 +79,27 @@ struct CategoryEditorView: View {
     ] }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                CategoryEditorPreview(name: name, icon: icon, colorToken: colorToken, cover: cover)
+                nameField
+                CategoryIconPicker(icon: $icon, storedIcon: category?.icon, colorToken: colorToken)
+                CategoryColorPicker(colorToken: $colorToken)
+                if canDelete { deleteButton }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 40)
+        }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
+        // The form passes under the bar, which softens it as a navigation bar would.
+        .safeAreaBar(edge: .top, spacing: 0) {
             EditorNavBar(title: category == nil
                              ? String(localized: "新建分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                              : String(localized: "编辑分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
                          canSave: canSave, cancelIdentifier: "cancelCategoryButton", saveIdentifier: "saveCategoryButton",
                          onCancel: cancel, onSave: save)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    CategoryEditorPreview(name: name, icon: icon, colorToken: colorToken, cover: cover)
-                    nameField
-                    CategoryIconPicker(icon: $icon, storedIcon: category?.icon, colorToken: colorToken)
-                    CategoryColorPicker(colorToken: $colorToken)
-                    if canDelete { deleteButton }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)

@@ -27,40 +27,43 @@ struct HomeView: View {
         let feed = query.isEmpty ? Self.split(sorted, today: today) : (upcoming: [], past: [])
         let upcoming = feed.upcoming
         let past = feed.past
-        VStack(spacing: 0) {
-            header
-            if isSearching { searchField }
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        if store.days.isEmpty {
-                            emptyLibrary
-                        } else if !query.isEmpty {
-                            searchResults(sorted)
-                        } else {
-                            HomeFacePicker(face: $face, upcoming: upcoming.count, past: past.count)
-                            switch face {
-                            case .upcoming: UpcomingFace(days: upcoming, heroPage: $heroPage, heroHeight: heroHeight, onOpen: onOpen)
-                            case .past: PastFace(days: past, heroHeight: heroHeight, onOpen: onOpen)
-                            }
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    if store.days.isEmpty {
+                        emptyLibrary
+                    } else if !query.isEmpty {
+                        searchResults(sorted)
+                    } else {
+                        HomeFacePicker(face: $face, upcoming: upcoming.count, past: past.count)
+                        switch face {
+                        case .upcoming: UpcomingFace(days: upcoming, heroPage: $heroPage, heroHeight: heroHeight, onOpen: onOpen)
+                        case .past: PastFace(days: past, heroHeight: heroHeight, onOpen: onOpen)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
-                    .padding(.bottom, 24)
-                    .id("home.feed.top")
                 }
-                .scrollIndicators(.hidden)
-                .accessibilityIdentifier("home.feed")
-                .scrollDismissesKeyboard(.interactively)
-                .onChange(of: face) {
-                    searchFocused = false
-                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
-                        proxy.scrollTo("home.feed.top", anchor: .top)
-                    }
-                }
-                .onChange(of: searchText) { proxy.scrollTo("home.feed.top", anchor: .top) }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+                .padding(.bottom, 24)
+                .id("home.feed.top")
             }
+            .scrollIndicators(.hidden)
+            .accessibilityIdentifier("home.feed")
+            .scrollDismissesKeyboard(.interactively)
+            // The feed passes under the header, which softens it as a navigation bar would.
+            .safeAreaBar(edge: .top, spacing: 0) {
+                VStack(spacing: 0) {
+                    header
+                    if isSearching { searchField }
+                }
+            }
+            .onChange(of: face) {
+                searchFocused = false
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.18)) {
+                    proxy.scrollTo("home.feed.top", anchor: .top)
+                }
+            }
+            .onChange(of: searchText) { proxy.scrollTo("home.feed.top", anchor: .top) }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
