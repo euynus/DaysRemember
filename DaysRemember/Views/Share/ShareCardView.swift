@@ -56,7 +56,7 @@ struct ShareCardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            NavHeader(title: String(localized: "分享", bundle: AppLocalization.bundle, locale: AppLocalization.locale), onBack: { dismiss() })
+            NavHeader(title: String(localized: "分享", bundle: AppLocalization.bundle, locale: AppLocalization.locale), onClose: { dismiss() })
             templatePicker
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)

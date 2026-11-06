@@ -1,24 +1,27 @@
 import SwiftUI
 
+/// A screen's title, large on a tab's root; in a sheet, smaller with a close button at the end.
 struct NavHeader<Trailing: View>: View {
     let title: String
-    var onBack: (() -> Void)? = nil
+    /// Closes the sheet the header heads.
+    var onClose: (() -> Void)? = nil
     @ViewBuilder let trailing: Trailing
 
     var body: some View {
         HStack(spacing: 12) {
-            if let onBack {
-                FAB(systemName: "chevron.left", size: 42, action: onBack)
-                    .accessibilityLabel("返回")
-            }
             Text(title)
-                .font(Theme.sans(onBack == nil ? 28 : 19, weight: .medium,
-                                 relativeTo: onBack == nil ? .largeTitle : .headline))
+                .font(Theme.sans(onClose == nil ? 28 : 19, weight: .medium,
+                                 relativeTo: onClose == nil ? .largeTitle : .headline))
                 .foregroundStyle(Theme.ink)
-                .lineLimit(onBack == nil ? 1 : 2)
+                .lineLimit(onClose == nil ? 1 : 2)
                 .minimumScaleFactor(0.5)
             Spacer(minLength: 8)
             trailing
+            if let onClose {
+                FAB(systemName: "xmark", size: 42, iconSize: 16, action: onClose)
+                    .accessibilityLabel("关闭")
+                    .accessibilityIdentifier("sheet.close")
+            }
         }
         .padding(.horizontal, 24)
         .padding(.top, 16)
@@ -27,7 +30,7 @@ struct NavHeader<Trailing: View>: View {
 }
 
 extension NavHeader where Trailing == EmptyView {
-    init(title: String, onBack: (() -> Void)? = nil) {
-        self.init(title: title, onBack: onBack, trailing: { EmptyView() })
+    init(title: String, onClose: (() -> Void)? = nil) {
+        self.init(title: title, onClose: onClose, trailing: { EmptyView() })
     }
 }
