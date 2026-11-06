@@ -180,9 +180,7 @@ struct DayDraft: Equatable {
             return selectedCategory == nil ? draft : nil
         }
         var day = draft
-        day.categoryID = category.id
-        day.categoryLabel = category.name
-        day.category = DayCategory(rawValue: category.id) ?? .life
+        day.assign(category)
         return day
     }
 }

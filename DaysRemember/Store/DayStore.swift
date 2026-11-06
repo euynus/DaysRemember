@@ -648,18 +648,7 @@ final class DayStore {
     }
 
     func sortedDays(_ source: [Day], today: Date = Today.date) -> [Day] {
-        // Decorate-sort-undecorate: compute DayInfo once per day instead of on every
-        // comparator call. With N days the sort issues ~N log N comparisons; without
-        // memoizing we'd hit DayInfo.compute (which can do a multi-year lunar walk for
-        // recurring lunar days) ~2N log N times per sort.
-        source
-            .map { ($0, DayInfo.compute($0, today: today)) }
-            .sorted { lhs, rhs in
-                if lhs.0.pinned != rhs.0.pinned { return lhs.0.pinned && !rhs.0.pinned }
-                if lhs.1.isPast != rhs.1.isPast { return !lhs.1.isPast }
-                return lhs.1.days < rhs.1.days
-            }
-            .map(\.0)
+        Day.feedOrder(source, today: today)
     }
 
     func daysByCategory(today: Date = Today.date) -> [String: [Day]] {
@@ -734,9 +723,7 @@ final class DayStore {
         func migrated(_ day: Day) -> Day {
             guard day.categoryID == id else { return day }
             var updated = day
-            updated.categoryID = target.id
-            updated.categoryLabel = target.name
-            updated.category = DayCategory(rawValue: target.id) ?? .life
+            updated.assign(target)
             return updated
         }
         // Copies in 最近删除 and 同步保留版本 move too, or restoring one would bring back a day
@@ -773,8 +760,7 @@ final class DayStore {
         // Cloud days can arrive before their category definition. Keep the reference
         // and label snapshot until the definition arrives; display lookup can fall back.
         if let definition = categories.first(where: { $0.id == day.categoryID }) {
-            updated.categoryLabel = definition.name
-            updated.category = DayCategory(rawValue: definition.id) ?? .life
+            updated.assign(definition)
         }
         updated.coverFocusX = min(1, max(0, updated.coverFocusX))
         updated.coverFocusY = min(1, max(0, updated.coverFocusY))
