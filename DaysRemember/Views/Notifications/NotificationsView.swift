@@ -119,7 +119,7 @@ struct NotificationsView: View {
 
                     ReminderScheduleSummary().padding(.top, 18)
                 }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 16)
                 .padding(.top, 18)
                 .padding(.bottom, 24)
             }

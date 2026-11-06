@@ -28,7 +28,7 @@ struct WidgetsPreviewView: View {
                 Text("锁定屏幕").tag(true)
             }
             .pickerStyle(.segmented)
-            .padding(.horizontal, 22)
+            .padding(.horizontal, 24)
             .padding(.bottom, 16)
             Picker("日子", selection: $selectedID) {
                 Text("置顶或最近的日子").tag(String?.none)
@@ -38,7 +38,7 @@ struct WidgetsPreviewView: View {
             }
             .pickerStyle(.menu)
             .accessibilityIdentifier("widgetPreviewDayPicker")
-            .padding(.horizontal, 22)
+            .padding(.horizontal, 24)
             if lockScreen {
                 Picker("样式", selection: $accessoryStyle) {
                     Text("圆形").tag(DayAccessoryWidget.Style.circular)
@@ -46,7 +46,8 @@ struct WidgetsPreviewView: View {
                     Text("行内").tag(DayAccessoryWidget.Style.inline)
                 }
                 .pickerStyle(.segmented)
-                .padding(22)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 22)
             } else {
                 Picker("尺寸", selection: $size) {
                     Text("小").tag(DayWidgetCard.Size.small)
@@ -54,7 +55,8 @@ struct WidgetsPreviewView: View {
                     Text("大").tag(DayWidgetCard.Size.large)
                 }
                 .pickerStyle(.segmented)
-                .padding(22)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 22)
             }
             ScrollView {
                 let day = WidgetDay.resolve(in: store.days, selectedID: selectedID, today: today)

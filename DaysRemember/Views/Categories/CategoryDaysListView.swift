@@ -16,7 +16,7 @@ struct CategoryDaysListView: View {
                 ContentUnavailableView("还没有日子", systemImage: "calendar")
             } else {
                 DayGrid(days: days, onOpen: onOpen)
-                    .padding(.horizontal, 22)
+                    .padding(.horizontal, 16)
                     .padding(.bottom, 22)
             }
         }
