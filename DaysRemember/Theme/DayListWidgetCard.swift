@@ -78,13 +78,7 @@ struct DayListWidgetCard: View {
         .background(renderingMode == .fullColor ? tint : Color.clear,
                     in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String(localized: "\(day.title)，\(countdown(info))，\(CNDate.full(info.displayDate))",
+        .accessibilityLabel(String(localized: "\(day.title)，\(info.compactCountdownText)，\(CNDate.full(info.displayDate))",
                                    bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-    }
-
-    private func countdown(_ info: DayInfo) -> String {
-        info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : info.isPast ? String(localized: "\(info.days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : String(localized: "\(info.days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 }

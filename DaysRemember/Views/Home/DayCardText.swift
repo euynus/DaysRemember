@@ -2,14 +2,8 @@ import Foundation
 
 /// Copy shared by the cards.
 enum DayCardText {
-    static func countdown(_ info: DayInfo) -> String {
-        info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : info.isPast ? String(localized: "\(info.days) 天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : String(localized: "\(info.days) 天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-    }
-
     static func accessibilityLabel(_ day: Day, info: DayInfo) -> String {
-        let countdown = countdown(info)
+        let countdown = info.countdownText
         return day.pinned
             ? String(localized: "\(day.title)，\(countdown)，已置顶", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             : String(localized: "\(day.title)，\(countdown)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)

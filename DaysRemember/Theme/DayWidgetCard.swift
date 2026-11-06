@@ -142,8 +142,7 @@ struct DayWidgetCard: View {
 
     private var accessibilitySummary: String {
         let info = self.info
-        let countdown = info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : info.isPast ? String(localized: "\(info.days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "\(info.days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        let countdown = info.compactCountdownText
         return String(localized: "\(day.title)，\(countdown)，\(CNDate.full(info.displayDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 }

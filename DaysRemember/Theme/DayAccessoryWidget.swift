@@ -139,18 +139,13 @@ struct DayAccessoryWidget: View {
             : String(localized: "还没有日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
-    private func countdownText(_ info: DayInfo) -> String {
-        info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : info.isPast ? String(localized: "\(info.days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "\(info.days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-    }
-
     private func inlineText(_ info: DayInfo?) -> String {
         guard let day, let info else { return emptyMessage }
-        return String(localized: "\(countdownText(info)) · \(day.title)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return String(localized: "\(info.compactCountdownText) · \(day.title)", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     var accessibilitySummary: String {
         guard let day, let info else { return emptyMessage }
-        return String(localized: "\(day.title)，\(countdownText(info))，\(CNDate.full(info.displayDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        return String(localized: "\(day.title)，\(info.compactCountdownText)，\(CNDate.full(info.displayDate))", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 }

@@ -12,6 +12,20 @@ struct DayInfo {
     /// Calendar days since the original date, starting at zero; nil before it starts.
     var elapsedDays: Int? = nil
 
+    /// 就是今天, N 天前 or N 天后, as the app's cards, detail and share images say it.
+    var countdownText: String {
+        isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : isPast ? String(localized: "\(days) 天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : String(localized: "\(days) 天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+    }
+
+    /// The same without the space before 天, as the widgets fit it into their narrower lines.
+    var compactCountdownText: String {
+        isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : isPast ? String(localized: "\(days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+            : String(localized: "\(days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+    }
+
     var countdownUnit: String {
         isPast ? String(localized: "countdown.daysAgoUnit", defaultValue: "\(days)天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
             : String(localized: "countdown.daysLeftUnit", defaultValue: "\(days)天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)

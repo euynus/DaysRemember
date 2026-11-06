@@ -11,9 +11,7 @@ struct DetailCountdown: View {
     @Binding var unit: CountdownUnit
 
     var body: some View {
-        let countdownLabel = info.isToday ? String(localized: "就是今天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : info.isPast ? String(localized: "\(info.days) 天前", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-            : String(localized: "\(info.days) 天后", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+        let countdownLabel = info.countdownText
         let other = info.isPast ? day.date : info.displayDate
         let breakdown = CountdownBreakdown.make(unit, between: today, and: other)
         return VStack(alignment: .leading, spacing: 8) {
