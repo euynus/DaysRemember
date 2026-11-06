@@ -8,6 +8,28 @@ struct CategoryTile: View {
     let count: Int
     var onEdit: () -> Void
 
+    private static let coverSide: CGFloat = 66
+    private static let coverInset: CGFloat = 8
+    private static let horizontalPadding: CGFloat = 14
+    private static let verticalPadding: CGFloat = 12
+    private static let editButtonRoom: CGFloat = 36
+    /// Trailing room a name beside the illustration leaves it, with a gap.
+    private static let besideCover = coverSide + coverInset - horizontalPadding + 6
+    /// Room above a name below the illustration, with a gap.
+    private static let belowCover = coverSide + coverInset - verticalPadding + 4
+
+    private var name: some View {
+        Label {
+            Text(category.displayName)
+        } icon: {
+            Image(systemName: category.symbolName)
+                .foregroundStyle(category.tintInk)
+        }
+        .font(Theme.sans(16, weight: .heavy))
+        .foregroundStyle(Theme.ink)
+        .multilineTextAlignment(.leading)
+    }
+
     /// The first day's preset cover, or the category's default template; the editor's preview
     /// shows the same one.
     static func cover(categoryID: String, coverDay: Day?) -> PhotoStyle {
@@ -18,30 +40,34 @@ struct CategoryTile: View {
     var body: some View {
         NavigationLink(value: CategoryRoute.category(category.id)) {
             VStack(alignment: .leading, spacing: 1) {
-                // Room for the edit button, which large text would otherwise put over the icon.
-                Spacer(minLength: dynamicTypeSize.isAccessibilitySize && category.isSystem ? 0 : 36)
-                Label {
-                    Text(category.displayName)
-                } icon: {
-                    Image(systemName: category.symbolName)
-                        .foregroundStyle(category.tintInk)
+                // Fills the row, which a neighbour with a longer name can make taller.
+                Spacer(minLength: 0)
+                if dynamicTypeSize.isAccessibilitySize {
+                    // Room for the edit button, which large text would otherwise put over the icon.
+                    name.padding(.top, category.isSystem ? 0 : Self.editButtonRoom)
+                } else {
+                    ViewThatFits(in: .horizontal) {
+                        // One line beside the illustration, below the edit button.
+                        name.lineLimit(1)
+                            .padding(.trailing, Self.besideCover)
+                            .padding(.top, Self.editButtonRoom)
+                        // A longer name goes below it rather than under it.
+                        name.lineLimit(2)
+                            .padding(.top, Self.belowCover)
+                    }
                 }
-                .font(Theme.sans(16, weight: .heavy))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                .multilineTextAlignment(.leading)
                 Text(String(localized: "\(count) 个日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
                     .font(Theme.sans(12))
                     .foregroundStyle(Theme.onPastel)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Self.horizontalPadding)
+            .padding(.vertical, Self.verticalPadding)
             .frame(maxWidth: .infinity, minHeight: 92, alignment: .bottomLeading)
             .background(alignment: .topTrailing) {
                 if !dynamicTypeSize.isAccessibilitySize {
                     FlatCover(style: Self.cover(categoryID: category.id, coverDay: coverDay))
-                        .frame(width: 66, height: 66)
-                        .padding(8)
+                        .frame(width: Self.coverSide, height: Self.coverSide)
+                        .padding(Self.coverInset)
                 }
             }
             .background(category.tint, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
