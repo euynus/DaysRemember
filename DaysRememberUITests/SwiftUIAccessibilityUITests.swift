@@ -94,7 +94,7 @@ final class SwiftUIAccessibilityUITests: XCTestCase {
         let name = app.textFields["例如：朋友"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
         XCTAssertEqual(name.value as? String, "Journeys and the people we meet along the way")
-        app.buttons["返回"].tap()
+        app.buttons["取消"].tap()
         XCTAssertTrue(category.waitForExistence(timeout: 5))
     }
 

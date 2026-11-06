@@ -349,7 +349,7 @@ final class EditFlowUITests: XCTestCase {
         addCategory.tap()
         XCTAssertTrue(app.textFields["例如：朋友"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["保存"].isEnabled)
-        app.buttons["返回"].tap()
+        app.buttons["取消"].tap()
 
         let loveCategory = app.descendants(matching: .any).matching(identifier: "category-love").firstMatch
         XCTAssertTrue(loveCategory.waitForExistence(timeout: 5), app.debugDescription)

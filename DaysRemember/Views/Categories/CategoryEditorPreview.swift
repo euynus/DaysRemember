@@ -1,30 +1,41 @@
 import SwiftUI
 
-/// The category as it will look: its icon on its colour, its name and the colour's name.
+/// The category on its colour, as its tile in 我的 shows it: the illustration in the corner, then its
+/// icon and name and the colour's name.
 struct CategoryEditorPreview: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let name: String
     let icon: String
     let colorToken: CategoryColorToken
+    let cover: PhotoStyle
 
     var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: CategoryDefinition.symbolName(for: icon))
-                .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(colorToken.color)
-                .frame(width: 56, height: 56)
-                .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            VStack(alignment: .leading, spacing: 3) {
-                Text(name.isEmpty ? String(localized: "分类名称", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : name)
-                    .font(Theme.sans(22, weight: .medium))
-                    .foregroundStyle(name.isEmpty ? Theme.muted : Theme.ink)
-                Text(colorToken.label)
-                    .font(Theme.sans(12, weight: .bold))
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        VStack(alignment: .leading, spacing: 2) {
+            // Above the name rather than beside it, so a long name never runs under it.
+            if !dynamicTypeSize.isAccessibilitySize {
+                FlatCover(style: cover)
+                    .frame(width: 76, height: 76)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.bottom, 4)
+            }
+            Label {
+                Text(trimmed.isEmpty ? String(localized: "分类名称", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : trimmed)
+                    .foregroundStyle(trimmed.isEmpty ? Theme.onPastel : Theme.ink)
+            } icon: {
+                Image(systemName: CategoryDefinition.symbolName(for: icon))
                     .foregroundStyle(colorToken.color)
             }
-            Spacer()
+            .font(Theme.sans(20, weight: .heavy, relativeTo: .title3))
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+            .multilineTextAlignment(.leading)
+            Text(colorToken.label)
+                .font(Theme.sans(12, weight: .bold))
+                .foregroundStyle(colorToken.color)
         }
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .overlay(alignment: .bottom) { RowDivider() }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(colorToken.soft, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }

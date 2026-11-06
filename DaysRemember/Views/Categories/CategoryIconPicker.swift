@@ -18,16 +18,15 @@ struct CategoryIconPicker: View {
                     Button {
                         icon = choice.symbol
                     } label: {
+                        let tile = RoundedRectangle(cornerRadius: 16, style: .continuous)
                         Image(systemName: choice.symbol)
                             .font(Theme.symbol(24))
-                            .foregroundStyle(selected ? Theme.accent : Theme.ink2)
+                            .foregroundStyle(selected ? colorToken.color : Theme.ink2)
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: 56)
-                            .background(selected ? colorToken.soft : Color.white, in: .rect(cornerRadius: 8))
+                            .background(selected ? colorToken.soft : Theme.card, in: tile)
                             .overlay {
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .strokeBorder(selected ? colorToken.color : Theme.hairline,
-                                                  lineWidth: selected ? 2 : 0.5)
+                                if selected { tile.strokeBorder(colorToken.color, lineWidth: 2) }
                             }
                     }
                     .buttonStyle(PressScale(scale: 0.92))

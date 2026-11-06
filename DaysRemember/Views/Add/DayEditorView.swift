@@ -35,7 +35,11 @@ struct DayEditorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            DayEditorNavBar(isNew: editingDay == nil, canSave: canSave, onCancel: cancel, onSave: saveDay)
+            EditorNavBar(title: editingDay == nil
+                             ? String(localized: "新的日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                             : String(localized: "编辑日子", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                         canSave: canSave, cancelIdentifier: "cancelDayButton", saveIdentifier: "saveDayButton",
+                         onCancel: cancel, onSave: saveDay)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     DayEditorPreview(title: draft.title, date: draft.date, recurring: draft.recurring, solar: draft.solar,

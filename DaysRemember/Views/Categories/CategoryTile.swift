@@ -8,10 +8,11 @@ struct CategoryTile: View {
     let count: Int
     var onEdit: () -> Void
 
-    /// The newest day's preset cover, or the category's default template.
-    private var coverStyle: PhotoStyle {
+    /// The first day's preset cover, or the category's default template; the editor's preview
+    /// shows the same one.
+    static func cover(categoryID: String, coverDay: Day?) -> PhotoStyle {
         if let coverDay, coverDay.photoData == nil { return coverDay.photo }
-        return PhotoStyle.defaultCover(forCategoryID: category.id) ?? coverDay?.photo ?? .systemDefault
+        return PhotoStyle.defaultCover(forCategoryID: categoryID) ?? coverDay?.photo ?? .systemDefault
     }
 
     var body: some View {
@@ -38,7 +39,7 @@ struct CategoryTile: View {
             .frame(maxWidth: .infinity, minHeight: 92, alignment: .bottomLeading)
             .background(alignment: .topTrailing) {
                 if !dynamicTypeSize.isAccessibilitySize {
-                    FlatCover(style: coverStyle)
+                    FlatCover(style: Self.cover(categoryID: category.id, coverDay: coverDay))
                         .frame(width: 66, height: 66)
                         .padding(8)
                 }

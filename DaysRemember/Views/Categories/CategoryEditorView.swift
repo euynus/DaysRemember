@@ -3,6 +3,7 @@ import SwiftUI
 // Category edits and deletion preserve the existing day migration behavior.
 struct CategoryEditorView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
 
     private let category: CategoryDefinition?
@@ -10,6 +11,7 @@ struct CategoryEditorView: View {
     @State private var icon: String
     @State private var colorToken: CategoryColorToken
     @State private var confirmingDelete = false
+    @State private var confirmingDiscard = false
     @State private var saveError: String?
 
     init(category: CategoryDefinition? = nil) {
@@ -21,6 +23,17 @@ struct CategoryEditorView: View {
 
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var hasChanges: Bool {
+        name != (category?.name ?? "") || icon != (category?.icon ?? "tag")
+            || colorToken != (category?.colorToken ?? .terracotta)
+    }
+
+    /// The illustration the category's tile shows: its first day's, or the default.
+    private var cover: PhotoStyle {
+        let days = category.map { category in store.days.filter { $0.categoryID == category.id } } ?? []
+        return CategoryTile.cover(categoryID: category?.id ?? "", coverDay: store.sortedDays(days, today: today).first)
     }
 
     private var canDelete: Bool {
@@ -67,23 +80,33 @@ struct CategoryEditorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            navBar
+            EditorNavBar(title: category == nil
+                             ? String(localized: "新建分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
+                             : String(localized: "编辑分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
+                         canSave: canSave, cancelIdentifier: "cancelCategoryButton", saveIdentifier: "saveCategoryButton",
+                         onCancel: cancel, onSave: save)
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    CategoryEditorPreview(name: name, icon: icon, colorToken: colorToken)
+                    CategoryEditorPreview(name: name, icon: icon, colorToken: colorToken, cover: cover)
                     nameField
                     CategoryIconPicker(icon: $icon, storedIcon: category?.icon, colorToken: colorToken)
                     CategoryColorPicker(colorToken: $colorToken)
                     if canDelete { deleteButton }
                 }
-                .padding(.horizontal, 22)
-                .padding(.top, 18)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
+        .interactiveDismissDisabled(hasChanges)
+        .alert("放弃未保存的修改？", isPresented: $confirmingDiscard) {
+            Button("放弃修改", role: .destructive) { dismiss() }
+            Button("继续编辑", role: .cancel) {}
+        }
         .sensoryFeedback(.selection, trigger: icon)
         .sensoryFeedback(.selection, trigger: colorToken)
         .alert("未能保存", isPresented: Binding(
@@ -95,37 +118,20 @@ struct CategoryEditorView: View {
         }
     }
 
-    private var navBar: some View {
-        NavHeader(title: category == nil ? String(localized: "新建分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale) : String(localized: "编辑分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)) {
-            dismiss()
-        } trailing: {
-            Button(action: save) {
-                Text("保存")
-                    .font(Theme.sans(15, weight: .bold))
-                    .foregroundStyle(canSave ? Theme.ink : Theme.muted)
-                    .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .disabled(!canSave)
-            .accessibilityIdentifier("saveCategoryButton")
-        }
-    }
-
     // MARK: - Name field
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(String(localized: "名称", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
             TextField("例如：朋友", text: $name)
-                .font(Theme.sans(17))
+                .font(Theme.sans(17, weight: .semibold))
                 .foregroundStyle(Theme.ink)
+                .tint(Theme.ink)
                 .submitLabel(.done)
                 .padding(.horizontal, 16)
                 .frame(minHeight: 52)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.white, in: .rect(cornerRadius: 8))
-                .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.hairline, lineWidth: 1) }
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                 .accessibilityLabel("分类名称")
                 .accessibilityIdentifier("categoryNameField")
         }
@@ -152,6 +158,10 @@ struct CategoryEditorView: View {
         }
         .padding(.top, 4)
         .accessibilityIdentifier("deleteCategoryButton")
+    }
+
+    private func cancel() {
+        if hasChanges { confirmingDiscard = true } else { dismiss() }
     }
 
     private func save() {

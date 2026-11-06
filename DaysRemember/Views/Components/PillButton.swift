@@ -22,6 +22,8 @@ struct PillButton: View {
             .frame(minHeight: height)
             .padding(.horizontal, 22)
             .background(background, in: .capsule)
+            // The whole frame takes a tap, corners included.
+            .contentShape(.rect)
         }
         .buttonStyle(PressScale())
     }
