@@ -94,11 +94,7 @@ struct DetailTimeline: View {
                 nodes.append(Node(title: String(localized: "那一天", bundle: AppLocalization.bundle, locale: AppLocalization.locale), date: day.date,
                                   relative: String(localized: "已过 \(elapsed) 天", bundle: AppLocalization.bundle, locale: AppLocalization.locale)))
             }
-            let year = cal.component(.year, from: todayStart)
-            let previous = ((year - 1)...year)
-                .flatMap { DayInfo.occurrences(of: day, inGregorianYear: $0) }
-                .filter { $0 < todayStart && $0 > cal.startOfDay(for: day.date) }
-                .max()
+            let previous = DayInfo.previousOccurrence(of: day, before: todayStart)
             if let previous {
                 nodes.append(Node(title: String(localized: "上一次", bundle: AppLocalization.bundle, locale: AppLocalization.locale), date: previous, relative: relative(previous)))
             }

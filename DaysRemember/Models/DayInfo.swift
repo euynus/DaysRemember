@@ -6,7 +6,6 @@ struct DayInfo {
     var isPast: Bool
     var isToday: Bool
     var displayDate: Date
-    var yearsAgo: Int?
     /// Years from the original date to `displayDate`; zero on the original date.
     /// `nil` for non-recurring days. Lunar recurrence counts lunar years.
     var anniversaryNumber: Int?
@@ -20,14 +19,21 @@ struct DayInfo {
 
     /// Dates in a visible Gregorian year, shared by the countdown and calendar.
     static func occurrences(of day: Day, inGregorianYear year: Int) -> [Date] {
+        guard recurs(day) else {
+            let cal = CNDate.calendar
+            return cal.component(.year, from: day.date) == year ? [cal.startOfDay(for: day.date)] : []
+        }
+        return annualOccurrences(of: day, inGregorianYear: year)
+    }
+
+    /// Where the day falls in a Gregorian year as a yearly day, whether or not it repeats:
+    /// reminders ask this for a one-off day's 时光回忆. None for a lunar day outside the table.
+    static func annualOccurrences(of day: Day, inGregorianYear year: Int) -> [Date] {
         let cal = CNDate.calendar
         let original = cal.startOfDay(for: day.date)
         guard year >= cal.component(.year, from: original) else { return [] }
-        if !recurs(day) {
-            return cal.component(.year, from: day.date) == year
-                ? [cal.startOfDay(for: day.date)] : []
-        }
         if day.lunar {
+            guard Lunar.supportedLunarDate(for: day.date) != nil else { return [] }
             let source = Lunar.solarToLunar(day.date)
             // Late lunar months cross into the next Gregorian year; a Gregorian
             // year can contain occurrences from both adjacent lunar years.
@@ -49,6 +55,28 @@ struct DayInfo {
         // The calendar is lenient: February 29 of a common year becomes March 1.
         return cal.date(from: DateComponents(year: year, month: source.month, day: source.day))
             .map { cal.startOfDay(for: $0) }
+    }
+
+    /// The latest occurrence since the original date and before `todayStart`, in the last two
+    /// Gregorian years: the one a yearly day has just had.
+    static func previousOccurrence(of day: Day, before todayStart: Date) -> Date? {
+        let cal = CNDate.calendar
+        let year = cal.component(.year, from: todayStart)
+        let original = cal.startOfDay(for: day.date)
+        return ((year - 1)...year)
+            .flatMap { occurrences(of: day, inGregorianYear: $0) }
+            .filter { $0 < todayStart && $0 > original }
+            .max()
+    }
+
+    /// Which anniversary falls on `date`, an occurrence of the day: zero on the original date.
+    /// A lunar day counts lunar years, as a 冬月 or 腊月 anniversary can land in the next
+    /// Gregorian year, which a Gregorian difference would count one too many.
+    static func anniversaryNumber(of day: Day, at date: Date) -> Int {
+        let cal = CNDate.calendar
+        return day.lunar
+            ? Lunar.solarToLunar(date).year - Lunar.solarToLunar(day.date).year
+            : cal.component(.year, from: date) - cal.component(.year, from: day.date)
     }
 
     /// A lunar day outside the lunar table has no lunar date to recur on, so it counts like a
@@ -86,30 +114,14 @@ struct DayInfo {
 
         let diff = CNDate.daysBetween(todayStart, displayDate)
         let elapsed = CNDate.daysBetween(d.date, todayStart)
-        let years = recurring
-            ? (cal.component(.year, from: todayStart) - cal.component(.year, from: d.date))
-            : nil
-        // Years between the original date and the upcoming occurrence — the anniversary
-        // number. (Distinct from yearsAgo, which is measured from today's year and
-        // over-counts before the anniversary rolls to next year.)
-        let anniversary: Int?
-        if !recurring {
-            anniversary = nil
-        } else if d.lunar {
-            // Count in LUNAR years: a late-lunar-month anniversary (冬月/腊月) can resolve
-            // to a solar date in the next Gregorian year, which a solar-year diff would
-            // over-count by one.
-            anniversary = max(0, Lunar.solarToLunar(displayDate).year - Lunar.solarToLunar(d.date).year)
-        } else {
-            anniversary = max(0, cal.component(.year, from: displayDate) - cal.component(.year, from: d.date))
-        }
+        // Years between the original date and the upcoming occurrence.
+        let anniversary = recurring ? max(0, anniversaryNumber(of: d, at: displayDate)) : nil
 
         return DayInfo(
             days: abs(diff),
             isPast: diff < 0,
             isToday: diff == 0,
             displayDate: displayDate,
-            yearsAgo: years,
             anniversaryNumber: anniversary,
             elapsedDays: elapsed >= 0 ? elapsed : nil
         )

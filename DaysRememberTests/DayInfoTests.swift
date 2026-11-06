@@ -26,7 +26,6 @@ final class DayInfoTests: XCTestCase {
         XCTAssertFalse(info.isToday)
         XCTAssertEqual(cal.startOfDay(for: info.displayDate),
                        cal.startOfDay(for: date(2027, 1, 1)))
-        XCTAssertNil(info.yearsAgo)
         XCTAssertNil(info.anniversaryNumber)
         XCTAssertNil(info.elapsedDays)
     }
@@ -96,7 +95,6 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(cal.component(.month, from: info.displayDate), 12)
         XCTAssertEqual(cal.component(.day, from: info.displayDate), 25)
         XCTAssertFalse(info.isPast)
-        XCTAssertEqual(info.yearsAgo, 6)
         // Upcoming this year → 6th anniversary (not 7).
         XCTAssertEqual(info.anniversaryNumber, 6)
         XCTAssertEqual(info.elapsedDays, 1961)
@@ -122,7 +120,6 @@ final class DayInfoTests: XCTestCase {
         XCTAssertEqual(info.days, 0)
         XCTAssertTrue(info.isToday)
         XCTAssertFalse(info.isPast)
-        XCTAssertEqual(info.yearsAgo, 6)
         // The anniversary is today → 6th occurrence.
         XCTAssertEqual(info.anniversaryNumber, 6)
     }

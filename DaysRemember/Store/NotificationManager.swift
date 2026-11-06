@@ -241,8 +241,6 @@ final class NotificationManager {
               let end = calendar.date(byAdding: .year, value: planningYears, to: now) else { return [] }
         let firstYear = calendar.component(.year, from: now) - 1
         let lastYear = calendar.component(.year, from: end) + 1
-        let lunarStart = Lunar.lunarToSolar(year: 1900, month: 1, day: 1)
-        let lunarEnd = Lunar.lunarToSolar(year: 1900 + LunarTable.info.count, month: 1, day: 1)
         var candidates: [Candidate] = []
 
         for (index, day) in days.enumerated() {
@@ -255,16 +253,10 @@ final class NotificationManager {
             let memory = settings.memoryEnabled && !day.recurring
                 && calendar.startOfDay(for: day.date) < calendar.startOfDay(for: now)
             guard !offsets.isEmpty || memory else { continue }
-            var annualDay = day
-            annualDay.recurring = true
-            let annualDates: [Date]
-            if (day.recurring || memory) && (!day.lunar || (lunarStart..<lunarEnd).contains(day.date)) {
-                annualDates = (firstYear...lastYear).flatMap { year in
-                    DayInfo.occurrences(of: annualDay, inGregorianYear: year)
-                }.filter { !day.lunar || (lunarStart..<lunarEnd).contains($0) }
-            } else {
-                annualDates = []
-            }
+            // A lunar day outside the table has none, so it gets no reminders.
+            let annualDates = day.recurring || memory
+                ? (firstYear...lastYear).flatMap { DayInfo.annualOccurrences(of: day, inGregorianYear: $0) }
+                : []
             let dates = day.recurring ? annualDates : [calendar.startOfDay(for: day.date)]
             for date in dates where date >= calendar.startOfDay(for: day.date) {
                 for offset in offsets {

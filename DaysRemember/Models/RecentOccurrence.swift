@@ -27,18 +27,10 @@ struct RecentOccurrence: Equatable {
     private static let cache = DailyCache<CacheKey, RecentOccurrence?>()
 
     private static func uncached(_ day: Day, todayStart: Date, window: Int) -> RecentOccurrence? {
-        let cal = CNDate.calendar
-        let year = cal.component(.year, from: todayStart)
-        let latest = ((year - 1)...year)
-            .flatMap { DayInfo.occurrences(of: day, inGregorianYear: $0) }
-            .filter { $0 < todayStart }
-            .max()
-        guard let latest else { return nil }
+        guard let latest = DayInfo.previousOccurrence(of: day, before: todayStart) else { return nil }
         let daysAgo = CNDate.daysBetween(latest, todayStart)
         guard (1...window).contains(daysAgo) else { return nil }
-        let number = day.lunar
-            ? Lunar.solarToLunar(latest).year - Lunar.solarToLunar(day.date).year
-            : cal.component(.year, from: latest) - cal.component(.year, from: day.date)
+        let number = DayInfo.anniversaryNumber(of: day, at: latest)
         guard number >= 1 else { return nil }
         return RecentOccurrence(date: latest, daysAgo: daysAgo, number: number)
     }
