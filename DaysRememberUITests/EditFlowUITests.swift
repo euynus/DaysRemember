@@ -214,6 +214,9 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(app.buttons["dayReminderSettingsButton"].label.contains("自定义（3次）"))
         XCTAssertTrue(app.buttons["dayReminderSettingsButton"].label.contains("14:35"))
         let title = "Reminders-" + UUID().uuidString.prefix(8)
+        // Bringing the reminder row above the keyboard scrolled the form, and its name now sits
+        // partly under the editor's bar, which takes a tap there. Scroll back to it first.
+        app.scrollViews["dayEditorScroll"].swipeDown()
         app.textFields["日子名称"].tap()
         app.textFields["日子名称"].typeText(title)
         app.buttons["保存"].tap()
