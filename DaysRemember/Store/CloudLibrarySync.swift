@@ -398,6 +398,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             let previous = engine
             stopEngine()
             await previous?.cancelOperations()
+            // Turning sync off meanwhile deleted the checkpoint and started a fresh one, which
+            // this mustn't write back.
+            guard started, state.accountChangePending else { return }
             _ = state.acceptAccount(account, confirmed: true)
             problem = nil
             guard persist() else { return }
