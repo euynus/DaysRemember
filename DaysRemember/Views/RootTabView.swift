@@ -19,10 +19,11 @@ struct RootTabView: View {
     /// The library's size when the new day's editor opened, to tell whether it added one.
     @State private var dayCountBeforeAdding = 0
 
-    /// A new day's editor; `categoryID` starts it in that category.
+    /// A new day's editor; `categoryID` and `date` start it in that category or on that date.
     private struct NewDayRequest: Identifiable {
         let id = UUID()
         var categoryID: String?
+        var date: Date?
     }
 
     init(startWithNewDay: Bool = false) {
@@ -42,7 +43,7 @@ struct RootTabView: View {
 
     var body: some View {
         content
-            .environment(\.addDay, AddDayAction { startNewDay(categoryID: $0) })
+            .environment(\.addDay, AddDayAction { startNewDay(categoryID: $0, date: $1) })
             .dayEditorHost()
             .categoryEditorHost()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -64,7 +65,7 @@ struct RootTabView: View {
                 }
             }
             .sheet(item: $newDay, onDismiss: askForReviewAfterAdding) {
-                DayEditorView(categoryID: $0.categoryID).environment(store)
+                DayEditorView(date: $0.date, categoryID: $0.categoryID).environment(store)
             }
             .onOpenURL { handleDeepLink($0) }
             // Intents, controls and quick actions leave their link to be taken here.
@@ -88,9 +89,9 @@ struct RootTabView: View {
             }
     }
 
-    private func startNewDay(categoryID: String? = nil) {
+    private func startNewDay(categoryID: String? = nil, date: Date? = nil) {
         dayCountBeforeAdding = store.days.count
-        newDay = NewDayRequest(categoryID: categoryID)
+        newDay = NewDayRequest(categoryID: categoryID, date: date)
     }
 
     /// Once the editor has gone, a day just added is a good moment to ask for a rating, now and then.

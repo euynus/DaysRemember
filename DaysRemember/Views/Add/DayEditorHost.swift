@@ -14,11 +14,11 @@ extension EnvironmentValues {
     @Entry var addDay = AddDayAction()
 }
 
-/// Starts a new day, in a category when given, from the editor `RootTabView` presents: a sheet on a
-/// pushed list would be rebuilt, losing its draft, when a link switches tabs.
+/// Starts a new day, in a category or on a date when given, from the editor `RootTabView`
+/// presents: a sheet on a pushed list would be rebuilt, losing its draft, when a link switches tabs.
 struct AddDayAction {
-    var add: (_ categoryID: String?) -> Void = { _ in }
-    func callAsFunction(categoryID: String? = nil) { add(categoryID) }
+    var add: (_ categoryID: String?, _ date: Date?) -> Void = { _, _ in }
+    func callAsFunction(categoryID: String? = nil, date: Date? = nil) { add(categoryID, date) }
 }
 
 private struct EditorRequest: Identifiable {

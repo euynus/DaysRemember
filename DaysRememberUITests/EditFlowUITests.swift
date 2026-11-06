@@ -455,6 +455,37 @@ final class EditFlowUITests: XCTestCase {
         XCTAssertTrue(date.waitForNonExistence(timeout: 5))
     }
 
+    func testCalendarPickerStartsANewDayOnItsDate() {
+        let app = launchApp()
+        let suffix = UUID().uuidString.prefix(6)
+        for title in ["UITest-C-\(suffix)", "UITest-D-\(suffix)"] {
+            app.buttons["添加日子"].tap()
+            let field = app.textFields["日子名称"]
+            XCTAssertTrue(field.waitForExistence(timeout: 5))
+            field.tap()
+            field.typeText(title)
+            app.buttons["保存"].tap()
+            XCTAssertTrue(field.waitForNonExistence(timeout: 5))
+        }
+        app.tabBars.buttons["日历"].tap()
+        let cell = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label CONTAINS %@ AND label MATCHES %@", "2026年4月23日", ".*[^0-9]2 个日子"
+        )).firstMatch
+        XCTAssertTrue(cell.waitForExistence(timeout: 5), app.debugDescription)
+        cell.tap()
+        let add = app.buttons["calendarPicker.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        add.tap()
+        // The editor opens once the picker has gone, from the tab root, on the picker's date.
+        let date = app.buttons["dayDatePickerButton"]
+        XCTAssertTrue(date.waitForExistence(timeout: 5), app.debugDescription)
+        XCTAssertTrue(app.staticTexts["2026年4月23日"].exists, app.debugDescription)
+        XCTAssertFalse(add.exists)
+        app.buttons["cancelDayButton"].tap()
+        XCTAssertTrue(date.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.tabBars.buttons["日历"].isSelected)
+    }
+
     func testCalendarMultiEventPickerAtLargestTextSize() {
         let app = XCUIApplication()
         app.launchEnvironment["DR_PIN_TODAY"] = "1"

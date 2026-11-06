@@ -4,12 +4,12 @@ struct CalendarMonthView: View {
     @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
     @Environment(DeepLinkRouter.self) private var router
+    @Environment(\.addDay) private var addDay
     @State private var month: Int
     @State private var year: Int
     @State private var selectedDay: CalendarDaySelection?
-    @State private var newDayDate: CalendarDaySelection?
     /// A new day asked for from the day picker, opened once the picker has gone.
-    @State private var pendingNewDayDate: CalendarDaySelection?
+    @State private var pendingNewDayDate: Date?
     var onOpen: (Day) -> Void
 
     init(onOpen: @escaping (Day) -> Void = { _ in }) {
@@ -68,7 +68,7 @@ struct CalendarMonthView: View {
                     CalendarMonthGrid(year: year, month: month, eventsByDay: eventsByDay,
                                       onShowMonth: { showMonth(offset: $0) },
                                       onOpenCell: { events, date in openCell(events: events, date: date) },
-                                      onAddOnDate: { newDayDate = CalendarDaySelection(date: $0) })
+                                      onAddOnDate: { addDay(date: $0) })
                         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     Text("本月日子")
                         .font(Theme.sans(17, weight: .heavy, relativeTo: .headline))
@@ -108,16 +108,13 @@ struct CalendarMonthView: View {
             }
         }
         .sheet(item: $selectedDay, onDismiss: {
-            newDayDate = pendingNewDayDate
+            if let date = pendingNewDayDate { addDay(date: date) }
             pendingNewDayDate = nil
         }) { selection in
             CalendarEventPicker(selection: selection, onOpen: onOpen, onAdd: { date in
-                pendingNewDayDate = CalendarDaySelection(date: date)
+                pendingNewDayDate = date
                 selectedDay = nil
             })
-        }
-        .sheet(item: $newDayDate) { selection in
-            DayEditorView(date: selection.date).environment(store)
         }
         // A new day's draft stays open; the day picker would cover the linked day.
         .onChange(of: router.linkOpenCount) { selectedDay = nil }
@@ -128,7 +125,7 @@ struct CalendarMonthView: View {
         if events.count == 1, let first = events.first {
             onOpen(first)
         } else if events.isEmpty {
-            newDayDate = CalendarDaySelection(date: date)
+            addDay(date: date)
         } else {
             selectedDay = CalendarDaySelection(date: date)
         }
