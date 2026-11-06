@@ -176,16 +176,16 @@ struct RootTabView: View {
         homePath = NavigationPath()
     }
 
+    /// A tapped reminder for a day deleted since lands on 日子, as its widget link does.
     private func routePending(_ id: String?) {
         guard let id else { return }
-        openDay(id: id)
+        if !openDay(id: id) { openHome() }
         router.dayID = nil
     }
 
     /// Open a day's detail on the Home stack; false, changing nothing, if the id no longer exists.
     /// Shared by the widget URL and tapped-reminder routing. Editors keep their drafts on top;
     /// the detail opens beneath them.
-    @discardableResult
     private func openDay(id: String) -> Bool {
         guard let day = store.days.first(where: { $0.id == id }) else { return false }
         openHome()
