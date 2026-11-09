@@ -109,11 +109,12 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         }
     }
 
-    /// Whether a first download from iCloud may still bring days, so an empty library isn't final yet.
+    /// Whether a first download from iCloud may still bring days, so an empty library isn't final yet:
+    /// from `start` until the first fetch ends (lastFetchedAt is observed and set with
+    /// state.hasFetched) or a problem stops sync. It doesn't follow `status`, which reads `.pending`
+    /// while a new library's categories wait to go up, before the sync that fetches has even begun.
     var isFirstDownloadPending: Bool {
-        // lastFetchedAt is observed and set with state.hasFetched, so the feed stops waiting when
-        // the first fetch ends even while the upload that follows keeps status at syncing.
-        started && lastFetchedAt == nil && (status == .idle || isSyncing)
+        started && lastFetchedAt == nil && !problemHoldsStatus
     }
 
     /// Names this build, so records it set aside as unreadable are fetched again after an update.

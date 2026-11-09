@@ -326,6 +326,30 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    /// A new device's feed and its first day's editor wait for the first download. Local records
+    /// waiting to go up, which every new library has (its categories), don't end the wait; a
+    /// failure that stops sync, or the fetch itself, does.
+    func testTheFirstDownloadIsPendingFromTheStartUntilTheFirstFetch() throws {
+        try withDirectory { directory in
+            let sync = CloudLibrarySync(stateURL: directory.appendingPathComponent("state.json"))
+            XCTAssertFalse(sync.isFirstDownloadPending, "Nothing is pending before sync starts")
+            // Each sync stops before its sync task runs, so nothing reaches CloudKit.
+            sync.start(days: [], categories: CategoryDefinition.system) { _ in }
+            XCTAssertEqual(sync.status, .pending, "The categories wait to go up")
+            XCTAssertTrue(sync.isFirstDownloadPending)
+            sync.fail(CocoaError(.fileWriteUnknown))
+            XCTAssertFalse(sync.isFirstDownloadPending, "A failure that stops sync ends the wait")
+            sync.stop()
+
+            let fetched = CloudLibrarySync(stateURL: directory.appendingPathComponent("fetched.json"))
+            fetched.start(days: [], categories: CategoryDefinition.system) { _ in }
+            XCTAssertTrue(fetched.isFirstDownloadPending)
+            fetched.zoneFetchFinished(error: nil)
+            XCTAssertFalse(fetched.isFirstDownloadPending, "The first fetch ends the wait")
+            fetched.stop()
+        }
+    }
+
     private func withLanguage(_ language: String, _ body: () throws -> Void) rethrows {
         let defaults = SharedStorage.defaults
         let previous = defaults.object(forKey: AppLocalization.languageKey)
