@@ -6075,29 +6075,6 @@
         }
       }
     },
-    "无法读取照片" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unable to Read Photo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法读取照片"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無法讀取照片"
-          }
-        }
-      }
-    },
     "无相册权限" : {
       "extractionState" : "manual",
       "localizations" : {

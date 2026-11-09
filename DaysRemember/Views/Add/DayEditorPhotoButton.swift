@@ -9,13 +9,11 @@ struct DayEditorPhotoButton: View {
     let coverFocusX: Double
     let coverFocusY: Double
     let tint: Color
-    /// The editor clears it when a template is chosen instead.
-    @Binding var pickerItem: PhotosPickerItem?
-    /// The editor holds saving while a photo loads.
-    @Binding var isLoadingPhoto: Bool
+    /// The picked photo's progress; the editor holds saving while it loads, and a template chosen
+    /// instead sets it back to idle.
+    @Binding var phase: CoverPhotoPhase
     /// The picked photo, downsampled and recompressed.
     var onLoad: (Data) -> Void = { _ in }
-    var onFailure: () -> Void = {}
     @State private var showPhotoPicker = false
 
     var body: some View {
@@ -46,19 +44,19 @@ struct DayEditorPhotoButton: View {
         .accessibilityLabel("选择相册封面")
         .accessibilityIdentifier("dayCoverPhotoPicker")
         .accessibilityAddTraits(photoData != nil ? [.isSelected] : [])
-        .photosPicker(isPresented: $showPhotoPicker, selection: $pickerItem, matching: .images,
-                      photoLibrary: .shared())
-        .overlay { if isLoadingPhoto { ProgressView() } }
-        .task(id: pickerItem) {
-            guard let item = pickerItem else { isLoadingPhoto = false; return }
-            isLoadingPhoto = true
-            defer { if !Task.isCancelled { isLoadingPhoto = false } }
+        .photosPicker(isPresented: $showPhotoPicker,
+                      selection: Binding(get: { phase.item }, set: { phase.pick($0) }),
+                      matching: .images, photoLibrary: .shared())
+        .overlay { if phase.isLoading { ProgressView() } }
+        .task(id: phase.item) {
+            guard let item = phase.item else { return }
             do {
                 let data = try await item.loadTransferable(type: Data.self)
-                onLoad(try await CoverPhotoImport.cover(from: data))
+                let cover = try await CoverPhotoImport.cover(from: data)
+                if phase.finish(item, succeeded: true) { onLoad(cover) }
             } catch {
                 guard !Task.isCancelled else { return }
-                onFailure()
+                phase.finish(item, succeeded: false)
             }
         }
     }

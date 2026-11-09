@@ -1,5 +1,5 @@
+import Accessibility
 import SwiftUI
-import PhotosUI
 
 // Shared add/edit form. Changes remain local until Save.
 struct DayEditorView: View {
@@ -11,9 +11,7 @@ struct DayEditorView: View {
     /// The id a new day is saved with, which tells whoever opened the editor that it added it.
     private let newDayID: String
     @State private var draft: DayDraft
-    @State private var pickerItem: PhotosPickerItem?
-    @State private var isLoadingPhoto = false
-    @State private var photoError: String?
+    @State private var coverPhoto = CoverPhotoPhase.idle
     @State private var showTemplateGallery = false
     @State private var showReminderSettings = false
     /// The date sheet's choice, which 完成 gives the draft.
@@ -32,9 +30,9 @@ struct DayEditorView: View {
         _draftDate = State(initialValue: draft.date)
     }
 
-    private var canSave: Bool { draft.canSave(isLoadingPhoto: isLoadingPhoto) }
+    private var canSave: Bool { draft.canSave(isLoadingPhoto: coverPhoto.isLoading) }
 
-    private var hasUnsavedChanges: Bool { isLoadingPhoto || draft.hasChanges }
+    private var hasUnsavedChanges: Bool { coverPhoto.isLoading || draft.hasChanges }
 
     var body: some View {
         ScrollView {
@@ -125,19 +123,20 @@ struct DayEditorView: View {
         } message: {
             Text(saveError ?? "")
         }
-        .alert("无法读取照片", isPresented: Binding(
-            get: { photoError != nil },
-            set: { if !$0 { photoError = nil } }
-        )) {
-            Button("好", role: .cancel) { photoError = nil }
-        } message: {
-            Text(photoError ?? "")
-        }
         .sensoryFeedback(.selection, trigger: draft.photo)
         .sensoryFeedback(.selection, trigger: draft.reminderOffsets)
         .sensoryFeedback(.selection, trigger: draft.categoryID)
         .sensoryFeedback(.selection, trigger: draft.solar)
         .sensoryFeedback(.selection, trigger: draft.recurring)
+        // The failure shows beside the photo button; VoiceOver hears it where it happens too.
+        .onChange(of: coverPhoto == .failed) { _, failed in
+            guard failed else { return }
+            AccessibilityNotification.Announcement(Self.photoFailure).post()
+        }
+    }
+
+    private static var photoFailure: String {
+        String(localized: "照片未能加载，原封面已保留。请重新选择。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
     }
 
     // MARK: - Actions
@@ -206,11 +205,19 @@ struct DayEditorView: View {
                 if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 8) }
                 DayEditorPhotoButton(photo: draft.photo, photoData: draft.photoData,
                                      coverFocusX: draft.coverFocusX, coverFocusY: draft.coverFocusY, tint: previewTint,
-                                     pickerItem: $pickerItem, isLoadingPhoto: $isLoadingPhoto,
-                                     onLoad: { draft.usePhoto($0) },
-                                     onFailure: {
-                                         photoError = String(localized: "照片未能加载，原封面已保留。请重新选择。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-                                     })
+                                     phase: $coverPhoto, onLoad: { draft.usePhoto($0) })
+            }
+
+            if coverPhoto == .failed {
+                Label {
+                    Text("照片未能加载，原封面已保留。请重新选择。")
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                }
+                .font(Theme.sans(13, weight: .medium))
+                .foregroundStyle(Theme.danger)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("dayCoverPhotoFailure")
             }
 
             DayEditorQuickTemplates(photo: draft.photo, photoData: draft.photoData, tint: previewTint,
@@ -218,9 +225,9 @@ struct DayEditorView: View {
         }
     }
 
-    /// A template replaces a photo still loading.
+    /// A template replaces a photo still loading, and the notice of one that failed.
     private func selectTemplate(_ preset: PhotoStyle) {
-        pickerItem = nil
+        coverPhoto = .idle
         draft.selectTemplate(preset)
     }
 
