@@ -3,6 +3,8 @@ import SwiftUI
 /// 保存 and 分享图片 under the card; stacked at accessibility sizes.
 struct ShareActionBar: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// A save under way: 保存 shows its progress and waits, so a second tap can't save a second copy.
+    var isSaving = false
     var onSave: () -> Void = {}
     var onShare: () -> Void = {}
 
@@ -12,7 +14,11 @@ struct ShareActionBar: View {
             : AnyLayout(HStackLayout(spacing: 16))
         return layout {
             Button(action: onSave) {
-                Label("保存", systemImage: "square.and.arrow.down")
+                Label {
+                    Text("保存")
+                } icon: {
+                    if isSaving { ProgressView() } else { Image(systemName: "square.and.arrow.down") }
+                }
                     .font(Theme.sans(16, weight: .heavy))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
@@ -21,6 +27,7 @@ struct ShareActionBar: View {
                     .background(Theme.card, in: Capsule())
             }
             .buttonStyle(PressScale(scale: 0.97))
+            .disabled(isSaving)
             Button(action: onShare) {
                 Label("分享图片", systemImage: "square.and.arrow.up")
                     .font(Theme.sans(16, weight: .heavy))

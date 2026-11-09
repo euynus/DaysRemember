@@ -11,6 +11,8 @@ struct ShareCardView: View {
     @State private var ratio: Ratio = .natural
     @State private var includeNote = false
     @State private var sharedImage: SharedImage?
+    /// A save to Photos under way, which a permission prompt can keep going for a while.
+    @State private var isSaving = false
     @State private var savedToast: (id: UUID, text: String, feedback: SensoryFeedback)?
 
     enum Template: String, CaseIterable {
@@ -92,7 +94,7 @@ struct ShareCardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
         .safeAreaInset(edge: .bottom) {
-            ShareActionBar(onSave: saveToPhotos, onShare: presentShareSheet)
+            ShareActionBar(isSaving: isSaving, onSave: saveToPhotos, onShare: presentShareSheet)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(Theme.bg)
@@ -151,12 +153,16 @@ struct ShareCardView: View {
         sharedImage = SharedImage(image: img)
     }
 
+    /// One save at a time: a second tap while one is under way would put a second copy in Photos.
     private func saveToPhotos() {
+        guard !isSaving else { return }
         guard let img = renderCardImage() else {
             flashToast(String(localized: "生成失败，请重试", bundle: AppLocalization.bundle, locale: AppLocalization.locale), feedback: .warning)
             return
         }
+        isSaving = true
         Task {
+            defer { isSaving = false }
             do {
                 try await PhotoSaver.save(image: img)
                 flashToast(String(localized: "已保存到相册", bundle: AppLocalization.bundle, locale: AppLocalization.locale), feedback: .success)
