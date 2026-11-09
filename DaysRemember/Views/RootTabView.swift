@@ -12,25 +12,13 @@ struct RootTabView: View {
     @State private var homePath = NavigationPath()
     @State private var calendarPath = NavigationPath()
     @State private var mePath = NavigationPath()
-    @State private var newDay: NewDayRequest?
+    @State private var newDay: NewDayFlow
     @State private var cloud = CloudLibrarySync.shared
-    /// A first day to start once iCloud's first download has brought nothing.
-    @State private var firstDayAfterDownload = false
-    /// The library's size when the new day's editor opened, to tell whether it added one.
-    @State private var dayCountBeforeAdding = 0
-
-    /// A new day's editor; `categoryID` and `date` start it in that category or on that date.
-    private struct NewDayRequest: Identifiable {
-        let id = UUID()
-        var categoryID: String?
-        var date: Date?
-    }
 
     init(startWithNewDay: Bool = false) {
         // On a new device the library may still be downloading; the editor would hide it arriving.
-        let waits = startWithNewDay && CloudLibrarySync.shared.isFirstDownloadPending
-        _newDay = State(initialValue: startWithNewDay && !waits ? NewDayRequest() : nil)
-        _firstDayAfterDownload = State(initialValue: waits)
+        _newDay = State(initialValue: NewDayFlow(firstDay: startWithNewDay,
+                                                 downloadPending: CloudLibrarySync.shared.isFirstDownloadPending))
     }
 
     /// Allows `xcrun simctl launch ... --tab calendar` for screenshotting.
@@ -64,8 +52,8 @@ struct RootTabView: View {
                     .background(Theme.bg)
                 }
             }
-            .sheet(item: $newDay, onDismiss: askForReviewAfterAdding) {
-                DayEditorView(date: $0.date, categoryID: $0.categoryID).environment(store)
+            .sheet(item: newDayEditor, onDismiss: askForReviewAfterAdding) {
+                DayEditorView(date: $0.date, categoryID: $0.categoryID, newDayID: $0.id).environment(store)
             }
             .onOpenURL { handleDeepLink($0) }
             // Intents, controls and quick actions leave their link to be taken here.
@@ -76,9 +64,7 @@ struct RootTabView: View {
                 if phase == .active { openPendingLink() }
             }
             .onChange(of: cloud.isFirstDownloadPending) { _, pending in
-                guard !pending, firstDayAfterDownload else { return }
-                firstDayAfterDownload = false
-                if store.days.isEmpty && newDay == nil { startNewDay() }
+                if !pending { newDay.firstDownloadEnded(libraryIsEmpty: store.days.isEmpty) }
             }
             .onChange(of: router.dayID) { _, id in routePending(id) }
             // Also catch a tap that set the id before this view began observing
@@ -90,17 +76,24 @@ struct RootTabView: View {
     }
 
     private func startNewDay(categoryID: String? = nil, date: Date? = nil) {
-        dayCountBeforeAdding = store.days.count
-        newDay = NewDayRequest(categoryID: categoryID, date: date)
+        newDay.open(categoryID: categoryID, date: date)
+    }
+
+    /// The open new day's editor; once it is dismissed, the flow knows whether it added its day.
+    private var newDayEditor: Binding<NewDayRequest?> {
+        Binding(get: { newDay.request }, set: { request in
+            guard request == nil else { return }
+            newDay.editorDismissed { id in store.days.contains { $0.id == id } }
+        })
     }
 
     /// Once the editor has gone, a day just added is a good moment to ask for a rating, now and then.
     private func askForReviewAfterAdding() {
+        let added = newDay.editorGone()
         #if DEBUG
         guard !DebugLaunch.isAutomated, !DebugLaunch.isUnitTesting else { return }
         #endif
-        guard store.days.count > dayCountBeforeAdding,
-              ReviewPrompt.takeTurn(dayCount: store.days.count) else { return }
+        guard added, ReviewPrompt.takeTurn(dayCount: store.days.count) else { return }
         requestReview()
     }
 
@@ -161,7 +154,7 @@ struct RootTabView: View {
         case .day(let id): if !openDay(id: id) { openHome() }
         case .newDay:
             openHome()
-            if newDay == nil { startNewDay() }
+            startNewDay()
         case .home: openHome()
         case nil: break
         }

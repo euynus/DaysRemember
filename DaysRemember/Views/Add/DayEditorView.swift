@@ -8,6 +8,8 @@ struct DayEditorView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private let editingDay: Day?
+    /// The id a new day is saved with, which tells whoever opened the editor that it added it.
+    private let newDayID: String
     @State private var draft: DayDraft
     @State private var pickerItem: PhotosPickerItem?
     @State private var isLoadingPhoto = false
@@ -22,8 +24,9 @@ struct DayEditorView: View {
     @FocusState private var titleFocused: Bool
 
     /// `date` and `categoryID` prefill a new day, e.g. from a calendar cell or a category's list.
-    init(day: Day? = nil, date: Date? = nil, categoryID: String? = nil) {
+    init(day: Day? = nil, date: Date? = nil, categoryID: String? = nil, newDayID: String = UUID().uuidString) {
         editingDay = day
+        self.newDayID = newDayID
         let draft = DayDraft(editing: day, date: date ?? Today.date, categoryID: categoryID)
         _draft = State(initialValue: draft)
         _draftDate = State(initialValue: draft.date)
@@ -243,7 +246,7 @@ struct DayEditorView: View {
     }
 
     private func saveDay() {
-        guard let draftDay = draft.day(id: editingDay?.id ?? UUID().uuidString, pinned: editingDay?.pinned ?? false) else {
+        guard let draftDay = draft.day(id: editingDay?.id ?? newDayID, pinned: editingDay?.pinned ?? false) else {
             return
         }
         guard let new = DayDraft.applyingCategory(to: draftDay, selectedCategory: draft.selectedCategory,
