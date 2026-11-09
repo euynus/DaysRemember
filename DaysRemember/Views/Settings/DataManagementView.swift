@@ -6,12 +6,8 @@ struct DataManagementView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
     @State private var cloud = CloudLibrarySync.shared
-    @State private var exporting = false
+    @State private var activity = DataManagementActivity.idle
     @State private var importing = false
-    @State private var isReading = false
-    @State private var document = BackupDocument(data: Data())
-    @State private var filename = String(localized: "时光备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-    @State private var pendingImport: DayBackup?
     @State private var confirmRecovery = false
     @State private var confirmRawCopyDeletion = false
     @State private var confirmAccountChange = false
@@ -20,7 +16,6 @@ struct DataManagementView: View {
     @State private var confirmCheckpointReset = false
     @State private var confirmSyncOff = false
     @State private var confirmCloudDeletion = false
-    @State private var deletingCloudData = false
     @State private var confirmInternalCleanup = false
     @State private var message: String?
 
@@ -39,8 +34,10 @@ struct DataManagementView: View {
                     }
                 }
             }
-            .fileExporter(isPresented: $exporting, document: document, contentType: .json,
-                          defaultFilename: filename) { result in
+            .fileExporter(isPresented: Binding(get: { activity.exportDocument != nil },
+                                               set: { if !$0 { activity.finishExport() } }),
+                          document: activity.exportDocument, contentType: .json,
+                          defaultFilename: activity.exportFilename) { result in
                 switch result {
                 case .success: message = String(localized: "备份已导出。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                 case .failure(let error): message = error.localizedDescription
@@ -67,6 +64,7 @@ struct DataManagementView: View {
                     Button("导出原始数据", systemImage: "square.and.arrow.up") {
                         prepareExport(name: String(localized: "时光原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: { try store.exportOriginalData() })
                     }
+                    .disabled(activity.isBusy)
                 }
             }
             cloudSection
@@ -99,7 +97,7 @@ struct DataManagementView: View {
             Toggle(isOn: syncToggle) {
                 Label("iCloud 同步", systemImage: "icloud")
             }
-            .disabled(store.loadError != nil || deletingCloudData)
+            .disabled(store.loadError != nil || activity.isBusy)
             .confirmationDialog("关闭 iCloud 同步？", isPresented: $confirmSyncOff, titleVisibility: .visible) {
                 Button("关闭同步", role: .destructive) {
                     CloudSyncControl.choose(.localOnly, store: store, settings: settings)
@@ -118,14 +116,14 @@ struct DataManagementView: View {
             Button("删除 iCloud 中的数据", systemImage: "icloud.slash", role: .destructive) {
                 confirmCloudDeletion = true
             }
-            .disabled(deletingCloudData)
+            .disabled(activity.isBusy)
             .confirmationDialog("删除 iCloud 中的数据？", isPresented: $confirmCloudDeletion, titleVisibility: .visible) {
                 Button("删除", role: .destructive) { deleteCloudData() }
                 Button("取消", role: .cancel) {}
             } message: {
                 Text("将从你的 iCloud 中删除时光的日子、分类、照片和设置，并让这台设备改为仅本机使用。本机日子不受影响；其他设备保留各自的日子，但会暂停同步。删除后无法撤销。")
             }
-            if deletingCloudData { ProgressView("正在删除 iCloud 中的数据") }
+            if case .deletingCloudData = activity { ProgressView("正在删除 iCloud 中的数据") }
         } header: {
             Text("iCloud")
         } footer: {
@@ -211,9 +209,9 @@ struct DataManagementView: View {
     }
 
     private func deleteCloudData() {
-        deletingCloudData = true
+        guard activity.startDeletingCloudData() else { return }
         Task {
-            defer { deletingCloudData = false }
+            defer { activity.finishDeletingCloudData() }
             do {
                 try await CloudSyncControl.deleteCloudData(store: store, settings: settings)
                 message = String(localized: "iCloud 中的数据已删除，这台设备已改为仅本机使用。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
@@ -226,22 +224,21 @@ struct DataManagementView: View {
             Button("导出备份", systemImage: "square.and.arrow.up") {
                 prepareExport(name: String(localized: "时光备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportBackup)
             }
-            .disabled(store.loadError != nil)
+            .disabled(store.loadError != nil || activity.isBusy)
             Button("从文件恢复", systemImage: "square.and.arrow.down") { importing = true }
-                .disabled(isReading)
+                .disabled(activity.isBusy)
                 .confirmationDialog("恢复此备份？", isPresented: Binding(
-                    get: { pendingImport != nil }, set: { if !$0 { pendingImport = nil } }
-                ), titleVisibility: .visible) {
+                    get: { activity.pendingRestore != nil }, set: { if !$0 { activity.cancelRestore() } }
+                ), titleVisibility: .visible, presenting: activity.pendingRestore) { _ in
                     Button("恢复备份", role: .destructive) {
-                        guard let backup = pendingImport else { return }
+                        guard let backup = activity.confirmRestore() else { return }
                         perform { try store.restoreBackup(backup) }
-                        pendingImport = nil
                     }
-                    Button("取消", role: .cancel) { pendingImport = nil }
-                } message: {
-                    Text("当前 \(store.days.count) 个日子将被备份中的 \(pendingImport?.days.count ?? 0) 个日子替换，并同步到其他设备。替换前会保留本机副本。")
+                    Button("取消", role: .cancel) { activity.cancelRestore() }
+                } message: { backup in
+                    Text("当前 \(store.days.count) 个日子将被备份中的 \(backup.days.count) 个日子替换，并同步到其他设备。替换前会保留本机副本。")
                 }
-            if isReading { ProgressView("正在读取备份") }
+            if case .readingBackup = activity { ProgressView("正在读取备份") }
             if store.hasRecoveryBackup {
                 Button("恢复上一次本机副本", systemImage: "arrow.uturn.backward") {
                     confirmRecovery = true
@@ -258,6 +255,7 @@ struct DataManagementView: View {
                 Button("导出替换前的原始数据", systemImage: "doc.badge.clock") {
                     prepareExport(name: String(localized: "时光替换前的原始数据", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportUnreadableDataCopy)
                 }
+                .disabled(activity.isBusy)
                 Button("删除替换前的原始数据", systemImage: "trash", role: .destructive) {
                     confirmRawCopyDeletion = true
                 }
@@ -272,6 +270,7 @@ struct DataManagementView: View {
                 Button("导出迁移前备份", systemImage: "externaldrive") {
                     prepareExport(name: String(localized: "时光迁移前备份", bundle: AppLocalization.bundle, locale: AppLocalization.locale), data: store.exportMigrationBackup)
                 }
+                .disabled(activity.isBusy)
             }
             if store.loadError == nil && store.hasInternalCopies {
                 Button("清除本机内部副本", systemImage: "trash", role: .destructive) {
@@ -304,22 +303,20 @@ struct DataManagementView: View {
 
     private func prepareExport(name: String, data: () throws -> Data) {
         do {
-            document = BackupDocument(data: try data())
-            filename = Self.filename(name, on: .now)
-            exporting = true
+            _ = activity.startExport(BackupDocument(data: try data()), filename: Self.filename(name, on: .now))
         } catch { message = error.localizedDescription }
     }
 
+    /// A chosen backup is read off the main actor, then waits for the user to confirm its restore.
     private func readBackup(_ result: Result<URL, Error>) {
         switch result {
         case .failure(let error): message = error.localizedDescription
         case .success(let url):
-            isReading = true
+            guard activity.startReading() else { return }
             Task {
-                defer { isReading = false }
-                do {
-                    pendingImport = try await DayBackup.load(from: url)
-                } catch { message = error.localizedDescription }
+                let read: Result<DayBackup, any Error>
+                do { read = .success(try await DayBackup.load(from: url)) } catch { read = .failure(error) }
+                do { try activity.finishReading(read) } catch { message = error.localizedDescription }
             }
         }
     }
