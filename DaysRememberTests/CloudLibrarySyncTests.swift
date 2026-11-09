@@ -797,6 +797,33 @@ final class CloudLibrarySyncTests: XCTestCase {
         }
     }
 
+    func testDaysThatComeBackEndTheHold() throws {
+        try withDirectory { directory in
+            let days = [day("first"), day("second")]
+            var state = CloudLibraryState()
+            for day in days { try state.receive(record(day, directory: directory)) }
+            state.acknowledgeRemoteUpdate()
+            state.hasFetched = true
+            state.accountChangePending = true
+            let url = directory.appendingPathComponent("state.json")
+            try state.write(to: url)
+
+            let sync = CloudLibrarySync(stateURL: url)
+            sync.start(days: [], categories: []) { _ in }
+            XCTAssertEqual(sync.missingDayCount, 2)
+            sync.updateLocal(days: [days[0]], categories: [])
+            XCTAssertEqual(sync.missingDayCount, 1)
+            sync.updateLocal(days: days, categories: [])
+            XCTAssertEqual(sync.missingDayCount, 0)
+            XCTAssertNil(sync.missingMessage)
+
+            // With nothing held, confirming has nothing to delete.
+            sync.confirmMissingDeletions()
+            let persisted = try CloudLibraryState.read(from: url)
+            for day in days { XCTAssertNotNil(persisted.records[CloudLibraryRecord.day(day).recordName]?.value) }
+        }
+    }
+
     func testUnreadableCheckpointCanBeReset() throws {
         try withDirectory { directory in
             let url = directory.appendingPathComponent("state.json")

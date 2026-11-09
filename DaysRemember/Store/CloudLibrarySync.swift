@@ -149,9 +149,10 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     @ObservationIgnored private var engine: CKSyncEngine?
     @ObservationIgnored private var onRemoteChange: ((CloudLibraryUpdate) throws -> Void)?
     private var started = false
-    @ObservationIgnored private var missingRecords: [String] = []
-    /// The latest local snapshot while deletions are held, for `confirmMissingDeletions`.
-    @ObservationIgnored private var heldLocal: (days: [Day], categories: [CategoryDefinition])?
+    /// The records whose deletions wait for the user, with the snapshot confirming them sends.
+    @ObservationIgnored private var missingHold: MissingDaysHold? {
+        didSet { missingDayCount = missingHold?.dayCount ?? 0 }
+    }
     @ObservationIgnored private var storageFailed = false
     @ObservationIgnored private var localSnapshotKnown = false
     @ObservationIgnored private var canSend = false
@@ -212,9 +213,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         stopEngine()
         started = false
         onRemoteChange = nil
-        missingRecords = []
-        heldLocal = nil
-        refreshMissingCount()
+        missingHold = nil
         localSnapshotKnown = false
         for url in [stateURL, Self.setAside(stateURL), assetDirectory, photoFiles.directory] {
             try? FileManager.default.removeItem(at: url)
@@ -277,8 +276,8 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
             guard deliverRemoteUpdate() else { return }
         }
         if state.hasFetched {
-            missingRecords = state.missingMost(days: days, categories: categories)
-            heldLocal = missingRecords.isEmpty ? nil : (days, categories)
+            missingHold = MissingDaysHold(missing: state.missingMost(days: days, categories: categories),
+                                          days: days, categories: categories)
         }
         updateLocal(days: days, categories: categories)
         guard !wasStarted else { return }
@@ -288,15 +287,12 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     func updateLocal(days: [Day], categories: [CategoryDefinition]) {
         guard !storageFailed else { return }
         do {
-            if !missingRecords.isEmpty {
-                heldLocal = (days, categories)
-                let names = Set(days.map { CloudLibraryRecord.day($0).recordName }
-                                + categories.map { CloudLibraryRecord.category($0).recordName })
-                missingRecords.removeAll { names.contains($0) || state.records[$0]?.value == nil }
+            missingHold = missingHold?.updating(days: days, categories: categories) {
+                state.records[$0]?.value != nil
             }
-            refreshMissingCount()
             try state.updateLocal(days: days, categories: categories,
-                                  inferDeletions: localSnapshotKnown || state.hasFetched, keeping: Set(missingRecords))
+                                  inferDeletions: localSnapshotKnown || state.hasFetched,
+                                  keeping: Set(missingHold?.records ?? []))
             localSnapshotKnown = true
             guard persist() else { return }
             enqueuePendingChanges()
@@ -306,13 +302,11 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     /// Brings back the days the library came up without, from the copies iCloud holds.
     func restoreMissing() {
-        guard !missingRecords.isEmpty, !storageFailed else { return }
-        for name in missingRecords {
+        guard let hold = missingHold, !storageFailed else { return }
+        for name in hold.records {
             if let value = state.records[name]?.value { state.pendingRemoteUpdate.upsert(value) }
         }
-        missingRecords = []
-        heldLocal = nil
-        refreshMissingCount()
+        missingHold = nil
         guard persist(), deliverRemoteUpdate() else { return }
         enqueuePendingChanges()
         refreshStatus()
@@ -320,14 +314,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
 
     /// Deletes the days the library came up without from iCloud and every device, as the user asked.
     func confirmMissingDeletions() {
-        guard !missingRecords.isEmpty, let local = heldLocal else { return }
-        missingRecords = []
-        heldLocal = nil
-        updateLocal(days: local.days, categories: local.categories)
-    }
-
-    private func refreshMissingCount() {
-        missingDayCount = missingRecords.count { $0.hasPrefix("LibraryDay.") }
+        guard let hold = missingHold else { return }
+        missingHold = nil
+        updateLocal(days: hold.days, categories: hold.categories)
     }
 
     /// Starts again after what sync couldn't get past by itself: no iCloud account when it started,
