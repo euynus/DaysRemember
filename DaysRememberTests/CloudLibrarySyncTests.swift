@@ -424,9 +424,27 @@ final class CloudLibrarySyncTests: XCTestCase {
             XCTAssertNil(pending.sentRevision)
 
             let sync = CloudLibrarySync(stateURL: directory.appendingPathComponent("state.json"))
+            // Started, so it holds the record; it stops before its sync task runs.
+            sync.start(days: [big, small], categories: []) { _ in }
             sync.reportTooLarge(batch.tooLarge)
-            let message = try XCTUnwrap(sync.errorMessage)
+            let message = try XCTUnwrap(sync.oversizedMessage)
             XCTAssertTrue(message.contains("Long notes"), message)
+            XCTAssertNil(sync.errorMessage, "A notice doesn't stop sync")
+
+            // A failure that comes meanwhile shows beside the notice and leaves it.
+            sync.fail(CocoaError(.fileWriteUnknown))
+            XCTAssertNotNil(sync.errorMessage)
+            XCTAssertEqual(sync.oversizedMessage, message)
+            sync.reportTooLarge([])
+            XCTAssertEqual(sync.oversizedMessage, message, "The record is still too large")
+
+            // Once its note fits, the next batch clears the notice.
+            var shortened = big
+            shortened.note = "Short"
+            sync.updateLocal(days: [shortened, small], categories: [])
+            sync.reportTooLarge([])
+            XCTAssertNil(sync.oversizedMessage)
+            sync.stop()
         }
     }
 

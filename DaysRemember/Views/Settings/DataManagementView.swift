@@ -145,6 +145,9 @@ struct DataManagementView: View {
         if let error = cloud.errorMessage {
             Text(error).foregroundStyle(Theme.accent)
         }
+        if let notice = cloud.oversizedMessage {
+            Text(notice).foregroundStyle(Theme.accent)
+        }
         if let notice = cloud.unreadableMessage {
             Text(notice).foregroundStyle(Theme.accent)
         }

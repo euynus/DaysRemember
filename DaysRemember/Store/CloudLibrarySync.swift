@@ -30,22 +30,20 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     }
 
     private(set) var status: Status = .idle
-    /// What went wrong, kept as a value rather than text so its message follows a language change.
+    /// What stopped sync, kept as a value rather than text so its message follows a language change.
+    /// While there is one, it rather than sync activity decides the status.
     private enum Problem {
         case accountChanged, zoneDeleted, accountUnavailable
         case cloudKit(CKError)
         case other(Error)
-        /// A notice rather than a stop: the rest of the library still syncs.
-        case tooLarge(CloudLibraryRecord)
     }
 
     private var problem: Problem?
 
-    /// Whether the problem, rather than sync activity, decides the status.
-    private var problemHoldsStatus: Bool {
-        if case .tooLarge = problem { return false }
-        return problem != nil
-    }
+    /// The first record a batch had to leave out as too large for CloudKit. A notice rather than a
+    /// problem: the rest of the library still syncs, and it stays until the record fits or is gone,
+    /// whatever problems come and go meanwhile.
+    private var oversizedRecord: CloudLibraryRecord?
 
     var errorMessage: String? {
         switch problem {
@@ -62,9 +60,16 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                           comment: "iCloud sync error. 1: the sync status, such as “Sync failed”; 2: the system’s error message; 3: the CloudKit error code.")
         case .other(let error):
             return error.localizedDescription
-        case .tooLarge(.day(let day)):
+        }
+    }
+
+    var oversizedMessage: String? {
+        switch oversizedRecord {
+        case nil:
+            return nil
+        case .day(let day):
             return String(localized: "「\(day.title)」的文字过长，无法上传到 iCloud；其他日子照常同步。缩短它的笔记后会再上传。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
-        case .tooLarge(.category(let category)):
+        case .category(let category):
             return String(localized: "分类「\(category.name)」的数据过大，无法上传到 iCloud；其他内容照常同步。", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
         }
     }
@@ -114,7 +119,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     /// state.hasFetched) or a problem stops sync. It doesn't follow `status`, which reads `.pending`
     /// while a new library's categories wait to go up, before the sync that fetches has even begun.
     var isFirstDownloadPending: Bool {
-        started && lastFetchedAt == nil && !problemHoldsStatus
+        started && lastFetchedAt == nil && problem == nil
     }
 
     /// Names this build, so records it set aside as unreadable are fetched again after an update.
@@ -202,6 +207,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         checkpointUnreadable = false
         localSnapshotKnown = false
         problem = nil
+        oversizedRecord = nil
         status = .idle
     }
 
@@ -225,6 +231,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
         storageFailed = false
         checkpointUnreadable = false
         problem = nil
+        oversizedRecord = nil
         status = .idle
         lastFetchedAt = nil
         lastSentAt = nil
@@ -365,7 +372,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 // First use of this account: no records can be overwritten in an absent zone.
             }
             guard self.engine === current, !state.accountChangePending, !state.zoneWasDeleted,
-                  !storageFailed, !problemHoldsStatus else { return }
+                  !storageFailed, problem == nil else { return }
             canSend = true
             state.hasFetched = true
             state.lastFetchedAt = Date.now
@@ -515,7 +522,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     private func refreshStatus() {
         if state.accountChangePending { showAccountChange(); return }
         if state.zoneWasDeleted { showDeletedZone(); return }
-        guard !problemHoldsStatus else { return }
+        guard problem == nil else { return }
         if fetching || sending || manualSyncRunning { status = .syncing }
         else if state.hasPendingChanges { status = .pending }
         else if lastFetchedAt != nil && canSend { status = .synced }
@@ -558,9 +565,9 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
     /// Names the first record a batch had to leave out, until it fits or is gone.
     func reportTooLarge(_ records: [CloudLibraryRecord]) {
         if let record = records.first {
-            problem = .tooLarge(record)
-        } else if case .tooLarge(let record) = problem, state.records[record.recordName]?.value != record {
-            problem = nil
+            oversizedRecord = record
+        } else if let record = oversizedRecord, state.records[record.recordName]?.value != record {
+            oversizedRecord = nil
         }
     }
 
@@ -714,7 +721,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 _ = persist()
             case .willFetchChanges:
                 fetching = true
-                if !problemHoldsStatus { status = .syncing }
+                if problem == nil { status = .syncing }
             case .didFetchRecordZoneChanges(let event):
                 guard event.zoneID == CloudLibraryRecord.zoneID else { return }
                 zoneFetchFinished(error: event.error)
@@ -723,7 +730,7 @@ final class CloudLibrarySync: CKSyncEngineDelegate {
                 refreshStatus()
             case .willSendChanges:
                 sending = true
-                if !problemHoldsStatus { status = .syncing }
+                if problem == nil { status = .syncing }
             case .didSendChanges:
                 sending = false
                 refreshStatus()
