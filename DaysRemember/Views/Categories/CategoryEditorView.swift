@@ -6,29 +6,17 @@ struct CategoryEditorView: View {
     @Environment(\.currentDay) private var today
     @Environment(DayStore.self) var store
 
-    private let category: CategoryDefinition?
-    @State private var name: String
-    @State private var icon: String
-    @State private var colorToken: CategoryColorToken
+    @State private var draft: CategoryDraft
     @State private var confirmingDelete = false
     @State private var confirmingDiscard = false
     @State private var saveError: String?
 
     init(category: CategoryDefinition? = nil) {
-        self.category = category
-        _name = State(initialValue: category?.name ?? "")
-        _icon = State(initialValue: category?.icon ?? "tag")
-        _colorToken = State(initialValue: category?.colorToken ?? .terracotta)
+        _draft = State(initialValue: CategoryDraft(editing: category))
     }
 
-    private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private var hasChanges: Bool {
-        name != (category?.name ?? "") || icon != (category?.icon ?? "tag")
-            || colorToken != (category?.colorToken ?? .terracotta)
-    }
+    /// The category as the editor opened it; nil for a new one.
+    private var category: CategoryDefinition? { draft.original }
 
     /// The illustration the category's tile shows: its first day's, or the default.
     private var cover: PhotoStyle {
@@ -81,10 +69,10 @@ struct CategoryEditorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                CategoryEditorPreview(name: name, icon: icon, colorToken: colorToken, cover: cover)
+                CategoryEditorPreview(name: draft.name, icon: draft.icon, colorToken: draft.colorToken, cover: cover)
                 nameField
-                CategoryIconPicker(icon: $icon, storedIcon: category?.icon, colorToken: colorToken)
-                CategoryColorPicker(colorToken: $colorToken)
+                CategoryIconPicker(icon: $draft.icon, storedIcon: category?.icon, colorToken: draft.colorToken)
+                CategoryColorPicker(colorToken: $draft.colorToken)
                 if canDelete { deleteButton }
             }
             .padding(.horizontal, 16)
@@ -98,18 +86,18 @@ struct CategoryEditorView: View {
             EditorNavBar(title: category == nil
                              ? String(localized: "新建分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale)
                              : String(localized: "编辑分类", bundle: AppLocalization.bundle, locale: AppLocalization.locale),
-                         canSave: canSave, cancelIdentifier: "cancelCategoryButton", saveIdentifier: "saveCategoryButton",
+                         canSave: draft.canSave, cancelIdentifier: "cancelCategoryButton", saveIdentifier: "saveCategoryButton",
                          onCancel: cancel, onSave: save)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
-        .interactiveDismissDisabled(hasChanges)
+        .interactiveDismissDisabled(draft.hasChanges)
         .alert("放弃未保存的修改？", isPresented: $confirmingDiscard) {
             Button("放弃修改", role: .destructive) { dismiss() }
             Button("继续编辑", role: .cancel) {}
         }
-        .sensoryFeedback(.selection, trigger: icon)
-        .sensoryFeedback(.selection, trigger: colorToken)
+        .sensoryFeedback(.selection, trigger: draft.icon)
+        .sensoryFeedback(.selection, trigger: draft.colorToken)
         .alert("未能保存", isPresented: Binding(
             get: { saveError != nil }, set: { if !$0 { saveError = nil } }
         )) {
@@ -124,7 +112,7 @@ struct CategoryEditorView: View {
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(String(localized: "名称", bundle: AppLocalization.bundle, locale: AppLocalization.locale))
-            TextField("例如：朋友", text: $name)
+            TextField("例如：朋友", text: $draft.name)
                 .font(Theme.sans(17, weight: .semibold))
                 .foregroundStyle(Theme.ink)
                 .tint(Theme.ink)
@@ -162,17 +150,14 @@ struct CategoryEditorView: View {
     }
 
     private func cancel() {
-        if hasChanges { confirmingDiscard = true } else { dismiss() }
+        if draft.hasChanges { confirmingDiscard = true } else { dismiss() }
     }
 
     private func save() {
-        if var category {
-            category.name = name
-            category.icon = icon
-            category.colorToken = colorToken
-            finishSaving(store.updateCategory(category))
+        if let edited = draft.edited {
+            finishSaving(store.updateCategory(edited))
         } else {
-            store.addCategory(name: name, icon: icon, colorToken: colorToken)
+            store.addCategory(name: draft.name, icon: draft.icon, colorToken: draft.colorToken)
             finishSaving(store.saveError == nil)
         }
     }
